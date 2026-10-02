@@ -5,6 +5,8 @@ void main() {
   testWidgets('LapakTani app initialization smoke test',
       (WidgetTester tester) async {
     await tester.pumpWidget(const LapakTaniApp());
-    expect(find.text('LapakTani Core Initialized'), findsOneWidget);
+    expect(find.text('Pasar Digital Hasil Tani Modern'), findsOneWidget);
+    await tester.pump(const Duration(milliseconds: 2600));
+    await tester.pumpAndSettle();
   });
 }

@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'core/config/supabase_config.dart';
 import 'core/theme/app_theme.dart';
+import 'features/auth/auth_screen.dart';
+import 'features/onboarding/splash_screen.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -24,11 +26,10 @@ class LapakTaniApp extends StatelessWidget {
       title: 'LapakTani',
       debugShowCheckedModeBanner: false,
       theme: AppTheme.lightTheme,
-      home: const Scaffold(
-        body: Center(
-          child: Text('LapakTani Core Initialized'),
-        ),
-      ),
+      home: const SplashScreen(),
+      routes: {
+        '/auth': (context) => const AuthScreen(),
+      },
     );
   }
 }
