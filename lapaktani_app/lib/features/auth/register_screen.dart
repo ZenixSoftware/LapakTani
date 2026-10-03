@@ -4,6 +4,7 @@ import 'package:lucide_icons/lucide_icons.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/widgets/custom_soft_card.dart';
+import '../../core/widgets/lapaktani_text_field.dart';
 import 'auth_repository.dart';
 import '../home/home_screen.dart';
 
@@ -140,14 +141,113 @@ class _RegisterScreenState extends State<RegisterScreen> {
     }
   }
 
+  void _showFarmerGroupPicker() {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.white,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      builder: (context) {
+        return SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Center(
+                  child: Container(
+                    width: 40,
+                    height: 4,
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFE2E8F0),
+                      borderRadius: BorderRadius.circular(2),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 16),
+                const Text(
+                  'Pilih Kelompok Tani (Gapoktan)',
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w800,
+                    color: Color(0xFF0F172A),
+                  ),
+                ),
+                const SizedBox(height: 12),
+                Flexible(
+                  child: ListView.separated(
+                    shrinkWrap: true,
+                    itemCount: _farmerGroups.length,
+                    separatorBuilder: (context, index) =>
+                        const Divider(height: 1, color: Color(0xFFF1F5F9)),
+                    itemBuilder: (context, index) {
+                      final group = _farmerGroups[index];
+                      final isSelected = group['id'] == _selectedFarmerGroupId;
+
+                      return ListTile(
+                        contentPadding: const EdgeInsets.symmetric(
+                          horizontal: 4,
+                          vertical: 2,
+                        ),
+                        title: Text(
+                          group['group_name'] as String,
+                          style: TextStyle(
+                            fontSize: 14,
+                            fontWeight: isSelected
+                                ? FontWeight.w700
+                                : FontWeight.w500,
+                            color: isSelected
+                                ? AppColors.primary
+                                : const Color(0xFF1E293B),
+                          ),
+                        ),
+                        subtitle: Text(
+                          group['domicile_region'] as String,
+                          style: const TextStyle(
+                            fontSize: 12,
+                            color: Color(0xFF64748B),
+                          ),
+                        ),
+                        trailing: isSelected
+                            ? const Icon(
+                                LucideIcons.checkCircle2,
+                                color: AppColors.primary,
+                                size: 20,
+                              )
+                            : null,
+                        onTap: () {
+                          setState(() {
+                            _selectedFarmerGroupId = group['id'] as String;
+                          });
+                          Navigator.of(context).pop();
+                        },
+                      );
+                    },
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final isFarmer = _selectedRole == 'petani';
+    final selectedGroup = _farmerGroups.firstWhere(
+      (g) => g['id'] == _selectedFarmerGroupId,
+      orElse: () => {'group_name': 'Pilih Kelompok Tani', 'domicile_region': ''},
+    );
 
     return Scaffold(
       backgroundColor: AppColors.background,
       body: SafeArea(
         child: SingleChildScrollView(
+          physics: const BouncingScrollPhysics(),
           padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -244,7 +344,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   ),
                 ],
               ),
-              const SizedBox(height: 10),
+              const SizedBox(height: 8),
               RichText(
                 text: const TextSpan(
                   children: [
@@ -279,10 +379,12 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 ),
               ),
               const SizedBox(height: 18),
-              CustomSoftCard(
+              Container(
                 padding: const EdgeInsets.all(4),
-                borderRadius: BorderRadius.circular(16),
-                backgroundColor: const Color(0xFFE2E8F0).withValues(alpha: 0.6),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFF1F5F9),
+                  borderRadius: BorderRadius.circular(30),
+                ),
                 child: Row(
                   children: [
                     Expanded(
@@ -293,20 +395,19 @@ class _RegisterScreenState extends State<RegisterScreen> {
                           }
                         },
                         child: AnimatedContainer(
-                          duration: const Duration(milliseconds: 200),
+                          duration: const Duration(milliseconds: 220),
+                          curve: Curves.easeOutCubic,
                           padding: const EdgeInsets.symmetric(vertical: 10),
                           decoration: BoxDecoration(
-                            color: !isFarmer
-                                ? AppColors.primary
-                                : Colors.transparent,
-                            borderRadius: BorderRadius.circular(12),
+                            color: !isFarmer ? Colors.white : Colors.transparent,
+                            borderRadius: BorderRadius.circular(26),
                             boxShadow: !isFarmer
                                 ? [
                                     BoxShadow(
-                                      color: AppColors.primary
-                                          .withValues(alpha: 0.28),
-                                      blurRadius: 8,
-                                      offset: const Offset(0, 3),
+                                      color:
+                                          Colors.black.withValues(alpha: 0.06),
+                                      blurRadius: 10,
+                                      offset: const Offset(0, 2),
                                     ),
                                   ]
                                 : null,
@@ -318,7 +419,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                                 LucideIcons.shoppingBag,
                                 size: 16,
                                 color: !isFarmer
-                                    ? Colors.white
+                                    ? AppColors.primary
                                     : const Color(0xFF64748B),
                               ),
                               const SizedBox(width: 8),
@@ -326,9 +427,11 @@ class _RegisterScreenState extends State<RegisterScreen> {
                                 'Pembeli',
                                 style: TextStyle(
                                   fontSize: 13,
-                                  fontWeight: FontWeight.w700,
+                                  fontWeight: !isFarmer
+                                      ? FontWeight.w800
+                                      : FontWeight.w600,
                                   color: !isFarmer
-                                      ? Colors.white
+                                      ? const Color(0xFF0F172A)
                                       : const Color(0xFF64748B),
                                 ),
                               ),
@@ -345,19 +448,20 @@ class _RegisterScreenState extends State<RegisterScreen> {
                           }
                         },
                         child: AnimatedContainer(
-                          duration: const Duration(milliseconds: 200),
+                          duration: const Duration(milliseconds: 220),
+                          curve: Curves.easeOutCubic,
                           padding: const EdgeInsets.symmetric(vertical: 10),
                           decoration: BoxDecoration(
                             color: isFarmer
                                 ? AppColors.primary
                                 : Colors.transparent,
-                            borderRadius: BorderRadius.circular(12),
+                            borderRadius: BorderRadius.circular(26),
                             boxShadow: isFarmer
                                 ? [
                                     BoxShadow(
                                       color: AppColors.primary
-                                          .withValues(alpha: 0.28),
-                                      blurRadius: 8,
+                                          .withValues(alpha: 0.3),
+                                      blurRadius: 10,
                                       offset: const Offset(0, 3),
                                     ),
                                   ]
@@ -378,7 +482,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
                                 'Petani Mitra',
                                 style: TextStyle(
                                   fontSize: 13,
-                                  fontWeight: FontWeight.w700,
+                                  fontWeight: isFarmer
+                                      ? FontWeight.w800
+                                      : FontWeight.w600,
                                   color: isFarmer
                                       ? Colors.white
                                       : const Color(0xFF64748B),
@@ -393,64 +499,70 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 ),
               ),
               const SizedBox(height: 12),
-              Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-                decoration: BoxDecoration(
-                  color: isFarmer
-                      ? const Color(0xFFFEF3C7)
-                      : const Color(0xFFECFDF5),
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(
+              AnimatedSwitcher(
+                duration: const Duration(milliseconds: 250),
+                child: Container(
+                  key: ValueKey(isFarmer),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                  decoration: BoxDecoration(
                     color: isFarmer
-                        ? const Color(0xFFFDE68A)
-                        : const Color(0xFFA7F3D0),
-                    width: 1,
-                  ),
-                ),
-                child: Row(
-                  children: [
-                    Icon(
-                      isFarmer ? LucideIcons.store : LucideIcons.checkCircle2,
-                      size: 16,
+                        ? const Color(0xFFFEF3C7)
+                        : const Color(0xFFECFDF5),
+                    borderRadius: BorderRadius.circular(14),
+                    border: Border.all(
                       color: isFarmer
-                          ? const Color(0xFFB45309)
-                          : const Color(0xFF047857),
+                          ? const Color(0xFFFDE68A)
+                          : const Color(0xFFA7F3D0),
+                      width: 1,
                     ),
-                    const SizedBox(width: 8),
-                    Expanded(
-                      child: Text(
-                        isFarmer
-                            ? 'Akses pasar luas tanpa tengkulak dengan pembayaran transparan.'
-                            : 'Akses produk panen subuh segar dan harga adil dari petani.',
-                        style: TextStyle(
-                          fontSize: 11,
-                          fontWeight: FontWeight.w600,
-                          color: isFarmer
-                              ? const Color(0xFF92400E)
-                              : const Color(0xFF065F46),
+                  ),
+                  child: Row(
+                    children: [
+                      Icon(
+                        isFarmer ? LucideIcons.store : LucideIcons.checkCircle2,
+                        size: 16,
+                        color: isFarmer
+                            ? const Color(0xFFB45309)
+                            : const Color(0xFF047857),
+                      ),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          isFarmer
+                              ? 'Akses pasar luas tanpa tengkulak dengan pembayaran transparan.'
+                              : 'Akses produk panen subuh segar dan harga adil dari petani.',
+                          style: TextStyle(
+                            fontSize: 11,
+                            fontWeight: FontWeight.w600,
+                            color: isFarmer
+                                ? const Color(0xFF92400E)
+                                : const Color(0xFF065F46),
+                          ),
                         ),
                       ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
               ),
               const SizedBox(height: 18),
               CustomSoftCard(
-                padding: const EdgeInsets.all(22.0),
-                borderRadius: BorderRadius.circular(24),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 22,
+                  vertical: 24,
+                ),
+                borderRadius: BorderRadius.circular(28),
                 child: Form(
                   key: _formKey,
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      _buildFieldLabel(
-                        'Nama Lengkap *',
-                        isFarmer ? 'Sesuai KTP' : null,
-                      ),
-                      const SizedBox(height: 6),
-                      TextFormField(
+                    children: <Widget>[
+                      LapaktaniTextField(
                         controller: _nameController,
+                        label: 'Nama Lengkap *',
+                        labelTrailing: isFarmer ? 'Sesuai KTP' : null,
+                        hintText: 'Contoh: Budi Santoso',
+                        prefixIcon: LucideIcons.user,
                         textInputAction: TextInputAction.next,
                         validator: (val) {
                           if (val == null || val.trim().isEmpty) {
@@ -458,16 +570,13 @@ class _RegisterScreenState extends State<RegisterScreen> {
                           }
                           return null;
                         },
-                        decoration: _buildSoftInputDecoration(
-                          hintText: 'Contoh: Budi Santoso',
-                          prefixIcon: LucideIcons.user,
-                        ),
                       ),
                       const SizedBox(height: 14),
-                      _buildFieldLabel('Email Aktif *', null),
-                      const SizedBox(height: 6),
-                      TextFormField(
+                      LapaktaniTextField(
                         controller: _emailController,
+                        label: 'Email Aktif *',
+                        hintText: 'nama@email.com',
+                        prefixIcon: LucideIcons.mail,
                         keyboardType: TextInputType.emailAddress,
                         textInputAction: TextInputAction.next,
                         validator: (val) {
@@ -479,18 +588,41 @@ class _RegisterScreenState extends State<RegisterScreen> {
                           }
                           return null;
                         },
-                        decoration: _buildSoftInputDecoration(
-                          hintText: 'nama@email.com',
-                          prefixIcon: LucideIcons.mail,
-                        ),
                       ),
                       const SizedBox(height: 14),
-                      _buildFieldLabel('Nomor WhatsApp / HP *', null),
-                      const SizedBox(height: 6),
-                      TextFormField(
+                      LapaktaniTextField(
                         controller: _phoneController,
+                        label: 'Nomor WhatsApp / HP *',
+                        hintText: '812-3456-7890',
                         keyboardType: TextInputType.phone,
                         textInputAction: TextInputAction.next,
+                        prefix: Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 10,
+                            vertical: 8,
+                          ),
+                          margin: const EdgeInsets.only(right: 4),
+                          decoration: const BoxDecoration(
+                            border: Border(
+                              right: BorderSide(color: Color(0xFFE2E8F0)),
+                            ),
+                          ),
+                          child: const Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Text('🇮🇩', style: TextStyle(fontSize: 14)),
+                              SizedBox(width: 4),
+                              Text(
+                                '+62',
+                                style: TextStyle(
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.w700,
+                                  color: Color(0xFF1E293B),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
                         validator: (val) {
                           if (val == null || val.trim().isEmpty) {
                             return 'Nomor HP wajib diisi';
@@ -500,69 +632,32 @@ class _RegisterScreenState extends State<RegisterScreen> {
                           }
                           return null;
                         },
-                        decoration: InputDecoration(
-                          prefixIcon: Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 10),
-                            margin: const EdgeInsets.only(right: 8),
-                            decoration: const BoxDecoration(
-                              border: Border(
-                                right: BorderSide(color: Color(0xFFE2E8F0)),
-                              ),
-                            ),
-                            child: const Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Text('🇮🇩', style: TextStyle(fontSize: 14)),
-                                SizedBox(width: 4),
-                                Text(
-                                  '+62',
-                                  style: TextStyle(
-                                    fontSize: 13,
-                                    fontWeight: FontWeight.w700,
-                                    color: Color(0xFF1E293B),
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                          hintText: '812-3456-7890',
-                          hintStyle: const TextStyle(
-                            fontSize: 14,
-                            color: Color(0xFF94A3B8),
-                            fontWeight: FontWeight.w400,
-                          ),
-                          filled: true,
-                          fillColor: const Color(0xFFF1F5F9),
-                          contentPadding: const EdgeInsets.symmetric(
-                            horizontal: 16,
-                            vertical: 14,
-                          ),
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(16),
-                            borderSide: BorderSide.none,
-                          ),
-                          enabledBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(16),
-                            borderSide: BorderSide.none,
-                          ),
-                          focusedBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(16),
-                            borderSide: const BorderSide(
-                              color: AppColors.primary,
-                              width: 1.5,
-                            ),
-                          ),
-                        ),
                       ),
                       const SizedBox(height: 14),
-                      _buildFieldLabel('Kata Sandi *', 'Minimal 6 karakter'),
-                      const SizedBox(height: 6),
-                      TextFormField(
+                      LapaktaniTextField(
                         controller: _passwordController,
+                        label: 'Kata Sandi *',
+                        labelTrailing: 'Minimal 6 karakter',
+                        hintText: '••••••••',
+                        prefixIcon: LucideIcons.lock,
                         obscureText: _obscurePassword,
                         textInputAction: isFarmer
                             ? TextInputAction.next
                             : TextInputAction.done,
+                        suffixIcon: IconButton(
+                          icon: Icon(
+                            _obscurePassword
+                                ? LucideIcons.eye
+                                : LucideIcons.eyeOff,
+                            size: 19,
+                            color: const Color(0xFF94A3B8),
+                          ),
+                          onPressed: () {
+                            setState(
+                              () => _obscurePassword = !_obscurePassword,
+                            );
+                          },
+                        ),
                         validator: (val) {
                           if (val == null || val.isEmpty) {
                             return 'Kata sandi wajib diisi';
@@ -570,176 +665,146 @@ class _RegisterScreenState extends State<RegisterScreen> {
                           if (val.length < 6) return 'Minimal 6 karakter';
                           return null;
                         },
-                        decoration: _buildSoftInputDecoration(
-                          hintText: '••••••••',
-                          prefixIcon: LucideIcons.lock,
-                          suffixWidget: IconButton(
-                            icon: Icon(
-                              _obscurePassword
-                                  ? LucideIcons.eye
-                                  : LucideIcons.eyeOff,
-                              size: 19,
-                              color: const Color(0xFF94A3B8),
-                            ),
-                            onPressed: () {
-                              setState(
-                                () => _obscurePassword = !_obscurePassword,
-                              );
-                            },
+                      ),
+                      if (isFarmer) ...[
+                        const SizedBox(height: 16),
+                        const Divider(color: Color(0xFFF1F5F9)),
+                        const SizedBox(height: 12),
+                        const Text(
+                          'Informasi Legalitas & Kebun Petani',
+                          style: TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w800,
+                            color: Color(0xFF0F172A),
                           ),
                         ),
-                      ),
-                      if (isFarmer)
-                        Column(
-                          crossAxisAlignment: CrossAxisAlignment.stretch,
-                          children: [
-                            const SizedBox(height: 16),
-                            const Divider(color: Color(0xFFE2E8F0)),
-                            const SizedBox(height: 12),
-                            const Text(
-                              'Informasi Legalitas & Kebun Petani',
+                        const SizedBox(height: 14),
+                        LapaktaniTextField(
+                          controller: _nikController,
+                          label: 'Nomor Induk Kependudukan (NIK) *',
+                          labelTrailing: '16 Digit',
+                          hintText: 'Contoh: 3201234567890001',
+                          prefixIcon: LucideIcons.fileText,
+                          keyboardType: TextInputType.number,
+                          maxLength: 16,
+                          textInputAction: TextInputAction.next,
+                          validator: (val) {
+                            if (!isFarmer) return null;
+                            if (val == null || val.trim().isEmpty) {
+                              return 'NIK wajib diisi untuk verifikasi petani';
+                            }
+                            if (val.trim().length != 16) {
+                              return 'NIK harus 16 digit';
+                            }
+                            return null;
+                          },
+                        ),
+                        const SizedBox(height: 14),
+                        LapaktaniTextField(
+                          controller: _landAreaController,
+                          label: 'Luas Lahan Pertanian (Hektar) *',
+                          labelTrailing: 'Contoh: 1.5',
+                          hintText: '1.5',
+                          prefixIcon: LucideIcons.maximize2,
+                          keyboardType:
+                              const TextInputType.numberWithOptions(
+                            decimal: true,
+                          ),
+                          textInputAction: TextInputAction.next,
+                          suffixIcon: const Padding(
+                            padding: EdgeInsets.symmetric(horizontal: 14),
+                            child: Text(
+                              'Ha',
                               style: TextStyle(
-                                fontSize: 14,
-                                fontWeight: FontWeight.w800,
-                                color: Color(0xFF0F172A),
+                                fontSize: 13,
+                                fontWeight: FontWeight.w700,
+                                color: Color(0xFF64748B),
                               ),
                             ),
-                            const SizedBox(height: 12),
-                            _buildFieldLabel(
-                              'Nomor Induk Kependudukan (NIK) *',
-                              '16 Digit',
-                            ),
-                            const SizedBox(height: 6),
-                            TextFormField(
-                              controller: _nikController,
-                              keyboardType: TextInputType.number,
-                              maxLength: 16,
-                              textInputAction: TextInputAction.next,
-                              validator: (val) {
-                                if (!isFarmer) return null;
-                                if (val == null || val.trim().isEmpty) {
-                                  return 'NIK wajib diisi untuk verifikasi petani';
-                                }
-                                if (val.trim().length != 16) {
-                                  return 'NIK harus 16 digit';
-                                }
-                                return null;
-                              },
-                              decoration: _buildSoftInputDecoration(
-                                hintText: 'Contoh: 3201234567890001',
-                                prefixIcon: LucideIcons.fileText,
+                          ),
+                          validator: (val) {
+                            if (!isFarmer) return null;
+                            if (val == null || val.trim().isEmpty) {
+                              return 'Luas lahan wajib diisi';
+                            }
+                            final parsed = double.tryParse(val.trim());
+                            if (parsed == null || parsed <= 0) {
+                              return 'Luas lahan harus berupa angka valid';
+                            }
+                            return null;
+                          },
+                        ),
+                        const SizedBox(height: 14),
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const Text(
+                              'Kelompok Tani (Gapoktan) *',
+                              style: TextStyle(
+                                fontSize: 13,
+                                fontWeight: FontWeight.w700,
+                                color: Color(0xFF1E293B),
                               ),
                             ),
-                            const SizedBox(height: 10),
-                            _buildFieldLabel(
-                              'Luas Lahan Pertanian (Hektar) *',
-                              'Contoh: 1.5',
-                            ),
-                            const SizedBox(height: 6),
-                            TextFormField(
-                              controller: _landAreaController,
-                              keyboardType:
-                                  const TextInputType.numberWithOptions(
-                                decimal: true,
-                              ),
-                              textInputAction: TextInputAction.next,
-                              validator: (val) {
-                                if (!isFarmer) return null;
-                                if (val == null || val.trim().isEmpty) {
-                                  return 'Luas lahan wajib diisi';
-                                }
-                                final parsed = double.tryParse(val.trim());
-                                if (parsed == null || parsed <= 0) {
-                                  return 'Luas lahan harus berupa angka valid';
-                                }
-                                return null;
-                              },
-                              decoration: _buildSoftInputDecoration(
-                                hintText: '1.5',
-                                prefixIcon: LucideIcons.maximize2,
-                                suffixWidget: const Padding(
-                                  padding:
-                                      EdgeInsets.symmetric(horizontal: 14),
-                                  child: Text(
-                                    'Ha',
-                                    style: TextStyle(
-                                      fontSize: 13,
-                                      fontWeight: FontWeight.w700,
-                                      color: Color(0xFF64748B),
-                                    ),
+                            const SizedBox(height: 7),
+                            GestureDetector(
+                              onTap: _isLoadingFarmerGroups
+                                  ? null
+                                  : _showFarmerGroupPicker,
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 14,
+                                  vertical: 13,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: const Color(0xFFF8FAFC),
+                                  borderRadius: BorderRadius.circular(16),
+                                  border: Border.all(
+                                    color: const Color(0xFFE2E8F0)
+                                        .withValues(alpha: 0.6),
+                                    width: 1,
                                   ),
+                                ),
+                                child: Row(
+                                  children: [
+                                    const Icon(
+                                      LucideIcons.users,
+                                      size: 19,
+                                      color: Color(0xFF94A3B8),
+                                    ),
+                                    const SizedBox(width: 10),
+                                    Expanded(
+                                      child: _isLoadingFarmerGroups
+                                          ? const Text(
+                                              'Memuat kelompok tani...',
+                                              style: TextStyle(
+                                                fontSize: 13,
+                                                color: Color(0xFF94A3B8),
+                                              ),
+                                            )
+                                          : Text(
+                                              '${selectedGroup['group_name']} (${selectedGroup['domicile_region']})',
+                                              style: const TextStyle(
+                                                fontSize: 13,
+                                                fontWeight: FontWeight.w600,
+                                                color: Color(0xFF0F172A),
+                                              ),
+                                              overflow: TextOverflow.ellipsis,
+                                            ),
+                                    ),
+                                    const Icon(
+                                      LucideIcons.chevronDown,
+                                      size: 18,
+                                      color: Color(0xFF94A3B8),
+                                    ),
+                                  ],
                                 ),
                               ),
                             ),
-                            const SizedBox(height: 14),
-                            _buildFieldLabel('Kelompok Tani (Gapoktan) *', null),
-                            const SizedBox(height: 6),
-                            _isLoadingFarmerGroups
-                                ? const Center(
-                                    child: Padding(
-                                      padding: EdgeInsets.all(12),
-                                      child: CircularProgressIndicator(
-                                        strokeWidth: 2,
-                                      ),
-                                    ),
-                                  )
-                                : DropdownButtonFormField<String>(
-                                    isExpanded: true,
-                                    initialValue: _selectedFarmerGroupId,
-                                    decoration: InputDecoration(
-                                      filled: true,
-                                      fillColor: const Color(0xFFF1F5F9),
-                                      contentPadding:
-                                          const EdgeInsets.symmetric(
-                                        horizontal: 16,
-                                        vertical: 14,
-                                      ),
-                                      border: OutlineInputBorder(
-                                        borderRadius:
-                                            BorderRadius.circular(16),
-                                        borderSide: BorderSide.none,
-                                      ),
-                                      enabledBorder: OutlineInputBorder(
-                                        borderRadius:
-                                            BorderRadius.circular(16),
-                                        borderSide: BorderSide.none,
-                                      ),
-                                      focusedBorder: OutlineInputBorder(
-                                        borderRadius:
-                                            BorderRadius.circular(16),
-                                        borderSide: const BorderSide(
-                                          color: AppColors.primary,
-                                          width: 1.5,
-                                        ),
-                                      ),
-                                    ),
-                                    items: _farmerGroups.map((group) {
-                                      return DropdownMenuItem<String>(
-                                        value: group['id'] as String,
-                                        child: Text(
-                                          '${group['group_name']} (${group['domicile_region']})',
-                                          style: const TextStyle(
-                                            fontSize: 13,
-                                            fontWeight: FontWeight.w600,
-                                            color: Color(0xFF1E293B),
-                                          ),
-                                          overflow: TextOverflow.ellipsis,
-                                        ),
-                                      );
-                                    }).toList(),
-                                    onChanged: (val) {
-                                      setState(
-                                        () => _selectedFarmerGroupId = val,
-                                      );
-                                    },
-                                  ),
                           ],
-                        ).animate().fadeIn(duration: 300.ms).slideY(
-                              begin: 0.08,
-                              end: 0,
-                              duration: 300.ms,
-                            ),
-                      const SizedBox(height: 16),
+                        ),
+                      ],
+                      const SizedBox(height: 18),
                       Row(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
@@ -815,13 +880,18 @@ class _RegisterScreenState extends State<RegisterScreen> {
                                 ),
                         ),
                       ),
-                    ],
+                    ]
+                        .animate(interval: 50.ms)
+                        .slideY(
+                          begin: 0.2,
+                          end: 0,
+                          duration: 400.ms,
+                          curve: Curves.easeOutCubic,
+                        )
+                        .fadeIn(),
                   ),
                 ),
-              )
-                  .animate()
-                  .fadeIn(duration: 500.ms)
-                  .slideY(begin: 0.1, end: 0),
+              ),
               const SizedBox(height: 20),
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,
@@ -850,69 +920,6 @@ class _RegisterScreenState extends State<RegisterScreen> {
               const SizedBox(height: 16),
             ],
           ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildFieldLabel(String label, String? hint) {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: [
-        Text(
-          label,
-          style: const TextStyle(
-            fontSize: 13,
-            fontWeight: FontWeight.w700,
-            color: Color(0xFF1E293B),
-          ),
-        ),
-        if (hint != null)
-          Text(
-            hint,
-            style: const TextStyle(
-              fontSize: 11,
-              fontWeight: FontWeight.w500,
-              color: Color(0xFF94A3B8),
-            ),
-          ),
-      ],
-    );
-  }
-
-  InputDecoration _buildSoftInputDecoration({
-    required String hintText,
-    required IconData prefixIcon,
-    Widget? suffixWidget,
-  }) {
-    return InputDecoration(
-      hintText: hintText,
-      hintStyle: const TextStyle(
-        fontSize: 14,
-        color: Color(0xFF94A3B8),
-        fontWeight: FontWeight.w400,
-      ),
-      prefixIcon: Icon(prefixIcon, size: 19, color: const Color(0xFF94A3B8)),
-      suffixIcon: suffixWidget,
-      filled: true,
-      fillColor: const Color(0xFFF1F5F9),
-      contentPadding: const EdgeInsets.symmetric(
-        horizontal: 16,
-        vertical: 14,
-      ),
-      border: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(16),
-        borderSide: BorderSide.none,
-      ),
-      enabledBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(16),
-        borderSide: BorderSide.none,
-      ),
-      focusedBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(16),
-        borderSide: const BorderSide(
-          color: AppColors.primary,
-          width: 1.5,
         ),
       ),
     );
