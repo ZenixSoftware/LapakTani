@@ -2,7 +2,10 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:lucide_icons/lucide_icons.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
+import '../../core/config/supabase_config.dart';
 import '../../core/theme/app_colors.dart';
+import '../home/home_screen.dart';
 import 'onboarding_screen.dart';
 
 class SplashScreen extends StatefulWidget {
@@ -18,15 +21,23 @@ class _SplashScreenState extends State<SplashScreen> {
   @override
   void initState() {
     super.initState();
-    _timer = Timer(const Duration(milliseconds: 2500), _navigateToOnboarding);
+    _timer = Timer(const Duration(milliseconds: 2500), _navigateToNextScreen);
   }
 
-  void _navigateToOnboarding() {
+  void _navigateToNextScreen() {
     if (!mounted) return;
+    Session? session;
+    try {
+      session = SupabaseConfig.client.auth.currentSession;
+    } catch (_) {
+      session = null;
+    }
+    final Widget targetScreen =
+        session != null ? const HomeScreen() : const OnboardingScreen();
+
     Navigator.of(context).pushReplacement(
       PageRouteBuilder(
-        pageBuilder: (context, animation, secondaryAnimation) =>
-            const OnboardingScreen(),
+        pageBuilder: (context, animation, secondaryAnimation) => targetScreen,
         transitionsBuilder: (context, animation, secondaryAnimation, child) {
           return FadeTransition(opacity: animation, child: child);
         },
