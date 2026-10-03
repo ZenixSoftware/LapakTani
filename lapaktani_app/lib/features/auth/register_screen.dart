@@ -3,6 +3,7 @@ import 'package:flutter_animate/flutter_animate.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../core/theme/app_colors.dart';
+import '../../core/widgets/lapaktani_logo.dart';
 import '../../core/widgets/lapaktani_text_field.dart';
 import 'auth_repository.dart';
 import '../home/home_screen.dart';
@@ -470,18 +471,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   const SizedBox(height: 16),
                   Row(
                     children: [
-                      Container(
+                      const LapaktaniLogo(
                         width: 28,
                         height: 28,
-                        decoration: BoxDecoration(
-                          color: AppColors.primary,
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        child: const Icon(
-                          LucideIcons.sprout,
-                          color: Colors.white,
-                          size: 16,
-                        ),
                       ),
                       const SizedBox(width: 8),
                       RichText(

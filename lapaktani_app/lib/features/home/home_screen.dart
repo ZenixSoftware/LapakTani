@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 import '../../core/theme/app_colors.dart';
+import '../../core/widgets/lapaktani_logo.dart';
 import '../auth/auth_repository.dart';
 
 class HomeScreen extends StatelessWidget {
@@ -18,18 +19,9 @@ class HomeScreen extends StatelessWidget {
         elevation: 0,
         title: Row(
           children: [
-            Container(
+            const LapaktaniLogo(
               width: 32,
               height: 32,
-              decoration: BoxDecoration(
-                color: AppColors.primary,
-                borderRadius: BorderRadius.circular(10),
-              ),
-              child: const Icon(
-                LucideIcons.sprout,
-                color: Colors.white,
-                size: 18,
-              ),
             ),
             const SizedBox(width: 8),
             RichText(

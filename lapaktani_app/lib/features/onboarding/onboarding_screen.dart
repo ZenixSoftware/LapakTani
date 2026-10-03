@@ -3,6 +3,7 @@ import 'package:flutter_animate/flutter_animate.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 import 'package:smooth_page_indicator/smooth_page_indicator.dart';
 import '../../core/theme/app_colors.dart';
+import '../../core/widgets/lapaktani_logo.dart';
 import '../auth/auth_screen.dart';
 
 class OnboardingSlideData {
@@ -138,18 +139,9 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                 children: [
                   Row(
                     children: [
-                      Container(
+                      const LapaktaniLogo(
                         width: 32,
                         height: 32,
-                        decoration: BoxDecoration(
-                          color: AppColors.primary.withValues(alpha: 0.12),
-                          shape: BoxShape.circle,
-                        ),
-                        child: const Icon(
-                          LucideIcons.sprout,
-                          color: AppColors.primary,
-                          size: 18,
-                        ),
                       ),
                       const SizedBox(width: 8),
                       RichText(
