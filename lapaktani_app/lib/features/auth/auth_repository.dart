@@ -88,43 +88,61 @@ class AuthRepository {
           ? (roleRecord['id'] as num).toInt()
           : (normalizedRole == 'petani' ? 1 : 4);
 
-      await _client.from('users').upsert({
-        'id': userId,
-        'email': email,
-        'phone': phone,
-        'role_id': roleId,
-        'updated_at': DateTime.now().toIso8601String(),
-      });
+      try {
+        await _client.from('users').upsert({
+          'id': userId,
+          'email': email,
+          'phone': phone,
+          'role_id': roleId,
+          'updated_at': DateTime.now().toIso8601String(),
+        });
+      } on PostgrestException catch (e) {
+        throw AuthException('Gagal menyimpan data pengguna: ${e.message}');
+      }
 
-      final profileRecord = await _client
-          .from('user_profiles')
-          .upsert({
-            'user_id': userId,
-            'full_name': fullName ?? email.split('@').first,
-            'nik_number': nikNumber,
-            'verification_status':
-                normalizedRole == 'petani' ? 'pending' : 'verified',
-          })
-          .select('id')
-          .single();
+      String profileId;
+      try {
+        final profileRecord = await _client
+            .from('user_profiles')
+            .upsert({
+              'user_id': userId,
+              'full_name': fullName ?? email.split('@').first,
+              'nik_number': nikNumber,
+              'verification_status':
+                  normalizedRole == 'petani' ? 'pending' : 'verified',
+            })
+            .select('id')
+            .single();
 
-      final profileId = profileRecord['id'] as String;
+        profileId = profileRecord['id'] as String;
+      } on PostgrestException catch (e) {
+        if (e.message.contains('duplicate') || e.code == '23505') {
+          throw const AuthException('NIK sudah terdaftar pada akun lain.');
+        }
+        throw AuthException('Gagal membuat profil pengguna: ${e.message}');
+      }
 
       if (normalizedRole == 'petani') {
-        await _client.from('farmer_profiles').upsert({
-          'user_id': userId,
-          if (farmerGroupId != null && farmerGroupId.isNotEmpty)
-            'farmer_group_id': farmerGroupId,
-          'land_area_ha': landAreaHa ?? 0.0,
-        });
+        try {
+          await _client.from('farmer_profiles').upsert({
+            'user_id': userId,
+            if (farmerGroupId != null && farmerGroupId.isNotEmpty)
+              'farmer_group_id': farmerGroupId,
+            'land_area_ha': landAreaHa ?? 0.0,
+          });
 
-        await _client.from('farms').insert({
-          'farmer_id': profileId,
-          'land_area_ha': landAreaHa ?? 0.0,
-        });
+          await _client.from('farms').insert({
+            'farmer_id': profileId,
+            'land_area_ha': landAreaHa ?? 0.0,
+          });
+        } on PostgrestException catch (e) {
+          throw AuthException('Gagal menyimpan profil kebun: ${e.message}');
+        }
       }
-    } catch (e) {
+    } on AuthException {
       rethrow;
+    } catch (e) {
+      throw AuthException('Terjadi kendala saat registrasi: ${e.toString()}');
     }
   }
 
