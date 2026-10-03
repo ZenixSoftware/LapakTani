@@ -146,6 +146,53 @@ class AuthRepository {
     }
   }
 
+  Future<List<String>> getDomicileRegions() async {
+    try {
+      final List<dynamic> rows = await _client
+          .from('farmer_groups')
+          .select('domicile_region')
+          .order('domicile_region');
+      final regions = rows
+          .map((e) => (e['domicile_region'] as String).trim())
+          .toSet()
+          .toList();
+      return regions.isNotEmpty
+          ? regions
+          : [
+              'Cipanas, Cianjur',
+              'Lembang, Bandung Barat',
+              'Pangalengan, Bandung',
+            ];
+    } catch (_) {
+      return [
+        'Cipanas, Cianjur',
+        'Lembang, Bandung Barat',
+        'Pangalengan, Bandung',
+      ];
+    }
+  }
+
+  Future<List<Map<String, dynamic>>> getFarmerGroupsByRegion(
+    String region,
+  ) async {
+    try {
+      final List<dynamic> rows = await _client
+          .from('farmer_groups')
+          .select('id, group_name, domicile_region')
+          .eq('domicile_region', region)
+          .order('group_name');
+      return rows.map((e) => Map<String, dynamic>.from(e as Map)).toList();
+    } catch (_) {
+      return [
+        {
+          'id': '7281a516-ae8d-48cf-8c32-31f6eed77662',
+          'group_name': 'Poktan Tani Makmur Sejahtera',
+          'domicile_region': region,
+        },
+      ];
+    }
+  }
+
   Future<List<Map<String, dynamic>>> getFarmerGroups() async {
     try {
       final List<dynamic> rows = await _client

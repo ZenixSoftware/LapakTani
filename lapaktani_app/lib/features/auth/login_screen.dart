@@ -3,7 +3,6 @@ import 'package:flutter_animate/flutter_animate.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../core/theme/app_colors.dart';
-import '../../core/widgets/custom_soft_card.dart';
 import '../../core/widgets/lapaktani_text_field.dart';
 import 'auth_repository.dart';
 import 'register_screen.dart';
@@ -108,40 +107,44 @@ class _LoginScreenState extends State<LoginScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: const Color(0xFFF1F5F9),
       body: Stack(
         children: [
           Positioned(
-            top: -90,
-            left: -70,
+            top: -96,
+            left: -80,
             child: Container(
-              width: 300,
-              height: 300,
+              width: 320,
+              height: 320,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                gradient: RadialGradient(
-                  colors: [
-                    const Color(0xFFDCFCE7).withValues(alpha: 0.8),
-                    Colors.transparent,
-                  ],
-                ),
+                color: const Color(0xFFD1FAE5).withValues(alpha: 0.6),
+                boxShadow: [
+                  BoxShadow(
+                    color: const Color(0xFFD1FAE5).withValues(alpha: 0.6),
+                    blurRadius: 90,
+                    spreadRadius: 40,
+                  ),
+                ],
               ),
             ),
           ),
           Positioned(
-            top: 40,
-            right: -80,
+            top: 48,
+            right: -96,
             child: Container(
-              width: 280,
-              height: 280,
+              width: 288,
+              height: 288,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                gradient: RadialGradient(
-                  colors: [
-                    const Color(0xFFFEF08A).withValues(alpha: 0.35),
-                    Colors.transparent,
-                  ],
-                ),
+                color: const Color(0xFFECFCCB).withValues(alpha: 0.4),
+                boxShadow: [
+                  BoxShadow(
+                    color: const Color(0xFFECFCCB).withValues(alpha: 0.4),
+                    blurRadius: 80,
+                    spreadRadius: 35,
+                  ),
+                ],
               ),
             ),
           ),
@@ -158,18 +161,18 @@ class _LoginScreenState extends State<LoginScreen> {
                       height: 64,
                       decoration: BoxDecoration(
                         color: AppColors.primary,
-                        borderRadius: BorderRadius.circular(20),
+                        borderRadius: BorderRadius.circular(16),
                         boxShadow: [
                           BoxShadow(
-                            color: AppColors.primary.withValues(alpha: 0.35),
-                            blurRadius: 22,
+                            color: AppColors.primary.withValues(alpha: 0.25),
+                            blurRadius: 20,
                             offset: const Offset(0, 8),
                           ),
                         ],
                       ),
                       child: const Icon(
                         LucideIcons.sprout,
-                        size: 34,
+                        size: 36,
                         color: Colors.white,
                       ),
                     )
@@ -202,9 +205,9 @@ class _LoginScreenState extends State<LoginScreen> {
                         ],
                       ),
                     ).animate().fadeIn(duration: 350.ms),
-                    const SizedBox(height: 6),
+                    const SizedBox(height: 8),
                     const Padding(
-                      padding: EdgeInsets.symmetric(horizontal: 20),
+                      padding: EdgeInsets.symmetric(horizontal: 16),
                       child: Text(
                         'Hubungkan langkah sehat Anda langsung dari ladang terbaik bersama ribuan petani lokal.',
                         textAlign: TextAlign.center,
@@ -216,12 +219,22 @@ class _LoginScreenState extends State<LoginScreen> {
                       ),
                     ).animate().fadeIn(duration: 400.ms),
                     const SizedBox(height: 24),
-                    CustomSoftCard(
+                    Container(
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(28),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withValues(alpha: 0.04),
+                            blurRadius: 20,
+                            offset: const Offset(0, 4),
+                          ),
+                        ],
+                      ),
                       padding: const EdgeInsets.symmetric(
                         horizontal: 22,
                         vertical: 26,
                       ),
-                      borderRadius: BorderRadius.circular(28),
                       child: Form(
                         key: _formKey,
                         child: Column(
@@ -305,48 +318,60 @@ class _LoginScreenState extends State<LoginScreen> {
                               ),
                             ),
                             const SizedBox(height: 18),
-                            SizedBox(
+                            Container(
                               height: 52,
-                              child: ElevatedButton(
-                                onPressed: _isLoading ? null : _handleEmailLogin,
-                                style: ElevatedButton.styleFrom(
-                                  backgroundColor: AppColors.primary,
-                                  foregroundColor: Colors.white,
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(16),
+                              decoration: BoxDecoration(
+                                color: AppColors.primary,
+                                borderRadius: BorderRadius.circular(16),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: AppColors.primary
+                                        .withValues(alpha: 0.35),
+                                    blurRadius: 24,
+                                    offset: const Offset(0, 8),
                                   ),
-                                  elevation: 0,
-                                ),
-                                child: _isLoading
-                                    ? const SizedBox(
-                                        width: 22,
-                                        height: 22,
-                                        child: CircularProgressIndicator(
-                                          strokeWidth: 2.2,
-                                          valueColor:
-                                              AlwaysStoppedAnimation<Color>(
-                                            Colors.white,
-                                          ),
-                                        ),
-                                      )
-                                    : const Row(
-                                        mainAxisAlignment:
-                                            MainAxisAlignment.center,
-                                        children: [
-                                          Text(
-                                            'Masuk',
-                                            style: TextStyle(
-                                              fontSize: 15,
-                                              fontWeight: FontWeight.w700,
+                                ],
+                              ),
+                              child: Material(
+                                color: Colors.transparent,
+                                child: InkWell(
+                                  borderRadius: BorderRadius.circular(16),
+                                  onTap: _isLoading ? null : _handleEmailLogin,
+                                  child: Center(
+                                    child: _isLoading
+                                        ? const SizedBox(
+                                            width: 22,
+                                            height: 22,
+                                            child: CircularProgressIndicator(
+                                              strokeWidth: 2.2,
+                                              valueColor:
+                                                  AlwaysStoppedAnimation<Color>(
+                                                Colors.white,
+                                              ),
                                             ),
+                                          )
+                                        : const Row(
+                                            mainAxisAlignment:
+                                                MainAxisAlignment.center,
+                                            children: [
+                                              Text(
+                                                'Masuk',
+                                                style: TextStyle(
+                                                  fontSize: 15,
+                                                  fontWeight: FontWeight.w700,
+                                                  color: Colors.white,
+                                                ),
+                                              ),
+                                              SizedBox(width: 8),
+                                              Icon(
+                                                LucideIcons.arrowRight,
+                                                size: 18,
+                                                color: Colors.white,
+                                              ),
+                                            ],
                                           ),
-                                          SizedBox(width: 8),
-                                          Icon(
-                                            LucideIcons.arrowRight,
-                                            size: 18,
-                                          ),
-                                        ],
-                                      ),
+                                  ),
+                                ),
                               ),
                             ),
                             const SizedBox(height: 22),
@@ -363,7 +388,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                     style: TextStyle(
                                       fontSize: 11,
                                       fontWeight: FontWeight.w600,
-                                      color: Colors.grey.shade500,
+                                      color: Colors.grey.shade400,
                                       letterSpacing: 0.4,
                                     ),
                                   ),
@@ -374,67 +399,120 @@ class _LoginScreenState extends State<LoginScreen> {
                               ],
                             ),
                             const SizedBox(height: 18),
-                            SizedBox(
-                              height: 50,
-                              child: OutlinedButton(
-                                onPressed: _isGoogleLoading
-                                    ? null
-                                    : _handleGoogleLogin,
-                                style: OutlinedButton.styleFrom(
-                                  backgroundColor: const Color(0xFFF8FAFC),
-                                  side: const BorderSide(
-                                    color: Color(0xFFE2E8F0),
-                                  ),
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(16),
-                                  ),
-                                  elevation: 0,
-                                ),
-                                child: _isGoogleLoading
-                                    ? const SizedBox(
-                                        width: 20,
-                                        height: 20,
-                                        child: CircularProgressIndicator(
-                                          strokeWidth: 2,
-                                          valueColor:
-                                              AlwaysStoppedAnimation<Color>(
-                                            AppColors.primary,
-                                          ),
+                            Row(
+                              children: [
+                                Expanded(
+                                  child: Container(
+                                    height: 48,
+                                    decoration: BoxDecoration(
+                                      color: Colors.white,
+                                      borderRadius: BorderRadius.circular(16),
+                                      border: Border.all(
+                                        color: const Color(0xFFE2E8F0),
+                                        width: 1,
+                                      ),
+                                      boxShadow: [
+                                        BoxShadow(
+                                          color: Colors.black
+                                              .withValues(alpha: 0.02),
+                                          blurRadius: 4,
+                                          offset: const Offset(0, 1),
                                         ),
-                                      )
-                                    : Row(
-                                        mainAxisAlignment:
-                                            MainAxisAlignment.center,
-                                        children: [
-                                          Container(
-                                            width: 22,
-                                            height: 22,
-                                            decoration: const BoxDecoration(
-                                              shape: BoxShape.circle,
-                                            ),
-                                            child: Center(
-                                              child: Text(
-                                                'G',
-                                                style: TextStyle(
-                                                  fontSize: 16,
-                                                  fontWeight: FontWeight.w900,
-                                                  color: Colors.blue.shade700,
-                                                ),
+                                      ],
+                                    ),
+                                    child: Material(
+                                      color: Colors.transparent,
+                                      child: InkWell(
+                                        borderRadius: BorderRadius.circular(16),
+                                        onTap: _isGoogleLoading
+                                            ? null
+                                            : _handleGoogleLogin,
+                                        child: Row(
+                                          mainAxisAlignment:
+                                              MainAxisAlignment.center,
+                                          children: [
+                                            Text(
+                                              'G',
+                                              style: TextStyle(
+                                                fontSize: 16,
+                                                fontWeight: FontWeight.w900,
+                                                color: Colors.blue.shade700,
                                               ),
                                             ),
-                                          ),
-                                          const SizedBox(width: 10),
-                                          const Text(
-                                            'Masuk dengan Google',
-                                            style: TextStyle(
-                                              fontSize: 14,
-                                              fontWeight: FontWeight.w600,
-                                              color: Color(0xFF334155),
+                                            const SizedBox(width: 8),
+                                            const Text(
+                                              'Google',
+                                              style: TextStyle(
+                                                fontSize: 13,
+                                                fontWeight: FontWeight.w600,
+                                                color: Color(0xFF334155),
+                                              ),
                                             ),
-                                          ),
-                                        ],
+                                          ],
+                                        ),
                                       ),
-                              ),
+                                    ),
+                                  ),
+                                ),
+                                const SizedBox(width: 12),
+                                Expanded(
+                                  child: Container(
+                                    height: 48,
+                                    decoration: BoxDecoration(
+                                      color: Colors.white,
+                                      borderRadius: BorderRadius.circular(16),
+                                      border: Border.all(
+                                        color: const Color(0xFFE2E8F0),
+                                        width: 1,
+                                      ),
+                                      boxShadow: [
+                                        BoxShadow(
+                                          color: Colors.black
+                                              .withValues(alpha: 0.02),
+                                          blurRadius: 4,
+                                          offset: const Offset(0, 1),
+                                        ),
+                                      ],
+                                    ),
+                                    child: Material(
+                                      color: Colors.transparent,
+                                      child: InkWell(
+                                        borderRadius: BorderRadius.circular(16),
+                                        onTap: () {
+                                          ScaffoldMessenger.of(context)
+                                              .showSnackBar(
+                                            const SnackBar(
+                                              content: Text(
+                                                'Masuk via Nomor HP segera aktif.',
+                                              ),
+                                            ),
+                                          );
+                                        },
+                                        child: const Row(
+                                          mainAxisAlignment:
+                                              MainAxisAlignment.center,
+                                          children: [
+                                            Icon(
+                                              LucideIcons.phone,
+                                              size: 16,
+                                              color: Color(0xFF25D366),
+                                            ),
+                                            SizedBox(width: 8),
+                                            Text(
+                                              'No. HP',
+                                              style: TextStyle(
+                                                fontSize: 13,
+                                                fontWeight: FontWeight.w600,
+                                                color: Color(0xFF334155),
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              ],
                             ),
                           ]
                               .animate(interval: 50.ms)

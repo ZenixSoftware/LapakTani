@@ -119,34 +119,39 @@ class _LapaktaniTextFieldState extends State<LapaktaniTextField> {
               const SizedBox(height: 7),
             ],
             AnimatedContainer(
-              duration: const Duration(milliseconds: 200),
+              duration: const Duration(milliseconds: 150),
               curve: Curves.easeOutCubic,
               decoration: BoxDecoration(
-                color: _isFocused ? Colors.white : const Color(0xFFF8FAFC),
+                color: Colors.white,
                 borderRadius: BorderRadius.circular(16),
                 border: hasError
                     ? Border.all(color: const Color(0xFFEF4444), width: 1.5)
                     : _isFocused
                         ? Border.all(color: AppColors.primary, width: 1.5)
-                        : Border.all(
-                            color: const Color(0xFFE2E8F0).withValues(alpha: 0.6),
-                            width: 1,
-                          ),
-                boxShadow: _isFocused
+                        : Border.all(color: const Color(0xFFE2E8F0), width: 1),
+                boxShadow: hasError
                     ? [
                         BoxShadow(
-                          color: AppColors.primary.withValues(alpha: 0.16),
-                          blurRadius: 12,
-                          spreadRadius: 1,
+                          color: const Color(0xFFEF4444).withValues(alpha: 0.15),
+                          blurRadius: 0,
+                          spreadRadius: 3,
                         ),
                       ]
-                    : [
-                        BoxShadow(
-                          color: Colors.black.withValues(alpha: 0.02),
-                          blurRadius: 4,
-                          offset: const Offset(0, 1),
-                        ),
-                      ],
+                    : _isFocused
+                        ? [
+                            BoxShadow(
+                              color: AppColors.primary.withValues(alpha: 0.20),
+                              blurRadius: 0,
+                              spreadRadius: 3,
+                            ),
+                          ]
+                        : [
+                            BoxShadow(
+                              color: Colors.black.withValues(alpha: 0.03),
+                              blurRadius: 2,
+                              offset: const Offset(0, 1),
+                            ),
+                          ],
               ),
               child: Row(
                 children: [
