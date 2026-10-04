@@ -12,11 +12,15 @@ import 'profile_repository.dart';
 import 'verification_pending_screen.dart';
 
 class CompleteFarmerProfileScreen extends StatefulWidget {
+  final String? initialSubdistrict;
+  final String? initialVillage;
   final String? initialRegion;
   final String? initialFarmerGroupId;
 
   const CompleteFarmerProfileScreen({
     super.key,
+    this.initialSubdistrict,
+    this.initialVillage,
     this.initialRegion,
     this.initialFarmerGroupId,
   });
@@ -37,20 +41,41 @@ class _CompleteFarmerProfileScreenState
   final ImagePicker _imagePicker = ImagePicker();
 
   File? _selectedKtpFile;
-  List<String> _domicileRegions = [];
-  String? _selectedRegion;
+  List<String> _subdistricts = [];
+  String? _selectedSubdistrict;
+  List<String> _villages = [];
+  String? _selectedVillage;
   List<Map<String, dynamic>> _filteredFarmerGroups = [];
   String? _selectedFarmerGroupId;
 
-  bool _isLoadingRegions = false;
+  bool _isLoadingSubdistricts = false;
+  bool _isLoadingVillages = false;
   bool _isLoadingGroups = false;
   bool _isSubmitting = false;
 
   @override
   void initState() {
     super.initState();
-    _selectedRegion = widget.initialRegion;
+    _selectedSubdistrict = widget.initialSubdistrict;
+    _selectedVillage = widget.initialVillage;
     _selectedFarmerGroupId = widget.initialFarmerGroupId;
+
+    if (_selectedSubdistrict == null && widget.initialRegion != null) {
+      final region = widget.initialRegion!;
+      if (region.contains('Kec.')) {
+        final parts = region.split('Kec.');
+        if (parts.length > 1) {
+          _selectedSubdistrict = parts[1].split(',').first.trim();
+        }
+      }
+      if (region.contains('Desa')) {
+        final parts = region.split('Desa');
+        if (parts.length > 1) {
+          _selectedVillage = parts[1].split(',').first.trim();
+        }
+      }
+    }
+
     _loadInitialData();
   }
 
@@ -63,7 +88,7 @@ class _CompleteFarmerProfileScreenState
   }
 
   Future<void> _loadInitialData() async {
-    setState(() => _isLoadingRegions = true);
+    setState(() => _isLoadingSubdistricts = true);
 
     final user = _profileRepository.currentUser;
     if (user != null) {
@@ -84,31 +109,84 @@ class _CompleteFarmerProfileScreenState
               (farmerProfile['land_area_ha'] as num).toString();
         }
         if (farmerProfile['farmer_group_id'] != null) {
-          _selectedFarmerGroupId =
-              farmerProfile['farmer_group_id'] as String;
+          _selectedFarmerGroupId = farmerProfile['farmer_group_id'] as String;
+          if (farmerProfile['farmer_groups'] != null) {
+            final fg = farmerProfile['farmer_groups'] as Map<String, dynamic>;
+            if (fg['subdistrict_name'] != null && _selectedSubdistrict == null) {
+              _selectedSubdistrict = fg['subdistrict_name'] as String;
+            }
+            if (fg['village_name'] != null && _selectedVillage == null) {
+              _selectedVillage = fg['village_name'] as String;
+            }
+          }
         }
       }
     }
 
-    final regions = await _profileRepository.getDomicileRegions();
+    final subdistricts = await _profileRepository.getSubdistricts();
     if (!mounted) return;
 
     setState(() {
-      _domicileRegions = regions;
-      if (_selectedRegion == null && _domicileRegions.isNotEmpty) {
-        _selectedRegion = _domicileRegions.first;
+      _subdistricts = subdistricts;
+      if (_selectedSubdistrict == null && _subdistricts.isNotEmpty) {
+        _selectedSubdistrict = _subdistricts.first;
       }
-      _isLoadingRegions = false;
+      _isLoadingSubdistricts = false;
     });
 
-    if (_selectedRegion != null) {
-      await _filterGroupsByRegion(_selectedRegion!);
+    if (_selectedSubdistrict != null) {
+      await _onSubdistrictChanged(_selectedSubdistrict!, preserveSelection: true);
     }
   }
 
-  Future<void> _filterGroupsByRegion(String region) async {
-    setState(() => _isLoadingGroups = true);
-    final groups = await _profileRepository.getFarmerGroupsByRegion(region);
+  Future<void> _onSubdistrictChanged(
+    String subdistrict, {
+    bool preserveSelection = false,
+  }) async {
+    setState(() {
+      _selectedSubdistrict = subdistrict;
+      _isLoadingVillages = true;
+      if (!preserveSelection) {
+        _selectedVillage = null;
+        _selectedFarmerGroupId = null;
+        _filteredFarmerGroups = [];
+      }
+    });
+
+    final villages =
+        await _profileRepository.getVillagesBySubdistrict(subdistrict);
+    if (!mounted) return;
+
+    setState(() {
+      _villages = villages;
+      if ((_selectedVillage == null || !_villages.contains(_selectedVillage)) &&
+          _villages.isNotEmpty) {
+        _selectedVillage = _villages.first;
+      }
+      _isLoadingVillages = false;
+    });
+
+    if (_selectedVillage != null) {
+      await _onVillageChanged(
+        _selectedVillage!,
+        preserveGroup: preserveSelection,
+      );
+    }
+  }
+
+  Future<void> _onVillageChanged(
+    String village, {
+    bool preserveGroup = false,
+  }) async {
+    setState(() {
+      _selectedVillage = village;
+      _isLoadingGroups = true;
+      if (!preserveGroup) {
+        _selectedFarmerGroupId = null;
+      }
+    });
+
+    final groups = await _profileRepository.getFarmerGroupsByVillage(village);
     if (!mounted) return;
 
     setState(() {
@@ -116,8 +194,9 @@ class _CompleteFarmerProfileScreenState
       if (_selectedFarmerGroupId == null ||
           !_filteredFarmerGroups
               .any((g) => g['id'] == _selectedFarmerGroupId)) {
-        _selectedFarmerGroupId =
-            _filteredFarmerGroups.isNotEmpty ? _filteredFarmerGroups.first['id'] : null;
+        _selectedFarmerGroupId = _filteredFarmerGroups.isNotEmpty
+            ? _filteredFarmerGroups.first['id'] as String
+            : null;
       }
       _isLoadingGroups = false;
     });
@@ -178,6 +257,26 @@ class _CompleteFarmerProfileScreenState
       return;
     }
 
+    if (_selectedSubdistrict == null || _selectedSubdistrict!.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Silakan pilih Kecamatan domisili kebun Anda.'),
+          backgroundColor: Color(0xFFDC2626),
+        ),
+      );
+      return;
+    }
+
+    if (_selectedVillage == null || _selectedVillage!.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Silakan pilih Desa domisili kebun Anda.'),
+          backgroundColor: Color(0xFFDC2626),
+        ),
+      );
+      return;
+    }
+
     if (_selectedFarmerGroupId == null || _selectedFarmerGroupId!.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
@@ -209,11 +308,15 @@ class _CompleteFarmerProfileScreenState
           ) ??
           0.0;
 
+      final fullAddress = _addressController.text.trim().isNotEmpty
+          ? _addressController.text.trim()
+          : 'Desa $_selectedVillage, Kec. $_selectedSubdistrict, Kab. Sumenep';
+
       await _profileRepository.submitFarmerProfileCompletion(
         userId: user.id,
         ktpImageFile: _selectedKtpFile!,
         nikNumber: _nikController.text.trim(),
-        homeAddress: _addressController.text.trim(),
+        homeAddress: fullAddress,
         farmerGroupId: _selectedFarmerGroupId,
         landAreaHa: landArea,
       );
@@ -243,8 +346,8 @@ class _CompleteFarmerProfileScreenState
     }
   }
 
-  void _showRegionPicker() {
-    if (_domicileRegions.isEmpty) return;
+  void _showSubdistrictPicker() {
+    if (_subdistricts.isEmpty) return;
 
     showModalBottomSheet(
       context: context,
@@ -272,31 +375,56 @@ class _CompleteFarmerProfileScreenState
                 ),
                 const SizedBox(height: 16),
                 const Text(
-                  'Pilih Wilayah Domisili Kebun',
+                  'Pilih Kecamatan (Kab. Sumenep)',
                   style: TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.w800,
                     color: Color(0xFF0F172A),
                   ),
                 ),
+                const SizedBox(height: 4),
+                const Text(
+                  'Daftar kecamatan resmi di wilayah Kabupaten Sumenep',
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: Color(0xFF64748B),
+                  ),
+                ),
                 const SizedBox(height: 12),
                 Flexible(
                   child: ListView.separated(
                     shrinkWrap: true,
-                    itemCount: _domicileRegions.length,
+                    itemCount: _subdistricts.length,
                     separatorBuilder: (context, index) =>
                         const Divider(height: 1, color: Color(0xFFF1F5F9)),
                     itemBuilder: (context, index) {
-                      final region = _domicileRegions[index];
-                      final isSelected = region == _selectedRegion;
+                      final subdistrict = _subdistricts[index];
+                      final isSelected = subdistrict == _selectedSubdistrict;
 
                       return ListTile(
                         contentPadding: const EdgeInsets.symmetric(
                           horizontal: 4,
                           vertical: 2,
                         ),
+                        leading: Container(
+                          width: 32,
+                          height: 32,
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            color: isSelected
+                                ? AppColors.primary.withValues(alpha: 0.12)
+                                : const Color(0xFFF1F5F9),
+                          ),
+                          child: Icon(
+                            LucideIcons.building2,
+                            size: 16,
+                            color: isSelected
+                                ? AppColors.primary
+                                : const Color(0xFF64748B),
+                          ),
+                        ),
                         title: Text(
-                          region,
+                          subdistrict,
                           style: TextStyle(
                             fontSize: 14,
                             fontWeight: isSelected
@@ -315,11 +443,8 @@ class _CompleteFarmerProfileScreenState
                               )
                             : null,
                         onTap: () {
-                          setState(() {
-                            _selectedRegion = region;
-                          });
                           Navigator.of(context).pop();
-                          _filterGroupsByRegion(region);
+                          _onSubdistrictChanged(subdistrict);
                         },
                       );
                     },
@@ -333,11 +458,20 @@ class _CompleteFarmerProfileScreenState
     );
   }
 
-  void _showFarmerGroupPicker() {
-    if (_filteredFarmerGroups.isEmpty) {
+  void _showVillagePicker() {
+    if (_selectedSubdistrict == null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Tidak ada kelompok tani di wilayah ini.'),
+        const SnackBar(content: Text('Pilih Kecamatan terlebih dahulu.')),
+      );
+      return;
+    }
+
+    if (_villages.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            'Sedang memuat desa di Kec. $_selectedSubdistrict...',
+          ),
         ),
       );
       return;
@@ -369,11 +503,147 @@ class _CompleteFarmerProfileScreenState
                 ),
                 const SizedBox(height: 16),
                 Text(
-                  'Kelompok Tani di $_selectedRegion',
+                  'Pilih Desa / Kelurahan di Kec. $_selectedSubdistrict',
                   style: const TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.w800,
                     color: Color(0xFF0F172A),
+                  ),
+                ),
+                const SizedBox(height: 4),
+                const Text(
+                  'Desa sentra pertanian di bawah naungan kelompok tani',
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: Color(0xFF64748B),
+                  ),
+                ),
+                const SizedBox(height: 12),
+                Flexible(
+                  child: ListView.separated(
+                    shrinkWrap: true,
+                    itemCount: _villages.length,
+                    separatorBuilder: (context, index) =>
+                        const Divider(height: 1, color: Color(0xFFF1F5F9)),
+                    itemBuilder: (context, index) {
+                      final village = _villages[index];
+                      final isSelected = village == _selectedVillage;
+
+                      return ListTile(
+                        contentPadding: const EdgeInsets.symmetric(
+                          horizontal: 4,
+                          vertical: 2,
+                        ),
+                        leading: Container(
+                          width: 32,
+                          height: 32,
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            color: isSelected
+                                ? AppColors.primary.withValues(alpha: 0.12)
+                                : const Color(0xFFF1F5F9),
+                          ),
+                          child: Icon(
+                            LucideIcons.mapPin,
+                            size: 16,
+                            color: isSelected
+                                ? AppColors.primary
+                                : const Color(0xFF64748B),
+                          ),
+                        ),
+                        title: Text(
+                          village,
+                          style: TextStyle(
+                            fontSize: 14,
+                            fontWeight: isSelected
+                                ? FontWeight.w700
+                                : FontWeight.w500,
+                            color: isSelected
+                                ? AppColors.primary
+                                : const Color(0xFF1E293B),
+                          ),
+                        ),
+                        trailing: isSelected
+                            ? const Icon(
+                                LucideIcons.checkCircle2,
+                                color: AppColors.primary,
+                                size: 20,
+                              )
+                            : null,
+                        onTap: () {
+                          Navigator.of(context).pop();
+                          _onVillageChanged(village);
+                        },
+                      );
+                    },
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  void _showFarmerGroupPicker() {
+    if (_selectedVillage == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Pilih Desa terlebih dahulu.')),
+      );
+      return;
+    }
+
+    if (_filteredFarmerGroups.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            'Belum ada kelompok tani terdaftar di Desa $_selectedVillage.',
+          ),
+        ),
+      );
+      return;
+    }
+
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.white,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      builder: (context) {
+        return SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Center(
+                  child: Container(
+                    width: 40,
+                    height: 4,
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFE2E8F0),
+                      borderRadius: BorderRadius.circular(2),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 16),
+                Text(
+                  'Kelompok Tani di Desa $_selectedVillage',
+                  style: const TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w800,
+                    color: Color(0xFF0F172A),
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  'Kecamatan $_selectedSubdistrict, Kabupaten Sumenep',
+                  style: const TextStyle(
+                    fontSize: 12,
+                    color: Color(0xFF64748B),
                   ),
                 ),
                 const SizedBox(height: 12),
@@ -386,11 +656,31 @@ class _CompleteFarmerProfileScreenState
                     itemBuilder: (context, index) {
                       final group = _filteredFarmerGroups[index];
                       final isSelected = group['id'] == _selectedFarmerGroupId;
+                      final address = group['secretariat_address'] ??
+                          group['domicile_region'] ??
+                          '';
 
                       return ListTile(
                         contentPadding: const EdgeInsets.symmetric(
                           horizontal: 4,
-                          vertical: 2,
+                          vertical: 4,
+                        ),
+                        leading: Container(
+                          width: 36,
+                          height: 36,
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            color: isSelected
+                                ? AppColors.primary.withValues(alpha: 0.12)
+                                : const Color(0xFFF1F5F9),
+                          ),
+                          child: Icon(
+                            LucideIcons.users,
+                            size: 18,
+                            color: isSelected
+                                ? AppColors.primary
+                                : const Color(0xFF64748B),
+                          ),
                         ),
                         title: Text(
                           group['group_name'] as String,
@@ -404,13 +694,17 @@ class _CompleteFarmerProfileScreenState
                                 : const Color(0xFF1E293B),
                           ),
                         ),
-                        subtitle: Text(
-                          group['domicile_region'] as String,
-                          style: const TextStyle(
-                            fontSize: 12,
-                            color: Color(0xFF64748B),
-                          ),
-                        ),
+                        subtitle: address.toString().isNotEmpty
+                            ? Text(
+                                address.toString(),
+                                style: const TextStyle(
+                                  fontSize: 12,
+                                  color: Color(0xFF64748B),
+                                ),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              )
+                            : null,
                         trailing: isSelected
                             ? const Icon(
                                 LucideIcons.checkCircle2,
@@ -442,7 +736,9 @@ class _CompleteFarmerProfileScreenState
       (g) => g['id'] == _selectedFarmerGroupId,
       orElse: () => {
         'group_name': _filteredFarmerGroups.isEmpty
-            ? 'Tidak ada kelompok tani'
+            ? (_selectedVillage != null
+                ? 'Belum ada kelompok tani di desa ini'
+                : 'Pilih Desa terlebih dahulu')
             : 'Pilih Kelompok Tani',
       },
     )['group_name'] as String;
@@ -537,7 +833,7 @@ class _CompleteFarmerProfileScreenState
                               ),
                               const SizedBox(width: 6),
                               const Text(
-                                'Verifikasi Petani',
+                                'Kabupaten Sumenep',
                                 style: TextStyle(
                                   color: Color(0xFF065F46),
                                   fontSize: 11,
@@ -561,7 +857,7 @@ class _CompleteFarmerProfileScreenState
                     ),
                     const SizedBox(height: 6),
                     const Text(
-                      'Unggah e-KTP dan tentukan kelompok tani binaan Anda untuk verifikasi identitas resmi.',
+                      'Unggah e-KTP dan pilih domisili kebun Anda di Kabupaten Sumenep secara bertahap.',
                       style: TextStyle(
                         fontSize: 13,
                         color: Color(0xFF64748B),
@@ -601,7 +897,8 @@ class _CompleteFarmerProfileScreenState
                                   ),
                                   child: Center(
                                     child: Column(
-                                      mainAxisAlignment: MainAxisAlignment.center,
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.center,
                                       children: [
                                         Container(
                                           width: 52,
@@ -700,7 +997,8 @@ class _CompleteFarmerProfileScreenState
                                 child: OutlinedButton.icon(
                                   onPressed: () =>
                                       _pickImage(ImageSource.camera),
-                                  icon: const Icon(LucideIcons.camera, size: 16),
+                                  icon:
+                                      const Icon(LucideIcons.camera, size: 16),
                                   label: const Text('Kamera'),
                                   style: OutlinedButton.styleFrom(
                                     foregroundColor: const Color(0xFF1E293B),
@@ -744,10 +1042,10 @@ class _CompleteFarmerProfileScreenState
                     ),
                     const SizedBox(height: 20),
 
-                    // Section 2: Farmer Group Assignment
+                    // Section 2: 2-Tier Domicile Selection (Sumenep: Kecamatan -> Desa -> Poktan)
                     _buildSectionHeader(
                       number: '2',
-                      title: 'Kelompok Tani (Gapoktan)',
+                      title: 'Wilayah & Kelompok Tani (Sumenep)',
                       isRequired: true,
                     ),
                     const SizedBox(height: 8),
@@ -756,8 +1054,45 @@ class _CompleteFarmerProfileScreenState
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.stretch,
                         children: [
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 12,
+                              vertical: 8,
+                            ),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFFF0FDF4),
+                              borderRadius: BorderRadius.circular(12),
+                              border: Border.all(
+                                color: const Color(0xFFBBF7D0),
+                                width: 1,
+                              ),
+                            ),
+                            child: const Row(
+                              children: [
+                                Icon(
+                                  LucideIcons.mapPin,
+                                  size: 16,
+                                  color: AppColors.primary,
+                                ),
+                                SizedBox(width: 8),
+                                Expanded(
+                                  child: Text(
+                                    'Cakupan Wilayah: Kabupaten Sumenep (Madura)',
+                                    style: TextStyle(
+                                      fontSize: 12,
+                                      fontWeight: FontWeight.w700,
+                                      color: Color(0xFF166534),
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          const SizedBox(height: 16),
+
+                          // Tier 1: Kecamatan
                           const Text(
-                            'Wilayah Domisili Kebun',
+                            '1. Kecamatan',
                             style: TextStyle(
                               fontSize: 13,
                               fontWeight: FontWeight.w700,
@@ -766,7 +1101,76 @@ class _CompleteFarmerProfileScreenState
                           ),
                           const SizedBox(height: 6),
                           GestureDetector(
-                            onTap: _showRegionPicker,
+                            onTap: _showSubdistrictPicker,
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 16,
+                                vertical: 14,
+                              ),
+                              decoration: BoxDecoration(
+                                color: const Color(0xFFF8FAFC),
+                                borderRadius: BorderRadius.circular(14),
+                                border: Border.all(
+                                  color: const Color(0xFFE2E8F0),
+                                  width: 1.2,
+                                ),
+                              ),
+                              child: Row(
+                                children: [
+                                  const Icon(
+                                    LucideIcons.building2,
+                                    size: 18,
+                                    color: AppColors.primary,
+                                  ),
+                                  const SizedBox(width: 10),
+                                  Expanded(
+                                    child: Text(
+                                      _selectedSubdistrict ??
+                                          'Pilih Kecamatan',
+                                      style: TextStyle(
+                                        fontSize: 14,
+                                        fontWeight: FontWeight.w600,
+                                        color: _selectedSubdistrict != null
+                                            ? const Color(0xFF0F172A)
+                                            : const Color(0xFF94A3B8),
+                                      ),
+                                    ),
+                                  ),
+                                  _isLoadingSubdistricts
+                                      ? const SizedBox(
+                                          width: 16,
+                                          height: 16,
+                                          child: CircularProgressIndicator(
+                                            strokeWidth: 2,
+                                            valueColor:
+                                                AlwaysStoppedAnimation<Color>(
+                                              AppColors.primary,
+                                            ),
+                                          ),
+                                        )
+                                      : const Icon(
+                                          LucideIcons.chevronDown,
+                                          size: 16,
+                                          color: Color(0xFF64748B),
+                                        ),
+                                ],
+                              ),
+                            ),
+                          ),
+                          const SizedBox(height: 14),
+
+                          // Tier 2: Desa / Kelurahan
+                          const Text(
+                            '2. Desa / Kelurahan',
+                            style: TextStyle(
+                              fontSize: 13,
+                              fontWeight: FontWeight.w700,
+                              color: Color(0xFF334155),
+                            ),
+                          ),
+                          const SizedBox(height: 6),
+                          GestureDetector(
+                            onTap: _showVillagePicker,
                             child: Container(
                               padding: const EdgeInsets.symmetric(
                                 horizontal: 16,
@@ -790,17 +1194,20 @@ class _CompleteFarmerProfileScreenState
                                   const SizedBox(width: 10),
                                   Expanded(
                                     child: Text(
-                                      _selectedRegion ?? 'Pilih Wilayah',
+                                      _selectedVillage ??
+                                          (_selectedSubdistrict != null
+                                              ? 'Pilih Desa'
+                                              : 'Pilih Kecamatan terlebih dahulu'),
                                       style: TextStyle(
                                         fontSize: 14,
                                         fontWeight: FontWeight.w600,
-                                        color: _selectedRegion != null
+                                        color: _selectedVillage != null
                                             ? const Color(0xFF0F172A)
                                             : const Color(0xFF94A3B8),
                                       ),
                                     ),
                                   ),
-                                  _isLoadingRegions
+                                  _isLoadingVillages
                                       ? const SizedBox(
                                           width: 16,
                                           height: 16,
@@ -821,9 +1228,11 @@ class _CompleteFarmerProfileScreenState
                               ),
                             ),
                           ),
-                          const SizedBox(height: 16),
+                          const SizedBox(height: 14),
+
+                          // Tier 3: Kelompok Tani (Gapoktan) filtered by Desa
                           const Text(
-                            'Kelompok Tani Terdaftar',
+                            '3. Kelompok Tani (Gapoktan)',
                             style: TextStyle(
                               fontSize: 13,
                               fontWeight: FontWeight.w700,
@@ -888,6 +1297,17 @@ class _CompleteFarmerProfileScreenState
                               ),
                             ),
                           ),
+                          if (_selectedVillage != null &&
+                              _filteredFarmerGroups.isNotEmpty) ...[
+                            const SizedBox(height: 8),
+                            Text(
+                              'Menampilkan ${_filteredFarmerGroups.length} kelompok tani aktif di Desa $_selectedVillage.',
+                              style: const TextStyle(
+                                fontSize: 11,
+                                color: Color(0xFF64748B),
+                              ),
+                            ),
+                          ],
                         ],
                       ),
                     ),
@@ -936,7 +1356,7 @@ class _CompleteFarmerProfileScreenState
                           const SizedBox(height: 14),
                           LapaktaniTextField(
                             label: 'Alamat Domisili Lengkap',
-                            hintText: 'Jalan, Desa/Kelurahan, RT/RW',
+                            hintText: 'Jalan, Dusun, RT/RW di Sumenep',
                             controller: _addressController,
                             keyboardType: TextInputType.streetAddress,
                             prefixIcon: LucideIcons.home,

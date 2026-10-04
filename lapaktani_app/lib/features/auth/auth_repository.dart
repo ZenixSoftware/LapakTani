@@ -160,15 +160,15 @@ class AuthRepository {
       return regions.isNotEmpty
           ? regions
           : [
-              'Cipanas, Cianjur',
-              'Lembang, Bandung Barat',
-              'Pangalengan, Bandung',
+              'Desa Kolor, Kec. Kota Sumenep',
+              'Desa Kalianget Timur, Kec. Kalianget',
+              'Desa Lobuk, Kec. Bluto',
             ];
     } catch (_) {
       return [
-        'Cipanas, Cianjur',
-        'Lembang, Bandung Barat',
-        'Pangalengan, Bandung',
+        'Desa Kolor, Kec. Kota Sumenep',
+        'Desa Kalianget Timur, Kec. Kalianget',
+        'Desa Lobuk, Kec. Bluto',
       ];
     }
   }

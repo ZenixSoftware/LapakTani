@@ -104,6 +104,112 @@ class ProfileRepository {
     }
   }
 
+  Future<List<String>> getSubdistricts() async {
+    try {
+      final List<dynamic> rows = await _client
+          .from('districts')
+          .select('name')
+          .order('name');
+      final list = rows.map((e) => (e['name'] as String).trim()).toList();
+      if (list.isNotEmpty) return list;
+    } catch (_) {}
+
+    return [
+      'Kota Sumenep',
+      'Kalianget',
+      'Bluto',
+      'Saronggi',
+      'Guluk-Guluk',
+      'Pragaan',
+      'Lenteng',
+      'Manding',
+    ];
+  }
+
+  Future<List<String>> getVillagesBySubdistrict(String subdistrict) async {
+    try {
+      final List<dynamic> rows = await _client
+          .from('villages')
+          .select('name, districts!inner(name)')
+          .eq('districts.name', subdistrict)
+          .order('name');
+      final list = rows.map((e) => (e['name'] as String).trim()).toList();
+      if (list.isNotEmpty) return list;
+    } catch (_) {}
+
+    const staticVillages = {
+      'Kota Sumenep': [
+        'Kolor',
+        'Pabian',
+        'Pangarangan',
+        'Bangselok',
+        'Karangduak',
+        'Pamolokan',
+      ],
+      'Kalianget': [
+        'Kalianget Timur',
+        'Kalianget Barat',
+        'Kalimook',
+        'Marengan Laok',
+        'Kertasada',
+      ],
+      'Bluto': [
+        'Aengdake',
+        'Bluto',
+        'Lobuk',
+        'Errabu',
+        'Pakandangan Barat',
+        'Pakandangan Tengah',
+      ],
+      'Saronggi': ['Saronggi', 'Nambakor', 'Tanamerah', 'Juluk'],
+      'Guluk-Guluk': ['Guluk-Guluk', 'Payudan Dundang', 'Pordapor'],
+      'Pragaan': ['Pragaan Laok', 'Karduluk'],
+      'Lenteng': ['Lenteng Timur', 'Lenteng Barat'],
+      'Manding': ['Manding Laok', 'Gadur'],
+    };
+
+    return staticVillages[subdistrict] ?? ['Desa 1', 'Desa 2'];
+  }
+
+  Future<List<Map<String, dynamic>>> getFarmerGroupsByVillage(
+    String village,
+  ) async {
+    try {
+      final List<dynamic> rows = await _client
+          .from('farmer_groups')
+          .select(
+            'id, group_name, subdistrict_name, village_name, domicile_region, secretariat_address',
+          )
+          .eq('village_name', village)
+          .order('group_name');
+      final list =
+          rows.map((e) => Map<String, dynamic>.from(e as Map)).toList();
+      if (list.isNotEmpty) return list;
+    } catch (_) {}
+
+    try {
+      final List<dynamic> rows = await _client
+          .from('farmer_groups')
+          .select(
+            'id, group_name, subdistrict_name, village_name, domicile_region, secretariat_address',
+          )
+          .ilike('domicile_region', '%$village%')
+          .order('group_name');
+      final list =
+          rows.map((e) => Map<String, dynamic>.from(e as Map)).toList();
+      if (list.isNotEmpty) return list;
+    } catch (_) {}
+
+    return [
+      {
+        'id': '7281a516-ae8d-48cf-8c32-31f6eed77662',
+        'group_name': 'Poktan Tani Makmur Sejahtera',
+        'village_name': village,
+        'domicile_region': 'Desa $village, Sumenep',
+      }
+    ];
+  }
+
   Future<List<String>> getDomicileRegions() async {
     try {
       final List<dynamic> rows = await _client
@@ -117,15 +223,15 @@ class ProfileRepository {
       return regions.isNotEmpty
           ? regions
           : [
-              'Cipanas, Cianjur',
-              'Lembang, Bandung Barat',
-              'Pangalengan, Bandung',
+              'Desa Kolor, Kec. Kota Sumenep',
+              'Desa Kalianget Timur, Kec. Kalianget',
+              'Desa Lobuk, Kec. Bluto',
             ];
     } catch (_) {
       return [
-        'Cipanas, Cianjur',
-        'Lembang, Bandung Barat',
-        'Pangalengan, Bandung',
+        'Desa Kolor, Kec. Kota Sumenep',
+        'Desa Kalianget Timur, Kec. Kalianget',
+        'Desa Lobuk, Kec. Bluto',
       ];
     }
   }
