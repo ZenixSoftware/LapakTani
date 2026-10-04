@@ -1,3 +1,4 @@
+import 'dart:io';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../core/config/supabase_config.dart';
 
@@ -219,6 +220,24 @@ class AuthRepository {
         },
       ];
     }
+  }
+
+  Future<String> uploadKtpImage(File imageFile, String userId) async {
+    final fileExt = imageFile.path.split('.').last.toLowerCase();
+    final fileName =
+        '$userId/ktp_${DateTime.now().millisecondsSinceEpoch}.$fileExt';
+    final bytes = await imageFile.readAsBytes();
+
+    await _client.storage.from('ktp-documents').uploadBinary(
+          fileName,
+          bytes,
+          fileOptions: FileOptions(
+            contentType: 'image/$fileExt',
+            upsert: true,
+          ),
+        );
+
+    return _client.storage.from('ktp-documents').getPublicUrl(fileName);
   }
 
   Future<void> signOut() async {

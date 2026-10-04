@@ -45,5 +45,11 @@
 	<true/>
 	<key>UIApplicationSupportsIndirectInputEvents</key>
 	<true/>
+	<key>NSCameraUsageDescription</key>
+	<string>Aplikasi LapakTani memerlukan akses kamera untuk mengambil foto KTP untuk verifikasi identitas petani.</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>Aplikasi LapakTani memerlukan akses galeri untuk memilih foto KTP untuk verifikasi identitas petani.</string>
+	<key>NSMicrophoneUsageDescription</key>
+	<string>Aplikasi LapakTani memerlukan akses mikrofon jika diperlukan.</string>
 </dict>
 </plist>

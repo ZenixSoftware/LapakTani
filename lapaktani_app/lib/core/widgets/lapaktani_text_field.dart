@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import '../theme/app_colors.dart';
 
@@ -21,6 +22,8 @@ class LapaktaniTextField extends StatefulWidget {
   final int? maxLength;
   final String? helperText;
   final FocusNode? focusNode;
+  final List<TextInputFormatter>? inputFormatters;
+  final int? maxLines;
 
   const LapaktaniTextField({
     super.key,
@@ -42,6 +45,8 @@ class LapaktaniTextField extends StatefulWidget {
     this.maxLength,
     this.helperText,
     this.focusNode,
+    this.inputFormatters,
+    this.maxLines = 1,
   });
 
   @override
@@ -177,6 +182,8 @@ class _LapaktaniTextFieldState extends State<LapaktaniTextField> {
                       textInputAction: widget.textInputAction,
                       readOnly: widget.readOnly,
                       maxLength: widget.maxLength,
+                      maxLines: widget.maxLines,
+                      inputFormatters: widget.inputFormatters,
                       onTap: widget.onTap,
                       onChanged: (value) {
                         state.didChange(value);
