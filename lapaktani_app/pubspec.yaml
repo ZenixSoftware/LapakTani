@@ -43,6 +43,7 @@ dependencies:
   flutter_svg: ^2.3.0
   image_picker: ^1.2.3
   image_cropper: ^12.2.1
+  http: ^1.6.0
 
 dev_dependencies:
   flutter_test:

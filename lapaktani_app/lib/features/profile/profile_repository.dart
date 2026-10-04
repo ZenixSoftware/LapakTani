@@ -35,6 +35,10 @@ class ProfileRepository {
     String? homeAddress,
     String? farmerGroupId,
     double? landAreaHa,
+    String? province,
+    String? regency,
+    String? district,
+    String? village,
   }) async {
     final ktpUrl = await uploadKtpImage(ktpImageFile, userId);
 
@@ -61,6 +65,18 @@ class ProfileRepository {
     }
     if (landAreaHa != null) {
       farmerUpdates['land_area_ha'] = landAreaHa;
+    }
+    if (province != null && province.trim().isNotEmpty) {
+      farmerUpdates['province'] = province.trim();
+    }
+    if (regency != null && regency.trim().isNotEmpty) {
+      farmerUpdates['regency'] = regency.trim();
+    }
+    if (district != null && district.trim().isNotEmpty) {
+      farmerUpdates['district'] = district.trim();
+    }
+    if (village != null && village.trim().isNotEmpty) {
+      farmerUpdates['village'] = village.trim();
     }
 
     final existingFarmer = await _client
@@ -174,13 +190,16 @@ class ProfileRepository {
   Future<List<Map<String, dynamic>>> getFarmerGroupsByVillage(
     String village,
   ) async {
+    final trimmed = village.trim();
+    if (trimmed.isEmpty) return [];
+
     try {
       final List<dynamic> rows = await _client
           .from('farmer_groups')
           .select(
             'id, group_name, subdistrict_name, village_name, domicile_region, secretariat_address',
           )
-          .eq('village_name', village)
+          .ilike('village_name', trimmed)
           .order('group_name');
       final list =
           rows.map((e) => Map<String, dynamic>.from(e as Map)).toList();
@@ -193,21 +212,27 @@ class ProfileRepository {
           .select(
             'id, group_name, subdistrict_name, village_name, domicile_region, secretariat_address',
           )
-          .ilike('domicile_region', '%$village%')
+          .ilike('village_name', '%$trimmed%')
           .order('group_name');
       final list =
           rows.map((e) => Map<String, dynamic>.from(e as Map)).toList();
       if (list.isNotEmpty) return list;
     } catch (_) {}
 
-    return [
-      {
-        'id': '7281a516-ae8d-48cf-8c32-31f6eed77662',
-        'group_name': 'Poktan Tani Makmur Sejahtera',
-        'village_name': village,
-        'domicile_region': 'Desa $village, Sumenep',
-      }
-    ];
+    try {
+      final List<dynamic> rows = await _client
+          .from('farmer_groups')
+          .select(
+            'id, group_name, subdistrict_name, village_name, domicile_region, secretariat_address',
+          )
+          .ilike('domicile_region', '%$trimmed%')
+          .order('group_name');
+      final list =
+          rows.map((e) => Map<String, dynamic>.from(e as Map)).toList();
+      if (list.isNotEmpty) return list;
+    } catch (_) {}
+
+    return [];
   }
 
   Future<List<String>> getDomicileRegions() async {
