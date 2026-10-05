@@ -6,6 +6,7 @@ const pool = require('./src/config/db');
 const redisClient = require('./src/config/redis');
 const authRoutes = require('./src/routes/auth');
 const productRoutes = require('./src/routes/products');
+const profileRoutes = require('./src/routes/profiles');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -57,6 +58,7 @@ app.get('/api/health', async (req, res) => {
 
 app.use('/api/auth', authRoutes);
 app.use('/api/products', productRoutes);
+app.use('/api/profiles', profileRoutes);
 
 app.use((req, res) => {
   res.status(404).json({
