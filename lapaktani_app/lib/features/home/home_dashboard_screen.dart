@@ -246,11 +246,9 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final themeFont = GoogleFonts.interTextTheme();
-
     return Theme(
       data: Theme.of(context).copyWith(
-        textTheme: themeFont,
+        textTheme: GoogleFonts.interTextTheme(),
       ),
       child: Scaffold(
         backgroundColor: const Color(0xFFF5F6F8),
@@ -271,7 +269,7 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen> {
                           _buildCategoryTabBar(),
                           _buildMainFeedSection(),
                           _buildTrustGuaranteeBanner(),
-                          const SizedBox(height: 20),
+                          const SizedBox(height: 16),
                         ],
                       ),
                     ),
@@ -308,7 +306,7 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen> {
       child: SafeArea(
         bottom: false,
         child: Padding(
-          padding: const EdgeInsets.fromLTRB(14, 8, 14, 10),
+          padding: const EdgeInsets.fromLTRB(10, 6, 10, 6),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -316,7 +314,7 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen> {
                 children: [
                   Expanded(
                     child: Container(
-                      height: 40,
+                      height: 38,
                       padding: const EdgeInsets.symmetric(horizontal: 10),
                       decoration: BoxDecoration(
                         color: Colors.white,
@@ -336,7 +334,7 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen> {
                         children: [
                           const Icon(
                             LucideIcons.search,
-                            size: 16,
+                            size: 15,
                             color: Color(0xFF94A3B8),
                           ),
                           const SizedBox(width: 8),
@@ -345,7 +343,7 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen> {
                               'Cari sayur hidroponik, buah segar...',
                               overflow: TextOverflow.ellipsis,
                               style: GoogleFonts.inter(
-                                fontSize: 12,
+                                fontSize: 11.5,
                                 color: const Color(0xFF94A3B8),
                               ),
                             ),
@@ -363,13 +361,13 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen> {
                               padding: EdgeInsets.all(4.0),
                               child: Icon(
                                 LucideIcons.camera,
-                                size: 16,
+                                size: 15,
                                 color: Color(0xFF94A3B8),
                               ),
                             ),
                           ),
                           Container(
-                            height: 16,
+                            height: 14,
                             width: 1,
                             color: const Color(0xFFE2E8F0),
                             margin: const EdgeInsets.symmetric(horizontal: 6),
@@ -377,7 +375,7 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen> {
                           Text(
                             'Cari',
                             style: GoogleFonts.inter(
-                              fontSize: 12,
+                              fontSize: 11.5,
                               fontWeight: FontWeight.w700,
                               color: const Color(0xFF1F2937),
                             ),
@@ -386,7 +384,7 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen> {
                       ),
                     ),
                   ),
-                  const SizedBox(width: 6),
+                  const SizedBox(width: 4),
                   _buildHeaderIconButton(
                     icon: LucideIcons.messageCircle,
                     badgeText: '12',
@@ -399,7 +397,6 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen> {
                       );
                     },
                   ),
-                  const SizedBox(width: 2),
                   _buildHeaderIconButton(
                     icon: LucideIcons.shoppingCart,
                     badgeText: _cartItemCount > 0 ? '$_cartItemCount' : null,
@@ -414,12 +411,12 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen> {
                   ),
                 ],
               ),
-              const SizedBox(height: 8),
+              const SizedBox(height: 6),
               Row(
                 children: [
                   const Icon(
                     LucideIcons.mapPin,
-                    size: 13,
+                    size: 12,
                     color: Color(0xFF03AC0E),
                   ),
                   const SizedBox(width: 4),
@@ -428,7 +425,7 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen> {
                       overflow: TextOverflow.ellipsis,
                       text: TextSpan(
                         style: GoogleFonts.inter(
-                          fontSize: 11,
+                          fontSize: 10.5,
                           color: const Color(0xFF4B5563),
                         ),
                         children: const [
@@ -447,7 +444,7 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen> {
                   const SizedBox(width: 2),
                   const Icon(
                     LucideIcons.chevronDown,
-                    size: 13,
+                    size: 12,
                     color: Color(0xFF6B7280),
                   ),
                 ],
@@ -468,15 +465,15 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen> {
       onTap: onTap,
       borderRadius: BorderRadius.circular(20),
       child: Container(
-        width: 38,
-        height: 38,
+        width: 36,
+        height: 36,
         alignment: Alignment.center,
         child: Stack(
           clipBehavior: Clip.none,
           children: [
             Icon(
               icon,
-              size: 22,
+              size: 21,
               color: const Color(0xFF334155),
             ),
             if (badgeText != null)
@@ -491,14 +488,14 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen> {
                     border: Border.all(color: Colors.white, width: 1.2),
                   ),
                   constraints: const BoxConstraints(
-                    minWidth: 16,
-                    minHeight: 14,
+                    minWidth: 15,
+                    minHeight: 13,
                   ),
                   child: Center(
                     child: Text(
                       badgeText,
                       style: GoogleFonts.inter(
-                        fontSize: 8.5,
+                        fontSize: 8.0,
                         fontWeight: FontWeight.w800,
                         color: Colors.white,
                       ),
@@ -514,16 +511,16 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen> {
 
   Widget _buildQuickActionServices() {
     return Container(
-      margin: const EdgeInsets.fromLTRB(10, 8, 10, 4),
-      padding: const EdgeInsets.fromLTRB(8, 12, 8, 10),
+      margin: const EdgeInsets.fromLTRB(8, 4, 8, 4),
+      padding: const EdgeInsets.fromLTRB(6, 8, 6, 8),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(14),
+        borderRadius: BorderRadius.circular(12),
         border: Border.all(color: const Color(0xFFF1F5F9)),
         boxShadow: const [
           BoxShadow(
             color: Color(0x0A000000),
-            blurRadius: 4,
+            blurRadius: 3,
             offset: Offset(0, 1),
           ),
         ],
@@ -550,41 +547,41 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen> {
                         clipBehavior: Clip.none,
                         children: [
                           Container(
-                            width: 44,
-                            height: 44,
+                            width: 38,
+                            height: 38,
                             decoration: BoxDecoration(
                               gradient: LinearGradient(
                                 begin: Alignment.topLeft,
                                 end: Alignment.bottomRight,
                                 colors: action['colors'] as List<Color>,
                               ),
-                              borderRadius: BorderRadius.circular(14),
+                              borderRadius: BorderRadius.circular(12),
                               boxShadow: const [
                                 BoxShadow(
                                   color: Color(0x14000000),
                                   blurRadius: 3,
-                                  offset: Offset(0, 2),
+                                  offset: Offset(0, 1),
                                 ),
                               ],
                             ),
                             child: Icon(
                               action['icon'] as IconData,
-                              size: 22,
+                              size: 19,
                               color: Colors.white,
                             ),
                           ),
                           if (action['badge'] != null)
                             Positioned(
-                              top: -4,
+                              top: -3,
                               right: -4,
                               child: Container(
                                 padding: const EdgeInsets.symmetric(
-                                  horizontal: 4,
-                                  vertical: 1,
+                                  horizontal: 3.5,
+                                  vertical: 0.5,
                                 ),
                                 decoration: BoxDecoration(
                                   color: const Color(0xFFEF4444),
-                                  borderRadius: BorderRadius.circular(8),
+                                  borderRadius: BorderRadius.circular(6),
                                   border: Border.all(
                                     color: Colors.white,
                                     width: 1,
@@ -593,7 +590,7 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen> {
                                 child: Text(
                                   action['badge'] as String,
                                   style: GoogleFonts.inter(
-                                    fontSize: 8,
+                                    fontSize: 7.5,
                                     fontWeight: FontWeight.w900,
                                     color: Colors.white,
                                   ),
@@ -602,14 +599,14 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen> {
                             ),
                         ],
                       ),
-                      const SizedBox(height: 6),
+                      const SizedBox(height: 4),
                       Text(
                         action['title'] as String,
                         textAlign: TextAlign.center,
                         maxLines: 2,
                         overflow: TextOverflow.ellipsis,
                         style: GoogleFonts.inter(
-                          fontSize: 9.5,
+                          fontSize: 9.0,
                           fontWeight: FontWeight.w600,
                           color: const Color(0xFF334155),
                           height: 1.1,
@@ -621,23 +618,23 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen> {
               );
             }).toList(),
           ),
-          const SizedBox(height: 10),
+          const SizedBox(height: 8),
           Center(
             child: Container(
-              width: 36,
-              height: 3.5,
+              width: 32,
+              height: 3,
               decoration: BoxDecoration(
                 color: const Color(0xFFE2E8F0),
-                borderRadius: BorderRadius.circular(4),
+                borderRadius: BorderRadius.circular(3),
               ),
               child: Align(
                 alignment: Alignment.centerLeft,
                 child: Container(
-                  width: 16,
-                  height: 3.5,
+                  width: 14,
+                  height: 3,
                   decoration: BoxDecoration(
                     color: const Color(0xFF03AC0E),
-                    borderRadius: BorderRadius.circular(4),
+                    borderRadius: BorderRadius.circular(3),
                   ),
                 ),
               ),
@@ -650,16 +647,16 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen> {
 
   Widget _buildRecentlyViewedSection() {
     return Container(
-      margin: const EdgeInsets.fromLTRB(10, 8, 10, 4),
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 12),
+      margin: const EdgeInsets.fromLTRB(8, 4, 8, 4),
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(14),
+        borderRadius: BorderRadius.circular(12),
         border: Border.all(color: const Color(0xFFF1F5F9)),
         boxShadow: const [
           BoxShadow(
             color: Color(0x0A000000),
-            blurRadius: 4,
+            blurRadius: 3,
             offset: Offset(0, 1),
           ),
         ],
@@ -673,7 +670,7 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen> {
               Text(
                 'Lanjut cek ini, yuk',
                 style: GoogleFonts.inter(
-                  fontSize: 13.5,
+                  fontSize: 13.0,
                   fontWeight: FontWeight.w700,
                   color: const Color(0xFF0F172A),
                 ),
@@ -690,7 +687,7 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen> {
                 child: Text(
                   'Lihat Semua',
                   style: GoogleFonts.inter(
-                    fontSize: 11.5,
+                    fontSize: 11.0,
                     fontWeight: FontWeight.w700,
                     color: const Color(0xFF03AC0E),
                   ),
@@ -698,32 +695,33 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen> {
               ),
             ],
           ),
-          const SizedBox(height: 10),
+          const SizedBox(height: 8),
           SizedBox(
-            height: 156,
+            height: 138,
             child: ListView.separated(
               scrollDirection: Axis.horizontal,
               itemCount: _recentlyViewed.length,
-              separatorBuilder: (context, index) => const SizedBox(width: 8),
+              separatorBuilder: (context, index) => const SizedBox(width: 6),
               itemBuilder: (context, index) {
                 final item = _recentlyViewed[index];
                 final badgeColorVal = int.parse(item['badgeColor']!);
 
                 return Container(
-                  width: 116,
-                  padding: const EdgeInsets.all(6),
+                  width: 104,
+                  padding: const EdgeInsets.all(5),
                   decoration: BoxDecoration(
                     color: Colors.white,
-                    borderRadius: BorderRadius.circular(10),
+                    borderRadius: BorderRadius.circular(8),
                     border: Border.all(color: const Color(0xFFF1F5F9)),
                   ),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisSize: MainAxisSize.min,
                     children: [
                       Stack(
                         children: [
                           ClipRRect(
-                            borderRadius: BorderRadius.circular(8),
+                            borderRadius: BorderRadius.circular(6),
                             child: AspectRatio(
                               aspectRatio: 1,
                               child: Image.network(
@@ -734,7 +732,7 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen> {
                                   color: const Color(0xFFE2E8F0),
                                   child: const Icon(
                                     LucideIcons.image,
-                                    size: 24,
+                                    size: 20,
                                     color: Color(0xFF94A3B8),
                                   ),
                                 ),
@@ -742,21 +740,21 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen> {
                             ),
                           ),
                           Positioned(
-                            top: 4,
-                            left: 4,
+                            top: 3,
+                            left: 3,
                             child: Container(
                               padding: const EdgeInsets.symmetric(
-                                horizontal: 4,
-                                vertical: 2,
+                                horizontal: 3.5,
+                                vertical: 1.5,
                               ),
                               decoration: BoxDecoration(
                                 color: Color(badgeColorVal).withValues(alpha: 0.9),
-                                borderRadius: BorderRadius.circular(4),
+                                borderRadius: BorderRadius.circular(3),
                               ),
                               child: Text(
                                 item['badge']!,
                                 style: GoogleFonts.inter(
-                                  fontSize: 7.5,
+                                  fontSize: 7.0,
                                   fontWeight: FontWeight.w700,
                                   color: Colors.white,
                                 ),
@@ -765,13 +763,13 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen> {
                           ),
                         ],
                       ),
-                      const SizedBox(height: 6),
+                      const SizedBox(height: 4),
                       Text(
                         item['title']!,
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                         style: GoogleFonts.inter(
-                          fontSize: 10.5,
+                          fontSize: 10.0,
                           fontWeight: FontWeight.w700,
                           color: const Color(0xFF1E293B),
                         ),
@@ -781,7 +779,7 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen> {
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                         style: GoogleFonts.inter(
-                          fontSize: 9.5,
+                          fontSize: 9.0,
                           color: const Color(0xFF64748B),
                         ),
                       ),
@@ -798,15 +796,15 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen> {
 
   Widget _buildCategoryTabBar() {
     return Container(
-      margin: const EdgeInsets.only(top: 8),
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+      margin: const EdgeInsets.only(top: 4),
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       color: Colors.white,
       child: SizedBox(
-        height: 32,
+        height: 28,
         child: ListView.separated(
           scrollDirection: Axis.horizontal,
           itemCount: _categoryTabs.length,
-          separatorBuilder: (context, index) => const SizedBox(width: 8),
+          separatorBuilder: (context, index) => const SizedBox(width: 6),
           itemBuilder: (context, index) {
             final isSelected = _selectedCategoryTabIndex == index;
             final label = _categoryTabs[index];
@@ -818,12 +816,12 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen> {
                 });
               },
               child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                 decoration: BoxDecoration(
                   color: isSelected
                       ? const Color(0xFFE8F8EA)
                       : Colors.transparent,
-                  borderRadius: BorderRadius.circular(20),
+                  borderRadius: BorderRadius.circular(16),
                   border: Border.all(
                     color: isSelected
                         ? const Color(0xFF03AC0E)
@@ -831,14 +829,16 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen> {
                     width: 1,
                   ),
                 ),
-                child: Text(
-                  label,
-                  style: GoogleFonts.inter(
-                    fontSize: 11.5,
-                    fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
-                    color: isSelected
-                        ? const Color(0xFF03AC0E)
-                        : const Color(0xFF475569),
+                child: Center(
+                  child: Text(
+                    label,
+                    style: GoogleFonts.inter(
+                      fontSize: 11.0,
+                      fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
+                      color: isSelected
+                          ? const Color(0xFF03AC0E)
+                          : const Color(0xFF475569),
+                    ),
                   ),
                 ),
               ),
@@ -851,27 +851,27 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen> {
 
   Widget _buildMainFeedSection() {
     return Padding(
-      padding: const EdgeInsets.fromLTRB(10, 8, 10, 0),
+      padding: const EdgeInsets.fromLTRB(8, 4, 8, 0),
       child: Column(
         children: [
           Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Expanded(child: _buildFlashSaleWidget()),
-              const SizedBox(width: 8),
+              const SizedBox(width: 6),
               Expanded(child: _buildOfficialFarmerHeroCard()),
             ],
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: 6),
           GridView.builder(
             shrinkWrap: true,
             physics: const NeverScrollableScrollPhysics(),
             itemCount: _catalogProducts.length,
             gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
               crossAxisCount: 2,
-              crossAxisSpacing: 8,
-              mainAxisSpacing: 8,
-              childAspectRatio: 0.62,
+              crossAxisSpacing: 6,
+              mainAxisSpacing: 6,
+              mainAxisExtent: 320,
             ),
             itemBuilder: (context, index) {
               final product = _catalogProducts[index];
@@ -885,21 +885,22 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen> {
 
   Widget _buildFlashSaleWidget() {
     return Container(
-      padding: const EdgeInsets.all(8),
+      padding: const EdgeInsets.all(6),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(10),
         border: Border.all(color: const Color(0xFFFEE2E2)),
         boxShadow: const [
           BoxShadow(
             color: Color(0x0A000000),
-            blurRadius: 4,
+            blurRadius: 3,
             offset: Offset(0, 1),
           ),
         ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
         children: [
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -907,29 +908,29 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen> {
               Text(
                 'Flash Sale',
                 style: GoogleFonts.inter(
-                  fontSize: 12,
+                  fontSize: 11.5,
                   fontWeight: FontWeight.w900,
                   color: const Color(0xFF0F172A),
                 ),
               ),
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
+                padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1.5),
                 decoration: BoxDecoration(
                   color: const Color(0xFFEF4444),
-                  borderRadius: BorderRadius.circular(10),
+                  borderRadius: BorderRadius.circular(8),
                 ),
                 child: Row(
                   children: [
                     const Icon(
                       LucideIcons.clock,
-                      size: 9,
+                      size: 8.5,
                       color: Colors.white,
                     ),
                     const SizedBox(width: 2),
                     Text(
                       '04:18:22',
                       style: GoogleFonts.inter(
-                        fontSize: 8.5,
+                        fontSize: 8.0,
                         fontWeight: FontWeight.w800,
                         color: Colors.white,
                       ),
@@ -939,31 +940,32 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen> {
               ),
             ],
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: 6),
           GridView.builder(
             shrinkWrap: true,
             physics: const NeverScrollableScrollPhysics(),
             itemCount: _flashSaleProducts.length,
             gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
               crossAxisCount: 2,
-              crossAxisSpacing: 5,
-              mainAxisSpacing: 5,
-              childAspectRatio: 0.64,
+              crossAxisSpacing: 4,
+              mainAxisSpacing: 4,
+              mainAxisExtent: 94,
             ),
             itemBuilder: (context, index) {
               final item = _flashSaleProducts[index];
               return Container(
-                padding: const EdgeInsets.all(4),
+                padding: const EdgeInsets.all(3.5),
                 decoration: BoxDecoration(
                   color: const Color(0xFFFEF2F2),
-                  borderRadius: BorderRadius.circular(8),
+                  borderRadius: BorderRadius.circular(6),
                   border: Border.all(color: const Color(0xFFFEE2E2)),
                 ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
                   children: [
                     ClipRRect(
-                      borderRadius: BorderRadius.circular(6),
+                      borderRadius: BorderRadius.circular(4),
                       child: AspectRatio(
                         aspectRatio: 1,
                         child: Image.network(
@@ -972,16 +974,16 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen> {
                           errorBuilder: (context, error, stackTrace) =>
                               Container(
                             color: const Color(0xFFE2E8F0),
-                            child: const Icon(LucideIcons.image, size: 16),
+                            child: const Icon(LucideIcons.image, size: 14),
                           ),
                         ),
                       ),
                     ),
-                    const SizedBox(height: 4),
+                    const SizedBox(height: 2),
                     Text(
                       item['price']!,
                       style: GoogleFonts.inter(
-                        fontSize: 10,
+                        fontSize: 9.5,
                         fontWeight: FontWeight.w800,
                         color: const Color(0xFFDC2626),
                       ),
@@ -989,7 +991,7 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen> {
                     Text(
                       item['originalPrice']!,
                       style: GoogleFonts.inter(
-                        fontSize: 8,
+                        fontSize: 7.5,
                         color: const Color(0xFF94A3B8),
                         decoration: TextDecoration.lineThrough,
                       ),
@@ -999,7 +1001,7 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen> {
               );
             },
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: 6),
           Center(
             child: InkWell(
               onTap: () {
@@ -1013,7 +1015,7 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen> {
               child: Text(
                 'Lihat Semua Flash Sale',
                 style: GoogleFonts.inter(
-                  fontSize: 10,
+                  fontSize: 9.5,
                   fontWeight: FontWeight.w700,
                   color: const Color(0xFF03AC0E),
                 ),
@@ -1027,42 +1029,43 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen> {
 
   Widget _buildOfficialFarmerHeroCard() {
     return Container(
-      padding: const EdgeInsets.all(8),
+      padding: const EdgeInsets.all(6),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(10),
         border: Border.all(color: const Color(0xFFF1F5F9)),
         boxShadow: const [
           BoxShadow(
             color: Color(0x0A000000),
-            blurRadius: 4,
+            blurRadius: 3,
             offset: Offset(0, 1),
           ),
         ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
         children: [
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
+                padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1.5),
                 decoration: BoxDecoration(
                   color: const Color(0xFF03AC0E),
-                  borderRadius: BorderRadius.circular(4),
+                  borderRadius: BorderRadius.circular(3),
                 ),
                 child: Text(
                   'MITRA UTAMA',
                   style: GoogleFonts.inter(
-                    fontSize: 7.5,
+                    fontSize: 7.0,
                     fontWeight: FontWeight.w800,
                     color: Colors.white,
                   ),
                 ),
               ),
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
+                padding: const EdgeInsets.symmetric(horizontal: 3.5, vertical: 1),
                 decoration: BoxDecoration(
                   color: const Color(0xFFEF4444),
                   borderRadius: BorderRadius.circular(3),
@@ -1070,7 +1073,7 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen> {
                 child: Text(
                   '-15%',
                   style: GoogleFonts.inter(
-                    fontSize: 8,
+                    fontSize: 7.5,
                     fontWeight: FontWeight.w900,
                     color: Colors.white,
                   ),
@@ -1078,9 +1081,9 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen> {
               ),
             ],
           ),
-          const SizedBox(height: 6),
+          const SizedBox(height: 5),
           ClipRRect(
-            borderRadius: BorderRadius.circular(8),
+            borderRadius: BorderRadius.circular(6),
             child: AspectRatio(
               aspectRatio: 1,
               child: Stack(
@@ -1091,23 +1094,23 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen> {
                       fit: BoxFit.cover,
                       errorBuilder: (context, error, stackTrace) => Container(
                         color: const Color(0xFFE2E8F0),
-                        child: const Icon(LucideIcons.image, size: 24),
+                        child: const Icon(LucideIcons.image, size: 20),
                       ),
                     ),
                   ),
                   Positioned(
-                    bottom: 4,
-                    left: 4,
+                    bottom: 3,
+                    left: 3,
                     child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+                      padding: const EdgeInsets.symmetric(horizontal: 3.5, vertical: 1.5),
                       decoration: BoxDecoration(
                         color: Colors.black.withValues(alpha: 0.65),
-                        borderRadius: BorderRadius.circular(4),
+                        borderRadius: BorderRadius.circular(3),
                       ),
                       child: Text(
                         'Petik Hari Ini',
                         style: GoogleFonts.inter(
-                          fontSize: 7.5,
+                          fontSize: 7.0,
                           color: Colors.white,
                           fontWeight: FontWeight.w600,
                         ),
@@ -1118,7 +1121,7 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen> {
               ),
             ),
           ),
-          const SizedBox(height: 6),
+          const SizedBox(height: 5),
           Row(
             children: [
               Container(
@@ -1130,7 +1133,7 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen> {
                 child: Text(
                   'Prioritas',
                   style: GoogleFonts.inter(
-                    fontSize: 7.5,
+                    fontSize: 7.0,
                     fontWeight: FontWeight.w700,
                     color: const Color(0xFF7E22CE),
                   ),
@@ -1143,7 +1146,7 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen> {
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: GoogleFonts.inter(
-                    fontSize: 9.5,
+                    fontSize: 9.0,
                     color: const Color(0xFF64748B),
                   ),
                 ),
@@ -1156,18 +1159,18 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen> {
             maxLines: 2,
             overflow: TextOverflow.ellipsis,
             style: GoogleFonts.inter(
-              fontSize: 11,
+              fontSize: 12.0,
               fontWeight: FontWeight.w600,
               color: const Color(0xFF0F172A),
               height: 1.2,
             ),
           ),
-          const SizedBox(height: 4),
+          const SizedBox(height: 3),
           Text(
             'Rp22.500',
             style: GoogleFonts.inter(
-              fontSize: 13,
-              fontWeight: FontWeight.w900,
+              fontSize: 14.0,
+              fontWeight: FontWeight.bold,
               color: const Color(0xFF028A0B),
             ),
           ),
@@ -1176,7 +1179,7 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen> {
               Text(
                 'Rp28.000',
                 style: GoogleFonts.inter(
-                  fontSize: 8.5,
+                  fontSize: 8.0,
                   color: const Color(0xFF94A3B8),
                   decoration: TextDecoration.lineThrough,
                 ),
@@ -1185,26 +1188,26 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen> {
               Text(
                 'Hemat 15%',
                 style: GoogleFonts.inter(
-                  fontSize: 8.5,
+                  fontSize: 8.0,
                   fontWeight: FontWeight.w700,
                   color: const Color(0xFFEF4444),
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 6),
+          const SizedBox(height: 4),
           Row(
             children: [
               const Icon(
                 LucideIcons.star,
-                size: 11,
+                size: 10,
                 color: Color(0xFFF59E0B),
               ),
               const SizedBox(width: 2),
               Text(
                 '5.0',
                 style: GoogleFonts.inter(
-                  fontSize: 9.5,
+                  fontSize: 9.0,
                   fontWeight: FontWeight.w700,
                   color: const Color(0xFF1F2937),
                 ),
@@ -1213,7 +1216,7 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen> {
               Text(
                 '1.2rb terjual',
                 style: GoogleFonts.inter(
-                  fontSize: 9.5,
+                  fontSize: 9.0,
                   color: const Color(0xFF64748B),
                 ),
               ),
@@ -1228,26 +1231,27 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen> {
     final isWishlisted = _wishlistIds.contains(product['id']);
 
     return Container(
-      padding: const EdgeInsets.all(8),
+      padding: const EdgeInsets.all(6),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(10),
         border: Border.all(color: const Color(0xFFF1F5F9)),
         boxShadow: const [
           BoxShadow(
             color: Color(0x0A000000),
-            blurRadius: 4,
+            blurRadius: 3,
             offset: Offset(0, 1),
           ),
         ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
         children: [
           Stack(
             children: [
               ClipRRect(
-                borderRadius: BorderRadius.circular(8),
+                borderRadius: BorderRadius.circular(6),
                 child: AspectRatio(
                   aspectRatio: 1,
                   child: Image.network(
@@ -1255,26 +1259,26 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen> {
                     fit: BoxFit.cover,
                     errorBuilder: (context, error, stackTrace) => Container(
                       color: const Color(0xFFE2E8F0),
-                      child: const Icon(LucideIcons.image, size: 24),
+                      child: const Icon(LucideIcons.image, size: 20),
                     ),
                   ),
                 ),
               ),
               Positioned(
-                top: 4,
-                right: 4,
+                top: 3,
+                right: 3,
                 child: InkWell(
                   onTap: () => _toggleWishlist(product['id'] as int),
                   child: Container(
-                    width: 26,
-                    height: 26,
+                    width: 24,
+                    height: 24,
                     decoration: BoxDecoration(
                       color: Colors.white.withValues(alpha: 0.85),
                       shape: BoxShape.circle,
                     ),
                     child: Icon(
-                      isWishlisted ? LucideIcons.heart : LucideIcons.heart,
-                      size: 14,
+                      LucideIcons.heart,
+                      size: 13,
                       color: isWishlisted
                           ? const Color(0xFFEF4444)
                           : const Color(0xFF64748B),
@@ -1283,18 +1287,18 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen> {
                 ),
               ),
               Positioned(
-                bottom: 4,
-                left: 4,
+                bottom: 3,
+                left: 3,
                 child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+                  padding: const EdgeInsets.symmetric(horizontal: 3.5, vertical: 1.5),
                   decoration: BoxDecoration(
                     color: const Color(0xFF047857).withValues(alpha: 0.9),
-                    borderRadius: BorderRadius.circular(4),
+                    borderRadius: BorderRadius.circular(3),
                   ),
                   child: Text(
                     product['originBadge'] as String,
                     style: GoogleFonts.inter(
-                      fontSize: 7.5,
+                      fontSize: 7.0,
                       fontWeight: FontWeight.w600,
                       color: Colors.white,
                     ),
@@ -1303,20 +1307,20 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen> {
               ),
             ],
           ),
-          const SizedBox(height: 6),
+          const SizedBox(height: 5),
           if (product['freeShipping'] == true)
             Container(
-              padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1.5),
-              margin: const EdgeInsets.only(bottom: 4),
+              padding: const EdgeInsets.symmetric(horizontal: 3.5, vertical: 1),
+              margin: const EdgeInsets.only(bottom: 3),
               decoration: BoxDecoration(
                 color: const Color(0xFFECFDF5),
-                borderRadius: BorderRadius.circular(4),
+                borderRadius: BorderRadius.circular(3),
                 border: Border.all(color: const Color(0xFFA7F3D0)),
               ),
               child: Text(
                 'Bebas Ongkir',
                 style: GoogleFonts.inter(
-                  fontSize: 7.5,
+                  fontSize: 7.0,
                   fontWeight: FontWeight.w700,
                   color: const Color(0xFF03AC0E),
                 ),
@@ -1327,28 +1331,28 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen> {
             maxLines: 2,
             overflow: TextOverflow.ellipsis,
             style: GoogleFonts.inter(
-              fontSize: 11,
+              fontSize: 12.0,
               fontWeight: FontWeight.w600,
               color: const Color(0xFF0F172A),
               height: 1.25,
             ),
           ),
-          const SizedBox(height: 4),
+          const SizedBox(height: 3),
           Row(
             children: [
               const Icon(
                 LucideIcons.mapPin,
-                size: 10,
+                size: 9.5,
                 color: Color(0xFF94A3B8),
               ),
-              const SizedBox(width: 3),
+              const SizedBox(width: 2.5),
               Expanded(
                 child: Text(
                   product['location'] as String,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: GoogleFonts.inter(
-                    fontSize: 9.5,
+                    fontSize: 9.0,
                     color: const Color(0xFF64748B),
                   ),
                 ),
@@ -1366,15 +1370,15 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen> {
                   Text(
                     product['price'] as String,
                     style: GoogleFonts.inter(
-                      fontSize: 13,
-                      fontWeight: FontWeight.w900,
+                      fontSize: 14.0,
+                      fontWeight: FontWeight.bold,
                       color: const Color(0xFF028A0B),
                     ),
                   ),
                   Text(
                     product['unit'] as String,
                     style: GoogleFonts.inter(
-                      fontSize: 8.5,
+                      fontSize: 8.0,
                       color: const Color(0xFF94A3B8),
                     ),
                   ),
@@ -1383,24 +1387,24 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen> {
               InkWell(
                 onTap: () => _handleAddToCart(product['title'] as String),
                 child: Container(
-                  width: 28,
-                  height: 28,
+                  width: 26,
+                  height: 26,
                   decoration: BoxDecoration(
                     color: const Color(0xFF03AC0E),
-                    borderRadius: BorderRadius.circular(8),
+                    borderRadius: BorderRadius.circular(7),
                   ),
                   child: const Icon(
                     LucideIcons.plus,
-                    size: 16,
+                    size: 15,
                     color: Colors.white,
                   ),
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 6),
+          const SizedBox(height: 4),
           Container(
-            padding: const EdgeInsets.only(top: 4),
+            padding: const EdgeInsets.only(top: 3),
             decoration: const BoxDecoration(
               border: Border(
                 top: BorderSide(
@@ -1416,14 +1420,14 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen> {
                   children: [
                     const Icon(
                       LucideIcons.star,
-                      size: 10,
+                      size: 9.5,
                       color: Color(0xFFF59E0B),
                     ),
                     const SizedBox(width: 2),
                     Text(
                       product['rating'] as String,
                       style: GoogleFonts.inter(
-                        fontSize: 9,
+                        fontSize: 8.5,
                         fontWeight: FontWeight.w600,
                         color: const Color(0xFF1F2937),
                       ),
@@ -1433,7 +1437,7 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen> {
                 Text(
                   product['soldCount'] as String,
                   style: GoogleFonts.inter(
-                    fontSize: 9,
+                    fontSize: 8.5,
                     color: const Color(0xFF64748B),
                   ),
                 ),
@@ -1447,8 +1451,8 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen> {
 
   Widget _buildTrustGuaranteeBanner() {
     return Container(
-      margin: const EdgeInsets.fromLTRB(10, 10, 10, 0),
-      padding: const EdgeInsets.all(12),
+      margin: const EdgeInsets.fromLTRB(8, 6, 8, 0),
+      padding: const EdgeInsets.all(10),
       decoration: BoxDecoration(
         gradient: const LinearGradient(
           colors: [
@@ -1457,25 +1461,25 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen> {
             Color(0xFFF0FDFA),
           ],
         ),
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(10),
         border: Border.all(color: const Color(0xFFA7F3D0)),
       ),
       child: Row(
         children: [
           Container(
-            width: 36,
-            height: 36,
+            width: 32,
+            height: 32,
             decoration: const BoxDecoration(
               color: Color(0xFF03AC0E),
               shape: BoxShape.circle,
             ),
             child: const Icon(
               LucideIcons.checkCircle2,
-              size: 20,
+              size: 18,
               color: Colors.white,
             ),
           ),
-          const SizedBox(width: 10),
+          const SizedBox(width: 8),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -1483,18 +1487,18 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen> {
                 Text(
                   'Jaminan Segar 100%',
                   style: GoogleFonts.inter(
-                    fontSize: 12,
+                    fontSize: 11.5,
                     fontWeight: FontWeight.w700,
                     color: const Color(0xFF065F46),
                   ),
                 ),
-                const SizedBox(height: 2),
+                const SizedBox(height: 1),
                 Text(
                   'Sayur layu saat sampai? Foto dan dapatkan penggantian instan tanpa ribet.',
                   style: GoogleFonts.inter(
-                    fontSize: 10,
+                    fontSize: 9.5,
                     color: const Color(0xFF047857),
-                    height: 1.25,
+                    height: 1.2,
                   ),
                 ),
               ],
@@ -1526,12 +1530,12 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen> {
         boxShadow: [
           BoxShadow(
             color: Color(0x0D000000),
-            blurRadius: 8,
-            offset: Offset(0, -2),
+            blurRadius: 6,
+            offset: Offset(0, -1),
           ),
         ],
       ),
-      padding: const EdgeInsets.symmetric(vertical: 4),
+      padding: const EdgeInsets.symmetric(vertical: 3),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceAround,
         children: List.generate(navItems.length, (index) {
@@ -1545,7 +1549,7 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen> {
               });
             },
             child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 3),
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
@@ -1554,7 +1558,7 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen> {
                     children: [
                       Icon(
                         item['icon'] as IconData,
-                        size: 20,
+                        size: 19,
                         color: isActive
                             ? const Color(0xFF03AC0E)
                             : const Color(0xFF94A3B8),
@@ -1564,8 +1568,8 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen> {
                           top: -1,
                           right: -3,
                           child: Container(
-                            width: 5,
-                            height: 5,
+                            width: 4.5,
+                            height: 4.5,
                             decoration: const BoxDecoration(
                               color: Color(0xFF03AC0E),
                               shape: BoxShape.circle,
@@ -1578,7 +1582,7 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen> {
                   Text(
                     item['label'] as String,
                     style: GoogleFonts.inter(
-                      fontSize: 9.5,
+                      fontSize: 9.0,
                       fontWeight: isActive ? FontWeight.w700 : FontWeight.w500,
                       color: isActive
                           ? const Color(0xFF03AC0E)
