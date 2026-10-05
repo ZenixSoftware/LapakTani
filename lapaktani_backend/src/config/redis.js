@@ -1,12 +1,13 @@
 const { createClient } = require('redis');
-require('dotenv').config();
+require('dotenv').config({ quiet: true });
 
 const redisClient = createClient({
   url: process.env.REDIS_URL || 'redis://localhost:6379',
+  RESP: 2,
   socket: {
     connectTimeout: 2000,
     reconnectStrategy: (retries) => {
-      if (retries > 2) {
+      if (retries > 3) {
         return false;
       }
       return 500;
@@ -15,11 +16,20 @@ const redisClient = createClient({
 });
 
 redisClient.on('error', (err) => {
-  console.warn('[Redis Client Warning]', err.message);
+  const msg = err && err.message ? err.message : String(err);
+  if (
+    msg.toLowerCase().includes("unknown command 'hello'") ||
+    msg.toLowerCase().includes('unknown command `hello`') ||
+    msg.toLowerCase().includes('unknown command "hello"') ||
+    msg.toLowerCase().includes('unknown command hello')
+  ) {
+    return;
+  }
+  console.error('[REDIS] Error:', msg);
 });
 
 redisClient.on('connect', () => {
-  console.log('✓ [Redis] Berhasil terhubung ke Redis server.');
+  console.log('[REDIS] Connected to Redis server (localhost:6379)');
 });
 
 redisClient.connectRedis = async () => {
@@ -27,7 +37,14 @@ redisClient.connectRedis = async () => {
     try {
       await redisClient.connect();
     } catch (err) {
-      console.warn('! [Redis] Gagal terhubung ke Redis server:', err.message);
+      const msg = err && err.message ? err.message : String(err);
+      if (
+        !msg.toLowerCase().includes("unknown command 'hello'") &&
+        !msg.toLowerCase().includes('unknown command `hello`') &&
+        !msg.toLowerCase().includes('unknown command hello')
+      ) {
+        console.warn('[REDIS] Connection warning:', msg);
+      }
     }
   }
   return redisClient;
@@ -36,4 +53,3 @@ redisClient.connectRedis = async () => {
 module.exports = redisClient;
 module.exports.redisClient = redisClient;
 module.exports.connectRedis = redisClient.connectRedis;
-

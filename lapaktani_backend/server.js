@@ -1,6 +1,6 @@
 const express = require('express');
 const cors = require('cors');
-require('dotenv').config();
+require('dotenv').config({ quiet: true });
 
 const pool = require('./src/config/db');
 const redisClient = require('./src/config/redis');
@@ -66,7 +66,7 @@ app.use((req, res) => {
 });
 
 app.use((err, req, res, next) => {
-  console.error('[Unhandled Error]', err);
+  console.error('[SERVER] Unhandled error:', err.message);
   res.status(500).json({
     success: false,
     message: 'Terjadi kesalahan internal server.',
@@ -78,26 +78,32 @@ const startServer = async () => {
   try {
     try {
       const conn = await pool.getConnection();
-      console.log('✓ [MySQL] Berhasil terhubung ke database.');
+      console.log('[MYSQL] Connected to database');
       conn.release();
     } catch (dbErr) {
-      console.warn('! [MySQL] Peringatan koneksi database:', dbErr.message);
+      console.warn('[MYSQL] Connection warning:', dbErr.message);
     }
 
     try {
       if (!redisClient.isOpen) {
         await redisClient.connect();
-        console.log('✓ [Redis] Berhasil terhubung ke Redis server (localhost:6379).');
       }
     } catch (redisErr) {
-      console.warn('! [Redis] Peringatan koneksi Redis:', redisErr.message);
+      const errMsg = redisErr && redisErr.message ? redisErr.message : String(redisErr);
+      if (
+        !errMsg.toLowerCase().includes("unknown command 'hello'") &&
+        !errMsg.toLowerCase().includes('unknown command `hello`') &&
+        !errMsg.toLowerCase().includes('unknown command hello')
+      ) {
+        console.warn('[REDIS] Connection warning:', errMsg);
+      }
     }
 
     app.listen(PORT, () => {
-      console.log(`🚀 [Server] LapakTani API berjalan di http://localhost:${PORT}`);
+      console.log(`[SERVER] Running on http://localhost:${PORT}`);
     });
   } catch (error) {
-    console.error('Fatal error starting server:', error);
+    console.error('[SERVER] Fatal error starting server:', error.message);
     process.exit(1);
   }
 };

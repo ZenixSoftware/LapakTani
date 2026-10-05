@@ -7,7 +7,7 @@ const getProducts = async (req, res) => {
     try {
       cachedCatalog = await redisClient.get('catalog_products');
     } catch (redisErr) {
-      console.warn('[Redis Cache Get Warning]', redisErr.message);
+      console.warn('[REDIS] Cache get warning:', redisErr.message);
     }
 
     if (cachedCatalog) {
@@ -40,7 +40,7 @@ const getProducts = async (req, res) => {
     try {
       await redisClient.setEx('catalog_products', 3600, JSON.stringify(rows));
     } catch (redisErr) {
-      console.warn('[Redis Cache Set Warning]', redisErr.message);
+      console.warn('[REDIS] Cache set warning:', redisErr.message);
     }
 
     return res.status(200).json({
@@ -96,7 +96,7 @@ const createProduct = async (req, res) => {
     try {
       await redisClient.del('catalog_products');
     } catch (redisErr) {
-      console.warn('[Redis Invalidation Warning]', redisErr.message);
+      console.warn('[REDIS] Invalidation warning:', redisErr.message);
     }
 
     return res.status(201).json({
