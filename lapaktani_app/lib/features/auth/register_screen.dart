@@ -7,7 +7,7 @@ import '../../core/services/api_service.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/widgets/lapaktani_logo.dart';
 import '../../core/widgets/lapaktani_text_field.dart';
-import 'auth_repository.dart';
+import '../profile/farmer_profile_setup_screen.dart';
 import '../home/home_dashboard_screen.dart';
 
 class RegisterScreen extends StatefulWidget {
@@ -23,61 +23,10 @@ class _RegisterScreenState extends State<RegisterScreen> {
   final _emailController = TextEditingController();
   final _phoneController = TextEditingController();
   final _passwordController = TextEditingController();
-  final _nikController = TextEditingController();
-  final _landAreaController = TextEditingController();
-
-  final AuthRepository _authRepository = AuthRepository();
-
   String _selectedRole = 'pembeli';
-  List<String> _domicileRegions = [];
-  String? _selectedRegion;
-  List<Map<String, dynamic>> _filteredFarmerGroups = [];
-  String? _selectedFarmerGroupId;
-  bool _isLoadingRegions = false;
-  bool _isLoadingGroups = false;
   bool _obscurePassword = true;
   bool _agreedToTerms = true;
   bool _isLoading = false;
-
-  @override
-  void initState() {
-    super.initState();
-    _loadRegionsAndInitialGroups();
-  }
-
-  Future<void> _loadRegionsAndInitialGroups() async {
-    setState(() => _isLoadingRegions = true);
-    final regions = await _authRepository.getDomicileRegions();
-    if (!mounted) return;
-
-    setState(() {
-      _domicileRegions = regions;
-      if (_domicileRegions.isNotEmpty) {
-        _selectedRegion = _domicileRegions.first;
-      }
-      _isLoadingRegions = false;
-    });
-
-    if (_selectedRegion != null) {
-      await _filterGroupsByRegion(_selectedRegion!);
-    }
-  }
-
-  Future<void> _filterGroupsByRegion(String region) async {
-    setState(() => _isLoadingGroups = true);
-    final groups = await _authRepository.getFarmerGroupsByRegion(region);
-    if (!mounted) return;
-
-    setState(() {
-      _filteredFarmerGroups = groups;
-      if (_filteredFarmerGroups.isNotEmpty) {
-        _selectedFarmerGroupId = _filteredFarmerGroups.first['id'] as String;
-      } else {
-        _selectedFarmerGroupId = null;
-      }
-      _isLoadingGroups = false;
-    });
-  }
 
   @override
   void dispose() {
@@ -85,8 +34,6 @@ class _RegisterScreenState extends State<RegisterScreen> {
     _emailController.dispose();
     _phoneController.dispose();
     _passwordController.dispose();
-    _nikController.dispose();
-    _landAreaController.dispose();
     super.dispose();
   }
 
@@ -129,18 +76,30 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
         if (!mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Registrasi berhasil! Selamat datang di LapakTani.'),
-            backgroundColor: Color(0xFF03AC0E),
-            duration: Duration(seconds: 2),
+          SnackBar(
+            content: Text(
+              _selectedRole == 'petani'
+                  ? 'Akun berhasil dibuat. Silakan lengkapi data legalitas kebun.'
+                  : 'Registrasi berhasil! Selamat datang di LapakTani.',
+            ),
+            backgroundColor: const Color(0xFF03AC0E),
+            duration: const Duration(seconds: 2),
             behavior: SnackBarBehavior.floating,
           ),
         );
 
-        Navigator.of(context).pushAndRemoveUntil(
-          MaterialPageRoute(builder: (_) => const HomeDashboardScreen()),
-          (route) => false,
-        );
+        if (_selectedRole == 'petani') {
+          Navigator.of(context).pushReplacement(
+            MaterialPageRoute(
+              builder: (_) => const FarmerProfileSetupScreen(),
+            ),
+          );
+        } else {
+          Navigator.of(context).pushAndRemoveUntil(
+            MaterialPageRoute(builder: (_) => const HomeDashboardScreen()),
+            (route) => false,
+          );
+        }
       } else {
         final message = data['message']?.toString() ??
             'Gagal mendaftar. Silakan periksa data Anda.';
@@ -169,209 +128,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
     }
   }
 
-  void _showRegionPicker() {
-    showModalBottomSheet(
-      context: context,
-      backgroundColor: Colors.white,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-      ),
-      builder: (context) {
-        return SafeArea(
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Center(
-                  child: Container(
-                    width: 40,
-                    height: 4,
-                    decoration: BoxDecoration(
-                      color: const Color(0xFFE2E8F0),
-                      borderRadius: BorderRadius.circular(2),
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 16),
-                const Text(
-                  'Pilih Wilayah Domisili Kebun',
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w800,
-                    color: Color(0xFF0F172A),
-                  ),
-                ),
-                const SizedBox(height: 12),
-                Flexible(
-                  child: ListView.separated(
-                    shrinkWrap: true,
-                    itemCount: _domicileRegions.length,
-                    separatorBuilder: (context, index) =>
-                        const Divider(height: 1, color: Color(0xFFF1F5F9)),
-                    itemBuilder: (context, index) {
-                      final region = _domicileRegions[index];
-                      final isSelected = region == _selectedRegion;
-
-                      return ListTile(
-                        contentPadding: const EdgeInsets.symmetric(
-                          horizontal: 4,
-                          vertical: 2,
-                        ),
-                        title: Text(
-                          region,
-                          style: TextStyle(
-                            fontSize: 14,
-                            fontWeight: isSelected
-                                ? FontWeight.w700
-                                : FontWeight.w500,
-                            color: isSelected
-                                ? AppColors.primary
-                                : const Color(0xFF1E293B),
-                          ),
-                        ),
-                        trailing: isSelected
-                            ? const Icon(
-                                LucideIcons.checkCircle2,
-                                color: AppColors.primary,
-                                size: 20,
-                              )
-                            : null,
-                        onTap: () {
-                          setState(() {
-                            _selectedRegion = region;
-                          });
-                          Navigator.of(context).pop();
-                          _filterGroupsByRegion(region);
-                        },
-                      );
-                    },
-                  ),
-                ),
-              ],
-            ),
-          ),
-        );
-      },
-    );
-  }
-
-  void _showFarmerGroupPicker() {
-    if (_filteredFarmerGroups.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Tidak ada kelompok tani di wilayah ini.'),
-        ),
-      );
-      return;
-    }
-
-    showModalBottomSheet(
-      context: context,
-      backgroundColor: Colors.white,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-      ),
-      builder: (context) {
-        return SafeArea(
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Center(
-                  child: Container(
-                    width: 40,
-                    height: 4,
-                    decoration: BoxDecoration(
-                      color: const Color(0xFFE2E8F0),
-                      borderRadius: BorderRadius.circular(2),
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 16),
-                Text(
-                  'Kelompok Tani di $_selectedRegion',
-                  style: const TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w800,
-                    color: Color(0xFF0F172A),
-                  ),
-                ),
-                const SizedBox(height: 12),
-                Flexible(
-                  child: ListView.separated(
-                    shrinkWrap: true,
-                    itemCount: _filteredFarmerGroups.length,
-                    separatorBuilder: (context, index) =>
-                        const Divider(height: 1, color: Color(0xFFF1F5F9)),
-                    itemBuilder: (context, index) {
-                      final group = _filteredFarmerGroups[index];
-                      final isSelected = group['id'] == _selectedFarmerGroupId;
-
-                      return ListTile(
-                        contentPadding: const EdgeInsets.symmetric(
-                          horizontal: 4,
-                          vertical: 2,
-                        ),
-                        title: Text(
-                          group['group_name'] as String,
-                          style: TextStyle(
-                            fontSize: 14,
-                            fontWeight: isSelected
-                                ? FontWeight.w700
-                                : FontWeight.w500,
-                            color: isSelected
-                                ? AppColors.primary
-                                : const Color(0xFF1E293B),
-                          ),
-                        ),
-                        subtitle: Text(
-                          group['domicile_region'] as String,
-                          style: const TextStyle(
-                            fontSize: 12,
-                            color: Color(0xFF64748B),
-                          ),
-                        ),
-                        trailing: isSelected
-                            ? const Icon(
-                                LucideIcons.checkCircle2,
-                                color: AppColors.primary,
-                                size: 20,
-                              )
-                            : null,
-                        onTap: () {
-                          setState(() {
-                            _selectedFarmerGroupId = group['id'] as String;
-                          });
-                          Navigator.of(context).pop();
-                        },
-                      );
-                    },
-                  ),
-                ),
-              ],
-            ),
-          ),
-        );
-      },
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
     final isFarmer = _selectedRole == 'petani';
-    final selectedGroup = _filteredFarmerGroups.firstWhere(
-      (g) => g['id'] == _selectedFarmerGroupId,
-      orElse: () => {
-        'group_name': _filteredFarmerGroups.isEmpty
-            ? 'Tidak ada kelompok tani'
-            : 'Pilih Kelompok Tani',
-        'domicile_region': '',
-      },
-    );
 
     return Scaffold(
       backgroundColor: const Color(0xFFF1F5F9),
@@ -874,9 +633,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                             hintText: '••••••••',
                             prefixIcon: LucideIcons.lock,
                             obscureText: _obscurePassword,
-                            textInputAction: isFarmer
-                                ? TextInputAction.next
-                                : TextInputAction.done,
+                            textInputAction: TextInputAction.done,
                             suffixIcon: IconButton(
                               icon: Icon(
                                 _obscurePassword
@@ -899,224 +656,6 @@ class _RegisterScreenState extends State<RegisterScreen> {
                               return null;
                             },
                           ),
-                          if (isFarmer) ...[
-                            const SizedBox(height: 16),
-                            const Divider(color: Color(0xFFF1F5F9)),
-                            const SizedBox(height: 12),
-                            const Text(
-                              'Informasi Legalitas & Kebun Petani',
-                              style: TextStyle(
-                                fontSize: 14,
-                                fontWeight: FontWeight.w800,
-                                color: Color(0xFF0F172A),
-                              ),
-                            ),
-                            const SizedBox(height: 14),
-                            LapaktaniTextField(
-                              controller: _nikController,
-                              label: 'Nomor Induk Kependudukan (NIK) *',
-                              labelTrailing: '16 Digit',
-                              hintText: 'Contoh: 3201234567890001',
-                              prefixIcon: LucideIcons.fileText,
-                              keyboardType: TextInputType.number,
-                              maxLength: 16,
-                              textInputAction: TextInputAction.next,
-                              validator: (val) {
-                                if (!isFarmer) return null;
-                                if (val == null || val.trim().isEmpty) {
-                                  return 'NIK wajib diisi untuk verifikasi petani';
-                                }
-                                if (val.trim().length != 16) {
-                                  return 'NIK harus 16 digit';
-                                }
-                                return null;
-                              },
-                            ),
-                            const SizedBox(height: 14),
-                            LapaktaniTextField(
-                              controller: _landAreaController,
-                              label: 'Luas Lahan Pertanian (Hektar) *',
-                              labelTrailing: 'Contoh: 1.5',
-                              hintText: '1.5',
-                              prefixIcon: LucideIcons.maximize2,
-                              keyboardType:
-                                  const TextInputType.numberWithOptions(
-                                decimal: true,
-                              ),
-                              textInputAction: TextInputAction.next,
-                              suffixIcon: const Padding(
-                                padding: EdgeInsets.symmetric(horizontal: 14),
-                                child: Text(
-                                  'Ha',
-                                  style: TextStyle(
-                                    fontSize: 13,
-                                    fontWeight: FontWeight.w700,
-                                    color: Color(0xFF64748B),
-                                  ),
-                                ),
-                              ),
-                              validator: (val) {
-                                if (!isFarmer) return null;
-                                if (val == null || val.trim().isEmpty) {
-                                  return 'Luas lahan wajib diisi';
-                                }
-                                final parsed = double.tryParse(val.trim());
-                                if (parsed == null || parsed <= 0) {
-                                  return 'Luas lahan harus berupa angka valid';
-                                }
-                                return null;
-                              },
-                            ),
-                            const SizedBox(height: 14),
-                            Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                const Text(
-                                  'Desa / Wilayah Domisili *',
-                                  style: TextStyle(
-                                    fontSize: 13,
-                                    fontWeight: FontWeight.w700,
-                                    color: Color(0xFF1E293B),
-                                  ),
-                                ),
-                                const SizedBox(height: 7),
-                                GestureDetector(
-                                  onTap: _isLoadingRegions
-                                      ? null
-                                      : _showRegionPicker,
-                                  child: Container(
-                                    padding: const EdgeInsets.symmetric(
-                                      horizontal: 14,
-                                      vertical: 13,
-                                    ),
-                                    decoration: BoxDecoration(
-                                      color: Colors.white,
-                                      borderRadius: BorderRadius.circular(16),
-                                      border: Border.all(
-                                        color: const Color(0xFFE2E8F0),
-                                        width: 1,
-                                      ),
-                                      boxShadow: [
-                                        BoxShadow(
-                                          color: Colors.black
-                                              .withValues(alpha: 0.02),
-                                          blurRadius: 4,
-                                          offset: const Offset(0, 1),
-                                        ),
-                                      ],
-                                    ),
-                                    child: Row(
-                                      children: [
-                                        const Icon(
-                                          LucideIcons.mapPin,
-                                          size: 19,
-                                          color: Color(0xFF94A3B8),
-                                        ),
-                                        const SizedBox(width: 10),
-                                        Expanded(
-                                          child: Text(
-                                            _selectedRegion ??
-                                                'Pilih Wilayah Domisili',
-                                            style: TextStyle(
-                                              fontSize: 13,
-                                              fontWeight: FontWeight.w600,
-                                              color: _selectedRegion != null
-                                                  ? const Color(0xFF0F172A)
-                                                  : const Color(0xFF94A3B8),
-                                            ),
-                                            overflow: TextOverflow.ellipsis,
-                                          ),
-                                        ),
-                                        const Icon(
-                                          LucideIcons.chevronDown,
-                                          size: 18,
-                                          color: Color(0xFF94A3B8),
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                ),
-                              ],
-                            ),
-                            const SizedBox(height: 14),
-                            Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                const Text(
-                                  'Kelompok Tani (Gapoktan) *',
-                                  style: TextStyle(
-                                    fontSize: 13,
-                                    fontWeight: FontWeight.w700,
-                                    color: Color(0xFF1E293B),
-                                  ),
-                                ),
-                                const SizedBox(height: 7),
-                                GestureDetector(
-                                  onTap: _isLoadingGroups
-                                      ? null
-                                      : _showFarmerGroupPicker,
-                                  child: Container(
-                                    padding: const EdgeInsets.symmetric(
-                                      horizontal: 14,
-                                      vertical: 13,
-                                    ),
-                                    decoration: BoxDecoration(
-                                      color: Colors.white,
-                                      borderRadius: BorderRadius.circular(16),
-                                      border: Border.all(
-                                        color: const Color(0xFFE2E8F0),
-                                        width: 1,
-                                      ),
-                                      boxShadow: [
-                                        BoxShadow(
-                                          color: Colors.black
-                                              .withValues(alpha: 0.02),
-                                          blurRadius: 4,
-                                          offset: const Offset(0, 1),
-                                        ),
-                                      ],
-                                    ),
-                                    child: Row(
-                                      children: [
-                                        const Icon(
-                                          LucideIcons.users,
-                                          size: 19,
-                                          color: Color(0xFF94A3B8),
-                                        ),
-                                        const SizedBox(width: 10),
-                                        Expanded(
-                                          child: _isLoadingGroups
-                                              ? const Text(
-                                                  'Memuat kelompok tani wilayah ini...',
-                                                  style: TextStyle(
-                                                    fontSize: 13,
-                                                    color: Color(0xFF94A3B8),
-                                                  ),
-                                                )
-                                              : Text(
-                                                  selectedGroup['group_name']
-                                                      as String,
-                                                  style: const TextStyle(
-                                                    fontSize: 13,
-                                                    fontWeight: FontWeight.w600,
-                                                    color: Color(0xFF0F172A),
-                                                  ),
-                                                  overflow:
-                                                      TextOverflow.ellipsis,
-                                                ),
-                                        ),
-                                        const Icon(
-                                          LucideIcons.chevronDown,
-                                          size: 18,
-                                          color: Color(0xFF94A3B8),
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ],
                           const SizedBox(height: 18),
                           Row(
                             crossAxisAlignment: CrossAxisAlignment.start,
@@ -1189,7 +728,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                                           children: [
                                             Text(
                                               isFarmer
-                                                  ? 'Daftar Sebagai Petani Mitra'
+                                                  ? 'Lanjut ke Profil Petani'
                                                   : 'Daftar Sekarang',
                                               style: const TextStyle(
                                                 fontSize: 15,
