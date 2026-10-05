@@ -8,7 +8,7 @@ class ApiService {
   factory ApiService() => _instance;
   ApiService._internal();
 
-  static const String baseUrl = 'http://10.0.2.2:3000/api';
+  static const String baseUrl = 'https://backslid-salvage-moocher.ngrok-free.dev/api';
   static const String tokenKey = 'jwt_token';
   static const String userKey = 'auth_user';
 

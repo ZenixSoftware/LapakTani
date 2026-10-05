@@ -2,8 +2,7 @@ import 'package:flutter/material.dart';
 import 'core/theme/app_theme.dart';
 import 'features/auth/login_screen.dart';
 import 'features/auth/register_screen.dart';
-import 'features/home/home_screen.dart';
-import 'features/onboarding/splash_screen.dart';
+import 'features/home/home_dashboard_screen.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
@@ -27,12 +26,13 @@ class _LapakTaniAppState extends State<LapakTaniApp> {
       title: 'LapakTani',
       debugShowCheckedModeBanner: false,
       theme: AppTheme.lightTheme,
-      home: const SplashScreen(),
+      home: const HomeDashboardScreen(),
       routes: {
         '/auth': (context) => const LoginScreen(),
         '/login': (context) => const LoginScreen(),
         '/register': (context) => const RegisterScreen(),
-        '/home': (context) => const HomeScreen(),
+        '/home': (context) => const HomeDashboardScreen(),
+        '/dashboard': (context) => const HomeDashboardScreen(),
       },
     );
   }
