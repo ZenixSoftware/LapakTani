@@ -7,7 +7,7 @@ import '../../core/services/api_service.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/widgets/lapaktani_logo.dart';
 import '../../core/widgets/lapaktani_text_field.dart';
-import '../profile/farmer_profile_setup_screen.dart';
+import '../profile/complete_farmer_profile_screen.dart';
 import '../home/home_dashboard_screen.dart';
 
 class RegisterScreen extends StatefulWidget {
@@ -91,7 +91,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
         if (_selectedRole == 'petani') {
           Navigator.of(context).pushReplacement(
             MaterialPageRoute(
-              builder: (_) => const FarmerProfileSetupScreen(),
+              builder: (_) => const CompleteFarmerProfileScreen(),
             ),
           );
         } else {

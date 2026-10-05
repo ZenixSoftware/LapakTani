@@ -994,54 +994,63 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen> {
                   borderRadius: BorderRadius.circular(6),
                   border: Border.all(color: const Color(0xFFFEE2E2)),
                 ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    ClipRRect(
-                      borderRadius: BorderRadius.circular(4),
-                      child: AspectRatio(
-                        aspectRatio: 1,
-                        child: Image.network(
-                          item['imageUrl']!,
-                          fit: BoxFit.cover,
-                          errorBuilder: (context, error, stackTrace) =>
-                              Container(
-                            color: const Color(0xFFE2E8F0),
-                            child: const Icon(LucideIcons.image, size: 14),
+                child: LayoutBuilder(
+                  builder: (context, constraints) {
+                    final double imageHeight =
+                        (constraints.maxHeight * 0.58).clamp(30.0, 70.0);
+                    return SingleChildScrollView(
+                      physics: const NeverScrollableScrollPhysics(),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          ClipRRect(
+                            borderRadius: BorderRadius.circular(4),
+                            child: SizedBox(
+                              height: imageHeight,
+                              width: double.infinity,
+                              child: Image.network(
+                                item['imageUrl']!,
+                                fit: BoxFit.cover,
+                                errorBuilder: (context, error, stackTrace) =>
+                                    Container(
+                                  color: const Color(0xFFE2E8F0),
+                                  child: const Icon(LucideIcons.image, size: 14),
+                                ),
+                              ),
+                            ),
                           ),
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: 2),
-                    Expanded(
-                      child: FittedBox(
-                        fit: BoxFit.scaleDown,
-                        alignment: Alignment.centerLeft,
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Text(
-                              item['price']!,
-                              style: GoogleFonts.inter(
-                                fontSize: 9.5,
-                                fontWeight: FontWeight.w800,
-                                color: const Color(0xFFDC2626),
-                              ),
+                          const SizedBox(height: 2),
+                          FittedBox(
+                            fit: BoxFit.scaleDown,
+                            alignment: Alignment.centerLeft,
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Text(
+                                  item['price']!,
+                                  style: GoogleFonts.inter(
+                                    fontSize: 9.5,
+                                    fontWeight: FontWeight.w800,
+                                    color: const Color(0xFFDC2626),
+                                  ),
+                                ),
+                                Text(
+                                  item['originalPrice']!,
+                                  style: GoogleFonts.inter(
+                                    fontSize: 7.5,
+                                    color: const Color(0xFF94A3B8),
+                                    decoration: TextDecoration.lineThrough,
+                                  ),
+                                ),
+                              ],
                             ),
-                            Text(
-                              item['originalPrice']!,
-                              style: GoogleFonts.inter(
-                                fontSize: 7.5,
-                                color: const Color(0xFF94A3B8),
-                                decoration: TextDecoration.lineThrough,
-                              ),
-                            ),
-                          ],
-                        ),
+                          ),
+                        ],
                       ),
-                    ),
-                  ],
+                    );
+                  },
                 ),
               );
             },
