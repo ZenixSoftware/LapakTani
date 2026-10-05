@@ -1,12 +1,14 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:lucide_icons/lucide_icons.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import '../../core/services/api_service.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/widgets/lapaktani_logo.dart';
 import '../../core/widgets/lapaktani_text_field.dart';
-import 'auth_repository.dart';
 import 'register_screen.dart';
-import '../home/home_screen.dart';
+import '../home/home_dashboard_screen.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -19,7 +21,6 @@ class _LoginScreenState extends State<LoginScreen> {
   final _formKey = GlobalKey<FormState>();
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
-  final AuthRepository _authRepository = AuthRepository();
 
   bool _obscurePassword = true;
   bool _isLoading = false;
@@ -38,33 +39,37 @@ class _LoginScreenState extends State<LoginScreen> {
     setState(() => _isLoading = true);
 
     try {
-      final response = await _authRepository.signInWithEmail(
-        email: _emailController.text,
-        password: _passwordController.text,
-      );
+      final response = await ApiService.post('/auth/login', {
+        'email': _emailController.text.trim(),
+        'password': _passwordController.text,
+      });
 
-      if (!mounted) return;
+      final Map<String, dynamic> data =
+          jsonDecode(response.body) as Map<String, dynamic>;
 
-      if (response.session != null) {
+      if (response.statusCode == 200 && data['success'] == true) {
+        final token = data['token'] as String;
+        final prefs = await SharedPreferences.getInstance();
+        await prefs.setString(ApiService.tokenKey, token);
+        if (data['user'] != null) {
+          await prefs.setString(ApiService.userKey, jsonEncode(data['user']));
+        }
+
+        if (!mounted) return;
         Navigator.of(context).pushReplacement(
-          MaterialPageRoute(builder: (_) => const HomeScreen()),
+          MaterialPageRoute(builder: (_) => const HomeDashboardScreen()),
         );
       } else {
+        final message = data['message']?.toString() ??
+            'Email atau password salah. Silakan coba lagi.';
+        if (!mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Silakan periksa email untuk konfirmasi akun Anda.'),
-            backgroundColor: AppColors.primary,
+          SnackBar(
+            content: Text(message),
+            backgroundColor: const Color(0xFFDC2626),
           ),
         );
       }
-    } on AuthException catch (e) {
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(e.message),
-          backgroundColor: const Color(0xFFDC2626),
-        ),
-      );
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
@@ -80,28 +85,17 @@ class _LoginScreenState extends State<LoginScreen> {
 
   Future<void> _handleGoogleLogin() async {
     setState(() => _isGoogleLoading = true);
-
-    try {
-      await _authRepository.signInWithGoogle();
-    } on AuthException catch (e) {
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(e.message),
-          backgroundColor: const Color(0xFFDC2626),
+    await Future.delayed(const Duration(milliseconds: 300));
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text(
+          'Login Google dinonaktifkan pada lingkungan server lokal.',
         ),
-      );
-    } catch (e) {
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Gagal menghubungkan Google: ${e.toString()}'),
-          backgroundColor: const Color(0xFFDC2626),
-        ),
-      );
-    } finally {
-      if (mounted) setState(() => _isGoogleLoading = false);
-    }
+        backgroundColor: Color(0xFFDC2626),
+      ),
+    );
+    if (mounted) setState(() => _isGoogleLoading = false);
   }
 
   @override

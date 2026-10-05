@@ -5,8 +5,8 @@ import 'package:lucide_icons/lucide_icons.dart';
 import '../../core/services/api_service.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/widgets/lapaktani_logo.dart';
-import '../home/home_screen.dart';
-import 'onboarding_screen.dart';
+import '../auth/login_screen.dart';
+import '../home/home_dashboard_screen.dart';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
@@ -34,8 +34,8 @@ class _SplashScreenState extends State<SplashScreen> {
     }
     if (!mounted) return;
     final Widget targetScreen = (token != null && token.isNotEmpty)
-        ? const HomeScreen()
-        : const OnboardingScreen();
+        ? const HomeDashboardScreen()
+        : const LoginScreen();
 
     Navigator.of(context).pushReplacement(
       PageRouteBuilder(

@@ -1,12 +1,14 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:lucide_icons/lucide_icons.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import '../../core/services/api_service.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/widgets/lapaktani_logo.dart';
 import '../../core/widgets/lapaktani_text_field.dart';
 import 'auth_repository.dart';
-import '../home/home_screen.dart';
-import '../profile/complete_farmer_profile_screen.dart';
+import '../home/home_dashboard_screen.dart';
 
 class RegisterScreen extends StatefulWidget {
   const RegisterScreen({super.key});
@@ -104,71 +106,62 @@ class _RegisterScreenState extends State<RegisterScreen> {
     setState(() => _isLoading = true);
 
     try {
-      final double? parsedLandArea = _selectedRole == 'petani'
-          ? double.tryParse(_landAreaController.text.trim()) ?? 0.0
-          : null;
+      final response = await ApiService.post('/auth/register', {
+        'full_name': _nameController.text.trim(),
+        'email': _emailController.text.trim(),
+        'password': _passwordController.text,
+        'role': _selectedRole.toLowerCase(),
+      });
 
-      final formattedPhone = _phoneController.text.trim().startsWith('+62')
-          ? _phoneController.text.trim()
-          : '+62${_phoneController.text.trim().replaceAll(RegExp(r'^0+'), '')}';
+      final Map<String, dynamic> data =
+          jsonDecode(response.body) as Map<String, dynamic>;
 
-      final response = await _authRepository.signUp(
-        email: _emailController.text.trim(),
-        password: _passwordController.text,
-        roleName: _selectedRole,
-        fullName: _nameController.text.trim(),
-        phone: formattedPhone,
-        nikNumber:
-            _selectedRole == 'petani' ? _nikController.text.trim() : null,
-        landAreaHa: parsedLandArea,
-        farmerGroupId:
-            _selectedRole == 'petani' ? _selectedFarmerGroupId : null,
-      );
-
-      if (!mounted) return;
-
-      if (response.session != null) {
-        if (_selectedRole == 'petani') {
-          Navigator.of(context).pushAndRemoveUntil(
-            MaterialPageRoute(
-              builder: (_) => CompleteFarmerProfileScreen(
-                initialRegion: _selectedRegion,
-                initialFarmerGroupId: _selectedFarmerGroupId,
-              ),
-            ),
-            (route) => false,
-          );
-        } else {
-          Navigator.of(context).pushAndRemoveUntil(
-            MaterialPageRoute(builder: (_) => const HomeScreen()),
-            (route) => false,
-          );
+      if ((response.statusCode == 200 || response.statusCode == 201) &&
+          data['success'] == true) {
+        final token = data['token'] as String?;
+        if (token != null && token.isNotEmpty) {
+          final prefs = await SharedPreferences.getInstance();
+          await prefs.setString(ApiService.tokenKey, token);
+          if (data['user'] != null) {
+            await prefs.setString(ApiService.userKey, jsonEncode(data['user']));
+          }
         }
-      } else {
+
+        if (!mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text(
-              'Registrasi berhasil! Silakan periksa email Anda untuk verifikasi.',
-            ),
-            backgroundColor: AppColors.primary,
+            content: Text('Registrasi berhasil! Selamat datang di LapakTani.'),
+            backgroundColor: Color(0xFF03AC0E),
+            duration: Duration(seconds: 2),
+            behavior: SnackBarBehavior.floating,
           ),
         );
-        Navigator.of(context).pop();
+
+        Navigator.of(context).pushAndRemoveUntil(
+          MaterialPageRoute(builder: (_) => const HomeDashboardScreen()),
+          (route) => false,
+        );
+      } else {
+        final message = data['message']?.toString() ??
+            'Gagal mendaftar. Silakan periksa data Anda.';
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(message),
+            backgroundColor: const Color(0xFFDC2626),
+            duration: const Duration(seconds: 3),
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
       }
-    } on AuthException catch (e) {
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(e.message),
-          backgroundColor: const Color(0xFFDC2626),
-        ),
-      );
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('Gagal mendaftar: ${e.toString()}'),
+          content: Text('Terjadi kesalahan: ${e.toString()}'),
           backgroundColor: const Color(0xFFDC2626),
+          duration: const Duration(seconds: 3),
+          behavior: SnackBarBehavior.floating,
         ),
       );
     } finally {
@@ -745,6 +738,51 @@ class _RegisterScreenState extends State<RegisterScreen> {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.stretch,
                         children: <Widget>[
+                          DropdownButtonFormField<String>(
+                            initialValue: _selectedRole,
+                            decoration: InputDecoration(
+                              labelText: 'Peran Akun *',
+                              prefixIcon: const Icon(
+                                LucideIcons.userCheck,
+                                size: 18,
+                                color: Color(0xFF64748B),
+                              ),
+                              filled: true,
+                              fillColor: const Color(0xFFF8FAFC),
+                              contentPadding: const EdgeInsets.symmetric(
+                                horizontal: 14,
+                                vertical: 12,
+                              ),
+                              border: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(14),
+                                borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
+                              ),
+                              enabledBorder: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(14),
+                                borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
+                              ),
+                              focusedBorder: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(14),
+                                borderSide: const BorderSide(color: Color(0xFF03AC0E), width: 1.5),
+                              ),
+                            ),
+                            items: const [
+                              DropdownMenuItem(
+                                value: 'pembeli',
+                                child: Text('Pembeli'),
+                              ),
+                              DropdownMenuItem(
+                                value: 'petani',
+                                child: Text('Petani'),
+                              ),
+                            ],
+                            onChanged: (val) {
+                              if (val != null) {
+                                setState(() => _selectedRole = val);
+                              }
+                            },
+                          ),
+                          const SizedBox(height: 14),
                           LapaktaniTextField(
                             controller: _nameController,
                             label: 'Nama Lengkap *',
@@ -798,7 +836,14 @@ class _RegisterScreenState extends State<RegisterScreen> {
                               child: const Row(
                                 mainAxisSize: MainAxisSize.min,
                                 children: [
-                                  Text('🇮🇩', style: TextStyle(fontSize: 14)),
+                                  Text(
+                                    'ID',
+                                    style: TextStyle(
+                                      fontSize: 13,
+                                      fontWeight: FontWeight.w800,
+                                      color: Color(0xFF1E293B),
+                                    ),
+                                  ),
                                   SizedBox(width: 4),
                                   Text(
                                     '+62',
