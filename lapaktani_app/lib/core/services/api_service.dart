@@ -63,7 +63,9 @@ class ApiService {
     return headers;
   }
 
-  Future<http.Response> get(String path) async {
+  static Future<http.Response> get(String path) => _instance._fetchGet(path);
+
+  Future<http.Response> _fetchGet(String path) async {
     final normalizedPath = path.startsWith('/') ? path : '/$path';
     final url = Uri.parse('$baseUrl$normalizedPath');
     try {

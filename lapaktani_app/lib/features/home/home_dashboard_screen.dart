@@ -1,6 +1,8 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:lucide_icons/lucide_icons.dart';
+import '../../core/services/api_service.dart';
 
 class HomeDashboardScreen extends StatefulWidget {
   const HomeDashboardScreen({super.key});
@@ -12,8 +14,60 @@ class HomeDashboardScreen extends StatefulWidget {
 class _HomeDashboardScreenState extends State<HomeDashboardScreen> {
   int _currentBottomNavIndex = 0;
   int _selectedCategoryTabIndex = 0;
-  final Set<int> _wishlistIds = {};
+  final Set<dynamic> _wishlistIds = {};
   int _cartItemCount = 4;
+  List<dynamic> _products = [];
+  bool _isLoading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    fetchProducts();
+  }
+
+  Future<void> fetchProducts() async {
+    try {
+      final httpResponse = await ApiService.get('/products');
+      if (httpResponse.statusCode == 200) {
+        final Map<String, dynamic> response =
+            jsonDecode(httpResponse.body) as Map<String, dynamic>;
+        final List<dynamic> data = (response['data'] as List<dynamic>?) ?? [];
+        if (mounted) {
+          setState(() {
+            _products = data;
+            _isLoading = false;
+          });
+        }
+        return;
+      }
+    } catch (e) {
+      debugPrint('[CATALOG] Gagal memuat data produk: $e');
+    }
+    if (mounted) {
+      setState(() {
+        _isLoading = false;
+      });
+    }
+  }
+
+  String _formatRupiah(dynamic price) {
+    if (price == null) return 'Rp0';
+    final num? val = num.tryParse(price.toString());
+    if (val == null) {
+      final s = price.toString().trim();
+      return s.startsWith('Rp') ? s : 'Rp$s';
+    }
+    final int intVal = val.round();
+    final String strVal = intVal.toString();
+    final buffer = StringBuffer();
+    for (int i = 0; i < strVal.length; i++) {
+      if (i > 0 && (strVal.length - i) % 3 == 0) {
+        buffer.write('.');
+      }
+      buffer.write(strVal[i]);
+    }
+    return 'Rp${buffer.toString()}';
+  }
 
   final List<String> _categoryTabs = [
     'Untuk Kamu',
@@ -139,87 +193,6 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen> {
     },
   ];
 
-  final List<Map<String, dynamic>> _catalogProducts = [
-    {
-      'id': 1,
-      'title': 'Jagung Manis Madu Organik Segar (Isi 3-4 Tongkol)',
-      'price': 'Rp14.500',
-      'unit': '/pack 1kg',
-      'location': 'Malang, Jatim',
-      'originBadge': 'Petani Batu',
-      'rating': '4.9',
-      'soldCount': '850+ terjual',
-      'imageUrl':
-          'https://lh3.googleusercontent.com/aida-public/AB6AXuBNcxC9AeGcJKDIKXvZnkUXpXQZacY4jyGWOKanfYvqS4ASLYkIBwQjNacsUbP2-m6R_Y9vclnMXfhUcZxPTWuAfY8jNDLTyotuWyQ4yQvMPJJIw1-ajA8Ma5dYzNElMD1xuF8PZCuWe3pzX6ndDMhLxrGhW0IPRZv-3PiQi5iIj32W5nns2mpa2U_Npkhkj2u1hAAXDVuhrzE4Mc7gwvqybgAI30IdJCwbwqHEIqVoZEYZ5WnQs2lh',
-      'freeShipping': true,
-    },
-    {
-      'id': 2,
-      'title': 'Wortel Manis Berastagi Super Renyah (Grade A)',
-      'price': 'Rp11.000',
-      'unit': '/500 gram',
-      'location': 'Karo, Sumut',
-      'originBadge': 'Petani Berastagi',
-      'rating': '5.0',
-      'soldCount': '1.5rb terjual',
-      'imageUrl':
-          'https://lh3.googleusercontent.com/aida-public/AB6AXuBrS3ZtwnKUuZ4K0rT35rQua4KG1cyajZF_8MR1EroaYQyWIjp0_37qFaYqRl4G781JAABaiB_i4NVVSNsggcBvAjzV60ku1UH47FgTptcO92_3CABgJrOuztx_31wSGDZDWounJkqI8_FqYKa1jAvsPrKAQFkk8PIOpgcZM4DaVeZP_9LfJcN8wIx3LY6PBpvsWbpN_uMVUCnCcjr0SXnEcFsxdqgFnj8K6GiGFBP_riuNrkM15QV6',
-      'freeShipping': true,
-    },
-    {
-      'id': 3,
-      'title': 'Brokoli Organik Lembang Pilihan (Segar Hijau)',
-      'price': 'Rp16.000',
-      'unit': '/500 gram',
-      'location': 'Lembang, Jabar',
-      'originBadge': 'Kebun Lembang',
-      'rating': '4.8',
-      'soldCount': '620+ terjual',
-      'imageUrl':
-          'https://lh3.googleusercontent.com/aida-public/AB6AXuBk603kJTTwyMZijNDcrTCQgKIriau9_3zXu-iSr0KlFkT4JKRLGwCHqT38CRGh7rX8YlQRTlXidz0qrQyxKK8-yNR7RsajVjAQH58sYuLdzip0DJzER-4O7icu9gSJDM71DnKZ12cY43Lf7DFN_pIkAEYEvTbBYuHggoR9z4jJjhWssKmZNbASdUOvhnI5_ZigVsPYHONWe7EwzMXIFgMJSL3CIrQtwQzk52zRvcamluL15gDpiPRJ',
-      'freeShipping': true,
-    },
-    {
-      'id': 4,
-      'title': 'Kentang Dieng Super Pulen & Lembut (Kualitas Super)',
-      'price': 'Rp19.000',
-      'unit': '/kg',
-      'location': 'Wonosobo, Jateng',
-      'originBadge': 'Petani Dieng',
-      'rating': '4.9',
-      'soldCount': '2.1rb terjual',
-      'imageUrl':
-          'https://lh3.googleusercontent.com/aida-public/AB6AXuBJDaJ-Pofumldvv-NxLrvsFj7mwyo48JB9Uk29VnJuvkyA2bR3H1hRdCq77kocU16eSNvOTFKKvvcHMoK6YxCr25WbxhSq5DZzAvP0X_asgv_EEAJlnyKeW51So_eIWTtFovyQQ1ySMDHn17M8pONmHe083BT50s2qn_IsA5Jh2gLDu2EurScGmtpr3OrZqfIGEtvkDR4J_Ae_Kezf8vIM50bK4wT6F7EtVF2wJxS_KjC7cppJBXWj',
-      'freeShipping': false,
-    },
-    {
-      'id': 5,
-      'title': 'Tomat Ceri Hidroponik Manis Segar Langsung Petik',
-      'price': 'Rp15.000',
-      'unit': '/pack 250g',
-      'location': 'Ciwidey, Jabar',
-      'originBadge': 'Hidroponik',
-      'rating': '4.9',
-      'soldCount': '980 terjual',
-      'imageUrl':
-          'https://lh3.googleusercontent.com/aida-public/AB6AXuD8Eqfhsv22uPEELae8HtrhA_aoJjqPPcyMx0XMkPwYuVg00PJgZglsTZF3UQOFRpv3BnMOOP6KbsUaMurybJU1WNEwVKI6YSSVmNBzA6RMDYVRRcqIcxThIvVRh4JWjiWZ6MqqhmahaDt9XUYObA-cS_eyaTxDfZ8vVsymdEPltylegsUmU3bnf0DnUMhYRB3P1nrdx8H4AEWRjnJaR65nCRLpBs2b-bItH_SRaEct5koAudYm5D-y',
-      'freeShipping': true,
-    },
-    {
-      'id': 6,
-      'title': 'Bawang Putih Tunggal Lanang Obat Alami Super',
-      'price': 'Rp32.000',
-      'unit': '/250 gram',
-      'location': 'Brebes, Jateng',
-      'originBadge': 'Grade Super',
-      'rating': '5.0',
-      'soldCount': '480+ terjual',
-      'imageUrl':
-          'https://lh3.googleusercontent.com/aida-public/AB6AXuC5dwR9LdFz_gwSFKBq0oYs39uUS46E2wAZmuRsuW6w1DZozkRFFwX9p8Rz_akKAN0mRhAxt66cg0sq_OMyssrIiYNneR4xPgI3rw9Yz2SmQwGUI7uceoiKiifcZi7mERId9D-ZQ7qHDjb3oiaQRazdH4cQ2P9iGWkm0D-JSdD06nlTopgnij3MOoLsMIzXYtTV9Mt97lXpUM3Psioa4j_imGYvAQ3jPEQXczqHEXbXi4irjbCqBDE8',
-      'freeShipping': true,
-    },
-  ];
-
   void _handleAddToCart(String productName) {
     setState(() {
       _cartItemCount++;
@@ -234,7 +207,7 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen> {
     );
   }
 
-  void _toggleWishlist(int id) {
+  void _toggleWishlist(dynamic id) {
     setState(() {
       if (_wishlistIds.contains(id)) {
         _wishlistIds.remove(id);
@@ -863,21 +836,57 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen> {
             ],
           ),
           const SizedBox(height: 6),
-          GridView.builder(
-            shrinkWrap: true,
-            physics: const NeverScrollableScrollPhysics(),
-            itemCount: _catalogProducts.length,
-            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-              crossAxisCount: 2,
-              crossAxisSpacing: 6,
-              mainAxisSpacing: 6,
-              mainAxisExtent: 320,
+          if (_isLoading)
+            const Padding(
+              padding: EdgeInsets.symmetric(vertical: 40),
+              child: Center(
+                child: CircularProgressIndicator(
+                  color: Color(0xFF03AC0E),
+                ),
+              ),
+            )
+          else if (_products.isEmpty)
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: 40),
+              child: Center(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Icon(
+                      LucideIcons.packageOpen,
+                      size: 36,
+                      color: Color(0xFF94A3B8),
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      'Belum ada produk tersedia.',
+                      style: GoogleFonts.inter(
+                        fontSize: 12,
+                        color: const Color(0xFF64748B),
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            )
+          else
+            GridView.builder(
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              itemCount: _products.length,
+              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                crossAxisCount: 2,
+                crossAxisSpacing: 6,
+                mainAxisSpacing: 6,
+                mainAxisExtent: 320,
+              ),
+              itemBuilder: (context, index) {
+                final product =
+                    Map<String, dynamic>.from(_products[index] as Map);
+                return _buildStandardProductCard(product);
+              },
             ),
-            itemBuilder: (context, index) {
-              final product = _catalogProducts[index];
-              return _buildStandardProductCard(product);
-            },
-          ),
         ],
       ),
     );
@@ -1239,7 +1248,24 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen> {
   }
 
   Widget _buildStandardProductCard(Map<String, dynamic> product) {
-    final isWishlisted = _wishlistIds.contains(product['id']);
+    final productId = product['id'];
+    final isWishlisted = _wishlistIds.contains(productId);
+    final String title = product['title']?.toString() ?? 'Produk Tani';
+    final String price =
+        _formatRupiah(product['price_per_kg'] ?? product['price']);
+    final String location = product['village_name']?.toString() ??
+        product['location']?.toString() ??
+        'Lokal';
+    final String grade = product['grade']?.toString() ??
+        product['originBadge']?.toString() ??
+        'Grade A';
+    final String imageUrl = product['image_url']?.toString() ??
+        product['imageUrl']?.toString() ??
+        '';
+    final bool freeShipping = product['freeShipping'] == true;
+    final String unit = product['unit']?.toString() ?? '/kg';
+    final String rating = product['rating']?.toString() ?? '5.0';
+    final String soldCount = product['soldCount']?.toString() ?? 'Panen Baru';
 
     return Container(
       padding: const EdgeInsets.all(6),
@@ -1265,21 +1291,34 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen> {
                 borderRadius: BorderRadius.circular(6),
                 child: AspectRatio(
                   aspectRatio: 1,
-                  child: Image.network(
-                    product['imageUrl'] as String,
-                    fit: BoxFit.cover,
-                    errorBuilder: (context, error, stackTrace) => Container(
-                      color: const Color(0xFFE2E8F0),
-                      child: const Icon(LucideIcons.image, size: 20),
-                    ),
-                  ),
+                  child: imageUrl.isNotEmpty
+                      ? Image.network(
+                          imageUrl,
+                          fit: BoxFit.cover,
+                          errorBuilder: (context, error, stackTrace) => Container(
+                            color: const Color(0xFFE2E8F0),
+                            child: const Icon(
+                              LucideIcons.image,
+                              size: 20,
+                              color: Color(0xFF94A3B8),
+                            ),
+                          ),
+                        )
+                      : Container(
+                          color: const Color(0xFFE2E8F0),
+                          child: const Icon(
+                            LucideIcons.image,
+                            size: 20,
+                            color: Color(0xFF94A3B8),
+                          ),
+                        ),
                 ),
               ),
               Positioned(
                 top: 3,
                 right: 3,
                 child: InkWell(
-                  onTap: () => _toggleWishlist(product['id'] as int),
+                  onTap: () => _toggleWishlist(productId),
                   child: Container(
                     width: 24,
                     height: 24,
@@ -1301,13 +1340,14 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen> {
                 bottom: 3,
                 left: 3,
                 child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 3.5, vertical: 1.5),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 3.5, vertical: 1.5),
                   decoration: BoxDecoration(
                     color: const Color(0xFF047857).withValues(alpha: 0.9),
                     borderRadius: BorderRadius.circular(3),
                   ),
                   child: Text(
-                    product['originBadge'] as String,
+                    grade,
                     style: GoogleFonts.inter(
                       fontSize: 7.0,
                       fontWeight: FontWeight.w600,
@@ -1319,9 +1359,10 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen> {
             ],
           ),
           const SizedBox(height: 5),
-          if (product['freeShipping'] == true)
+          if (freeShipping)
             Container(
-              padding: const EdgeInsets.symmetric(horizontal: 3.5, vertical: 1),
+              padding:
+                  const EdgeInsets.symmetric(horizontal: 3.5, vertical: 1),
               margin: const EdgeInsets.only(bottom: 3),
               decoration: BoxDecoration(
                 color: const Color(0xFFECFDF5),
@@ -1338,7 +1379,7 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen> {
               ),
             ),
           Text(
-            product['title'] as String,
+            title,
             maxLines: 2,
             overflow: TextOverflow.ellipsis,
             style: GoogleFonts.inter(
@@ -1359,7 +1400,7 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen> {
               const SizedBox(width: 2.5),
               Expanded(
                 child: Text(
-                  product['location'] as String,
+                  location,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: GoogleFonts.inter(
@@ -1379,7 +1420,7 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    product['price'] as String,
+                    price,
                     style: GoogleFonts.inter(
                       fontSize: 14.0,
                       fontWeight: FontWeight.bold,
@@ -1387,7 +1428,7 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen> {
                     ),
                   ),
                   Text(
-                    product['unit'] as String,
+                    unit,
                     style: GoogleFonts.inter(
                       fontSize: 8.0,
                       color: const Color(0xFF94A3B8),
@@ -1396,7 +1437,7 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen> {
                 ],
               ),
               InkWell(
-                onTap: () => _handleAddToCart(product['title'] as String),
+                onTap: () => _handleAddToCart(title),
                 child: Container(
                   width: 26,
                   height: 26,
@@ -1436,7 +1477,7 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen> {
                     ),
                     const SizedBox(width: 2),
                     Text(
-                      product['rating'] as String,
+                      rating,
                       style: GoogleFonts.inter(
                         fontSize: 8.5,
                         fontWeight: FontWeight.w600,
@@ -1446,7 +1487,7 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen> {
                   ],
                 ),
                 Text(
-                  product['soldCount'] as String,
+                  soldCount,
                   style: GoogleFonts.inter(
                     fontSize: 8.5,
                     color: const Color(0xFF64748B),
