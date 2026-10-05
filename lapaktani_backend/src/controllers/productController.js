@@ -1,51 +1,58 @@
+const { v4: uuidv4 } = require('uuid');
 const pool = require('../config/db');
 const redisClient = require('../config/redis');
 
 const getProducts = async (req, res) => {
   try {
-    let cachedCatalog = null;
-    try {
-      cachedCatalog = await redisClient.get('catalog_products');
-    } catch (redisErr) {
-      console.warn('[REDIS] Cache get warning:', redisErr.message);
+    if (redisClient.isOpen) {
+      try {
+        const cachedCatalog = await redisClient.get('lapaktani_catalog');
+        if (cachedCatalog) {
+          const parsedData = JSON.parse(cachedCatalog);
+          return res.status(200).json({
+            success: true,
+            source: 'redis_cache',
+            count: parsedData.length,
+            data: parsedData
+          });
+        }
+      } catch (redisErr) {
+        console.warn('[REDIS] Cache get warning:', redisErr.message);
+      }
     }
 
-    if (cachedCatalog) {
-      const parsedData = JSON.parse(cachedCatalog);
-      return res.status(200).json({
-        success: true,
-        source: 'redis_cache',
-        count: parsedData.length,
-        data: parsedData
-      });
-    }
-
-    const [rows] = await pool.query(`
+    const query = `
       SELECT 
         p.id, 
-        p.farmer_id, 
         p.title, 
-        p.description, 
-        p.price, 
-        p.stock, 
+        p.price_per_kg, 
+        p.stock_kg, 
         p.image_url, 
-        p.created_at,
-        u.full_name AS farmer_name,
-        u.email AS farmer_email
-      FROM products p
-      LEFT JOIN users u ON p.farmer_id = u.id
-      ORDER BY p.created_at DESC
-    `);
+        c.specific_name as category, 
+        pg.grade_label as grade, 
+        fg.group_name as poktan_name, 
+        v.name as village_name 
+      FROM products p 
+      JOIN commodities c ON p.commodity_id = c.id 
+      JOIN product_grades pg ON p.grade_id = pg.id 
+      JOIN farmer_profiles fp ON p.farmer_id = fp.user_id 
+      JOIN farmer_groups fg ON fp.farmer_group_id = fg.id 
+      JOIN villages v ON fg.village_id = v.id
+    `;
 
-    try {
-      await redisClient.setEx('catalog_products', 3600, JSON.stringify(rows));
-    } catch (redisErr) {
-      console.warn('[REDIS] Cache set warning:', redisErr.message);
+    const [rows] = await pool.query(query);
+
+    if (redisClient.isOpen) {
+      try {
+        await redisClient.setEx('lapaktani_catalog', 3600, JSON.stringify(rows));
+      } catch (redisErr) {
+        console.warn('[REDIS] Cache set warning:', redisErr.message);
+      }
     }
 
     return res.status(200).json({
       success: true,
-      source: 'database',
+      source: 'mysql_db',
       count: rows.length,
       data: rows
     });
@@ -60,56 +67,89 @@ const getProducts = async (req, res) => {
 
 const createProduct = async (req, res) => {
   try {
-    const { title, description, price, stock, image_url } = req.body;
-    const farmerId = req.user.id;
+    const farmerId = req.user ? req.user.id : null;
 
-    if (!title || price === undefined || price === null) {
-      return res.status(400).json({
+    if (!farmerId) {
+      return res.status(401).json({
         success: false,
-        message: 'Judul produk dan harga wajib diisi.'
+        message: 'Akses tidak sah. ID petani tidak ditemukan dalam token.'
       });
     }
 
-    const numericPrice = parseFloat(price);
-    const numericStock = parseInt(stock || 0, 10);
+    const { title, price_per_kg, stock_kg, commodity_id, grade_id } = req.body;
 
-    if (isNaN(numericPrice) || numericPrice < 0) {
+    if (
+      !title ||
+      price_per_kg === undefined ||
+      price_per_kg === null ||
+      stock_kg === undefined ||
+      stock_kg === null ||
+      !commodity_id ||
+      !grade_id
+    ) {
       return res.status(400).json({
         success: false,
-        message: 'Harga produk harus berupa angka positif.'
+        message: 'Field title, price_per_kg, stock_kg, commodity_id, dan grade_id wajib diisi.'
       });
     }
 
-    const [result] = await pool.query(
-      `INSERT INTO products (farmer_id, title, description, price, stock, image_url)
-       VALUES (?, ?, ?, ?, ?, ?)`,
+    const numericPrice = parseFloat(price_per_kg);
+    const numericStock = parseFloat(stock_kg);
+
+    if (isNaN(numericPrice) || numericPrice < 0 || isNaN(numericStock) || numericStock < 0) {
+      return res.status(400).json({
+        success: false,
+        message: 'Harga per kg dan stok kg harus berupa angka positif.'
+      });
+    }
+
+    const [farmerProfiles] = await pool.query(
+      'SELECT user_id, farmer_group_id FROM farmer_profiles WHERE user_id = ? LIMIT 1',
+      [farmerId]
+    );
+
+    if (farmerProfiles.length === 0) {
+      return res.status(403).json({
+        success: false,
+        message: 'Profil petani tidak ditemukan. Silakan lengkapi profil petani terlebih dahulu.'
+      });
+    }
+
+    const productId = uuidv4();
+
+    await pool.query(
+      `INSERT INTO products (id, farmer_id, commodity_id, grade_id, title, price_per_kg, stock_kg)
+       VALUES (?, ?, ?, ?, ?, ?, ?)`,
       [
+        productId,
         farmerId,
+        commodity_id,
+        grade_id,
         title.trim(),
-        description ? description.trim() : null,
         numericPrice,
-        isNaN(numericStock) ? 0 : numericStock,
-        image_url ? image_url.trim() : null
+        numericStock
       ]
     );
 
-    try {
-      await redisClient.del('catalog_products');
-    } catch (redisErr) {
-      console.warn('[REDIS] Invalidation warning:', redisErr.message);
+    if (redisClient.isOpen) {
+      try {
+        await redisClient.del('lapaktani_catalog');
+      } catch (redisErr) {
+        console.warn('[REDIS] Invalidation warning:', redisErr.message);
+      }
     }
 
     return res.status(201).json({
       success: true,
       message: 'Produk berhasil ditambahkan ke katalog.',
       data: {
-        id: result.insertId,
+        id: productId,
         farmer_id: farmerId,
+        commodity_id,
+        grade_id,
         title: title.trim(),
-        description: description ? description.trim() : null,
-        price: numericPrice,
-        stock: isNaN(numericStock) ? 0 : numericStock,
-        image_url: image_url ? image_url.trim() : null
+        price_per_kg: numericPrice,
+        stock_kg: numericStock
       }
     });
   } catch (error) {
