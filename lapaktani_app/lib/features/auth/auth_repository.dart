@@ -76,7 +76,7 @@ class AuthRepository {
     required String password,
   }) async {
     try {
-      final response = await _apiService.post('/auth/login', {
+      final response = await ApiService.post('/auth/login', {
         'email': email.trim(),
         'password': password,
       });
@@ -136,7 +136,7 @@ class AuthRepository {
     String? farmerGroupId,
   }) async {
     try {
-      final response = await _apiService.post('/auth/register', {
+      final response = await ApiService.post('/auth/register', {
         'full_name': fullName ?? email.split('@').first,
         'email': email.trim(),
         'password': password,

@@ -3,6 +3,7 @@ import '../../core/services/api_service.dart';
 import '../auth/auth_repository.dart';
 
 class ProfileRepository {
+  // ignore: unused_field
   final ApiService _apiService;
 
   ProfileRepository({ApiService? apiService})
@@ -43,7 +44,7 @@ class ProfileRepository {
     };
 
     try {
-      await _apiService.post('/farmer/profile', payload);
+      await ApiService.post('/farmer/profile', payload);
     } catch (_) {
       // Local fallback simulation if endpoint is pending extension
     }

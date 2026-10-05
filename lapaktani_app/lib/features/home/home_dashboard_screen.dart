@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 import '../../core/services/api_service.dart';
+import '../product/add_product_screen.dart';
 
 class HomeDashboardScreen extends StatefulWidget {
   const HomeDashboardScreen({super.key});
@@ -250,6 +251,30 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen> {
                 ),
               ),
             ],
+          ),
+        ),
+        floatingActionButton: FloatingActionButton.extended(
+          onPressed: () async {
+            final result = await Navigator.push<bool>(
+              context,
+              MaterialPageRoute(
+                builder: (context) => const AddProductScreen(),
+              ),
+            );
+            if (result == true) {
+              fetchProducts();
+            }
+          },
+          backgroundColor: const Color(0xFF03AC0E),
+          foregroundColor: Colors.white,
+          elevation: 3,
+          icon: const Icon(LucideIcons.plus, size: 18),
+          label: Text(
+            'Tambah Produk',
+            style: GoogleFonts.inter(
+              fontSize: 12,
+              fontWeight: FontWeight.w700,
+            ),
           ),
         ),
         bottomNavigationBar: _buildBottomNavigationBar(),

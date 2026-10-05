@@ -83,7 +83,10 @@ class ApiService {
     }
   }
 
-  Future<http.Response> post(String path, Map<String, dynamic> body) async {
+  static Future<http.Response> post(String path, Map<String, dynamic> body) =>
+      _instance._post(path, body);
+
+  Future<http.Response> _post(String path, Map<String, dynamic> body) async {
     final normalizedPath = path.startsWith('/') ? path : '/$path';
     final url = Uri.parse('$baseUrl$normalizedPath');
     try {
