@@ -949,7 +949,7 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen> {
               crossAxisCount: 2,
               crossAxisSpacing: 4,
               mainAxisSpacing: 4,
-              mainAxisExtent: 94,
+              mainAxisExtent: 110,
             ),
             itemBuilder: (context, index) {
               final item = _flashSaleProducts[index];
@@ -962,7 +962,6 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen> {
                 ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
-                  mainAxisSize: MainAxisSize.min,
                   children: [
                     ClipRRect(
                       borderRadius: BorderRadius.circular(4),
@@ -980,20 +979,32 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen> {
                       ),
                     ),
                     const SizedBox(height: 2),
-                    Text(
-                      item['price']!,
-                      style: GoogleFonts.inter(
-                        fontSize: 9.5,
-                        fontWeight: FontWeight.w800,
-                        color: const Color(0xFFDC2626),
-                      ),
-                    ),
-                    Text(
-                      item['originalPrice']!,
-                      style: GoogleFonts.inter(
-                        fontSize: 7.5,
-                        color: const Color(0xFF94A3B8),
-                        decoration: TextDecoration.lineThrough,
+                    Expanded(
+                      child: FittedBox(
+                        fit: BoxFit.scaleDown,
+                        alignment: Alignment.centerLeft,
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Text(
+                              item['price']!,
+                              style: GoogleFonts.inter(
+                                fontSize: 9.5,
+                                fontWeight: FontWeight.w800,
+                                color: const Color(0xFFDC2626),
+                              ),
+                            ),
+                            Text(
+                              item['originalPrice']!,
+                              style: GoogleFonts.inter(
+                                fontSize: 7.5,
+                                color: const Color(0xFF94A3B8),
+                                decoration: TextDecoration.lineThrough,
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
                     ),
                   ],
