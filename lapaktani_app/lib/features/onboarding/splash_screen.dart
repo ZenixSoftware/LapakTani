@@ -2,8 +2,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:lucide_icons/lucide_icons.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
-import '../../core/config/supabase_config.dart';
+import '../../core/services/api_service.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/widgets/lapaktani_logo.dart';
 import '../home/home_screen.dart';
@@ -25,16 +24,18 @@ class _SplashScreenState extends State<SplashScreen> {
     _timer = Timer(const Duration(milliseconds: 2500), _navigateToNextScreen);
   }
 
-  void _navigateToNextScreen() {
+  Future<void> _navigateToNextScreen() async {
     if (!mounted) return;
-    Session? session;
+    String? token;
     try {
-      session = SupabaseConfig.client.auth.currentSession;
+      token = await ApiService().getToken();
     } catch (_) {
-      session = null;
+      token = null;
     }
-    final Widget targetScreen =
-        session != null ? const HomeScreen() : const OnboardingScreen();
+    if (!mounted) return;
+    final Widget targetScreen = (token != null && token.isNotEmpty)
+        ? const HomeScreen()
+        : const OnboardingScreen();
 
     Navigator.of(context).pushReplacement(
       PageRouteBuilder(

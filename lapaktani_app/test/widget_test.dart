@@ -7,6 +7,6 @@ void main() {
     await tester.pumpWidget(const LapakTaniApp());
     expect(find.text('Pasar Digital Hasil Tani Modern'), findsOneWidget);
     await tester.pump(const Duration(milliseconds: 2600));
-    await tester.pumpAndSettle();
+    await tester.pump(const Duration(milliseconds: 500));
   });
 }

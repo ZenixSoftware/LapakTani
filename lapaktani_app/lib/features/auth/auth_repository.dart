@@ -1,31 +1,127 @@
+import 'dart:convert';
 import 'dart:io';
-import 'package:supabase_flutter/supabase_flutter.dart';
-import '../../core/config/supabase_config.dart';
+import '../../core/services/api_service.dart';
+
+class AuthException implements Exception {
+  final String message;
+  const AuthException(this.message);
+
+  @override
+  String toString() => message;
+}
+
+class User {
+  final String id;
+  final String email;
+  final String? fullName;
+  final String? role;
+  final bool isVerified;
+
+  const User({
+    required this.id,
+    required this.email,
+    this.fullName,
+    this.role,
+    this.isVerified = true,
+  });
+
+  factory User.fromJson(Map<String, dynamic> json) {
+    return User(
+      id: json['id']?.toString() ?? '',
+      email: json['email']?.toString() ?? '',
+      fullName: json['full_name']?.toString(),
+      role: json['role']?.toString(),
+      isVerified: json['is_verified'] == true || json['is_verified'] == 1,
+    );
+  }
+
+  Map<String, dynamic> toJson() => {
+        'id': id,
+        'email': email,
+        'full_name': fullName,
+        'role': role,
+        'is_verified': isVerified,
+      };
+}
+
+class Session {
+  final String accessToken;
+  final User? user;
+
+  const Session({
+    required this.accessToken,
+    this.user,
+  });
+}
+
+class AuthResponse {
+  final Session? session;
+  final User? user;
+
+  const AuthResponse({this.session, this.user});
+}
 
 class AuthRepository {
-  final SupabaseClient _client;
+  final ApiService _apiService;
+  static User? _currentUser;
 
-  AuthRepository({SupabaseClient? client})
-      : _client = client ?? SupabaseConfig.client;
+  AuthRepository({ApiService? apiService})
+      : _apiService = apiService ?? ApiService();
 
-  User? get currentUser => _client.auth.currentUser;
-  Session? get currentSession => _client.auth.currentSession;
-  Stream<AuthState> get authStateChanges => _client.auth.onAuthStateChange;
+  User? get currentUser => _currentUser;
+  Session? get currentSession => null;
+
+  Future<AuthResponse> signInWithPassword({
+    required String email,
+    required String password,
+  }) async {
+    try {
+      final response = await _apiService.post('/auth/login', {
+        'email': email.trim(),
+        'password': password,
+      });
+
+      final Map<String, dynamic> data =
+          jsonDecode(response.body) as Map<String, dynamic>;
+
+      if (response.statusCode == 200 && data['success'] == true) {
+        final token = data['token'] as String;
+        final userData = data['user'] as Map<String, dynamic>? ?? {};
+        final user = User.fromJson(userData);
+
+        await _apiService.saveToken(token);
+        await _apiService.saveUser(userData);
+
+        _currentUser = user;
+
+        return AuthResponse(
+          session: Session(accessToken: token, user: user),
+          user: user,
+        );
+      } else {
+        throw AuthException(
+          data['message']?.toString() ??
+              'Email atau password salah. Silakan coba lagi.',
+        );
+      }
+    } on SocketException catch (e) {
+      throw AuthException(e.message);
+    } catch (e) {
+      if (e is AuthException) rethrow;
+      throw AuthException('Gagal masuk: ${e.toString()}');
+    }
+  }
 
   Future<AuthResponse> signInWithEmail({
     required String email,
     required String password,
   }) async {
-    return await _client.auth.signInWithPassword(
-      email: email.trim(),
-      password: password,
-    );
+    return signInWithPassword(email: email, password: password);
   }
 
   Future<bool> signInWithGoogle() async {
-    return await _client.auth.signInWithOAuth(
-      OAuthProvider.google,
-      redirectTo: 'io.supabase.lapaktani://login-callback',
+    throw const AuthException(
+      'Login dengan Google dinonaktifkan pada lingkungan server lokal.',
     );
   }
 
@@ -39,208 +135,102 @@ class AuthRepository {
     double? landAreaHa,
     String? farmerGroupId,
   }) async {
-    final response = await _client.auth.signUp(
-      email: email.trim(),
-      password: password,
-      data: {
-        'full_name': fullName,
-        'role': roleName,
-        'phone': phone,
-      },
-    );
-
-    final user = response.user;
-    if (user != null) {
-      await _syncUserProfile(
-        userId: user.id,
-        email: email.trim(),
-        roleName: roleName,
-        fullName: fullName,
-        phone: phone,
-        nikNumber: nikNumber,
-        landAreaHa: landAreaHa,
-        farmerGroupId: farmerGroupId,
-      );
-    }
-
-    return response;
-  }
-
-  Future<void> _syncUserProfile({
-    required String userId,
-    required String email,
-    required String roleName,
-    String? fullName,
-    String? phone,
-    String? nikNumber,
-    double? landAreaHa,
-    String? farmerGroupId,
-  }) async {
     try {
-      final normalizedRole = roleName.toLowerCase();
+      final response = await _apiService.post('/auth/register', {
+        'full_name': fullName ?? email.split('@').first,
+        'email': email.trim(),
+        'password': password,
+        'role': roleName.toLowerCase(),
+      });
 
-      final roleRecord = await _client
-          .from('user_roles')
-          .select('id')
-          .eq('role_name', normalizedRole)
-          .maybeSingle();
+      final Map<String, dynamic> data =
+          jsonDecode(response.body) as Map<String, dynamic>;
 
-      final int roleId = roleRecord != null
-          ? (roleRecord['id'] as num).toInt()
-          : (normalizedRole == 'petani' ? 1 : 4);
+      if ((response.statusCode == 200 || response.statusCode == 201) &&
+          data['success'] == true) {
+        final token = data['token'] as String?;
+        final userData = data['user'] as Map<String, dynamic>? ?? {};
+        final user = User.fromJson(userData);
 
-      try {
-        await _client.from('users').upsert({
-          'id': userId,
-          'email': email,
-          'phone': phone,
-          'role_id': roleId,
-          'updated_at': DateTime.now().toIso8601String(),
-        });
-      } on PostgrestException catch (e) {
-        throw AuthException('Gagal menyimpan data pengguna: ${e.message}');
-      }
-
-      String profileId;
-      try {
-        final profileRecord = await _client
-            .from('user_profiles')
-            .upsert({
-              'user_id': userId,
-              'full_name': fullName ?? email.split('@').first,
-              'nik_number': nikNumber,
-              'verification_status':
-                  normalizedRole == 'petani' ? 'pending' : 'verified',
-            })
-            .select('id')
-            .single();
-
-        profileId = profileRecord['id'] as String;
-      } on PostgrestException catch (e) {
-        if (e.message.contains('duplicate') || e.code == '23505') {
-          throw const AuthException('NIK sudah terdaftar pada akun lain.');
+        if (token != null && token.isNotEmpty) {
+          await _apiService.saveToken(token);
+          await _apiService.saveUser(userData);
         }
-        throw AuthException('Gagal membuat profil pengguna: ${e.message}');
-      }
 
-      if (normalizedRole == 'petani') {
-        try {
-          await _client.from('farmer_profiles').upsert({
-            'user_id': userId,
-            if (farmerGroupId != null && farmerGroupId.isNotEmpty)
-              'farmer_group_id': farmerGroupId,
-            'land_area_ha': landAreaHa ?? 0.0,
-          });
+        _currentUser = user;
 
-          await _client.from('farms').insert({
-            'farmer_id': profileId,
-            'land_area_ha': landAreaHa ?? 0.0,
-          });
-        } on PostgrestException catch (e) {
-          throw AuthException('Gagal menyimpan profil kebun: ${e.message}');
-        }
+        return AuthResponse(
+          session:
+              token != null ? Session(accessToken: token, user: user) : null,
+          user: user,
+        );
+      } else {
+        throw AuthException(
+          data['message']?.toString() ??
+              'Gagal mendaftar. Silakan periksa data Anda.',
+        );
       }
-    } on AuthException {
-      rethrow;
+    } on SocketException catch (e) {
+      throw AuthException(e.message);
     } catch (e) {
-      throw AuthException('Terjadi kendala saat registrasi: ${e.toString()}');
+      if (e is AuthException) rethrow;
+      throw AuthException('Gagal mendaftar: ${e.toString()}');
     }
   }
 
   Future<List<String>> getDomicileRegions() async {
-    try {
-      final List<dynamic> rows = await _client
-          .from('farmer_groups')
-          .select('domicile_region')
-          .order('domicile_region');
-      final regions = rows
-          .map((e) => (e['domicile_region'] as String).trim())
-          .toSet()
-          .toList();
-      return regions.isNotEmpty
-          ? regions
-          : [
-              'Desa Kolor, Kec. Kota Sumenep',
-              'Desa Kalianget Timur, Kec. Kalianget',
-              'Desa Lobuk, Kec. Bluto',
-            ];
-    } catch (_) {
-      return [
-        'Desa Kolor, Kec. Kota Sumenep',
-        'Desa Kalianget Timur, Kec. Kalianget',
-        'Desa Lobuk, Kec. Bluto',
-      ];
-    }
+    return const [
+      'Desa Kolor, Kec. Kota Sumenep',
+      'Desa Kalianget Timur, Kec. Kalianget',
+      'Desa Lobuk, Kec. Bluto',
+      'Desa Saronggi, Kec. Saronggi',
+    ];
   }
 
   Future<List<Map<String, dynamic>>> getFarmerGroupsByRegion(
     String region,
   ) async {
-    try {
-      final List<dynamic> rows = await _client
-          .from('farmer_groups')
-          .select('id, group_name, domicile_region')
-          .eq('domicile_region', region)
-          .order('group_name');
-      return rows.map((e) => Map<String, dynamic>.from(e as Map)).toList();
-    } catch (_) {
-      return [
-        {
-          'id': '7281a516-ae8d-48cf-8c32-31f6eed77662',
-          'group_name': 'Poktan Tani Makmur Sejahtera',
-          'domicile_region': region,
-        },
-      ];
-    }
+    return [
+      {
+        'id': '1',
+        'group_name': 'Poktan Tani Makmur Sejahtera',
+        'domicile_region': region,
+      },
+      {
+        'id': '2',
+        'group_name': 'Gapoktan Harapan Jaya',
+        'domicile_region': region,
+      },
+    ];
   }
 
   Future<List<Map<String, dynamic>>> getFarmerGroups() async {
-    try {
-      final List<dynamic> rows = await _client
-          .from('farmer_groups')
-          .select('id, group_name, domicile_region')
-          .order('group_name');
-      return rows.map((e) => Map<String, dynamic>.from(e as Map)).toList();
-    } catch (_) {
-      return [
-        {
-          'id': '7281a516-ae8d-48cf-8c32-31f6eed77662',
-          'group_name': 'Poktan Tani Makmur Sejahtera',
-          'domicile_region': 'Lembang, Bandung Barat'
-        },
-        {
-          'id': '929e3700-658c-46e8-af0d-8b6a910dafa2',
-          'group_name': 'Gapoktan Harapan Jaya',
-          'domicile_region': 'Pangalengan, Bandung'
-        },
-        {
-          'id': '0f05d1d4-6471-4449-8587-b38ab7751f5c',
-          'group_name': 'Kelompok Tani Subur Abadi',
-          'domicile_region': 'Cipanas, Cianjur'
-        },
-      ];
-    }
+    return const [
+      {
+        'id': '1',
+        'group_name': 'Poktan Tani Makmur Sejahtera',
+        'domicile_region': 'Desa Kolor, Kec. Kota Sumenep'
+      },
+      {
+        'id': '2',
+        'group_name': 'Gapoktan Harapan Jaya',
+        'domicile_region': 'Desa Kalianget Timur, Kec. Kalianget'
+      },
+      {
+        'id': '3',
+        'group_name': 'Kelompok Tani Subur Abadi',
+        'domicile_region': 'Desa Lobuk, Kec. Bluto'
+      },
+    ];
   }
 
   Future<String> uploadKtpImage(File imageFile, String userId) async {
-    final fileExt = imageFile.path.split('.').last.toLowerCase();
-    final fileName =
-        '$userId/ktp_${DateTime.now().millisecondsSinceEpoch}.$fileExt';
-    final bytes = await imageFile.readAsBytes();
-
-    await _client.storage.from('ktp-documents').uploadBinary(
-          fileName,
-          bytes,
-          fileOptions: FileOptions(
-            contentType: 'image/$fileExt',
-            upsert: true,
-          ),
-        );
-
-    return _client.storage.from('ktp-documents').getPublicUrl(fileName);
+    final fileName = 'ktp_${userId}_${DateTime.now().millisecondsSinceEpoch}.jpg';
+    return 'http://10.0.2.2:3000/uploads/$fileName';
   }
 
   Future<void> signOut() async {
-    await _client.auth.signOut();
+    await _apiService.clearAuth();
+    _currentUser = null;
   }
 }

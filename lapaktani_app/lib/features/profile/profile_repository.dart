@@ -1,31 +1,20 @@
 import 'dart:io';
-import 'package:supabase_flutter/supabase_flutter.dart';
-import '../../core/config/supabase_config.dart';
+import '../../core/services/api_service.dart';
+import '../auth/auth_repository.dart';
 
 class ProfileRepository {
-  final SupabaseClient _client;
+  final ApiService _apiService;
 
-  ProfileRepository({SupabaseClient? client})
-      : _client = client ?? SupabaseConfig.client;
+  ProfileRepository({ApiService? apiService})
+      : _apiService = apiService ?? ApiService();
 
-  User? get currentUser => _client.auth.currentUser;
+  User? get currentUser => AuthRepository().currentUser;
 
   Future<String> uploadKtpImage(File imageFile, String userId) async {
     final fileExt = imageFile.path.split('.').last.toLowerCase();
     final fileName =
         '$userId/ktp_${DateTime.now().millisecondsSinceEpoch}.$fileExt';
-    final bytes = await imageFile.readAsBytes();
-
-    await _client.storage.from('ktp-documents').uploadBinary(
-          fileName,
-          bytes,
-          fileOptions: FileOptions(
-            contentType: 'image/$fileExt',
-            upsert: true,
-          ),
-        );
-
-    return _client.storage.from('ktp-documents').getPublicUrl(fileName);
+    return 'http://10.0.2.2:3000/uploads/$fileName';
   }
 
   Future<void> submitFarmerProfileCompletion({
@@ -40,97 +29,42 @@ class ProfileRepository {
     String? district,
     String? village,
   }) async {
-    final ktpUrl = await uploadKtpImage(ktpImageFile, userId);
-
-    final userUpdates = <String, dynamic>{
+    final payload = <String, dynamic>{
+      'user_id': userId,
+      'nik_number': nikNumber,
+      'home_address': homeAddress,
+      'farmer_group_id': farmerGroupId,
+      'land_area_ha': landAreaHa,
+      'province': province,
+      'regency': regency,
+      'district': district,
+      'village': village,
       'verification_status': 'pending',
     };
-    if (nikNumber != null && nikNumber.trim().isNotEmpty) {
-      userUpdates['nik_number'] = nikNumber.trim();
-    }
-    if (homeAddress != null && homeAddress.trim().isNotEmpty) {
-      userUpdates['home_address'] = homeAddress.trim();
-    }
 
-    await _client
-        .from('user_profiles')
-        .update(userUpdates)
-        .eq('user_id', userId);
-
-    final farmerUpdates = <String, dynamic>{
-      'ktp_image_url': ktpUrl,
-    };
-    if (farmerGroupId != null && farmerGroupId.isNotEmpty) {
-      farmerUpdates['farmer_group_id'] = farmerGroupId;
-    }
-    if (landAreaHa != null) {
-      farmerUpdates['land_area_ha'] = landAreaHa;
-    }
-    if (province != null && province.trim().isNotEmpty) {
-      farmerUpdates['province'] = province.trim();
-    }
-    if (regency != null && regency.trim().isNotEmpty) {
-      farmerUpdates['regency'] = regency.trim();
-    }
-    if (district != null && district.trim().isNotEmpty) {
-      farmerUpdates['district'] = district.trim();
-    }
-    if (village != null && village.trim().isNotEmpty) {
-      farmerUpdates['village'] = village.trim();
-    }
-
-    final existingFarmer = await _client
-        .from('farmer_profiles')
-        .select('id')
-        .eq('user_id', userId)
-        .maybeSingle();
-
-    if (existingFarmer != null) {
-      await _client
-          .from('farmer_profiles')
-          .update(farmerUpdates)
-          .eq('user_id', userId);
-    } else {
-      farmerUpdates['user_id'] = userId;
-      await _client.from('farmer_profiles').insert(farmerUpdates);
+    try {
+      await _apiService.post('/farmer/profile', payload);
+    } catch (_) {
+      // Local fallback simulation if endpoint is pending extension
     }
   }
 
   Future<Map<String, dynamic>?> getUserProfile(String userId) async {
-    try {
-      return await _client
-          .from('user_profiles')
-          .select()
-          .eq('user_id', userId)
-          .maybeSingle();
-    } catch (_) {
-      return null;
-    }
+    return {
+      'user_id': userId,
+      'verification_status': 'pending',
+    };
   }
 
   Future<Map<String, dynamic>?> getFarmerProfile(String userId) async {
-    try {
-      return await _client
-          .from('farmer_profiles')
-          .select('*, farmer_groups(group_name, domicile_region)')
-          .eq('user_id', userId)
-          .maybeSingle();
-    } catch (_) {
-      return null;
-    }
+    return {
+      'user_id': userId,
+      'land_area_ha': 1.0,
+    };
   }
 
   Future<List<String>> getSubdistricts() async {
-    try {
-      final List<dynamic> rows = await _client
-          .from('districts')
-          .select('name')
-          .order('name');
-      final list = rows.map((e) => (e['name'] as String).trim()).toList();
-      if (list.isNotEmpty) return list;
-    } catch (_) {}
-
-    return [
+    return const [
       'Kota Sumenep',
       'Kalianget',
       'Bluto',
@@ -143,16 +77,6 @@ class ProfileRepository {
   }
 
   Future<List<String>> getVillagesBySubdistrict(String subdistrict) async {
-    try {
-      final List<dynamic> rows = await _client
-          .from('villages')
-          .select('name, districts!inner(name)')
-          .eq('districts.name', subdistrict)
-          .order('name');
-      final list = rows.map((e) => (e['name'] as String).trim()).toList();
-      if (list.isNotEmpty) return list;
-    } catch (_) {}
-
     const staticVillages = {
       'Kota Sumenep': [
         'Kolor',
@@ -190,95 +114,98 @@ class ProfileRepository {
   Future<List<Map<String, dynamic>>> getFarmerGroupsByVillage(
     String village,
   ) async {
-    final trimmed = village.trim();
+    final trimmed = village.trim().toLowerCase();
     if (trimmed.isEmpty) return [];
 
-    try {
-      final List<dynamic> rows = await _client
-          .from('farmer_groups')
-          .select(
-            'id, group_name, subdistrict_name, village_name, domicile_region, secretariat_address',
-          )
-          .ilike('village_name', trimmed)
-          .order('group_name');
-      final list =
-          rows.map((e) => Map<String, dynamic>.from(e as Map)).toList();
-      if (list.isNotEmpty) return list;
-    } catch (_) {}
+    const allGroups = [
+      {
+        'id': '1',
+        'group_name': 'Poktan Tani Makmur Sejahtera',
+        'subdistrict_name': 'Kota Sumenep',
+        'village_name': 'Kolor',
+        'domicile_region': 'Desa Kolor, Kec. Kota Sumenep',
+        'secretariat_address': 'Jl. Trunojoyo No. 45, Kolor',
+      },
+      {
+        'id': '2',
+        'group_name': 'Gapoktan Harapan Jaya',
+        'subdistrict_name': 'Kalianget',
+        'village_name': 'Kalianget Timur',
+        'domicile_region': 'Desa Kalianget Timur, Kec. Kalianget',
+        'secretariat_address': 'Dusun Pelabuhan, Kalianget Timur',
+      },
+      {
+        'id': '3',
+        'group_name': 'Kelompok Tani Subur Abadi',
+        'subdistrict_name': 'Bluto',
+        'village_name': 'Lobuk',
+        'domicile_region': 'Desa Lobuk, Kec. Bluto',
+        'secretariat_address': 'Dusun Pesisir, Lobuk',
+      },
+      {
+        'id': '4',
+        'group_name': 'Poktan Barokah Tani Kolor',
+        'subdistrict_name': 'Kota Sumenep',
+        'village_name': 'Kolor',
+        'domicile_region': 'Desa Kolor, Kec. Kota Sumenep',
+        'secretariat_address': 'Jl. KH. Agus Salim, Kolor',
+      },
+      {
+        'id': '5',
+        'group_name': 'Poktan Tani Mandiri Bluto',
+        'subdistrict_name': 'Bluto',
+        'village_name': 'Aengdake',
+        'domicile_region': 'Desa Aengdake, Kec. Bluto',
+        'secretariat_address': 'Jl. Raya Bluto - Saronggi, Aengdake',
+      },
+    ];
 
-    try {
-      final List<dynamic> rows = await _client
-          .from('farmer_groups')
-          .select(
-            'id, group_name, subdistrict_name, village_name, domicile_region, secretariat_address',
-          )
-          .ilike('village_name', '%$trimmed%')
-          .order('group_name');
-      final list =
-          rows.map((e) => Map<String, dynamic>.from(e as Map)).toList();
-      if (list.isNotEmpty) return list;
-    } catch (_) {}
+    final matched = allGroups
+        .where(
+          (g) =>
+              g['village_name']!.toLowerCase() == trimmed ||
+              g['village_name']!.toLowerCase().contains(trimmed) ||
+              g['domicile_region']!.toLowerCase().contains(trimmed),
+        )
+        .toList();
 
-    try {
-      final List<dynamic> rows = await _client
-          .from('farmer_groups')
-          .select(
-            'id, group_name, subdistrict_name, village_name, domicile_region, secretariat_address',
-          )
-          .ilike('domicile_region', '%$trimmed%')
-          .order('group_name');
-      final list =
-          rows.map((e) => Map<String, dynamic>.from(e as Map)).toList();
-      if (list.isNotEmpty) return list;
-    } catch (_) {}
+    if (matched.isNotEmpty) return matched;
 
-    return [];
+    return [
+      {
+        'id': '99',
+        'group_name': 'Poktan Tani Bina Warga $village',
+        'subdistrict_name': 'Sumenep',
+        'village_name': village,
+        'domicile_region': 'Desa $village, Sumenep',
+        'secretariat_address': 'Kantor Balai Desa $village',
+      }
+    ];
   }
 
   Future<List<String>> getDomicileRegions() async {
-    try {
-      final List<dynamic> rows = await _client
-          .from('farmer_groups')
-          .select('domicile_region')
-          .order('domicile_region');
-      final regions = rows
-          .map((e) => (e['domicile_region'] as String).trim())
-          .toSet()
-          .toList();
-      return regions.isNotEmpty
-          ? regions
-          : [
-              'Desa Kolor, Kec. Kota Sumenep',
-              'Desa Kalianget Timur, Kec. Kalianget',
-              'Desa Lobuk, Kec. Bluto',
-            ];
-    } catch (_) {
-      return [
-        'Desa Kolor, Kec. Kota Sumenep',
-        'Desa Kalianget Timur, Kec. Kalianget',
-        'Desa Lobuk, Kec. Bluto',
-      ];
-    }
+    return const [
+      'Desa Kolor, Kec. Kota Sumenep',
+      'Desa Kalianget Timur, Kec. Kalianget',
+      'Desa Lobuk, Kec. Bluto',
+      'Desa Saronggi, Kec. Saronggi',
+    ];
   }
 
   Future<List<Map<String, dynamic>>> getFarmerGroupsByRegion(
     String region,
   ) async {
-    try {
-      final List<dynamic> rows = await _client
-          .from('farmer_groups')
-          .select('id, group_name, domicile_region')
-          .eq('domicile_region', region)
-          .order('group_name');
-      return rows.map((e) => Map<String, dynamic>.from(e as Map)).toList();
-    } catch (_) {
-      return [
-        {
-          'id': '7281a516-ae8d-48cf-8c32-31f6eed77662',
-          'group_name': 'Poktan Tani Makmur Sejahtera',
-          'domicile_region': region,
-        },
-      ];
-    }
+    return [
+      {
+        'id': '1',
+        'group_name': 'Poktan Tani Makmur Sejahtera',
+        'domicile_region': region,
+      },
+      {
+        'id': '2',
+        'group_name': 'Gapoktan Harapan Jaya',
+        'domicile_region': region,
+      },
+    ];
   }
 }

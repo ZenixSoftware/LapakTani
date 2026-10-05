@@ -48,3 +48,8 @@ app.*.map.json
 .agents/
 AGENTS.md
 
+# Node / Web / Backend
+node_modules/
+.env
+
+
