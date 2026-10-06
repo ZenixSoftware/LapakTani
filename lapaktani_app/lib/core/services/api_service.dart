@@ -109,4 +109,51 @@ class ApiService {
       rethrow;
     }
   }
+
+  static Future<http.Response> put(String path, Map<String, dynamic> body) =>
+      _instance._put(path, body);
+
+  Future<http.Response> _put(String path, Map<String, dynamic> body) async {
+    final normalizedPath = path.startsWith('/') ? path : '/$path';
+    final url = Uri.parse('$baseUrl$normalizedPath');
+    try {
+      final headers = await _buildHeaders();
+      final response = await _client
+          .put(
+            url,
+            headers: headers,
+            body: jsonEncode(body),
+          )
+          .timeout(
+            const Duration(seconds: 15),
+          );
+      return response;
+    } on SocketException {
+      throw const SocketException(
+        'Tidak dapat terhubung ke server backend lokal (http://10.0.2.2:3000). Pastikan server Express aktif.',
+      );
+    } catch (e) {
+      rethrow;
+    }
+  }
+
+  static Future<http.Response> delete(String path) => _instance._delete(path);
+
+  Future<http.Response> _delete(String path) async {
+    final normalizedPath = path.startsWith('/') ? path : '/$path';
+    final url = Uri.parse('$baseUrl$normalizedPath');
+    try {
+      final headers = await _buildHeaders();
+      final response = await _client.delete(url, headers: headers).timeout(
+            const Duration(seconds: 15),
+          );
+      return response;
+    } on SocketException {
+      throw const SocketException(
+        'Tidak dapat terhubung ke server backend lokal (http://10.0.2.2:3000). Pastikan server Express aktif.',
+      );
+    } catch (e) {
+      rethrow;
+    }
+  }
 }

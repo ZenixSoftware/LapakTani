@@ -4,6 +4,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 import '../../core/services/api_service.dart';
 import '../product/add_product_screen.dart';
+import '../product/my_products_screen.dart';
 
 class HomeDashboardScreen extends StatefulWidget {
   const HomeDashboardScreen({super.key});
@@ -1630,9 +1631,16 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen> {
 
           return InkWell(
             onTap: () {
-              setState(() {
-                _currentBottomNavIndex = index;
-              });
+              if (index == 2) {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => const MyProductsScreen()),
+                ).then((_) => fetchProducts());
+              } else {
+                setState(() {
+                  _currentBottomNavIndex = index;
+                });
+              }
             },
             child: Padding(
               padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 3),

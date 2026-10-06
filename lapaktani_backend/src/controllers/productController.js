@@ -2,6 +2,9 @@ const { v4: uuidv4 } = require('uuid');
 const pool = require('../config/db');
 const redisClient = require('../config/redis');
 
+/**
+ * Public catalog
+ */
 const getProducts = async (req, res) => {
   try {
     if (redisClient.isOpen) {
@@ -65,6 +68,60 @@ const getProducts = async (req, res) => {
   }
 };
 
+/**
+ * Farmer Products (GET /api/products/me)
+ */
+const getFarmerProducts = async (req, res) => {
+  try {
+    const farmerId = req.user ? req.user.id : null;
+
+    if (!farmerId) {
+      return res.status(401).json({
+        success: false,
+        message: 'Akses tidak sah. ID petani tidak ditemukan dalam token.'
+      });
+    }
+
+    const query = `
+      SELECT 
+        p.id, 
+        p.title, 
+        p.price_per_kg, 
+        p.stock_kg, 
+        p.image_url, 
+        p.description,
+        p.commodity_id,
+        p.grade_id,
+        c.specific_name as category, 
+        c.specific_name as commodity_name,
+        pg.grade_label as grade, 
+        p.created_at
+      FROM products p 
+      LEFT JOIN commodities c ON p.commodity_id = c.id 
+      LEFT JOIN product_grades pg ON p.grade_id = pg.id 
+      WHERE p.farmer_id = ?
+      ORDER BY p.created_at DESC
+    `;
+
+    const [rows] = await pool.query(query, [farmerId]);
+
+    return res.status(200).json({
+      success: true,
+      count: rows.length,
+      data: rows
+    });
+  } catch (error) {
+    return res.status(500).json({
+      success: false,
+      message: 'Gagal mengambil produk petani.',
+      error: error.message
+    });
+  }
+};
+
+/**
+ * Create Product (POST /api/products)
+ */
 const createProduct = async (req, res) => {
   try {
     const farmerId = req.user ? req.user.id : null;
@@ -76,7 +133,7 @@ const createProduct = async (req, res) => {
       });
     }
 
-    const { title, price_per_kg, stock_kg, commodity_id, grade_id } = req.body;
+    const { title, price_per_kg, stock_kg, commodity_id, grade_id, description, image_url } = req.body;
 
     if (
       !title ||
@@ -118,8 +175,8 @@ const createProduct = async (req, res) => {
     const productId = uuidv4();
 
     await pool.query(
-      `INSERT INTO products (id, farmer_id, commodity_id, grade_id, title, price_per_kg, stock_kg)
-       VALUES (?, ?, ?, ?, ?, ?, ?)`,
+      `INSERT INTO products (id, farmer_id, commodity_id, grade_id, title, price_per_kg, stock_kg, description, image_url)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
         productId,
         farmerId,
@@ -127,7 +184,9 @@ const createProduct = async (req, res) => {
         grade_id,
         title.trim(),
         numericPrice,
-        numericStock
+        numericStock,
+        description || null,
+        image_url || null
       ]
     );
 
@@ -161,7 +220,155 @@ const createProduct = async (req, res) => {
   }
 };
 
+/**
+ * Delete Product (DELETE /api/products/:id)
+ */
+const deleteProduct = async (req, res) => {
+  try {
+    const farmerId = req.user ? req.user.id : null;
+    const { id } = req.params;
+
+    if (!farmerId) {
+      return res.status(401).json({
+        success: false,
+        message: 'Akses tidak sah. ID pengguna tidak ditemukan dalam token.'
+      });
+    }
+
+    const [existing] = await pool.query(
+      'SELECT id FROM products WHERE id = ? AND farmer_id = ? LIMIT 1',
+      [id, farmerId]
+    );
+
+    if (existing.length === 0) {
+      return res.status(404).json({
+        success: false,
+        message: 'Produk tidak ditemukan atau bukan milik Anda.'
+      });
+    }
+
+    await pool.query('DELETE FROM products WHERE id = ? AND farmer_id = ?', [id, farmerId]);
+
+    if (redisClient.isOpen) {
+      try {
+        await redisClient.del('lapaktani_catalog');
+      } catch (redisErr) {
+        console.warn('[REDIS] Invalidation warning:', redisErr.message);
+      }
+    }
+
+    return res.status(200).json({
+      success: true,
+      message: 'Produk berhasil dihapus.'
+    });
+  } catch (error) {
+    return res.status(500).json({
+      success: false,
+      message: 'Gagal menghapus produk.',
+      error: error.message
+    });
+  }
+};
+
+/**
+ * Update Product (PUT /api/products/:id)
+ */
+const updateProduct = async (req, res) => {
+  try {
+    const farmerId = req.user ? req.user.id : null;
+    const { id } = req.params;
+
+    if (!farmerId) {
+      return res.status(401).json({
+        success: false,
+        message: 'Akses tidak sah. ID pengguna tidak ditemukan dalam token.'
+      });
+    }
+
+    const { title, price_per_kg, stock_kg, commodity_id, grade_id, description, image_url } = req.body;
+
+    const [existing] = await pool.query(
+      'SELECT id FROM products WHERE id = ? AND farmer_id = ? LIMIT 1',
+      [id, farmerId]
+    );
+
+    if (existing.length === 0) {
+      return res.status(404).json({
+        success: false,
+        message: 'Produk tidak ditemukan atau bukan milik Anda.'
+      });
+    }
+
+    const updates = [];
+    const params = [];
+
+    if (title !== undefined && title !== null) {
+      updates.push('title = ?');
+      params.push(String(title).trim());
+    }
+    if (price_per_kg !== undefined && price_per_kg !== null) {
+      const numPrice = parseFloat(price_per_kg);
+      if (isNaN(numPrice) || numPrice < 0) {
+        return res.status(400).json({ success: false, message: 'Harga per kg harus angka positif.' });
+      }
+      updates.push('price_per_kg = ?');
+      params.push(numPrice);
+    }
+    if (stock_kg !== undefined && stock_kg !== null) {
+      const numStock = parseFloat(stock_kg);
+      if (isNaN(numStock) || numStock < 0) {
+        return res.status(400).json({ success: false, message: 'Stok kg harus angka positif.' });
+      }
+      updates.push('stock_kg = ?');
+      params.push(numStock);
+    }
+    if (commodity_id !== undefined && commodity_id !== null) {
+      updates.push('commodity_id = ?');
+      params.push(commodity_id);
+    }
+    if (grade_id !== undefined && grade_id !== null) {
+      updates.push('grade_id = ?');
+      params.push(grade_id);
+    }
+    if (description !== undefined) {
+      updates.push('description = ?');
+      params.push(description);
+    }
+    if (image_url !== undefined) {
+      updates.push('image_url = ?');
+      params.push(image_url);
+    }
+
+    if (updates.length > 0) {
+      params.push(id, farmerId);
+      await pool.query(`UPDATE products SET ${updates.join(', ')} WHERE id = ? AND farmer_id = ?`, params);
+    }
+
+    if (redisClient.isOpen) {
+      try {
+        await redisClient.del('lapaktani_catalog');
+      } catch (redisErr) {
+        console.warn('[REDIS] Invalidation warning:', redisErr.message);
+      }
+    }
+
+    return res.status(200).json({
+      success: true,
+      message: 'Produk berhasil diperbarui.'
+    });
+  } catch (error) {
+    return res.status(500).json({
+      success: false,
+      message: 'Gagal memperbarui produk.',
+      error: error.message
+    });
+  }
+};
+
 module.exports = {
   getProducts,
-  createProduct
+  getFarmerProducts,
+  createProduct,
+  deleteProduct,
+  updateProduct
 };
