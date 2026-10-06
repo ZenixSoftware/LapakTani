@@ -31,6 +31,9 @@ const getProducts = async (req, res) => {
         p.price_per_kg, 
         p.stock_kg, 
         p.image_url, 
+        p.unit_id,
+        cu.unit_name,
+        cu.description as unit_description,
         c.specific_name as category, 
         pg.grade_label as grade, 
         fg.group_name as poktan_name, 
@@ -38,6 +41,7 @@ const getProducts = async (req, res) => {
       FROM products p 
       JOIN commodities c ON p.commodity_id = c.id 
       JOIN product_grades pg ON p.grade_id = pg.id 
+      LEFT JOIN commodity_units cu ON p.unit_id = cu.id
       JOIN farmer_profiles fp ON p.farmer_id = fp.user_id 
       JOIN farmer_groups fg ON fp.farmer_group_id = fg.id 
       JOIN villages v ON fg.village_id = v.id
@@ -92,6 +96,9 @@ const getFarmerProducts = async (req, res) => {
         p.description,
         p.commodity_id,
         p.grade_id,
+        p.unit_id,
+        cu.unit_name,
+        cu.description as unit_description,
         c.specific_name as category, 
         c.specific_name as commodity_name,
         pg.grade_label as grade, 
@@ -99,6 +106,7 @@ const getFarmerProducts = async (req, res) => {
       FROM products p 
       LEFT JOIN commodities c ON p.commodity_id = c.id 
       LEFT JOIN product_grades pg ON p.grade_id = pg.id 
+      LEFT JOIN commodity_units cu ON p.unit_id = cu.id
       WHERE p.farmer_id = ?
       ORDER BY p.created_at DESC
     `;
@@ -133,7 +141,7 @@ const createProduct = async (req, res) => {
       });
     }
 
-    const { title, price_per_kg, stock_kg, commodity_id, grade_id, description, image_url } = req.body;
+    const { title, price_per_kg, stock_kg, commodity_id, grade_id, unit_id, description, image_url } = req.body;
 
     if (
       !title ||
@@ -173,15 +181,17 @@ const createProduct = async (req, res) => {
     }
 
     const productId = uuidv4();
+    const selectedUnitId = unit_id || 'unit-kg';
 
     await pool.query(
-      `INSERT INTO products (id, farmer_id, commodity_id, grade_id, title, price_per_kg, stock_kg, description, image_url)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      `INSERT INTO products (id, farmer_id, commodity_id, grade_id, unit_id, title, price_per_kg, stock_kg, description, image_url)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
         productId,
         farmerId,
         commodity_id,
         grade_id,
+        selectedUnitId,
         title.trim(),
         numericPrice,
         numericStock,
@@ -285,7 +295,7 @@ const updateProduct = async (req, res) => {
       });
     }
 
-    const { title, price_per_kg, stock_kg, commodity_id, grade_id, description, image_url } = req.body;
+    const { title, price_per_kg, stock_kg, commodity_id, grade_id, unit_id, description, image_url } = req.body;
 
     const [existing] = await pool.query(
       'SELECT id FROM products WHERE id = ? AND farmer_id = ? LIMIT 1',
@@ -329,6 +339,10 @@ const updateProduct = async (req, res) => {
     if (grade_id !== undefined && grade_id !== null) {
       updates.push('grade_id = ?');
       params.push(grade_id);
+    }
+    if (unit_id !== undefined && unit_id !== null) {
+      updates.push('unit_id = ?');
+      params.push(unit_id);
     }
     if (description !== undefined) {
       updates.push('description = ?');

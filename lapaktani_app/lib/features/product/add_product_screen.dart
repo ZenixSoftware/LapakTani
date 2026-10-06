@@ -17,15 +17,18 @@ class _AddProductScreenState extends State<AddProductScreen> {
 
   final TextEditingController _titleController = TextEditingController();
   final TextEditingController _priceController = TextEditingController();
+  final TextEditingController _promoPriceController = TextEditingController();
   final TextEditingController _stockController = TextEditingController();
   final TextEditingController _minOrderController = TextEditingController(text: '1');
   final TextEditingController _descriptionController = TextEditingController();
 
   List<Map<String, dynamic>> _commodities = [];
   List<Map<String, dynamic>> _grades = [];
+  List<Map<String, dynamic>> _units = [];
 
   String? _selectedCommodity;
   String? _selectedGrade;
+  String? _selectedUnitId = 'unit-kg';
   String _selectedCultivation = 'Organik Bersertifikat';
   bool _needCoolBox = true;
   bool _isLoadingMaster = true;
@@ -34,17 +37,38 @@ class _AddProductScreenState extends State<AddProductScreen> {
   @override
   void initState() {
     super.initState();
+    _priceController.addListener(_onPriceChanged);
+    _promoPriceController.addListener(_onPriceChanged);
     _fetchMasterData();
+  }
+
+  void _onPriceChanged() {
+    if (mounted) {
+      setState(() {});
+    }
   }
 
   @override
   void dispose() {
+    _priceController.removeListener(_onPriceChanged);
+    _promoPriceController.removeListener(_onPriceChanged);
     _titleController.dispose();
     _priceController.dispose();
+    _promoPriceController.dispose();
     _stockController.dispose();
     _minOrderController.dispose();
     _descriptionController.dispose();
     super.dispose();
+  }
+
+  String get _promoDiscountLabel {
+    final normal = double.tryParse(_priceController.text.trim());
+    final promo = double.tryParse(_promoPriceController.text.trim());
+    if (normal != null && promo != null && normal > 0 && promo < normal && promo > 0) {
+      final pct = (((normal - promo) / normal) * 100).round();
+      return 'Hemat $pct%';
+    }
+    return 'Hemat 14%';
   }
 
   Future<void> _fetchMasterData() async {
@@ -55,6 +79,7 @@ class _AddProductScreenState extends State<AddProductScreen> {
     try {
       final comRes = await ApiService.get('/master/commodities');
       final grdRes = await ApiService.get('/master/grades');
+      final untRes = await ApiService.get('/master/units');
 
       if (comRes.statusCode == 200) {
         final dynamic body = jsonDecode(comRes.body);
@@ -72,6 +97,20 @@ class _AddProductScreenState extends State<AddProductScreen> {
           _grades = List<Map<String, dynamic>>.from(body['data']);
           if (_grades.isNotEmpty) {
             _selectedGrade = _grades.first['id']?.toString();
+          }
+        }
+      }
+
+      if (untRes.statusCode == 200) {
+        final dynamic body = jsonDecode(untRes.body);
+        if (body is Map && body['data'] is List) {
+          _units = List<Map<String, dynamic>>.from(body['data']);
+          if (_units.isNotEmpty) {
+            final found = _units.firstWhere(
+              (u) => u['id'] == 'unit-kg',
+              orElse: () => _units.first,
+            );
+            _selectedUnitId = found['id']?.toString();
           }
         }
       }
@@ -110,6 +149,7 @@ class _AddProductScreenState extends State<AddProductScreen> {
       'stock_kg': double.parse(_stockController.text.trim()),
       'commodity_id': _selectedCommodity,
       'grade_id': _selectedGrade,
+      'unit_id': _selectedUnitId ?? 'unit-kg',
       'description': _descriptionController.text.trim().isNotEmpty
           ? _descriptionController.text.trim()
           : null,
@@ -316,11 +356,17 @@ class _AddProductScreenState extends State<AddProductScreen> {
                     // Section 3: Harga & Satuan Penjualan
                     _buildSectionContainer(
                       title: 'Harga & Satuan Penjualan',
-                      subtitle: 'Nilai jual per kilogram baku timbangan',
+                      subtitle: 'Pilihan satuan komoditas dan penetapan nilai jual panen',
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          _buildFieldLabel('Harga Normal per Kg *'),
+                          // Satuan Komoditas *
+                          _buildFieldLabel('Satuan Komoditas *'),
+                          _buildUnitSelector(),
+                          const SizedBox(height: 16),
+
+                          // Harga Normal per Satuan *
+                          _buildFieldLabel('Harga Normal per Satuan *'),
                           TextFormField(
                             controller: _priceController,
                             keyboardType: const TextInputType.numberWithOptions(decimal: true),
@@ -328,17 +374,56 @@ class _AddProductScreenState extends State<AddProductScreen> {
                               FilteringTextInputFormatter.allow(RegExp(r'^\d*\.?\d*')),
                             ],
                             style: GoogleFonts.plusJakartaSans(
-                              fontSize: 15,
+                              fontSize: 16,
                               fontWeight: FontWeight.w700,
-                              color: const Color(0xFF03AC0E),
+                              color: const Color(0xFF121C2A),
                             ),
-                            decoration: _buildInputDecoration(
-                              hintText: '14000',
-                              prefixText: 'Rp ',
+                            decoration: InputDecoration(
+                              hintText: '0',
+                              hintStyle: GoogleFonts.plusJakartaSans(
+                                fontSize: 15,
+                                color: const Color(0xFF94A3B8),
+                                fontWeight: FontWeight.w500,
+                              ),
+                              prefixIcon: Container(
+                                width: 44,
+                                alignment: Alignment.center,
+                                child: Text(
+                                  'Rp',
+                                  style: GoogleFonts.plusJakartaSans(
+                                    fontSize: 15,
+                                    fontWeight: FontWeight.w700,
+                                    color: const Color(0xFF475569),
+                                  ),
+                                ),
+                              ),
+                              contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                              filled: true,
+                              fillColor: const Color(0xFFEFF4FF).withValues(alpha: 0.5),
+                              border: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(10),
+                                borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
+                              ),
+                              enabledBorder: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(10),
+                                borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
+                              ),
+                              focusedBorder: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(10),
+                                borderSide: const BorderSide(color: Color(0xFF03AC0E), width: 1.5),
+                              ),
+                              errorBorder: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(10),
+                                borderSide: const BorderSide(color: Color(0xFFEF4444)),
+                              ),
+                              focusedErrorBorder: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(10),
+                                borderSide: const BorderSide(color: Color(0xFFEF4444), width: 1.5),
+                              ),
                             ),
                             validator: (value) {
                               if (value == null || value.trim().isEmpty) {
-                                return 'Harga per kg wajib diisi';
+                                return 'Harga normal wajib diisi';
                               }
                               final parsed = double.tryParse(value.trim());
                               if (parsed == null || parsed <= 0) {
@@ -346,6 +431,85 @@ class _AddProductScreenState extends State<AddProductScreen> {
                               }
                               return null;
                             },
+                          ),
+                          const SizedBox(height: 16),
+
+                          // Harga Promo Komoditas (Opsional)
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              _buildFieldLabel('Harga Promo Komoditas'),
+                              Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                                decoration: BoxDecoration(
+                                  color: const Color(0xFFFFE4E6),
+                                  borderRadius: BorderRadius.circular(6),
+                                ),
+                                child: Text(
+                                  _promoDiscountLabel,
+                                  style: GoogleFonts.plusJakartaSans(
+                                    fontSize: 11,
+                                    fontWeight: FontWeight.w700,
+                                    color: const Color(0xFFE11D48),
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                          TextFormField(
+                            controller: _promoPriceController,
+                            keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                            inputFormatters: [
+                              FilteringTextInputFormatter.allow(RegExp(r'^\d*\.?\d*')),
+                            ],
+                            style: GoogleFonts.plusJakartaSans(
+                              fontSize: 16,
+                              fontWeight: FontWeight.w700,
+                              color: const Color(0xFF03AC0E),
+                            ),
+                            decoration: InputDecoration(
+                              hintText: 'Opsional (Harga coret)',
+                              hintStyle: GoogleFonts.plusJakartaSans(
+                                fontSize: 13,
+                                color: const Color(0xFF94A3B8),
+                                fontWeight: FontWeight.w500,
+                              ),
+                              prefixIcon: Container(
+                                width: 44,
+                                alignment: Alignment.center,
+                                child: Text(
+                                  'Rp',
+                                  style: GoogleFonts.plusJakartaSans(
+                                    fontSize: 15,
+                                    fontWeight: FontWeight.w700,
+                                    color: const Color(0xFF475569),
+                                  ),
+                                ),
+                              ),
+                              contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                              filled: true,
+                              fillColor: const Color(0xFFEFF4FF).withValues(alpha: 0.5),
+                              border: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(10),
+                                borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
+                              ),
+                              enabledBorder: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(10),
+                                borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
+                              ),
+                              focusedBorder: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(10),
+                                borderSide: const BorderSide(color: Color(0xFF03AC0E), width: 1.5),
+                              ),
+                            ),
+                          ),
+                          const SizedBox(height: 6),
+                          Text(
+                            'Harga promo akan memicu label diskon merah menarik di katalog.',
+                            style: GoogleFonts.plusJakartaSans(
+                              fontSize: 11.5,
+                              color: const Color(0xFF64748B),
+                            ),
                           ),
                         ],
                       ),
@@ -380,7 +544,7 @@ class _AddProductScreenState extends State<AddProductScreen> {
                                       ),
                                       decoration: _buildInputDecoration(
                                         hintText: '150',
-                                        suffixText: 'Kg',
+                                        suffixText: _unitSuffix,
                                       ),
                                       validator: (value) {
                                         if (value == null || value.trim().isEmpty) {
@@ -416,7 +580,7 @@ class _AddProductScreenState extends State<AddProductScreen> {
                                       ),
                                       decoration: _buildInputDecoration(
                                         hintText: '1',
-                                        suffixText: 'Kg',
+                                        suffixText: _unitSuffix,
                                       ),
                                     ),
                                   ],
@@ -850,6 +1014,125 @@ class _AddProductScreenState extends State<AddProductScreen> {
         borderRadius: BorderRadius.circular(10),
         borderSide: const BorderSide(color: Color(0xFFEF4444), width: 1.5),
       ),
+    );
+  }
+
+  String get _unitSuffix {
+    if (_selectedUnitId == 'unit-ikat') return 'Ikat';
+    if (_selectedUnitId == 'unit-keranjang') return 'Kjg';
+    if (_selectedUnitId == 'unit-karung') return 'Sak';
+    return 'Kg';
+  }
+
+  Widget _buildUnitSelector() {
+    final displayUnits = _units.isNotEmpty
+        ? _units
+        : [
+            {'id': 'unit-kg', 'unit_name': 'Per Kilogram', 'description': '1 Kg baku timbangan'},
+            {'id': 'unit-ikat', 'unit_name': 'Per Ikat', 'description': 'Bundel sayur daun'},
+            {'id': 'unit-keranjang', 'unit_name': 'Per Keranjang', 'description': 'Karton / peti 10 Kg'},
+            {'id': 'unit-karung', 'unit_name': 'Per Karung (Sak)', 'description': 'Sak grosir 25-50 Kg'},
+          ];
+
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final itemWidth = (constraints.maxWidth - 10) / 2;
+        return Wrap(
+          spacing: 10,
+          runSpacing: 10,
+          children: displayUnits.map((unit) {
+            final id = unit['id']?.toString() ?? '';
+            final isSelected = _selectedUnitId == id;
+            final name = unit['unit_name']?.toString() ?? '';
+            final desc = unit['description']?.toString() ?? '';
+
+            return InkWell(
+              onTap: () {
+                setState(() {
+                  _selectedUnitId = id;
+                });
+              },
+              borderRadius: BorderRadius.circular(10),
+              child: AnimatedContainer(
+                duration: const Duration(milliseconds: 150),
+                width: itemWidth,
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 12),
+                decoration: BoxDecoration(
+                  color: isSelected
+                      ? const Color(0xFFE8F7EE)
+                      : const Color(0xFFEFF4FF).withValues(alpha: 0.5),
+                  borderRadius: BorderRadius.circular(10),
+                  border: Border.all(
+                    color: isSelected
+                        ? const Color(0xFF03AC0E)
+                        : const Color(0xFFE2E8F0),
+                    width: isSelected ? 1.5 : 1.0,
+                  ),
+                ),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [
+                    Container(
+                      width: 16,
+                      height: 16,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        border: Border.all(
+                          color: isSelected
+                              ? const Color(0xFF03AC0E)
+                              : const Color(0xFF94A3B8),
+                          width: 2,
+                        ),
+                      ),
+                      child: isSelected
+                          ? Center(
+                              child: Container(
+                                width: 8,
+                                height: 8,
+                                decoration: const BoxDecoration(
+                                  color: Color(0xFF03AC0E),
+                                  shape: BoxShape.circle,
+                                ),
+                              ),
+                            )
+                          : null,
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Text(
+                            name,
+                            style: GoogleFonts.plusJakartaSans(
+                              fontSize: 12.5,
+                              fontWeight: isSelected ? FontWeight.w700 : FontWeight.w600,
+                              color: const Color(0xFF121C2A),
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                          const SizedBox(height: 2),
+                          Text(
+                            desc,
+                            style: GoogleFonts.plusJakartaSans(
+                              fontSize: 10.5,
+                              color: const Color(0xFF64748B),
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            );
+          }).toList(),
+        );
+      },
     );
   }
 }

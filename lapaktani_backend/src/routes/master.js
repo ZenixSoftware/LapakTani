@@ -4,5 +4,6 @@ const masterDataController = require('../controllers/masterDataController');
 
 router.get('/commodities', masterDataController.getCommodities);
 router.get('/grades', masterDataController.getProductGrades);
+router.get('/units', masterDataController.getUnits);
 
 module.exports = router;

@@ -42,7 +42,29 @@ const getProductGrades = async (req, res) => {
   }
 };
 
+/**
+ * GET /api/master/units
+ * Fetch list of commodity units
+ */
+const getUnits = async (req, res) => {
+  try {
+    const [rows] = await pool.query('SELECT * FROM commodity_units ORDER BY id ASC');
+    return res.status(200).json({
+      success: true,
+      count: rows.length,
+      data: rows
+    });
+  } catch (error) {
+    return res.status(500).json({
+      success: false,
+      message: 'Gagal mengambil data satuan komoditas.',
+      error: error.message
+    });
+  }
+};
+
 module.exports = {
   getCommodities,
-  getProductGrades
+  getProductGrades,
+  getUnits
 };
