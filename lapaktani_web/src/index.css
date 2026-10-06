@@ -4,22 +4,22 @@
 
 @layer base {
   body {
-    background-color: #F6F3EB;
+    background-color: #f6f8f6;
     font-family: 'Plus Jakarta Sans', sans-serif;
-    color: #0F172A;
+    color: #131f18;
   }
 }
 
-::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
+.custom-scrollbar::-webkit-scrollbar {
+  width: 5px;
+  height: 5px;
 }
 
-::-webkit-scrollbar-track {
-  background: #F6F3EB;
-}
-
-::-webkit-scrollbar-thumb {
-  background: #CBD5E1;
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
   border-radius: 9999px;
+}
+
+.polygon-glow {
+  filter: drop-shadow(0 0 8px rgba(3, 172, 14, 0.6));
 }

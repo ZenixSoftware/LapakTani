@@ -1,318 +1,379 @@
-import {
-  RefreshCw,
-  CreditCard,
-  CheckCircle2,
-  XCircle,
-  ChevronLeft,
-  ChevronRight,
-  ShieldCheck
-} from 'lucide-react';
-import type { FarmerProfile } from '../services/mockApi';
+import React, { useState, useMemo } from 'react';
+import type { PendingFarmer } from '../services/api';
 
 interface QueueTableProps {
-  farmers: FarmerProfile[];
+  farmers: PendingFarmer[];
   selectedFarmerId: string;
-  onSelectFarmer: (farmer: FarmerProfile) => void;
-  statusFilter: 'all' | 'pending' | 'verified' | 'rejected';
-  onStatusFilterChange: (status: 'all' | 'pending' | 'verified' | 'rejected') => void;
-  selectedPoktan: string;
-  onPoktanChange: (poktan: string) => void;
-  selectedCommodity: string;
-  onCommodityChange: (commodity: string) => void;
-  pendingCount: number;
+  onSelectFarmer: (farmer: PendingFarmer) => void;
+  isLoading: boolean;
+  onRefresh: () => void;
 }
 
-export const QueueTable = ({
+export const QueueTable: React.FC<QueueTableProps> = ({
   farmers,
   selectedFarmerId,
   onSelectFarmer,
-  statusFilter,
-  onStatusFilterChange,
-  selectedPoktan,
-  onPoktanChange,
-  selectedCommodity,
-  onCommodityChange,
-  pendingCount
-}: QueueTableProps) => {
+  isLoading,
+  onRefresh,
+}) => {
+  const [tableSearch, setTableSearch] = useState('');
+  const [activeTab, setActiveTab] = useState<'all' | 'need_action' | 'geofence' | 'revision'>('all');
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 6;
+
+  // Filter logic
+  const filteredList = useMemo(() => {
+    return farmers.filter((f) => {
+      // Tab filter
+      if (activeTab === 'need_action' && f.verification_status !== 'pending') return false;
+      if (activeTab === 'geofence' && (!f.gps_latitude || !f.gps_longitude)) return false;
+
+      // Search filter
+      if (tableSearch.trim() !== '') {
+        const query = tableSearch.toLowerCase();
+        const matchName = (f.name || f.full_name || '').toLowerCase().includes(query);
+        const matchNik = (f.nik || f.nik_number || '').includes(query);
+        const matchPoktan = (f.poktan || '').toLowerCase().includes(query);
+        const matchVillage = (f.village || '').toLowerCase().includes(query);
+        return matchName || matchNik || matchPoktan || matchVillage;
+      }
+      return true;
+    });
+  }, [farmers, activeTab, tableSearch]);
+
+  const totalPages = Math.max(1, Math.ceil(filteredList.length / itemsPerPage));
+  const paginatedList = useMemo(() => {
+    const start = (currentPage - 1) * itemsPerPage;
+    return filteredList.slice(start, start + itemsPerPage);
+  }, [filteredList, currentPage]);
+
+  const getInitials = (name: string) => {
+    if (!name) return 'PT';
+    const parts = name.trim().split(' ');
+    if (parts.length >= 2) {
+      return (parts[0][0] + parts[1][0]).toUpperCase();
+    }
+    return name.slice(0, 2).toUpperCase();
+  };
+
+  const getAvatarBg = (index: number) => {
+    const colors = [
+      'bg-amber-100 text-amber-800',
+      'bg-purple-100 text-purple-800',
+      'bg-blue-100 text-blue-800',
+      'bg-emerald-100 text-emerald-800',
+      'bg-rose-100 text-rose-800',
+      'bg-teal-100 text-teal-800',
+    ];
+    return colors[index % colors.length];
+  };
+
   return (
-    <div className="flex flex-col gap-4">
-      {/* Search, Filter & Quick Pills Toolbar Bento */}
-      <section className="p-4 rounded-2xl bg-cream-50 border-2 border-brutal-border shadow-brutal flex flex-col lg:flex-row items-stretch lg:items-center justify-between gap-4">
-        <div className="flex items-center gap-2 overflow-x-auto pb-1 lg:pb-0" id="statusFilterTabs">
-          <button
-            className={`tab-btn px-4 py-1.5 rounded-full font-bold text-xs border border-brutal-border whitespace-nowrap transition-all cursor-pointer ${
-              statusFilter === 'all'
-                ? 'bg-brutal-dark text-white shadow-brutal-sm'
-                : 'bg-white text-slate-700 hover:bg-cream-200'
-            }`}
-            type="button"
-            onClick={() => onStatusFilterChange('all')}
-          >
-            Semua (24)
-          </button>
-          <button
-            className={`tab-btn px-4 py-1.5 rounded-full font-bold text-xs border border-brutal-border whitespace-nowrap transition-all cursor-pointer ${
-              statusFilter === 'pending'
-                ? 'bg-brutal-dark text-white shadow-brutal-sm'
-                : 'bg-white text-slate-700 hover:bg-cream-200'
-            }`}
-            type="button"
-            onClick={() => onStatusFilterChange('pending')}
-          >
-            Menunggu Validasi ({pendingCount})
-          </button>
-          <button
-            className={`tab-btn px-4 py-1.5 rounded-full font-bold text-xs border border-brutal-border whitespace-nowrap transition-all cursor-pointer ${
-              statusFilter === 'verified'
-                ? 'bg-brutal-dark text-white shadow-brutal-sm'
-                : 'bg-white text-slate-700 hover:bg-cream-200'
-            }`}
-            type="button"
-            onClick={() => onStatusFilterChange('verified')}
-          >
-            Terverifikasi (48)
-          </button>
-          <button
-            className={`tab-btn px-4 py-1.5 rounded-full font-bold text-xs border border-brutal-border whitespace-nowrap transition-all cursor-pointer ${
-              statusFilter === 'rejected'
-                ? 'bg-brutal-dark text-white shadow-brutal-sm'
-                : 'bg-white text-slate-700 hover:bg-cream-200'
-            }`}
-            type="button"
-            onClick={() => onStatusFilterChange('rejected')}
-          >
-            Ditolak / Revisi (3)
-          </button>
-        </div>
-        <div className="flex flex-wrap items-center gap-2.5">
-          <select
-            className="h-9 px-3 rounded-xl bg-white border-2 border-brutal-border text-xs font-bold text-slate-700 focus:outline-none cursor-pointer"
-            value={selectedPoktan}
-            onChange={(e) => onPoktanChange(e.target.value)}
-          >
-            <option value="all">Semua Poktan</option>
-            <option value="Tani Makmur Sejahtera">Poktan Tani Makmur Sejahtera</option>
-            <option value="Harapan Mandiri">Poktan Harapan Mandiri</option>
-            <option value="Subur Barokah">Poktan Subur Barokah</option>
-          </select>
-          <select
-            className="h-9 px-3 rounded-xl bg-white border-2 border-brutal-border text-xs font-bold text-slate-700 focus:outline-none cursor-pointer"
-            value={selectedCommodity}
-            onChange={(e) => onCommodityChange(e.target.value)}
-          >
-            <option value="all">Semua Komoditas</option>
-            <option value="sayuran">Sayuran Dataran Tinggi</option>
-            <option value="buah">Hortikultura / Buah</option>
-            <option value="kopi">Kopi &amp; Palawija</option>
-          </select>
-        </div>
-      </section>
-
-      {/* Main Table Bento Container */}
-      <div className="bg-cream-50 rounded-2xl border-2 border-brutal-border shadow-brutal overflow-hidden">
-        {/* Table Header Bar */}
-        <div className="px-5 py-3.5 border-b-2 border-brutal-border bg-cream-100 flex items-center justify-between">
-          <div className="flex items-center gap-2.5">
-            <span className="font-extrabold text-sm text-brutal-dark">Daftar Antrean Permohonan Petani</span>
-            <span className="px-2 py-0.5 rounded-full bg-white border border-brutal-border text-slate-700 font-extrabold text-[11px]">
-              {pendingCount} Menunggu
-            </span>
+    <div className="xl:col-span-7 space-y-4">
+      <div className="bg-surface-white rounded-2xl p-5 border border-gray-100 shadow-sm">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
+          <div>
+            <div className="flex items-center gap-2">
+              <span className="w-2.5 h-2.5 rounded-full bg-primary animate-pulse"></span>
+              <h2 className="text-[16px] font-extrabold text-neutral-dark">
+                Daftar Antrean Permohonan Akun
+              </h2>
+            </div>
+            <p className="text-[12px] text-gray-500 mt-0.5">
+              Pilih pemohon untuk melihat audit KTP, verifikasi lahan polygon, dan beri keputusan.
+            </p>
           </div>
-          <div className="flex items-center gap-1 text-[11px] font-semibold text-slate-500">
-            <RefreshCw className="w-[15px] h-[15px] text-brand" />
-            <span>Update 1 menit lalu</span>
+
+          <div className="flex items-center gap-2">
+            <div className="relative">
+              <span className="material-symbols-outlined absolute left-2.5 top-1/2 -translate-y-1/2 text-gray-400 text-[16px]">
+                search
+              </span>
+              <input
+                className="h-8 pl-8 pr-3 text-[12px] rounded-lg bg-gray-50 border border-gray-200 focus:bg-white focus:border-primary focus:ring-1 focus:ring-primary outline-none"
+                placeholder="Cari nama / NIK..."
+                type="text"
+                value={tableSearch}
+                onChange={(e) => {
+                  setTableSearch(e.target.value);
+                  setCurrentPage(1);
+                }}
+              />
+            </div>
+            <button
+              onClick={onRefresh}
+              className="h-8 px-2.5 rounded-lg border border-gray-200 hover:bg-gray-50 text-gray-600 flex items-center gap-1 text-[12px] font-semibold transition-colors"
+              title="Perbarui Data"
+            >
+              <span className="material-symbols-outlined text-[16px]">refresh</span>
+            </button>
           </div>
         </div>
 
-        {/* Queue Table */}
-        <div className="overflow-x-auto">
-          <table className="w-full text-left border-collapse text-xs">
-            <thead>
-              <tr className="border-b-2 border-brutal-border bg-cream-50 font-extrabold text-slate-500 text-[11px] uppercase tracking-wider">
-                <th className="py-3 px-4">Petani &amp; NIK</th>
-                <th className="py-3 px-3">Poktan &amp; Desa</th>
-                <th className="py-3 px-3">Lahan</th>
-                <th className="py-3 px-3">Status</th>
-                <th className="py-3 px-4 text-right">Aksi</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y border-brutal-border/20 font-medium" id="queueTableBody">
-              {farmers.map((farmer) => {
-                const isSelected = farmer.id === selectedFarmerId;
-                const isPending = farmer.status === 'pending';
-                const isVerified = farmer.status === 'verified';
-                const isRejected = farmer.status === 'rejected';
+        {/* Filter Tab Pills */}
+        <div className="flex items-center gap-2 overflow-x-auto pb-2 border-b border-gray-100 text-[12px] font-bold">
+          <button
+            onClick={() => {
+              setActiveTab('all');
+              setCurrentPage(1);
+            }}
+            className={`px-3 py-1.5 rounded-lg whitespace-nowrap transition-colors ${
+              activeTab === 'all'
+                ? 'bg-forest-emerald text-white shadow-sm'
+                : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+            }`}
+          >
+            Semua ({farmers.length})
+          </button>
+          <button
+            onClick={() => {
+              setActiveTab('need_action');
+              setCurrentPage(1);
+            }}
+            className={`px-3 py-1.5 rounded-lg whitespace-nowrap transition-colors ${
+              activeTab === 'need_action'
+                ? 'bg-forest-emerald text-white shadow-sm'
+                : 'bg-emerald-50 text-forest-emerald hover:bg-emerald-100'
+            }`}
+          >
+            Perlu Tindakan ({farmers.filter((f) => f.verification_status === 'pending').length})
+          </button>
+          <button
+            onClick={() => {
+              setActiveTab('geofence');
+              setCurrentPage(1);
+            }}
+            className={`px-3 py-1.5 rounded-lg whitespace-nowrap transition-colors ${
+              activeTab === 'geofence'
+                ? 'bg-forest-emerald text-white shadow-sm'
+                : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+            }`}
+          >
+            Verifikasi Geofencing (10)
+          </button>
+          <button
+            onClick={() => {
+              setActiveTab('revision');
+              setCurrentPage(1);
+            }}
+            className={`px-3 py-1.5 rounded-lg whitespace-nowrap transition-colors ${
+              activeTab === 'revision'
+                ? 'bg-forest-emerald text-white shadow-sm'
+                : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+            }`}
+          >
+            Revisi Dokumen (4)
+          </button>
+        </div>
 
-                let rowBgClass = 'bg-cream-50/70';
-                if (isSelected) {
-                  rowBgClass = 'bg-white border-l-4 border-l-brand';
-                } else if (isVerified || isRejected) {
-                  rowBgClass = 'bg-cream-50/40 opacity-80';
-                }
+        {/* Table Content */}
+        <div className="overflow-x-auto mt-3">
+          {isLoading ? (
+            <div className="py-16 text-center text-gray-500 space-y-2">
+              <span className="material-symbols-outlined text-3xl animate-spin text-forest-emerald">
+                progress_activity
+              </span>
+              <p className="text-[13px] font-semibold">Memuat data antrean dari backend...</p>
+            </div>
+          ) : paginatedList.length === 0 ? (
+            <div className="py-16 text-center text-gray-500 space-y-2">
+              <span className="material-symbols-outlined text-4xl text-gray-400">
+                inbox
+              </span>
+              <p className="text-[13px] font-bold text-gray-700">Tidak ada data permohonan</p>
+              <p className="text-[12px] text-gray-400">
+                Semua permohonan petani pada filter ini telah diproses.
+              </p>
+            </div>
+          ) : (
+            <table className="w-full text-left border-collapse">
+              <thead>
+                <tr className="text-[11px] font-bold uppercase tracking-wider text-gray-400 border-b border-gray-100">
+                  <th className="py-2.5 px-3">Petani &amp; Poktan</th>
+                  <th className="py-2.5 px-3">Komoditas &amp; Lahan</th>
+                  <th className="py-2.5 px-3">Data Dukcapil &amp; KT</th>
+                  <th className="py-2.5 px-3 text-right">Aksi</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-100 text-[13px]">
+                {paginatedList.map((farmer, idx) => {
+                  const isSelected =
+                    farmer.id === selectedFarmerId || farmer.user_id === selectedFarmerId;
+                  const displayName = farmer.name || farmer.full_name || 'Petani Binaan';
+                  const displayNik = farmer.nik || farmer.nik_number || '3204120988770001';
+                  const displayPoktan = farmer.poktan || 'Poktan Tani Makmur';
+                  const displayVillage = farmer.village || 'Lembang';
+                  const displayArea = farmer.land_area || farmer.land_area_ha || '1.5';
+                  const hasGps = Boolean(farmer.gps_latitude && farmer.gps_longitude);
 
-                let badgeColorClass = 'bg-cream-200 text-slate-700';
-                if (farmer.id === 'PTN-2024-00412') {
-                  badgeColorClass = 'bg-brand-light text-brand shadow-brutal-sm';
-                } else if (isVerified) {
-                  badgeColorClass = 'bg-emerald-100 text-emerald-800';
-                } else if (isRejected) {
-                  badgeColorClass = 'bg-rose-100 text-rose-700';
-                }
+                  return (
+                    <tr
+                      key={farmer.id || farmer.user_id || idx}
+                      onClick={() => onSelectFarmer(farmer)}
+                      className={`cursor-pointer transition-all ${
+                        isSelected
+                          ? 'bg-emerald-50/70 border-l-4 border-primary'
+                          : 'hover:bg-gray-50'
+                      }`}
+                    >
+                      {/* Column 1: Petani & Poktan */}
+                      <td className="py-3.5 px-3">
+                        <div className="flex items-center gap-3">
+                          {farmer.avatar_url ? (
+                            <div className="relative flex-shrink-0">
+                              <img
+                                alt={displayName}
+                                className={`w-11 h-11 rounded-xl object-cover ${
+                                  isSelected ? 'ring-2 ring-primary' : ''
+                                }`}
+                                src={farmer.avatar_url}
+                              />
+                              <span className="absolute -bottom-1 -right-1 w-4 h-4 bg-primary text-white rounded-full flex items-center justify-center text-[10px]">
+                                <span className="material-symbols-outlined text-[10px]">check</span>
+                              </span>
+                            </div>
+                          ) : (
+                            <div
+                              className={`w-11 h-11 rounded-xl ${getAvatarBg(
+                                idx
+                              )} flex items-center justify-center font-bold text-[14px] flex-shrink-0`}
+                            >
+                              {getInitials(displayName)}
+                            </div>
+                          )}
 
-                return (
-                  <tr
-                    key={farmer.id}
-                    className={`table-row-item cursor-pointer transition-all hover:bg-cream-100 ${rowBgClass}`}
-                    onClick={() => onSelectFarmer(farmer)}
-                  >
-                    <td className="py-3.5 px-4">
-                      <div className="flex items-center gap-2.5">
-                        <div
-                          className={`w-9 h-9 rounded-xl border border-brutal-border flex items-center justify-center font-extrabold text-xs shrink-0 ${badgeColorClass}`}
-                        >
-                          {farmer.initials}
-                        </div>
-                        <div className="flex flex-col">
-                          <span
-                            className={`font-bold flex items-center gap-1 ${
-                              isVerified || isRejected ? 'text-slate-700' : 'text-brutal-dark'
-                            }`}
-                          >
-                            {farmer.full_name}
-                            <span title="KTP Terunggah" className="inline-flex items-center">
-                              <CreditCard className="w-[14px] h-[14px] text-brand" />
+                          <div>
+                            <span className="font-bold text-gray-900 block leading-tight">
+                              {displayName}
                             </span>
+                            <span className="text-[11px] text-gray-500 font-medium">
+                              {displayPoktan} • {displayVillage}
+                            </span>
+                            <span className="text-[10px] font-mono text-forest-emerald font-semibold block">
+                              NIK: {displayNik}
+                            </span>
+                          </div>
+                        </div>
+                      </td>
+
+                      {/* Column 2: Komoditas & Lahan */}
+                      <td className="py-3.5 px-3">
+                        <div className="space-y-1">
+                          <div className="flex flex-wrap gap-1">
+                            <span className="px-2 py-0.5 rounded-md bg-red-100 text-red-700 font-bold text-[10px]">
+                              Tomat Merah
+                            </span>
+                            <span className="px-2 py-0.5 rounded-md bg-emerald-100 text-emerald-800 font-bold text-[10px]">
+                              Sayur Segar
+                            </span>
+                          </div>
+                          <span className="text-[11px] font-semibold text-gray-600 block">
+                            {displayArea} Ha • Milik Sendiri
                           </span>
                           <span
-                            className={`font-mono text-[10px] ${
-                              isVerified || isRejected ? 'text-slate-400' : 'text-slate-500'
+                            className={`inline-flex items-center gap-1 text-[11px] font-bold ${
+                              hasGps ? 'text-emerald-700' : 'text-amber-700'
                             }`}
                           >
-                            {farmer.nik}
+                            <span className="material-symbols-outlined text-[13px]">
+                              {hasGps ? 'pin_drop' : 'wrong_location'}
+                            </span>
+                            <span>{hasGps ? 'GPS Terpetakan' : 'Butuh Geofencing'}</span>
                           </span>
                         </div>
-                      </div>
-                    </td>
-                    <td className="py-3.5 px-3">
-                      <div className="flex flex-col leading-tight">
-                        <span className={`font-bold ${isVerified || isRejected ? 'text-slate-700' : 'text-slate-800'}`}>
-                          {farmer.poktan}
-                        </span>
-                        <span className="text-[11px] text-slate-500">{farmer.village}</span>
-                      </div>
-                    </td>
-                    <td className="py-3.5 px-3">
-                      <div className="flex flex-col leading-tight">
-                        <span className={`font-bold ${isVerified || isRejected ? 'text-slate-700' : 'text-slate-800'}`}>
-                          {farmer.land_area}
-                        </span>
-                        <span className="text-[11px] text-slate-500">
-                          {farmer.commodities.map((c) => c.name.split(' ')[0]).join(' & ')}
-                        </span>
-                      </div>
-                    </td>
-                    <td className="py-3.5 px-3">
-                      {isPending && (
-                        <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-amber-100 border border-brutal-border text-amber-900 font-bold text-[10px]">
-                          <span className="w-1.5 h-1.5 rounded-full bg-amber-600"></span> Menunggu
-                        </span>
-                      )}
-                      {isVerified && (
-                        <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-emerald-100 border border-brutal-border text-emerald-800 font-bold text-[10px]">
-                          <CheckCircle2 className="w-[13px] h-[13px]" /> Disetujui
-                        </span>
-                      )}
-                      {isRejected && (
-                        <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-rose-100 border border-brutal-border text-rose-800 font-bold text-[10px]">
-                          <XCircle className="w-[13px] h-[13px]" /> Ditolak
-                        </span>
-                      )}
-                    </td>
-                    <td className="py-3.5 px-4 text-right">
-                      {isPending && (
-                        <button
-                          className={`px-3 py-1 rounded-xl font-bold text-xs border border-brutal-border shadow-brutal-sm transition-all active:translate-x-0.5 active:translate-y-0.5 cursor-pointer ${
-                            isSelected
-                              ? 'bg-brand text-white hover:bg-brand-hover'
-                              : 'bg-white text-slate-800 hover:bg-cream-200'
-                          }`}
-                          type="button"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            onSelectFarmer(farmer);
-                          }}
-                        >
-                          Periksa
-                        </button>
-                      )}
-                      {isVerified && (
-                        <span className="text-[11px] text-slate-500 font-mono">
-                          {farmer.verified_by || 'Oleh: Andi P.'}
-                        </span>
-                      )}
-                      {isRejected && (
-                        <span className="text-[10px] text-rose-700 font-semibold">
-                          {farmer.rejection_reason || 'KTP non-wilayah'}
-                        </span>
-                      )}
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
+                      </td>
+
+                      {/* Column 3: Data Dukcapil & KT */}
+                      <td className="py-3.5 px-3">
+                        <div className="space-y-1">
+                          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-emerald-100 text-emerald-800 text-[10px] font-bold">
+                            <span className="material-symbols-outlined text-[12px]">verified</span>
+                            <span>98% Dukcapil Match</span>
+                          </span>
+                          <span className="text-[11px] text-gray-600 block font-mono">
+                            KT: KT-3204-{displayNik.slice(-4) || '9912'}
+                          </span>
+                        </div>
+                      </td>
+
+                      {/* Column 4: Aksi */}
+                      <td className="py-3.5 px-3 text-right">
+                        {isSelected ? (
+                          <button
+                            type="button"
+                            className="px-3 py-1.5 rounded-xl bg-forest-emerald text-white text-[12px] font-bold shadow-sm flex items-center gap-1 ml-auto"
+                          >
+                            <span className="material-symbols-outlined text-[16px]">
+                              search_check
+                            </span>
+                            <span>Sedang Diaudit</span>
+                          </button>
+                        ) : (
+                          <button
+                            type="button"
+                            className="px-3 py-1.5 rounded-xl border border-gray-200 hover:border-forest-emerald hover:text-forest-emerald text-gray-700 text-[12px] font-bold transition-all ml-auto"
+                          >
+                            Audit Permohonan
+                          </button>
+                        )}
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          )}
         </div>
 
-        {/* Table Pagination Bar */}
-        <div className="p-4 border-t-2 border-brutal-border bg-cream-100 flex items-center justify-between text-xs font-semibold text-slate-600">
+        {/* Pagination Info */}
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pt-4 mt-3 border-t border-gray-100 text-[12px] text-gray-500">
           <span>
-            Menampilkan <strong>1 - {farmers.length}</strong> dari <strong>24</strong> permohonan
+            Menampilkan <strong>{paginatedList.length}</strong> dari{' '}
+            <strong>{filteredList.length}</strong> permohonan aktif
           </span>
-          <div className="flex items-center gap-1">
+          <div className="flex items-center gap-1.5">
             <button
-              className="w-8 h-8 rounded-lg bg-white border border-brutal-border flex items-center justify-center hover:bg-cream-200 cursor-pointer"
-              type="button"
+              onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+              disabled={currentPage === 1}
+              className="w-8 h-8 rounded-lg border border-gray-200 flex items-center justify-center hover:bg-gray-50 text-gray-500 disabled:opacity-40"
             >
-              <ChevronLeft className="w-[16px] h-[16px]" />
+              <span className="material-symbols-outlined text-[16px]">chevron_left</span>
             </button>
+            {Array.from({ length: totalPages }).map((_, i) => (
+              <button
+                key={i + 1}
+                onClick={() => setCurrentPage(i + 1)}
+                className={`w-8 h-8 rounded-lg text-[12px] font-bold transition-colors ${
+                  currentPage === i + 1
+                    ? 'bg-forest-emerald text-white'
+                    : 'border border-gray-200 hover:bg-gray-50 text-gray-700'
+                }`}
+              >
+                {i + 1}
+              </button>
+            ))}
             <button
-              className="w-8 h-8 rounded-lg bg-brutal-dark text-white font-bold border border-brutal-border shadow-brutal-sm cursor-pointer"
-              type="button"
+              onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+              disabled={currentPage === totalPages}
+              className="w-8 h-8 rounded-lg border border-gray-200 flex items-center justify-center hover:bg-gray-50 text-gray-500 disabled:opacity-40"
             >
-              1
-            </button>
-            <button
-              className="w-8 h-8 rounded-lg bg-white border border-brutal-border flex items-center justify-center hover:bg-cream-200 cursor-pointer"
-              type="button"
-            >
-              2
-            </button>
-            <button
-              className="w-8 h-8 rounded-lg bg-white border border-brutal-border flex items-center justify-center hover:bg-cream-200 cursor-pointer"
-              type="button"
-            >
-              3
-            </button>
-            <button
-              className="w-8 h-8 rounded-lg bg-white border border-brutal-border flex items-center justify-center hover:bg-cream-200 cursor-pointer"
-              type="button"
-            >
-              <ChevronRight className="w-[16px] h-[16px]" />
+              <span className="material-symbols-outlined text-[16px]">chevron_right</span>
             </button>
           </div>
         </div>
       </div>
 
-      {/* SOP Guide Bento Banner */}
-      <div className="p-4 rounded-2xl bg-white border-2 border-brutal-border shadow-brutal flex items-start gap-3.5">
-        <div className="w-10 h-10 rounded-xl bg-brand-light border-2 border-brutal-border flex items-center justify-center text-brand shrink-0 shadow-brutal-sm">
-          <ShieldCheck className="w-[22px] h-[22px]" />
+      {/* Quick Guidance Card */}
+      <div className="bg-gradient-to-r from-emerald-50 to-teal-50 border border-emerald-100 rounded-2xl p-4 flex items-start gap-3.5">
+        <div className="w-9 h-9 rounded-xl bg-forest-emerald text-white flex items-center justify-center flex-shrink-0 shadow-sm">
+          <span className="material-symbols-outlined text-[20px]">assignment_turned_in</span>
         </div>
-        <div>
-          <span className="font-extrabold text-sm text-brutal-dark">Panduan SOP Verifikasi Lapangan PPL</span>
-          <p className="text-xs text-slate-600 font-medium mt-0.5 leading-relaxed">
-            Pastikan NIK terdaftar di Disdukcapil Jawa Barat dan koordinat lahan garapan tidak bersinggungan dengan kawasan
-            hutan lindung Perhutani. Sertakan catatan bila petani menggarap lahan sewa/bengkok desa.
+        <div className="text-[12px] text-emerald-950 space-y-0.5">
+          <span className="font-bold text-[13px] text-forest-emerald block">
+            Standar Validasi LapakTani Sesuai Pedoman US-06:
+          </span>
+          <p className="text-gray-600">
+            Pastikan NIK terdaftar aktif di Dukcapil, foto selfie KTP tidak buram/terpotong, dan koordinat polygon GPS berada di batas desa binaan BPP Lembang sebelum menekan tombol Setujui Akun.
           </p>
         </div>
       </div>

@@ -1,83 +1,94 @@
-import { Search, Download, RefreshCw, Bell } from 'lucide-react';
+import React from 'react';
 
 interface HeaderProps {
   searchQuery: string;
-  onSearchChange: (val: string) => void;
-  onRefresh: () => void;
-  onExportCsv: () => void;
-  isRefreshing?: boolean;
+  onSearchChange: (query: string) => void;
+  onSync: () => void;
+  isSyncing: boolean;
 }
 
-export const Header = ({
+export const Header: React.FC<HeaderProps> = ({
   searchQuery,
   onSearchChange,
-  onRefresh,
-  onExportCsv,
-  isRefreshing = false
-}: HeaderProps) => {
+  onSync,
+  isSyncing,
+}) => {
   return (
-    <header className="px-6 py-3.5 border-b-2 border-brutal-border bg-cream-50 flex items-center justify-between gap-4 flex-wrap sticky top-0 z-50 shadow-brutal-sm">
-      {/* Search input bar */}
-      <div className="relative flex-1 min-w-[240px] max-w-xl">
-        <Search className="absolute left-3 top-2.5 text-slate-400 w-[18px] h-[18px]" />
-        <input
-          className="w-full h-10 pl-9 pr-3 rounded-xl bg-white border-2 border-brutal-border text-xs font-semibold placeholder:text-slate-400 focus:outline-none focus:shadow-brutal-sm transition-all"
-          placeholder="Cari NIK, nama petani, kelompok tani, atau desa..."
-          type="text"
-          value={searchQuery}
-          onChange={(e) => onSearchChange(e.target.value)}
-        />
+    <header className="fixed top-0 left-0 right-0 h-16 bg-surface-white/95 backdrop-blur-md z-40 border-b border-gray-100 flex items-center justify-between px-4 lg:px-8">
+      <div className="flex items-center gap-3 w-64 lg:w-72 flex-shrink-0">
+        <div className="w-10 h-10 rounded-xl bg-forest-emerald flex items-center justify-center text-white shadow-sm shadow-emerald-900/20">
+          <span className="material-symbols-outlined text-[24px]">eco</span>
+        </div>
+        <div>
+          <div className="flex items-center gap-1.5">
+            <span className="font-extrabold text-[18px] tracking-tight text-forest-emerald leading-tight">
+              LapakTani
+            </span>
+            <span className="text-[10px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded bg-emerald-100 text-forest-emerald">
+              Penyuluh
+            </span>
+          </div>
+          <p className="text-[11px] text-gray-500 font-medium">BPP Wilayah Jawa Barat</p>
+        </div>
       </div>
 
-      {/* Right Header Actions & Profile */}
-      <div className="flex items-center gap-3 flex-wrap">
-        {/* Action button: Export CSV */}
-        <button
-          className="px-3.5 py-2 rounded-xl bg-white border-2 border-brutal-border shadow-brutal-sm text-xs font-bold text-brutal-dark flex items-center gap-1.5 hover:bg-cream-100 transition-all active:translate-x-0.5 active:translate-y-0.5 cursor-pointer"
-          type="button"
-          onClick={onExportCsv}
-        >
-          <Download className="w-[17px] h-[17px] text-brand" />
-          <span className="hidden sm:inline">Unduh CSV</span>
-        </button>
-
-        {/* Action button: Segarkan / Refresh */}
-        <button
-          className="px-3.5 py-2 rounded-xl bg-white border-2 border-brutal-border shadow-brutal-sm text-xs font-bold text-slate-700 flex items-center gap-1.5 hover:bg-cream-100 transition-all active:translate-x-0.5 active:translate-y-0.5 cursor-pointer"
-          title="Segarkan Data"
-          type="button"
-          onClick={onRefresh}
-          disabled={isRefreshing}
-        >
-          <RefreshCw className={`w-[17px] h-[17px] text-brand ${isRefreshing ? 'animate-spin' : ''}`} />
-          <span className="hidden sm:inline">Segarkan</span>
-        </button>
-
-        {/* Notification Bell */}
-        <button
-          className="relative w-10 h-10 rounded-xl bg-white border-2 border-brutal-border shadow-brutal-sm flex items-center justify-center hover:bg-cream-100 transition-all active:translate-x-0.5 active:translate-y-0.5 cursor-pointer"
-          title="Notifikasi"
-          type="button"
-        >
-          <Bell className="w-[20px] h-[20px] text-brutal-dark" />
-          <span className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-rose-500 text-white font-bold text-[9px] flex items-center justify-center border border-brutal-border">
-            12
+      {/* Search Bar */}
+      <div className="hidden md:flex items-center flex-1 max-w-xl mx-4">
+        <div className="relative w-full">
+          <span className="material-symbols-outlined absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400 text-[20px]">
+            search
           </span>
+          <input
+            className="w-full h-10 pl-11 pr-4 rounded-xl bg-[#eef2ef] border-transparent text-[13px] text-neutral-dark placeholder-gray-400 focus:bg-white focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all outline-none"
+            placeholder="Cari NIK, nama petani, Poktan binaan, atau komoditas..."
+            type="text"
+            value={searchQuery}
+            onChange={(e) => onSearchChange(e.target.value)}
+          />
+          <div className="absolute right-2.5 top-1/2 -translate-y-1/2 flex items-center gap-1 text-[11px] bg-white px-2 py-0.5 rounded-md border border-gray-200 text-gray-400">
+            <span>Ctrl</span>
+            <span>K</span>
+          </div>
+        </div>
+      </div>
+
+      {/* Header Actions */}
+      <div className="flex items-center gap-2 sm:gap-3">
+        <button
+          onClick={onSync}
+          disabled={isSyncing}
+          className="hidden sm:inline-flex items-center gap-1.5 px-3 py-2 rounded-xl bg-emerald-50 text-forest-emerald hover:bg-emerald-100 font-bold text-[12px] transition-colors disabled:opacity-50"
+        >
+          <span
+            className={`material-symbols-outlined text-[18px] ${
+              isSyncing ? 'animate-spin' : ''
+            }`}
+          >
+            sync
+          </span>
+          <span>{isSyncing ? 'Sinkronisasi...' : 'Simluhtan Terhubung'}</span>
         </button>
 
-        {/* Officer Profile Bento Capsule */}
-        <div className="flex items-center gap-2.5 px-3 py-1.5 rounded-2xl bg-white border-2 border-brutal-border shadow-brutal-sm">
-          <div className="relative">
-            <img
-              alt="Bpk. Andi Pratama, S.P."
-              className="w-9 h-9 rounded-xl object-cover border border-brutal-border"
-              src="https://lh3.googleusercontent.com/aida/AEtjO1UNfK26KJdbT_DohKppIpXeaJGOvGULCmW80KzAfR5f9tchkdqHaaY5pSV_kPOj1x_6_wPiCuY-txPOodLlZKInZycXVthb2N-ZtqXCzgllp_qaDgWnXQNRbd-ySCksoeSGbzDJf04RYmW84LJsE7Fuu1eMbhS6oIQgqH4lhtEGJwPiXVBKCNYhItHIKdjnB4W1cqfseQrehGk_CMwXdGjw990Tf2MDomlt5BHDegWzznpMk9KcCu0DDeJL"
-            />
-            <span className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full bg-emerald-500 border border-white"></span>
+        <button
+          className="relative w-9 h-9 rounded-xl bg-gray-100 hover:bg-gray-200 flex items-center justify-center text-gray-600 transition-colors"
+          title="Notifikasi"
+        >
+          <span className="material-symbols-outlined text-[20px]">notifications</span>
+          <span className="absolute top-2 right-2 w-2 h-2 rounded-full bg-red-500 ring-2 ring-white"></span>
+        </button>
+
+        <div className="h-6 w-px bg-gray-200 mx-1 hidden sm:block"></div>
+
+        {/* Quick profile badge on topbar */}
+        <div className="flex items-center gap-2.5 pl-1">
+          <div className="w-9 h-9 rounded-xl bg-forest-emerald text-white flex items-center justify-center font-bold text-[13px] shadow-sm">
+            AH
           </div>
-          <div className="flex flex-col text-left leading-none">
-            <span className="text-xs font-bold text-brutal-dark truncate max-w-[130px]">Bpk. Andi Pratama, S.P.</span>
-            <span className="text-[10px] text-slate-500 font-medium mt-0.5">Penyuluh Ahli Pertama</span>
+          <div className="hidden xl:flex flex-col text-left">
+            <span className="text-[13px] font-bold text-gray-800 leading-tight">
+              Ir. Ahmad Hidayat
+            </span>
+            <span className="text-[11px] text-gray-500">Penyuluh Ahli Muda</span>
           </div>
         </div>
       </div>
