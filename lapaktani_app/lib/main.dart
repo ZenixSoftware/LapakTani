@@ -3,6 +3,7 @@ import 'core/theme/app_theme.dart';
 import 'features/auth/login_screen.dart';
 import 'features/auth/register_screen.dart';
 import 'features/home/home_dashboard_screen.dart';
+import 'features/onboarding/onboarding_screen.dart';
 import 'features/onboarding/splash_screen.dart';
 
 void main() {
@@ -30,6 +31,7 @@ class _LapakTaniAppState extends State<LapakTaniApp> {
       home: const SplashScreen(),
       routes: {
         '/splash': (context) => const SplashScreen(),
+        '/onboarding': (context) => const OnboardingScreen(),
         '/auth': (context) => const LoginScreen(),
         '/login': (context) => const LoginScreen(),
         '/register': (context) => const RegisterScreen(),

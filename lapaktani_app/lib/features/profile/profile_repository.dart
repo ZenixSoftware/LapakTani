@@ -22,6 +22,9 @@ class ProfileRepository {
   Future<void> submitFarmerProfileCompletion({
     required String userId,
     required File ktpImageFile,
+    File? selfieImageFile,
+    String? ktpImageUrl,
+    String? selfieImageUrl,
     String? nikNumber,
     String? homeAddress,
     String? farmerGroupId,
@@ -45,6 +48,10 @@ class ProfileRepository {
       'district': district,
       'village': village,
       'village_id': village,
+      if (ktpImageUrl != null && ktpImageUrl.isNotEmpty)
+        'ktp_image_url': ktpImageUrl,
+      if (selfieImageUrl != null && selfieImageUrl.isNotEmpty)
+        'selfie_image_url': selfieImageUrl,
       'verification_status': 'pending',
     };
 

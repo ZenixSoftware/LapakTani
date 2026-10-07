@@ -49,6 +49,7 @@ class _CompleteFarmerProfileScreenState
   final ImagePicker _imagePicker = ImagePicker();
 
   File? _selectedKtpFile;
+  File? _selectedSelfieFile;
 
   List<RegionItem> _provinces = [];
   RegionItem? _selectedProvince;
@@ -282,7 +283,7 @@ class _CompleteFarmerProfileScreenState
     });
   }
 
-  Future<void> _pickImage(ImageSource source) async {
+  Future<void> _pickKtpImage(ImageSource source) async {
     try {
       final XFile? pickedFile = await _imagePicker.pickImage(
         source: source,
@@ -319,18 +320,73 @@ class _CompleteFarmerProfileScreenState
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('Gagal memilih foto: ${e.toString()}'),
+          content: Text('Gagal memilih foto KTP: ${e.toString()}'),
           backgroundColor: const Color(0xFFDC2626),
         ),
       );
     }
   }
 
-  Future<void> _submitVerification() async {
+  Future<void> _pickSelfieImage(ImageSource source) async {
+    try {
+      final XFile? pickedFile = await _imagePicker.pickImage(
+        source: source,
+        preferredCameraDevice: CameraDevice.front,
+        maxWidth: 1600,
+        maxHeight: 1600,
+        imageQuality: 85,
+      );
+
+      if (pickedFile == null) return;
+
+      final CroppedFile? croppedFile = await ImageCropper().cropImage(
+        sourcePath: pickedFile.path,
+        uiSettings: [
+          AndroidUiSettings(
+            toolbarTitle: 'Atur Swafoto KTP',
+            toolbarColor: AppColors.primary,
+            toolbarWidgetColor: Colors.white,
+            initAspectRatio: CropAspectRatioPreset.square,
+            lockAspectRatio: false,
+          ),
+          IOSUiSettings(
+            title: 'Atur Swafoto KTP',
+            aspectRatioLockEnabled: false,
+          ),
+        ],
+      );
+
+      if (croppedFile != null && mounted) {
+        setState(() {
+          _selectedSelfieFile = File(croppedFile.path);
+        });
+      }
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Gagal memilih swafoto: ${e.toString()}'),
+          backgroundColor: const Color(0xFFDC2626),
+        ),
+      );
+    }
+  }
+
+  Future<void> _submitProfile() async {
     if (_selectedKtpFile == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('Wajib mengunggah foto e-KTP untuk verifikasi petani.'),
+          backgroundColor: Color(0xFFDC2626),
+        ),
+      );
+      return;
+    }
+
+    if (_selectedSelfieFile == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Wajib mengunggah swafoto dengan KTP untuk verifikasi.'),
           backgroundColor: Color(0xFFDC2626),
         ),
       );
@@ -421,9 +477,44 @@ class _CompleteFarmerProfileScreenState
           ? _addressController.text.trim()
           : 'Desa ${_selectedVillage!.displayName}, Kec. ${_selectedDistrict!.displayName}, ${_selectedRegency!.displayName}, ${_selectedProvince!.displayName}';
 
+      // 1. Upload KTP Image to backend
+      String? ktpImageUrl;
+      try {
+        final ktpRes = await ApiService.uploadImage(
+          '/upload/product-image',
+          _selectedKtpFile!,
+          fieldName: 'image',
+        );
+        ktpImageUrl = ktpRes['data']?['image_url'] ??
+            ktpRes['image_url'] ??
+            ktpRes['data']?['relative_url'];
+      } catch (uploadErr) {
+        debugPrint('[KTP_UPLOAD] Warning: ${uploadErr.toString()}');
+      }
+
+      // 2. Upload Selfie Image to backend
+      String? selfieImageUrl;
+      if (_selectedSelfieFile != null) {
+        try {
+          final selfieRes = await ApiService.uploadImage(
+            '/upload/product-image',
+            _selectedSelfieFile!,
+            fieldName: 'image',
+          );
+          selfieImageUrl = selfieRes['data']?['image_url'] ??
+              selfieRes['image_url'] ??
+              selfieRes['data']?['relative_url'];
+        } catch (uploadErr) {
+          debugPrint('[SELFIE_UPLOAD] Warning: ${uploadErr.toString()}');
+        }
+      }
+
       await _profileRepository.submitFarmerProfileCompletion(
         userId: user.id,
         ktpImageFile: _selectedKtpFile!,
+        selfieImageFile: _selectedSelfieFile,
+        ktpImageUrl: ktpImageUrl,
+        selfieImageUrl: selfieImageUrl,
         nikNumber: _nikController.text.trim(),
         homeAddress: fullAddress,
         farmerGroupId: _selectedFarmerGroupId,
@@ -1074,7 +1165,7 @@ class _CompleteFarmerProfileScreenState
                     // Section 1: KTP Upload Card
                     _buildSectionHeader(
                       number: '1',
-                      title: 'Foto e-KTP Asli',
+                      title: 'Upload Foto e-KTP',
                       isRequired: true,
                     ),
                     const SizedBox(height: 8),
@@ -1085,7 +1176,7 @@ class _CompleteFarmerProfileScreenState
                         children: [
                           if (_selectedKtpFile == null)
                             GestureDetector(
-                              onTap: () => _pickImage(ImageSource.camera),
+                              onTap: () => _pickKtpImage(ImageSource.camera),
                               child: Container(
                                 height: 180,
                                 decoration: BoxDecoration(
@@ -1201,7 +1292,7 @@ class _CompleteFarmerProfileScreenState
                               Expanded(
                                 child: OutlinedButton.icon(
                                   onPressed: () =>
-                                      _pickImage(ImageSource.camera),
+                                      _pickKtpImage(ImageSource.camera),
                                   icon:
                                       const Icon(LucideIcons.camera, size: 16),
                                   label: const Text('Kamera'),
@@ -1223,7 +1314,7 @@ class _CompleteFarmerProfileScreenState
                               Expanded(
                                 child: OutlinedButton.icon(
                                   onPressed: () =>
-                                      _pickImage(ImageSource.gallery),
+                                      _pickKtpImage(ImageSource.gallery),
                                   icon: const Icon(LucideIcons.image, size: 16),
                                   label: const Text('Galeri'),
                                   style: OutlinedButton.styleFrom(
@@ -1247,9 +1338,185 @@ class _CompleteFarmerProfileScreenState
                     ),
                     const SizedBox(height: 20),
 
-                    // Section 2: 4-Tier Cascading Domicile Selection
+                    // Section 2: Swafoto dengan KTP Card
                     _buildSectionHeader(
                       number: '2',
+                      title: 'Swafoto dengan KTP',
+                      isRequired: true,
+                    ),
+                    const SizedBox(height: 8),
+                    CustomSoftCard(
+                      padding: const EdgeInsets.all(16),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          if (_selectedSelfieFile == null)
+                            GestureDetector(
+                              onTap: () => _pickSelfieImage(ImageSource.camera),
+                              child: Container(
+                                height: 180,
+                                decoration: BoxDecoration(
+                                  color: const Color(0xFFF8FAFC),
+                                  borderRadius: BorderRadius.circular(16),
+                                ),
+                                child: CustomPaint(
+                                  painter: _DashedBorderPainter(
+                                    color: const Color(0xFFCBD5E1),
+                                    strokeWidth: 1.6,
+                                    dashLength: 8,
+                                    dashGap: 5,
+                                    borderRadius: 16,
+                                  ),
+                                  child: Center(
+                                    child: Column(
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.center,
+                                      children: [
+                                        Container(
+                                          width: 52,
+                                          height: 52,
+                                          decoration: BoxDecoration(
+                                            color: AppColors.primary
+                                                .withValues(alpha: 0.1),
+                                            shape: BoxShape.circle,
+                                          ),
+                                          child: const Icon(
+                                            LucideIcons.userCheck,
+                                            color: AppColors.primary,
+                                            size: 26,
+                                          ),
+                                        ),
+                                        const SizedBox(height: 12),
+                                        const Text(
+                                          'Ambil Swafoto dengan KTP',
+                                          style: TextStyle(
+                                            fontSize: 14,
+                                            fontWeight: FontWeight.w700,
+                                            color: Color(0xFF1E293B),
+                                          ),
+                                        ),
+                                        const SizedBox(height: 4),
+                                        const Text(
+                                          'Wajah & KTP terlihat jelas dalam satu bingkai',
+                                          style: TextStyle(
+                                            fontSize: 11,
+                                            color: Color(0xFF64748B),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            )
+                          else
+                            Column(
+                              children: [
+                                ClipRRect(
+                                  borderRadius: BorderRadius.circular(14),
+                                  child: Stack(
+                                    children: [
+                                      Image.file(
+                                        _selectedSelfieFile!,
+                                        height: 190,
+                                        width: double.infinity,
+                                        fit: BoxFit.cover,
+                                      ),
+                                      Positioned(
+                                        top: 10,
+                                        right: 10,
+                                        child: Container(
+                                          padding: const EdgeInsets.symmetric(
+                                            horizontal: 10,
+                                            vertical: 5,
+                                          ),
+                                          decoration: BoxDecoration(
+                                            color: Colors.black
+                                                .withValues(alpha: 0.65),
+                                            borderRadius:
+                                                BorderRadius.circular(20),
+                                          ),
+                                          child: const Row(
+                                            mainAxisSize: MainAxisSize.min,
+                                            children: [
+                                              Icon(
+                                                LucideIcons.checkCircle2,
+                                                color: Color(0xFF34D399),
+                                                size: 14,
+                                              ),
+                                              SizedBox(width: 4),
+                                              Text(
+                                                'Swafoto Terpilih',
+                                                style: TextStyle(
+                                                  color: Colors.white,
+                                                  fontSize: 11,
+                                                  fontWeight: FontWeight.w600,
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ],
+                            ),
+                          const SizedBox(height: 14),
+                          Row(
+                            children: [
+                              Expanded(
+                                child: OutlinedButton.icon(
+                                  onPressed: () =>
+                                      _pickSelfieImage(ImageSource.camera),
+                                  icon:
+                                      const Icon(LucideIcons.camera, size: 16),
+                                  label: const Text('Kamera'),
+                                  style: OutlinedButton.styleFrom(
+                                    foregroundColor: const Color(0xFF1E293B),
+                                    backgroundColor: const Color(0xFFF8FAFC),
+                                    side: const BorderSide(
+                                      color: Color(0xFFE2E8F0),
+                                    ),
+                                    padding:
+                                        const EdgeInsets.symmetric(vertical: 12),
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(12),
+                                    ),
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(width: 10),
+                              Expanded(
+                                child: OutlinedButton.icon(
+                                  onPressed: () =>
+                                      _pickSelfieImage(ImageSource.gallery),
+                                  icon: const Icon(LucideIcons.image, size: 16),
+                                  label: const Text('Galeri'),
+                                  style: OutlinedButton.styleFrom(
+                                    foregroundColor: const Color(0xFF1E293B),
+                                    backgroundColor: const Color(0xFFF8FAFC),
+                                    side: const BorderSide(
+                                      color: Color(0xFFE2E8F0),
+                                    ),
+                                    padding:
+                                        const EdgeInsets.symmetric(vertical: 12),
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(12),
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 20),
+
+                    // Section 3: 4-Tier Cascading Domicile Selection
+                    _buildSectionHeader(
+                      number: '3',
                       title: 'Domisili Kebun (Hierarki 4 Tingkat)',
                       isRequired: true,
                     ),
@@ -1479,9 +1746,9 @@ class _CompleteFarmerProfileScreenState
                     ),
                     const SizedBox(height: 20),
 
-                    // Section 3: Data Detail
+                    // Section 4: Data Detail
                     _buildSectionHeader(
-                      number: '3',
+                      number: '4',
                       title: 'Detail Identitas & Lahan',
                       isRequired: false,
                     ),
@@ -1537,7 +1804,7 @@ class _CompleteFarmerProfileScreenState
                     SizedBox(
                       height: 52,
                       child: ElevatedButton(
-                        onPressed: _isSubmitting ? null : _submitVerification,
+                        onPressed: _isSubmitting ? null : _submitProfile,
                         style: ElevatedButton.styleFrom(
                           backgroundColor: AppColors.primary,
                           foregroundColor: Colors.white,

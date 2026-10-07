@@ -23,7 +23,9 @@ const setupFarmerProfile = async (req, res) => {
     village_id,
     village,
     farmer_group_id,
-    farmer_group
+    farmer_group,
+    ktp_image_url,
+    selfie_image_url
   } = req.body;
 
   const rawNik = nik_number || nik;
@@ -118,22 +120,24 @@ const setupFarmerProfile = async (req, res) => {
 
     // Query 1: Insert or update user_profiles
     await connection.query(
-      `INSERT INTO user_profiles (id, user_id, full_name, nik_number, village_id, verification_status)
-       VALUES (?, ?, COALESCE((SELECT full_name FROM users WHERE id = ?), ?), ?, ?, 'pending')
+      `INSERT INTO user_profiles (id, user_id, full_name, nik_number, village_id, avatar_url, verification_status)
+       VALUES (?, ?, COALESCE((SELECT full_name FROM users WHERE id = ?), ?), ?, ?, ?, 'pending')
        ON DUPLICATE KEY UPDATE
          nik_number = VALUES(nik_number),
          village_id = VALUES(village_id),
+         avatar_url = COALESCE(VALUES(avatar_url), avatar_url),
          verification_status = 'pending'`,
-      [profileId, userId, userId, fallbackName, sanitizedNik, resolvedVillageId]
+      [profileId, userId, userId, fallbackName, sanitizedNik, resolvedVillageId, selfie_image_url || null]
     );
 
     // Query 2: Insert or update farmer_profiles
     await connection.query(
-      `INSERT INTO farmer_profiles (user_id, farmer_group_id)
-       VALUES (?, ?)
+      `INSERT INTO farmer_profiles (user_id, farmer_group_id, ktp_image_url)
+       VALUES (?, ?, ?)
        ON DUPLICATE KEY UPDATE
-         farmer_group_id = VALUES(farmer_group_id)`,
-      [userId, resolvedFarmerGroupId]
+         farmer_group_id = VALUES(farmer_group_id),
+         ktp_image_url = COALESCE(VALUES(ktp_image_url), ktp_image_url)`,
+      [userId, resolvedFarmerGroupId, ktp_image_url || null]
     );
 
     // Query 3: Save farm area details
