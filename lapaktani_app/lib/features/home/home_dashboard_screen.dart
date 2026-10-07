@@ -5,6 +5,7 @@ import 'package:lucide_icons/lucide_icons.dart';
 import '../../core/services/api_service.dart';
 import '../product/add_product_screen.dart';
 import '../product/my_products_screen.dart';
+import '../product/product_detail_screen.dart';
 
 class HomeDashboardScreen extends StatefulWidget {
   const HomeDashboardScreen({super.key});
@@ -15,16 +16,188 @@ class HomeDashboardScreen extends StatefulWidget {
 
 class _HomeDashboardScreenState extends State<HomeDashboardScreen> {
   int _currentBottomNavIndex = 0;
-  int _selectedCategoryTabIndex = 0;
   final Set<dynamic> _wishlistIds = {};
   int _cartItemCount = 4;
   List<dynamic> _products = [];
   bool _isLoading = true;
 
+  String _searchQuery = '';
+  String _selectedCategory = 'Semua';
+  final TextEditingController _searchController = TextEditingController();
+
+  final List<String> _categories = [
+    'Semua',
+    'Sayur Daun',
+    'Umbi-umbian',
+    'Sayur Buah',
+    'Organik',
+    'Hidroponik',
+    'Siap Masak',
+  ];
+
+  static final List<Map<String, dynamic>> _defaultProducts = [
+    {
+      'id': 'prod-1',
+      'title': 'Jagung Manis Madu Organik Segar (Isi 3-4 Tongkol)',
+      'price_per_kg': 14500,
+      'unit': '/pack 1kg',
+      'category': 'Sayur Buah',
+      'grade': 'Petani Batu',
+      'village_name': 'Malang, Jatim',
+      'freeShipping': true,
+      'rating': '4.9',
+      'soldCount': '850+ terjual',
+      'image_url':
+          'https://lh3.googleusercontent.com/aida-public/AB6AXuBNcxC9AeGcJKDIKXvZnkUXpXQZacY4jyGWOKanfYvqS4ASLYkIBwQjNacsUbP2-m6R_Y9vclnMXfhUcZxPTWuAfY8jNDLTyotuWyQ4yQvMPJJIw1-ajA8Ma5dYzNElMD1xuF8PZCuWe3pzX6ndDMhLxrGhW0IPRZv-3PiQi5iIj32W5nns2mpa2U_Npkhkj2u1hAAXDVuhrzE4Mc7gwvqybgAI30IdJCwbwqHEIqVoZEYZ5WnQs2lh',
+      'description':
+          'Jagung manis madu pilihan langsung petik dari kebun organik lereng Gunung Panderman Batu. Rasa manis alami tanpa pemanis buatan, tongkol padat berisi.',
+    },
+    {
+      'id': 'prod-2',
+      'title': 'Wortel Manis Berastagi Super Renyah (Grade A)',
+      'price_per_kg': 11000,
+      'unit': '/500 gram',
+      'category': 'Umbi-umbian',
+      'grade': 'Petani Berastagi',
+      'village_name': 'Karo, Sumut',
+      'freeShipping': true,
+      'rating': '5.0',
+      'soldCount': '1.5rb terjual',
+      'image_url':
+          'https://lh3.googleusercontent.com/aida-public/AB6AXuBrS3ZtwnKUuZ4K0rT35rQua4KG1cyajZF_8MR1EroaYQyWIjp0_37qFaYqRl4G781JAABaiB_i4NVVSNsggcBvAjzV60ku1UH47FgTptcO92_3CABgJrOuztx_31wSGDZDWounJkqI8_FqYKa1jAvsPrKAQFkk8PIOpgcZM4DaVeZP_9LfJcN8wIx3LY6PBpvsWbpN_uMVUCnCcjr0SXnEcFsxdqgFnj8K6GiGFBP_riuNrkM15QV6',
+      'description':
+          'Wortel Berastagi kualitas ekspor yang dipanen dari tanah vulkanik dataran tinggi Karo. Tekstur sangat renyah, manis alami, dan kaya beta karoten.',
+    },
+    {
+      'id': 'prod-3',
+      'title': 'Tomat Merah Organik Segar (Petik Subuh Lembang)',
+      'price_per_kg': 12000,
+      'unit': '/kg',
+      'category': 'Sayur Buah',
+      'grade': 'Petik Subuh',
+      'village_name': 'Batu, Malang',
+      'freeShipping': true,
+      'rating': '4.8',
+      'soldCount': '890+ terjual',
+      'image_url':
+          'https://lh3.googleusercontent.com/aida-public/AB6AXuB7MFNm6fGiAm5QTKbvDcHMQ3fNnfFYJO_Kyt9JrlLi9bdKKdnbkUUFDVEY7mCNRqoT57wyH6E0LUIC1jGc0D-kArTwJmp2e_5daQ-YOhbRz6XPP7EYvLTgq5ALb_-pvxAwxa6jFCLpDRll8ED4v4Ji4zgioDov57ptO20jhk2yg-AMXM58Y1QEp-gsPaWJsmltO5szzG6PzNOWC0-PNC7sN4gPpfDUDJMz25zaMnEVC1MiKNDOCJB_',
+      'description':
+          'Tomat merah segar organik dipanen langsung dari ladang pegunungan Batu di pagi hari. Memiliki tekstur padat, kaya antioksidan likopen, rasa asam-manis seimbang.',
+    },
+    {
+      'id': 'prod-4',
+      'title': 'Kentang Granola Dieng Super',
+      'price_per_kg': 16000,
+      'unit': '/kg',
+      'category': 'Umbi-umbian',
+      'grade': 'Grade A',
+      'village_name': 'Dieng, Jateng',
+      'freeShipping': false,
+      'rating': '4.9',
+      'soldCount': '1.2rb terjual',
+      'image_url':
+          'https://lh3.googleusercontent.com/aida-public/AB6AXuDQfZ8rlRVHk2qkSfC0zsPq1XBOalKVCjz-SK27JBESez2nkF4XHUYWP-swEAKZngWukUvo9Df9G4f9trDz2JqjpoyfGClJ80yD76cURQ-33wsz7GIkmINCKucwTcWZEnF2pKg9NyLwAzB8N_BqidBu0XttzgLQW9bD7fi9kRgYANzWxfO6nmsMw7hQFcHN0cewb8hFiACXv_6zfeZxZ3i9LjW0DRx3RO8-cnPTrZIREWEzmDEUovQr',
+      'description':
+          'Kentang granola pilihan dari dataran tinggi Dieng. Kulit mulus bersih, daging kuning pulen, cocok untuk rendang, perkedel, maupun kentang goreng.',
+    },
+    {
+      'id': 'prod-5',
+      'title': 'Cabai Rawit Merah Segar Pedas Juara',
+      'price_per_kg': 35000,
+      'unit': '/kg',
+      'category': 'Sayur Buah',
+      'grade': 'Pedas Juara',
+      'village_name': 'Cianjur, Jabar',
+      'freeShipping': true,
+      'rating': '5.0',
+      'soldCount': '2.5rb terjual',
+      'image_url':
+          'https://lh3.googleusercontent.com/aida-public/AB6AXuBrEzlx59eqGOtnBIamg68cvQ14I5nY00p7Vu2vo0A9vlk5b2HhjT1eRPqxWnJcFISTjZ2yhPWA3mU3vPoK9YLit0ItITTn3Cz1aFo2Z9_lgj6vBer1s1adzaI8ifh7qodffy2ZnUrHf0g78ye5KkXuLVqh4q0VuJoC75wcVb7l7YY2NvpT0yFGr2A3GBXkWUD7FxGsJ2toIIs2NosOcihuT4EbtGBSpZgd-Y4eO2CFyPID9SH9gtGu',
+      'description':
+          'Cabai rawit domba merah petik langsung dari pohon di Cianjur. Tingkat kepedasan maksimal, aroma tajam segar, tanpa perlakuan lilin atau bahan kimia.',
+    },
+    {
+      'id': 'prod-6',
+      'title': 'Bayam Hijau Segar Non-Pestisida',
+      'price_per_kg': 6000,
+      'unit': '/ikat',
+      'category': 'Sayur Daun',
+      'grade': 'Organik',
+      'village_name': 'Lembang, Bandung',
+      'freeShipping': false,
+      'rating': '4.9',
+      'soldCount': '620+ terjual',
+      'image_url':
+          'https://lh3.googleusercontent.com/aida-public/AB6AXuB14n6jZhrVGPSInNCClNlFUfc4AARg1G4DEYi5A613plfHYjmjx3S_gTyQs5LprS_MiWWXYNTMM93b6AsawOkFPboGTVb9ZV9WiEN8RbPtB6N1eethO2zK0A_SFHrkAF5Ah7haqpTbQDgljIZv9uy2yC2OCQA0Kx2imHYdxB5hxGl_hP9B_Eue1uhC9D0_0QQEhT_Y7ijROxpLyx-Uz-QipVKqsWs1p31p1URzfLUoVlEYTNC92sCT',
+      'description':
+          'Bayam hijau segar diikat rapi dengan tali bambu tradisional. Ditanam menggunakan pupuk kompos alami di sejuknya hawa perbukitan Lembang.',
+    },
+    {
+      'id': 'prod-7',
+      'title': 'Paket Sayur Sop Komplit & Segar Lembang (1 Kg)',
+      'price_per_kg': 22500,
+      'unit': '/paket',
+      'category': 'Siap Masak',
+      'grade': 'Mitra Utama',
+      'village_name': 'Kebun Lembang Segar',
+      'freeShipping': true,
+      'rating': '5.0',
+      'soldCount': '1.2rb terjual',
+      'image_url':
+          'https://lh3.googleusercontent.com/aida-public/AB6AXuALDDiNd4kkcbVgjbcQUTzmuQJULFGslfxZfpr6pWVhd7b8tdw5-wGxEupE4H6sArX9vEoHPJayMGt5Q_d0jTT8H1fprQ8UXm9cznmtX0XopfNUr4QvmuF0ZOG7CwBTaJ7ZncHBoAfAlMmdaKZRc3TGFcwcfS_0uSGy7w0HKVbu9MI5D7bLFtiBGbgVqWYWa-FHJkz8lewhG3UB6CEGuTAp1LeGI297Q0oBHs0FL6dm5CM5yhLbEjFO',
+      'description':
+          'Paket komplit berisi wortel, buncis, kentang, kol, daun seledri, daun bawang dan bumbu kaldu siap racik. Praktis dan higienis.',
+    },
+    {
+      'id': 'prod-8',
+      'title': 'Selada Keriting Hijau Hidroponik',
+      'price_per_kg': 9500,
+      'unit': '/250 gram',
+      'category': 'Hidroponik',
+      'grade': 'Grade A',
+      'village_name': 'Parongpong, Bandung',
+      'freeShipping': true,
+      'rating': '4.9',
+      'soldCount': '410+ terjual',
+      'image_url':
+          'https://lh3.googleusercontent.com/aida-public/AB6AXuBk603kJTTwyMZijNDcrTCQgKIriau9_3zXu-iSr0KlFkT4JKRLGwCHqT38CRGh7rX8YlQRTlXidz0qrQyxKK8-yNR7RsajVjAQH58sYuLdzip0DJzER-4O7icu9gSJDM71DnKZ12cY43Lf7DFN_pIkAEYEvTbBYuHggoR9z4jJjhWssKmZNbASdUOvhnI5_ZigVsPYHONWe7EwzMXIFgMJSL3CIrQtwQzk52zRvcamluL15gDpiPRJ',
+      'description':
+          'Selada keriting segar ditanam dengan sistem hidroponik NFT air mengalir. Daun renyah, bersih tanpa tanah, siap santap untuk salad atau burger.',
+    },
+  ];
+
+  List<dynamic> get _filteredProducts {
+    return _products.where((item) {
+      if (item is! Map) return false;
+      final p = item;
+      final title = (p['title'] ?? '').toString().toLowerCase();
+      final desc = (p['description'] ?? '').toString().toLowerCase();
+      final category = (p['category'] ?? p['category_name'] ?? '').toString().toLowerCase();
+      final grade = (p['grade'] ?? '').toString().toLowerCase();
+
+      final matchesSearch = _searchQuery.isEmpty ||
+          title.contains(_searchQuery.toLowerCase().trim());
+
+      final matchesCategory = _selectedCategory == 'Semua' ||
+          category.contains(_selectedCategory.toLowerCase()) ||
+          title.contains(_selectedCategory.toLowerCase()) ||
+          grade.contains(_selectedCategory.toLowerCase()) ||
+          desc.contains(_selectedCategory.toLowerCase());
+
+      return matchesSearch && matchesCategory;
+    }).toList();
+  }
+
   @override
   void initState() {
     super.initState();
     fetchProducts();
+  }
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
   }
 
   Future<void> fetchProducts() async {
@@ -36,7 +209,7 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen> {
         final List<dynamic> data = (response['data'] as List<dynamic>?) ?? [];
         if (mounted) {
           setState(() {
-            _products = data;
+            _products = data.isNotEmpty ? data : _defaultProducts;
             _isLoading = false;
           });
         }
@@ -47,6 +220,9 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen> {
     }
     if (mounted) {
       setState(() {
+        if (_products.isEmpty) {
+          _products = _defaultProducts;
+        }
         _isLoading = false;
       });
     }
@@ -71,14 +247,6 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen> {
     return 'Rp${buffer.toString()}';
   }
 
-  final List<String> _categoryTabs = [
-    'Untuk Kamu',
-    'Panen 10.10',
-    'Petani Terpilih',
-    'Sayur Daun',
-    'Buah Segar',
-    'Bumbu Dapur',
-  ];
 
   final List<Map<String, dynamic>> _quickActions = [
     {
@@ -338,15 +506,48 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen> {
                           ),
                           const SizedBox(width: 8),
                           Expanded(
-                            child: Text(
-                              'Cari sayur hidroponik, buah segar...',
-                              overflow: TextOverflow.ellipsis,
+                            child: TextField(
+                              controller: _searchController,
+                              onChanged: (value) {
+                                setState(() {
+                                  _searchQuery = value;
+                                });
+                              },
                               style: GoogleFonts.inter(
-                                fontSize: 11.5,
-                                color: const Color(0xFF94A3B8),
+                                fontSize: 12,
+                                color: const Color(0xFF1F2937),
+                              ),
+                              decoration: InputDecoration(
+                                isDense: true,
+                                contentPadding: EdgeInsets.zero,
+                                hintText: 'Cari sayur hidroponik, buah segar...',
+                                hintStyle: GoogleFonts.inter(
+                                  fontSize: 11.5,
+                                  color: const Color(0xFF94A3B8),
+                                ),
+                                border: InputBorder.none,
+                                focusedBorder: InputBorder.none,
+                                enabledBorder: InputBorder.none,
                               ),
                             ),
                           ),
+                          if (_searchQuery.isNotEmpty)
+                            InkWell(
+                              onTap: () {
+                                setState(() {
+                                  _searchController.clear();
+                                  _searchQuery = '';
+                                });
+                              },
+                              child: const Padding(
+                                padding: EdgeInsets.all(4.0),
+                                child: Icon(
+                                  LucideIcons.x,
+                                  size: 14,
+                                  color: Color(0xFF94A3B8),
+                                ),
+                              ),
+                            ),
                           InkWell(
                             onTap: () {
                               ScaffoldMessenger.of(context).showSnackBar(
@@ -705,84 +906,109 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen> {
                 final item = _recentlyViewed[index];
                 final badgeColorVal = int.parse(item['badgeColor']!);
 
-                return Container(
-                  width: 104,
-                  padding: const EdgeInsets.all(5),
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(8),
-                    border: Border.all(color: const Color(0xFFF1F5F9)),
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Stack(
-                        children: [
-                          ClipRRect(
-                            borderRadius: BorderRadius.circular(6),
-                            child: AspectRatio(
-                              aspectRatio: 1,
-                              child: Image.network(
-                                item['imageUrl']!,
-                                fit: BoxFit.cover,
-                                errorBuilder: (context, error, stackTrace) =>
-                                    Container(
-                                  color: const Color(0xFFE2E8F0),
-                                  child: const Icon(
-                                    LucideIcons.image,
-                                    size: 20,
-                                    color: Color(0xFF94A3B8),
+                return InkWell(
+                  onTap: () {
+                    final recentProduct = {
+                      'id': 'recent-$index',
+                      'title': '${item['title']} - ${item['category']}',
+                      'price_per_kg': 14000,
+                      'unit': '/kg',
+                      'category': item['category'],
+                      'grade': item['badge'],
+                      'village_name': 'Lembang, Bandung Barat',
+                      'rating': '4.9',
+                      'soldCount': '500+ terjual',
+                      'image_url': item['imageUrl'],
+                      'description':
+                          'Komoditas ${item['title']} segar berkualitas hasil panen petani mitra LapakTani.',
+                    };
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => ProductDetailScreen(product: recentProduct),
+                      ),
+                    );
+                  },
+                  borderRadius: BorderRadius.circular(8),
+                  child: Container(
+                    width: 104,
+                    padding: const EdgeInsets.all(5),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(color: const Color(0xFFF1F5F9)),
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Stack(
+                          children: [
+                            ClipRRect(
+                              borderRadius: BorderRadius.circular(6),
+                              child: AspectRatio(
+                                aspectRatio: 1,
+                                child: Image.network(
+                                  item['imageUrl']!,
+                                  fit: BoxFit.cover,
+                                  errorBuilder: (context, error, stackTrace) =>
+                                      Container(
+                                    color: const Color(0xFFE2E8F0),
+                                    child: const Icon(
+                                      LucideIcons.image,
+                                      size: 20,
+                                      color: Color(0xFF94A3B8),
+                                    ),
                                   ),
                                 ),
                               ),
                             ),
-                          ),
-                          Positioned(
-                            top: 3,
-                            left: 3,
-                            child: Container(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 3.5,
-                                vertical: 1.5,
-                              ),
-                              decoration: BoxDecoration(
-                                color: Color(badgeColorVal).withValues(alpha: 0.9),
-                                borderRadius: BorderRadius.circular(3),
-                              ),
-                              child: Text(
-                                item['badge']!,
-                                style: GoogleFonts.inter(
-                                  fontSize: 7.0,
-                                  fontWeight: FontWeight.w700,
-                                  color: Colors.white,
+                            Positioned(
+                              top: 3,
+                              left: 3,
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 3.5,
+                                  vertical: 1.5,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: Color(badgeColorVal).withValues(alpha: 0.9),
+                                  borderRadius: BorderRadius.circular(3),
+                                ),
+                                child: Text(
+                                  item['badge']!,
+                                  style: GoogleFonts.inter(
+                                    fontSize: 7.0,
+                                    fontWeight: FontWeight.w700,
+                                    color: Colors.white,
+                                  ),
                                 ),
                               ),
                             ),
+                          ],
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          item['title']!,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: GoogleFonts.inter(
+                            fontSize: 10.0,
+                            fontWeight: FontWeight.w700,
+                            color: const Color(0xFF1E293B),
                           ),
-                        ],
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        item['title']!,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: GoogleFonts.inter(
-                          fontSize: 10.0,
-                          fontWeight: FontWeight.w700,
-                          color: const Color(0xFF1E293B),
                         ),
-                      ),
-                      Text(
-                        item['category']!,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: GoogleFonts.inter(
-                          fontSize: 9.0,
-                          color: const Color(0xFF64748B),
+                        Text(
+                          item['category']!,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: GoogleFonts.inter(
+                            fontSize: 9.0,
+                            color: const Color(0xFF64748B),
+                          ),
                         ),
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
                 );
               },
@@ -795,47 +1021,64 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen> {
 
   Widget _buildCategoryTabBar() {
     return Container(
-      margin: const EdgeInsets.only(top: 4),
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      margin: const EdgeInsets.only(top: 6),
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
       color: Colors.white,
       child: SizedBox(
-        height: 28,
+        height: 34,
         child: ListView.separated(
           scrollDirection: Axis.horizontal,
-          itemCount: _categoryTabs.length,
-          separatorBuilder: (context, index) => const SizedBox(width: 6),
+          itemCount: _categories.length,
+          separatorBuilder: (context, index) => const SizedBox(width: 8),
           itemBuilder: (context, index) {
-            final isSelected = _selectedCategoryTabIndex == index;
-            final label = _categoryTabs[index];
+            final category = _categories[index];
+            final isSelected = _selectedCategory == category;
 
             return InkWell(
               onTap: () {
                 setState(() {
-                  _selectedCategoryTabIndex = index;
+                  _selectedCategory = category;
                 });
               },
-              child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+              borderRadius: BorderRadius.circular(20),
+              child: AnimatedContainer(
+                duration: const Duration(milliseconds: 150),
+                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
                 decoration: BoxDecoration(
                   color: isSelected
-                      ? const Color(0xFFE8F8EA)
-                      : Colors.transparent,
-                  borderRadius: BorderRadius.circular(16),
+                      ? const Color(0xFF03AC0E)
+                      : Colors.white,
+                  borderRadius: BorderRadius.circular(20),
                   border: Border.all(
                     color: isSelected
                         ? const Color(0xFF03AC0E)
                         : const Color(0xFFE2E8F0),
                     width: 1,
                   ),
+                  boxShadow: isSelected
+                      ? [
+                          BoxShadow(
+                            color: const Color(0xFF03AC0E).withValues(alpha: 0.25),
+                            blurRadius: 4,
+                            offset: const Offset(0, 1.5),
+                          ),
+                        ]
+                      : [
+                          const BoxShadow(
+                            color: Color(0x08000000),
+                            blurRadius: 2,
+                            offset: Offset(0, 1),
+                          ),
+                        ],
                 ),
                 child: Center(
                   child: Text(
-                    label,
+                    category,
                     style: GoogleFonts.inter(
-                      fontSize: 11.0,
+                      fontSize: 11.5,
                       fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
                       color: isSelected
-                          ? const Color(0xFF03AC0E)
+                          ? Colors.white
                           : const Color(0xFF475569),
                     ),
                   ),
@@ -871,7 +1114,7 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen> {
                 ),
               ),
             )
-          else if (_products.isEmpty)
+          else if (_filteredProducts.isEmpty)
             Padding(
               padding: const EdgeInsets.symmetric(vertical: 40),
               child: Center(
@@ -885,11 +1128,32 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen> {
                     ),
                     const SizedBox(height: 8),
                     Text(
-                      'Belum ada produk tersedia.',
+                      _searchQuery.isNotEmpty
+                          ? 'Tidak ada produk untuk pencarian "$_searchQuery".'
+                          : 'Tidak ada produk untuk kategori "$_selectedCategory".',
+                      textAlign: TextAlign.center,
                       style: GoogleFonts.inter(
                         fontSize: 12,
                         color: const Color(0xFF64748B),
                         fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                    const SizedBox(height: 10),
+                    TextButton(
+                      onPressed: () {
+                        setState(() {
+                          _searchController.clear();
+                          _searchQuery = '';
+                          _selectedCategory = 'Semua';
+                        });
+                      },
+                      child: Text(
+                        'Reset Filter',
+                        style: GoogleFonts.inter(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w700,
+                          color: const Color(0xFF03AC0E),
+                        ),
                       ),
                     ),
                   ],
@@ -900,7 +1164,7 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen> {
             GridView.builder(
               shrinkWrap: true,
               physics: const NeverScrollableScrollPhysics(),
-              itemCount: _products.length,
+              itemCount: _filteredProducts.length,
               gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
                 crossAxisCount: 2,
                 crossAxisSpacing: 6,
@@ -909,8 +1173,19 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen> {
               ),
               itemBuilder: (context, index) {
                 final product =
-                    Map<String, dynamic>.from(_products[index] as Map);
-                return _buildStandardProductCard(product);
+                    Map<String, dynamic>.from(_filteredProducts[index] as Map);
+                return InkWell(
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => ProductDetailScreen(product: product),
+                      ),
+                    );
+                  },
+                  borderRadius: BorderRadius.circular(10),
+                  child: _buildStandardProductCard(product),
+                );
               },
             ),
         ],
@@ -1083,27 +1358,53 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen> {
   }
 
   Widget _buildOfficialFarmerHeroCard() {
-    return Container(
-      padding: const EdgeInsets.all(6),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: const Color(0xFFF1F5F9)),
-        boxShadow: const [
-          BoxShadow(
-            color: Color(0x0A000000),
-            blurRadius: 3,
-            offset: Offset(0, 1),
+    final heroProduct = {
+      'id': 'hero-1',
+      'title': 'Paket Sayur Sop Komplit & Segar Lembang (1 Kg)',
+      'price_per_kg': 22500,
+      'unit': '/kg',
+      'category': 'Sayuran Segar Organik',
+      'grade': 'Mitra Utama',
+      'village_name': 'Kebun Lembang Segar',
+      'rating': '5.0',
+      'soldCount': '1.2rb terjual',
+      'image_url':
+          'https://lh3.googleusercontent.com/aida-public/AB6AXuALDDiNd4kkcbVgjbcQUTzmuQJULFGslfxZfpr6pWVhd7b8tdw5-wGxEupE4H6sArX9vEoHPJayMGt5Q_d0jTT8H1fprQ8UXm9cznmtX0XopfNUr4QvmuF0ZOG7CwBTaJ7ZncHBoAfAlMmdaKZRc3TGFcwcfS_0uSGy7w0HKVbu9MI5D7bLFtiBGbgVqWYWa-FHJkz8lewhG3UB6CEGuTAp1LeGI297Q0oBHs0FL6dm5CM5yhLbEjFO',
+      'description':
+          'Paket Sayur Sop Komplit & Segar Lembang dipanen langsung setiap pagi. Kualitas terjamin segar dengan kombinasi sayur lengkap siap masak.',
+    };
+
+    return InkWell(
+      onTap: () {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => ProductDetailScreen(product: heroProduct),
           ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
+        );
+      },
+      borderRadius: BorderRadius.circular(10),
+      child: Container(
+        padding: const EdgeInsets.all(6),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(10),
+          border: Border.all(color: const Color(0xFFF1F5F9)),
+          boxShadow: const [
+            BoxShadow(
+              color: Color(0x0A000000),
+              blurRadius: 3,
+              offset: Offset(0, 1),
+            ),
+          ],
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1.5),
                 decoration: BoxDecoration(
@@ -1279,8 +1580,9 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen> {
           ),
         ],
       ),
-    );
-  }
+    ),
+  );
+}
 
   Widget _buildStandardProductCard(Map<String, dynamic> product) {
     final productId = product['id'];
