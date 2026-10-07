@@ -337,6 +337,9 @@ const updateProduct = async (req, res) => {
       });
     }
 
+    const updates = [];
+    const params = [];
+
     if (image_urls !== undefined && Array.isArray(image_urls)) {
       await pool.query('DELETE FROM product_images WHERE product_id = ?', [id]);
       for (let i = 0; i < image_urls.length; i++) {
@@ -352,10 +355,6 @@ const updateProduct = async (req, res) => {
         params.push(image_urls[0]);
       }
     }
-
-
-    const updates = [];
-    const params = [];
 
     if (title !== undefined && title !== null) {
       updates.push('title = ?');
