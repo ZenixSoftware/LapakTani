@@ -18,12 +18,18 @@ class ApiService {
 
   Future<String?> getToken() async {
     final prefs = await SharedPreferences.getInstance();
-    return prefs.getString(tokenKey);
+    final token = prefs.getString(tokenKey) ??
+        prefs.getString('lapaktani_token') ??
+        prefs.getString('token') ??
+        prefs.getString('auth_token');
+    return token;
   }
 
   Future<void> saveToken(String token) async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString(tokenKey, token);
+    await prefs.setString('lapaktani_token', token);
+    await prefs.setString('token', token);
   }
 
   Future<void> saveUser(Map<String, dynamic> user) async {
@@ -33,7 +39,7 @@ class ApiService {
 
   Future<Map<String, dynamic>?> getUser() async {
     final prefs = await SharedPreferences.getInstance();
-    final userStr = prefs.getString(userKey);
+    final userStr = prefs.getString(userKey) ?? prefs.getString('user');
     if (userStr == null) return null;
     try {
       return jsonDecode(userStr) as Map<String, dynamic>;
@@ -45,7 +51,10 @@ class ApiService {
   Future<void> clearAuth() async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.remove(tokenKey);
+    await prefs.remove('lapaktani_token');
+    await prefs.remove('token');
     await prefs.remove(userKey);
+    await prefs.remove('user');
   }
 
   Future<Map<String, String>> _buildHeaders({

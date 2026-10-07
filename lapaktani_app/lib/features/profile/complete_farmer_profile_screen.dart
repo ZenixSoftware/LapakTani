@@ -9,6 +9,8 @@ import '../../core/services/region_service.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/widgets/custom_soft_card.dart';
 import '../../core/widgets/lapaktani_text_field.dart';
+import '../../core/services/api_service.dart';
+import '../auth/auth_repository.dart';
 import 'profile_repository.dart';
 import 'verification_pending_screen.dart';
 
@@ -88,7 +90,14 @@ class _CompleteFarmerProfileScreenState
   Future<void> _loadInitialData() async {
     setState(() => _isLoadingProvinces = true);
 
-    final user = _profileRepository.currentUser;
+    var user = _profileRepository.currentUser;
+    if (user == null) {
+      final userMap = await ApiService().getUser();
+      if (userMap != null) {
+        user = User.fromJson(userMap);
+        AuthRepository.setCurrentUser(user);
+      }
+    }
     if (user != null) {
       final userProfile = await _profileRepository.getUserProfile(user.id);
       if (userProfile != null && mounted) {
@@ -381,8 +390,16 @@ class _CompleteFarmerProfileScreenState
 
     if (!_formKey.currentState!.validate()) return;
 
-    final user = _profileRepository.currentUser;
+    var user = _profileRepository.currentUser;
     if (user == null) {
+      final userMap = await ApiService().getUser();
+      if (userMap != null) {
+        user = User.fromJson(userMap);
+        AuthRepository.setCurrentUser(user);
+      }
+    }
+    if (user == null) {
+      if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('Sesi pengguna tidak valid. Silakan login kembali.'),

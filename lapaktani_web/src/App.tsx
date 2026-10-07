@@ -4,7 +4,16 @@ import { Sidebar } from './components/Sidebar';
 import { HeroBanner } from './components/HeroBanner';
 import { QueueTable } from './components/QueueTable';
 import { AuditDesk } from './components/AuditDesk';
-import { fetchPendingFarmers, verifyFarmer, type PendingFarmer } from './services/api';
+import { LoginModal } from './components/LoginModal';
+import {
+  fetchPendingFarmers,
+  verifyFarmer,
+  getAuthToken,
+  getStoredUser,
+  removeAuthToken,
+  type PendingFarmer,
+  type AuthUser,
+} from './services/api';
 
 export function App() {
   const [farmers, setFarmers] = useState<PendingFarmer[]>([]);
@@ -14,6 +23,8 @@ export function App() {
   const [isSyncing, setIsSyncing] = useState<boolean>(false);
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' | 'info' } | null>(null);
+  const [currentUser, setCurrentUser] = useState<AuthUser | null>(() => getStoredUser());
+  const [isLoginModalOpen, setIsLoginModalOpen] = useState<boolean>(() => !getAuthToken());
 
   const showToast = useCallback((message: string, type: 'success' | 'error' | 'info' = 'success') => {
     setToast({ message, type });
@@ -37,15 +48,41 @@ export function App() {
       }
     } catch (err: any) {
       console.error('[WEB] Error fetching pending farmers:', err);
-      showToast(err.message || 'Gagal memuat data antrean dari backend.', 'error');
+      if (err.message && err.message.includes('401')) {
+        setIsLoginModalOpen(true);
+        showToast('Sesi autentikasi belum tersedia atau kedaluwarsa. Silakan masuk.', 'error');
+      } else {
+        showToast(err.message || 'Gagal memuat data antrean dari backend.', 'error');
+      }
     } finally {
       if (!quiet) setIsLoading(false);
     }
   }, [showToast]);
 
   useEffect(() => {
-    loadData();
+    if (getAuthToken()) {
+      loadData();
+    } else {
+      setIsLoading(false);
+      setIsLoginModalOpen(true);
+    }
   }, [loadData]);
+
+  const handleLoginSuccess = (user: AuthUser) => {
+    setCurrentUser(user);
+    setIsLoginModalOpen(false);
+    showToast(`Berhasil masuk sebagai ${user.full_name || 'Penyuluh Pertanian'}.`, 'success');
+    loadData();
+  };
+
+  const handleLogout = () => {
+    removeAuthToken();
+    setCurrentUser(null);
+    setFarmers([]);
+    setSelectedFarmerId('');
+    setIsLoginModalOpen(true);
+    showToast('Sesi keluar berhasil.', 'info');
+  };
 
   const handleVerify = async (id: string, status: 'verified' | 'rejected', notes: string) => {
     setIsProcessing(true);
@@ -56,6 +93,9 @@ export function App() {
       await loadData(true);
     } catch (err: any) {
       console.error('[WEB] Verification failed:', err);
+      if (err.message && err.message.includes('401')) {
+        setIsLoginModalOpen(true);
+      }
       showToast(err.message || 'Terjadi kesalahan saat memproses permohonan.', 'error');
     } finally {
       setIsProcessing(false);
@@ -122,11 +162,17 @@ export function App() {
         onSearchChange={setSearchQuery}
         onSync={handleSyncSimluhtan}
         isSyncing={isSyncing}
+        currentUser={currentUser}
+        onOpenLogin={() => setIsLoginModalOpen(true)}
       />
 
       <div className="flex pt-16 min-h-screen">
         {/* SIDEBAR NAVIGATION */}
-        <Sidebar pendingCount={farmers.length} />
+        <Sidebar
+          pendingCount={farmers.length}
+          currentUser={currentUser}
+          onLogout={handleLogout}
+        />
 
         {/* MAIN WORKSPACE */}
         <main className="flex-1 md:pl-64 lg:pl-72 p-4 lg:p-8 overflow-x-hidden">
@@ -162,6 +208,13 @@ export function App() {
           </div>
         </main>
       </div>
+
+      {/* Penyuluh Authentication Modal */}
+      <LoginModal
+        isOpen={isLoginModalOpen}
+        onClose={getAuthToken() ? () => setIsLoginModalOpen(false) : undefined}
+        onSuccess={handleLoginSuccess}
+      />
     </div>
   );
 }

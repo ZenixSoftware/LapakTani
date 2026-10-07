@@ -68,6 +68,10 @@ class AuthRepository {
   AuthRepository({ApiService? apiService})
       : _apiService = apiService ?? ApiService();
 
+  static void setCurrentUser(User? user) {
+    _currentUser = user;
+  }
+
   User? get currentUser => _currentUser;
   Session? get currentSession => null;
 

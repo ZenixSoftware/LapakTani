@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'dart:io';
 import '../../core/services/api_service.dart';
 import '../auth/auth_repository.dart';
@@ -33,20 +34,30 @@ class ProfileRepository {
     final payload = <String, dynamic>{
       'user_id': userId,
       'nik_number': nikNumber,
+      'nik': nikNumber,
       'home_address': homeAddress,
       'farmer_group_id': farmerGroupId,
+      'farmer_group': farmerGroupId,
       'land_area_ha': landAreaHa,
+      'land_area': landAreaHa,
       'province': province,
       'regency': regency,
       'district': district,
       'village': village,
+      'village_id': village,
       'verification_status': 'pending',
     };
 
-    try {
-      await ApiService.post('/farmer/profile', payload);
-    } catch (_) {
-      // Local fallback simulation if endpoint is pending extension
+    final response = await ApiService.post('/profiles/farmer', payload);
+    if (response.statusCode >= 400) {
+      String message = 'Gagal menyimpan profil petani.';
+      try {
+        final decoded = jsonDecode(response.body);
+        if (decoded is Map && decoded['message'] != null) {
+          message = decoded['message'].toString();
+        }
+      } catch (_) {}
+      throw Exception(message);
     }
   }
 

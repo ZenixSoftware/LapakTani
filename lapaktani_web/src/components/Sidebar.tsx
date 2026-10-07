@@ -2,9 +2,15 @@ import React from 'react';
 
 interface SidebarProps {
   pendingCount: number;
+  currentUser?: { full_name?: string; email?: string } | null;
+  onLogout?: () => void;
 }
 
-export const Sidebar: React.FC<SidebarProps> = ({ pendingCount }) => {
+export const Sidebar: React.FC<SidebarProps> = ({
+  pendingCount,
+  currentUser,
+  onLogout,
+}) => {
   return (
     <aside className="w-64 lg:w-72 bg-surface-white border-r border-gray-100 hidden md:flex flex-col justify-between fixed top-16 bottom-0 left-0 z-30 shadow-sm">
       <div className="p-4 space-y-6 overflow-y-auto custom-scrollbar flex-1">
@@ -120,23 +126,31 @@ export const Sidebar: React.FC<SidebarProps> = ({ pendingCount }) => {
           <div className="flex items-center gap-2.5 min-w-0">
             <div className="relative flex-shrink-0">
               <div className="w-10 h-10 rounded-xl bg-forest-emerald text-white flex items-center justify-center font-bold text-[14px]">
-                AH
+                {currentUser?.full_name
+                  ? currentUser.full_name
+                      .split(' ')
+                      .map((n) => n[0])
+                      .slice(0, 2)
+                      .join('')
+                      .toUpperCase()
+                  : 'AH'}
               </div>
               <span className="absolute -bottom-0.5 -right-0.5 w-3 h-3 bg-primary rounded-full border-2 border-white"></span>
             </div>
             <div className="min-w-0">
               <p className="text-[13px] font-bold text-gray-900 truncate">
-                Ir. Ahmad Hidayat
+                {currentUser?.full_name || 'Ir. Ahmad Hidayat'}
               </p>
               <div className="flex items-center gap-1">
                 <span className="inline-block w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
                 <span className="text-[11px] text-gray-500 font-medium truncate">
-                  BPP Lembang
+                  {currentUser?.email || 'BPP Lembang'}
                 </span>
               </div>
             </div>
           </div>
           <button
+            onClick={onLogout}
             className="p-1.5 rounded-lg text-gray-400 hover:text-red-600 hover:bg-red-50 transition-colors"
             title="Keluar"
           >
