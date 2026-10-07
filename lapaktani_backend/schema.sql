@@ -35,3 +35,12 @@ CREATE TABLE IF NOT EXISTS products (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (farmer_id) REFERENCES users(id) ON DELETE CASCADE
 );
+
+CREATE TABLE IF NOT EXISTS product_images (
+    id VARCHAR(50) PRIMARY KEY,
+    product_id VARCHAR(50),
+    image_url VARCHAR(255),
+    is_primary BOOLEAN DEFAULT false,
+    FOREIGN KEY (product_id) REFERENCES products(id) ON DELETE CASCADE
+);
+

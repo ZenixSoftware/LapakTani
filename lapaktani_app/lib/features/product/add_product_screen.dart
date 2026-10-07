@@ -1,7 +1,9 @@
 import 'dart:convert';
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 import '../../core/services/api_service.dart';
 
@@ -22,9 +24,13 @@ class _AddProductScreenState extends State<AddProductScreen> {
   final TextEditingController _minOrderController = TextEditingController(text: '1');
   final TextEditingController _descriptionController = TextEditingController();
 
+  final List<File> _selectedImages = [];
+  final ImagePicker _picker = ImagePicker();
+
   List<Map<String, dynamic>> _commodities = [];
   List<Map<String, dynamic>> _grades = [];
   List<Map<String, dynamic>> _units = [];
+
 
   String? _selectedCommodity;
   String? _selectedGrade;
@@ -125,6 +131,139 @@ class _AddProductScreenState extends State<AddProductScreen> {
     }
   }
 
+  Future<void> _pickImage(ImageSource source) async {
+    if (_selectedImages.length >= 5) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Maksimal 5 foto komoditas.'),
+          backgroundColor: Color(0xFFEF4444),
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+      return;
+    }
+
+    try {
+      if (source == ImageSource.gallery) {
+        final List<XFile> pickedList = await _picker.pickMultiImage(
+          imageQuality: 85,
+          limit: 5 - _selectedImages.length,
+        );
+        if (pickedList.isNotEmpty) {
+          setState(() {
+            for (final xFile in pickedList) {
+              if (_selectedImages.length < 5) {
+                _selectedImages.add(File(xFile.path));
+              }
+            }
+          });
+        }
+      } else {
+        final XFile? photo = await _picker.pickImage(
+          source: source,
+          imageQuality: 85,
+        );
+        if (photo != null) {
+          setState(() {
+            _selectedImages.add(File(photo.path));
+          });
+        }
+      }
+    } catch (e) {
+      debugPrint('[ADD_PRODUCT] Error picking image: $e');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Gagal memilih gambar: $e'),
+            backgroundColor: const Color(0xFFEF4444),
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      }
+    }
+  }
+
+  void _showImageSourceDialog() {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.white,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (ctx) => SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'Pilih Sumber Foto Panen',
+                style: GoogleFonts.plusJakartaSans(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w700,
+                  color: const Color(0xFF121C2A),
+                ),
+              ),
+              const SizedBox(height: 16),
+              ListTile(
+                leading: Container(
+                  padding: const EdgeInsets.all(10),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFE8F7EE),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: const Icon(LucideIcons.camera, color: Color(0xFF03AC0E), size: 22),
+                ),
+                title: Text(
+                  'Kamera',
+                  style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w600, fontSize: 14),
+                ),
+                subtitle: Text(
+                  'Ambil foto langsung dari kebun/ladang',
+                  style: GoogleFonts.plusJakartaSans(color: const Color(0xFF64748B), fontSize: 12),
+                ),
+                onTap: () {
+                  Navigator.pop(ctx);
+                  _pickImage(ImageSource.camera);
+                },
+              ),
+              const SizedBox(height: 8),
+              ListTile(
+                leading: Container(
+                  padding: const EdgeInsets.all(10),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFEFF4FF),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: const Icon(LucideIcons.image, color: Color(0xFF2563EB), size: 22),
+                ),
+                title: Text(
+                  'Galeri Foto',
+                  style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w600, fontSize: 14),
+                ),
+                subtitle: Text(
+                  'Pilih dari album/galeri smartphone',
+                  style: GoogleFonts.plusJakartaSans(color: const Color(0xFF64748B), fontSize: 12),
+                ),
+                onTap: () {
+                  Navigator.pop(ctx);
+                  _pickImage(ImageSource.gallery);
+                },
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  void _removeImage(int index) {
+    setState(() {
+      _selectedImages.removeAt(index);
+    });
+  }
+
   Future<void> _submitProduct() async {
     if (!_formKey.currentState!.validate()) return;
 
@@ -143,19 +282,38 @@ class _AddProductScreenState extends State<AddProductScreen> {
       _isSubmitting = true;
     });
 
-    final payload = <String, dynamic>{
-      'title': _titleController.text.trim(),
-      'price_per_kg': double.parse(_priceController.text.trim()),
-      'stock_kg': double.parse(_stockController.text.trim()),
-      'commodity_id': _selectedCommodity,
-      'grade_id': _selectedGrade,
-      'unit_id': _selectedUnitId ?? 'unit-kg',
-      'description': _descriptionController.text.trim().isNotEmpty
-          ? _descriptionController.text.trim()
-          : null,
-    };
-
     try {
+      final List<String> uploadedUrls = [];
+      if (_selectedImages.isNotEmpty) {
+        for (int i = 0; i < _selectedImages.length; i++) {
+          try {
+            final res = await ApiService.uploadImage('/upload/product-image', _selectedImages[i]);
+            if (res['data'] != null && res['data']['image_url'] != null) {
+              uploadedUrls.add(res['data']['image_url'].toString());
+            }
+          } catch (uploadErr) {
+            debugPrint('[ADD_PRODUCT] Gagal mengunggah foto ke-$i: $uploadErr');
+          }
+        }
+      }
+
+      final payload = <String, dynamic>{
+        'title': _titleController.text.trim(),
+        'price_per_kg': double.parse(_priceController.text.trim()),
+        'stock_kg': double.parse(_stockController.text.trim()),
+        'commodity_id': _selectedCommodity,
+        'grade_id': _selectedGrade,
+        'unit_id': _selectedUnitId ?? 'unit-kg',
+        'description': _descriptionController.text.trim().isNotEmpty
+            ? _descriptionController.text.trim()
+            : null,
+      };
+
+      if (uploadedUrls.isNotEmpty) {
+        payload['image_urls'] = uploadedUrls;
+        payload['image_url'] = uploadedUrls.first;
+      }
+
       final response = await ApiService.post('/products', payload);
       final dynamic body = jsonDecode(response.body);
 
@@ -202,6 +360,7 @@ class _AddProductScreenState extends State<AddProductScreen> {
       }
     }
   }
+
 
   @override
   Widget build(BuildContext context) {
@@ -250,9 +409,10 @@ class _AddProductScreenState extends State<AddProductScreen> {
                     _buildSectionContainer(
                       title: 'Foto Panen Komoditas',
                       subtitle: 'Maksimal 5 foto komoditas asli dari ladang',
-                      trailingBadge: '1 / 5',
+                      trailingBadge: '${_selectedImages.length} / 5',
                       child: _buildPhotoSection(),
                     ),
+
                     const SizedBox(height: 14),
 
                     // Section 2: Informasi Dasar Produk
@@ -886,9 +1046,11 @@ class _AddProductScreenState extends State<AddProductScreen> {
   }
 
   Widget _buildPhotoSection() {
-    return Column(
-      children: [
-        Container(
+    if (_selectedImages.isEmpty) {
+      return InkWell(
+        onTap: _showImageSourceDialog,
+        borderRadius: BorderRadius.circular(12),
+        child: Container(
           width: double.infinity,
           height: 140,
           decoration: BoxDecoration(
@@ -902,7 +1064,7 @@ class _AddProductScreenState extends State<AddProductScreen> {
               const Icon(LucideIcons.camera, size: 32, color: Color(0xFF03AC0E)),
               const SizedBox(height: 6),
               Text(
-                'Foto Utama Komoditas',
+                'Pilih / Ambil Foto Komoditas',
                 style: GoogleFonts.plusJakartaSans(
                   fontSize: 13,
                   fontWeight: FontWeight.w700,
@@ -910,7 +1072,7 @@ class _AddProductScreenState extends State<AddProductScreen> {
                 ),
               ),
               Text(
-                'Rasio 1:1 • Cahaya alami subuh',
+                'Rasio 1:1 • Cahaya alami subuh (Maks 5 foto)',
                 style: GoogleFonts.plusJakartaSans(
                   fontSize: 11,
                   color: const Color(0xFF64748B),
@@ -919,9 +1081,158 @@ class _AddProductScreenState extends State<AddProductScreen> {
             ],
           ),
         ),
+      );
+    }
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Stack(
+          children: [
+            ClipRRect(
+              borderRadius: BorderRadius.circular(12),
+              child: Image.file(
+                _selectedImages.first,
+                width: double.infinity,
+                height: 180,
+                fit: BoxFit.cover,
+              ),
+            ),
+            Positioned(
+              top: 10,
+              left: 10,
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                decoration: BoxDecoration(
+                  color: const Color(0xFF03AC0E),
+                  borderRadius: BorderRadius.circular(20),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withValues(alpha: 0.2),
+                      blurRadius: 4,
+                      offset: const Offset(0, 1),
+                    ),
+                  ],
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Icon(LucideIcons.star, size: 12, color: Colors.white),
+                    const SizedBox(width: 4),
+                    Text(
+                      'Foto Utama',
+                      style: GoogleFonts.plusJakartaSans(
+                        fontSize: 10.5,
+                        fontWeight: FontWeight.w700,
+                        color: Colors.white,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            Positioned(
+              top: 10,
+              right: 10,
+              child: InkWell(
+                onTap: () => _removeImage(0),
+                child: Container(
+                  padding: const EdgeInsets.all(6),
+                  decoration: BoxDecoration(
+                    color: Colors.black.withValues(alpha: 0.6),
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Icon(LucideIcons.trash2, size: 16, color: Colors.white),
+                ),
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 12),
+        SizedBox(
+          height: 72,
+          child: ListView.separated(
+            scrollDirection: Axis.horizontal,
+            itemCount: _selectedImages.length + (_selectedImages.length < 5 ? 1 : 0),
+            separatorBuilder: (context, index) => const SizedBox(width: 10),
+            itemBuilder: (context, index) {
+              if (index < _selectedImages.length) {
+                final isPrimary = index == 0;
+                return Stack(
+                  children: [
+                    Container(
+                      width: 72,
+                      height: 72,
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(10),
+                        border: Border.all(
+                          color: isPrimary ? const Color(0xFF03AC0E) : const Color(0xFFE2E8F0),
+                          width: isPrimary ? 2 : 1,
+                        ),
+                      ),
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(8),
+                        child: Image.file(
+                          _selectedImages[index],
+                          fit: BoxFit.cover,
+                        ),
+                      ),
+                    ),
+                    if (!isPrimary)
+                      Positioned(
+                        top: 4,
+                        right: 4,
+                        child: InkWell(
+                          onTap: () => _removeImage(index),
+                          child: Container(
+                            padding: const EdgeInsets.all(3),
+                            decoration: BoxDecoration(
+                              color: Colors.black.withValues(alpha: 0.65),
+                              shape: BoxShape.circle,
+                            ),
+                            child: const Icon(LucideIcons.x, size: 12, color: Colors.white),
+                          ),
+                        ),
+                      ),
+                  ],
+                );
+              } else {
+                return InkWell(
+                  onTap: _showImageSourceDialog,
+                  borderRadius: BorderRadius.circular(10),
+                  child: Container(
+                    width: 72,
+                    height: 72,
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFEFF4FF),
+                      borderRadius: BorderRadius.circular(10),
+                      border: Border.all(color: const Color(0xFF93C5FD), width: 1.2),
+                    ),
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        const Icon(LucideIcons.plus, size: 20, color: Color(0xFF2563EB)),
+                        const SizedBox(height: 2),
+                        Text(
+                          'Tambah',
+                          style: GoogleFonts.plusJakartaSans(
+                            fontSize: 10,
+                            fontWeight: FontWeight.w600,
+                            color: const Color(0xFF2563EB),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                );
+              }
+            },
+          ),
+        ),
       ],
     );
   }
+
 
   Widget _buildFieldLabel(String label) {
     return Padding(

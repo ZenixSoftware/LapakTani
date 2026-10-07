@@ -141,7 +141,7 @@ const createProduct = async (req, res) => {
       });
     }
 
-    const { title, price_per_kg, stock_kg, commodity_id, grade_id, unit_id, description, image_url } = req.body;
+    const { title, price_per_kg, stock_kg, commodity_id, grade_id, unit_id, description, image_url, image_urls } = req.body;
 
     if (
       !title ||
@@ -183,6 +183,19 @@ const createProduct = async (req, res) => {
     const productId = uuidv4();
     const selectedUnitId = unit_id || 'unit-kg';
 
+    let formattedImageUrls = [];
+    if (Array.isArray(image_urls)) {
+      formattedImageUrls = image_urls.filter(url => typeof url === 'string' && url.trim().length > 0);
+    } else if (typeof image_urls === 'string' && image_urls.trim().length > 0) {
+      formattedImageUrls = [image_urls.trim()];
+    }
+
+    if (image_url && typeof image_url === 'string' && image_url.trim().length > 0 && !formattedImageUrls.includes(image_url.trim())) {
+      formattedImageUrls.unshift(image_url.trim());
+    }
+
+    const primaryImageUrl = formattedImageUrls.length > 0 ? formattedImageUrls[0] : (image_url || null);
+
     await pool.query(
       `INSERT INTO products (id, farmer_id, commodity_id, grade_id, unit_id, title, price_per_kg, stock_kg, description, image_url)
        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
@@ -196,9 +209,21 @@ const createProduct = async (req, res) => {
         numericPrice,
         numericStock,
         description || null,
-        image_url || null
+        primaryImageUrl
       ]
     );
+
+    if (formattedImageUrls.length > 0) {
+      for (let i = 0; i < formattedImageUrls.length; i++) {
+        const imgId = uuidv4();
+        const imgUrl = formattedImageUrls[i];
+        const isPrimary = i === 0;
+        await pool.query(
+          `INSERT INTO product_images (id, product_id, image_url, is_primary) VALUES (?, ?, ?, ?)`,
+          [imgId, productId, imgUrl, isPrimary]
+        );
+      }
+    }
 
     if (redisClient.isOpen) {
       try {
@@ -218,9 +243,12 @@ const createProduct = async (req, res) => {
         grade_id,
         title: title.trim(),
         price_per_kg: numericPrice,
-        stock_kg: numericStock
+        stock_kg: numericStock,
+        image_url: primaryImageUrl,
+        image_urls: formattedImageUrls
       }
     });
+
   } catch (error) {
     return res.status(500).json({
       success: false,
@@ -295,7 +323,7 @@ const updateProduct = async (req, res) => {
       });
     }
 
-    const { title, price_per_kg, stock_kg, commodity_id, grade_id, unit_id, description, image_url } = req.body;
+    const { title, price_per_kg, stock_kg, commodity_id, grade_id, unit_id, description, image_url, image_urls } = req.body;
 
     const [existing] = await pool.query(
       'SELECT id FROM products WHERE id = ? AND farmer_id = ? LIMIT 1',
@@ -308,6 +336,23 @@ const updateProduct = async (req, res) => {
         message: 'Produk tidak ditemukan atau bukan milik Anda.'
       });
     }
+
+    if (image_urls !== undefined && Array.isArray(image_urls)) {
+      await pool.query('DELETE FROM product_images WHERE product_id = ?', [id]);
+      for (let i = 0; i < image_urls.length; i++) {
+        const imgId = uuidv4();
+        const isPrimary = i === 0;
+        await pool.query(
+          'INSERT INTO product_images (id, product_id, image_url, is_primary) VALUES (?, ?, ?, ?)',
+          [imgId, id, image_urls[i], isPrimary]
+        );
+      }
+      if (image_urls.length > 0 && image_url === undefined) {
+        updates.push('image_url = ?');
+        params.push(image_urls[0]);
+      }
+    }
+
 
     const updates = [];
     const params = [];

@@ -1,3 +1,4 @@
+const path = require('path');
 const express = require('express');
 const cors = require('cors');
 require('dotenv').config({ quiet: true });
@@ -9,6 +10,7 @@ const productRoutes = require('./src/routes/products');
 const profileRoutes = require('./src/routes/profiles');
 const penyuluhRoutes = require('./src/routes/penyuluh');
 const masterRoutes = require('./src/routes/master');
+const uploadRoutes = require('./src/routes/upload');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -16,6 +18,9 @@ const PORT = process.env.PORT || 3000;
 app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+app.use(express.static(path.join(__dirname, 'public')));
+app.use('/uploads', express.static(path.join(__dirname, 'public/uploads')));
+
 
 app.get('/', (req, res) => {
   res.status(200).json({
@@ -63,6 +68,8 @@ app.use('/api/products', productRoutes);
 app.use('/api/profiles', profileRoutes);
 app.use('/api/penyuluh', penyuluhRoutes);
 app.use('/api/master', masterRoutes);
+app.use('/api/upload', uploadRoutes);
+
 
 app.use((req, res) => {
   res.status(404).json({
