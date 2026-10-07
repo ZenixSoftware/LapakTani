@@ -44,9 +44,6 @@ app.*.map.json
 /android/app/profile
 /android/app/release
 
-# AI Agents & Skills
-.agents/
-AGENTS.md
 
 # Node / Web / Backend
 node_modules/
