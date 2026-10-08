@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import type { PendingFarmer } from '../services/api';
+import { type PendingFarmer, resolveImageUrl } from '../services/api';
 
 interface AuditDeskProps {
   farmer: PendingFarmer | null;
@@ -13,7 +13,7 @@ export const AuditDesk: React.FC<AuditDeskProps> = ({
   isProcessing,
 }) => {
   const [notes, setNotes] = useState(
-    'Identitas NIK sesuai data Dukcapil dan Kartu Tani aktif. Batas polygon telah dikonfirmasi via GPS lapangan. Pemohon memenuhi kriteria untuk aktif berjualan di LapakTani.'
+    'Identitas NIK sesuai data Dukcapil. Batas polygon telah dikonfirmasi via GPS lapangan. Pemohon memenuhi kriteria untuk aktif berjualan di LapakTani.'
   );
 
   useEffect(() => {
@@ -21,7 +21,7 @@ export const AuditDesk: React.FC<AuditDeskProps> = ({
       setNotes(
         `Identitas NIK ${farmer.nik || farmer.nik_number || ''} atas nama ${
           farmer.name || farmer.full_name || ''
-        } sesuai data Dukcapil dan Kartu Tani aktif. Batas polygon ${
+        } sesuai data Dukcapil. Batas polygon ${
           farmer.land_area || farmer.land_area_ha || '1.8'
         } Ha telah dikonfirmasi via GPS lapangan. Pemohon memenuhi kriteria untuk aktif berjualan di LapakTani.`
       );
@@ -54,17 +54,12 @@ export const AuditDesk: React.FC<AuditDeskProps> = ({
       ? `${farmer.gps_latitude}, ${farmer.gps_longitude}`
       : '-6.812401, 107.618920';
 
-  const ktpImageUrl =
-    farmer.ktp_image_url ||
-    'https://lh3.googleusercontent.com/aida-public/AB6AXuAJRxkFNjuPjlxSoeyJ0DWoP3ruIOjaO9Bop1kUqdkrAlqE_JCv5itKxXlLn4z_84G-Fpn_9NBTL3qNCxXZgaRnRtW8-f8TB8TRyo2jcSyfONhBjF5jxV9pWbhl6_u2wBmlLarGwC6RgSQ2OlicGJwyqMlAliEAcMttGktNWnvY98Vz_Hsctb2IaBiZWVPUuXvtvJHl6IGLKKEkRCQmWLyEmqXdzk3bBqqLebIsBFqTAE6UxL7_Epwr';
-
-  const selfieImageUrl =
-    farmer.avatar_url ||
-    'https://lh3.googleusercontent.com/aida-public/AB6AXuAdMhdij9M59zsLZFZCApKDIhS4Zz7QTskOfqZazfu-PUaC9my-zPmYZUeQiX7uzG7_B7Ab0SimwZDIvoFsrKSIUXA6Lgxq21VSMyo-UEK6173AASIdKivBDC2wy81AkoiWw93_WP9wJaD8xSwSaDimZy1jXQWMpmbN0jIJesyQWArfDjIX3sB6xT6EEkOrM8CAMX0GlvpiAcKkieCbmJIsF721vSgvuSSNh8vPwm71A5maX67tIcXH';
+  const ktpImageUrl = resolveImageUrl(farmer.ktp_image_url);
+  const selfieImageUrl = resolveImageUrl(farmer.selfie_image_url || farmer.avatar_url);
 
   const profileHeaderImg =
-    farmer.avatar_url ||
-    'https://lh3.googleusercontent.com/aida-public/AB6AXuBt72jkbFdGo5C7sSttPY_ot3zBIO1CoBTzRnHdsNCV6El2BUr_BLNco3izonTVrHolvPdGou4Pw-QIUp7G3DInoKEVAjGoKPiXqe3aBZGROGCy0vUKc4QFskuntmqueIvCGP1foDSuDZ3amz2lkGNmYyzcX2BNJ7C1GfGEjItI7_9Ei2To2UR9XY5JvpM0a_L0DJI8mr_yhlVHSsoN-Va0JAnLSrUOkBrckOpMgIgTlTAAtR8eR2tx';
+    selfieImageUrl ||
+    `https://ui-avatars.com/api/?name=${encodeURIComponent(displayName)}&background=03AC0E&color=fff&size=128`;
 
   return (
     <div className="xl:col-span-5 space-y-4">
@@ -74,8 +69,13 @@ export const AuditDesk: React.FC<AuditDeskProps> = ({
           <div className="flex items-center gap-3">
             <img
               alt={displayName}
-              className="w-14 h-14 rounded-2xl object-cover ring-2 ring-forest-emerald shadow-sm"
+              className="w-14 h-14 rounded-2xl object-cover ring-2 ring-forest-emerald shadow-sm bg-gray-100"
               src={profileHeaderImg}
+              onError={(e) => {
+                (e.currentTarget as HTMLImageElement).src = `https://ui-avatars.com/api/?name=${encodeURIComponent(
+                  displayName
+                )}&background=03AC0E&color=fff&size=128`;
+              }}
             />
             <div>
               <div className="flex items-center gap-2">
@@ -108,61 +108,82 @@ export const AuditDesk: React.FC<AuditDeskProps> = ({
             </span>
             <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-emerald-100 text-emerald-800 font-bold text-[11px]">
               <span className="material-symbols-outlined text-[14px]">verified</span>
-              <span>98% Cocok</span>
+              <span>{ktpImageUrl && selfieImageUrl ? 'Dokumen Lengkap' : 'Menunggu Berkas'}</span>
             </span>
           </div>
 
           <div className="grid grid-cols-2 gap-3">
             {/* e-KTP Card Preview */}
             <div className="rounded-xl overflow-hidden border border-gray-200 bg-gray-50 group hover:border-primary transition-all">
-              <div
-                className="relative h-28 w-full bg-cover bg-center"
-                style={{ backgroundImage: `url('${ktpImageUrl}')` }}
-              >
-                <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent flex items-end p-2">
-                  <span className="text-white text-[11px] font-bold">Foto e-KTP Asli</span>
+              {ktpImageUrl ? (
+                <div className="relative h-28 w-full bg-slate-900 overflow-hidden">
+                  <img
+                    src={ktpImageUrl}
+                    alt="Foto e-KTP Asli"
+                    className="w-full h-full object-cover"
+                    onError={(e) => {
+                      (e.currentTarget as HTMLElement).style.display = 'none';
+                    }}
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent flex items-end p-2 pointer-events-none">
+                    <span className="text-white text-[11px] font-bold">Foto e-KTP Asli</span>
+                  </div>
                 </div>
-              </div>
+              ) : (
+                <div className="relative h-28 w-full bg-gray-100 flex flex-col items-center justify-center text-gray-400 p-2">
+                  <span className="material-symbols-outlined text-[32px] text-gray-300">
+                    badge
+                  </span>
+                  <span className="text-[11px] font-medium text-gray-500 mt-1">
+                    Belum ada foto e-KTP
+                  </span>
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent flex items-end p-2 pointer-events-none">
+                    <span className="text-white text-[11px] font-bold">Foto e-KTP Asli</span>
+                  </div>
+                </div>
+              )}
               <div className="p-2 bg-white text-[11px] space-y-0.5">
                 <p className="font-bold text-gray-800">NIK: {displayNik}</p>
-                <p className="text-gray-500">Tgl Lahir: 14 Mei 1979</p>
               </div>
             </div>
 
             {/* Selfie Card Preview */}
             <div className="rounded-xl overflow-hidden border border-gray-200 bg-gray-50 group hover:border-primary transition-all">
-              <div
-                className="relative h-28 w-full bg-cover bg-center"
-                style={{ backgroundImage: `url('${selfieImageUrl}')` }}
-              >
-                <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent flex items-end p-2">
-                  <span className="text-white text-[11px] font-bold">Swafoto Petani + KTP</span>
+              {selfieImageUrl ? (
+                <div className="relative h-28 w-full bg-slate-900 overflow-hidden">
+                  <img
+                    src={selfieImageUrl}
+                    alt="Swafoto Petani + KTP"
+                    className="w-full h-full object-cover"
+                    onError={(e) => {
+                      (e.currentTarget as HTMLElement).style.display = 'none';
+                    }}
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent flex items-end p-2 pointer-events-none">
+                    <span className="text-white text-[11px] font-bold">Swafoto Petani + KTP</span>
+                  </div>
                 </div>
-              </div>
+              ) : (
+                <div className="relative h-28 w-full bg-gray-100 flex flex-col items-center justify-center text-gray-400 p-2">
+                  <span className="material-symbols-outlined text-[32px] text-gray-300">
+                    face
+                  </span>
+                  <span className="text-[11px] font-medium text-gray-500 mt-1">
+                    Belum ada swafoto
+                  </span>
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent flex items-end p-2 pointer-events-none">
+                    <span className="text-white text-[11px] font-bold">Swafoto Petani + KTP</span>
+                  </div>
+                </div>
+              )}
               <div className="p-2 bg-white text-[11px] space-y-0.5">
                 <p className="font-bold text-forest-emerald flex items-center gap-1">
                   <span className="material-symbols-outlined text-[13px]">face</span>
-                  <span>Liveness OK</span>
+                  <span>{selfieImageUrl ? 'Liveness OK' : 'Menunggu Berkas'}</span>
                 </p>
-                <p className="text-gray-500">Kamera HP • Lembang</p>
+                <p className="text-gray-500">{selfieImageUrl ? 'Kamera HP' : 'Belum diunggah'}</p>
               </div>
             </div>
-          </div>
-
-          {/* Kartu Tani Strip */}
-          <div className="flex items-center justify-between p-2.5 rounded-xl bg-gray-50 border border-gray-100 text-[12px]">
-            <div className="flex items-center gap-2">
-              <span className="material-symbols-outlined text-forest-emerald text-[18px]">
-                credit_card
-              </span>
-              <span className="font-medium text-gray-700">
-                Kartu Tani Fisik:{' '}
-                <strong className="font-mono text-gray-900">KT-3204-{shortId}</strong>
-              </span>
-            </div>
-            <span className="px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 font-bold text-[10px]">
-              Aktif Simluhtan
-            </span>
           </div>
         </div>
 

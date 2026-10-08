@@ -2,6 +2,22 @@ const API_BASE_URL = 'http://localhost:3000/api';
 export const TOKEN_KEY = 'lapaktani_token';
 export const USER_KEY = 'lapaktani_user';
 
+/**
+ * Resolves local/relative or Android-emulated image URLs to accessible backend URLs
+ */
+export const resolveImageUrl = (url?: string | null): string | null => {
+  if (!url || typeof url !== 'string' || !url.trim()) return null;
+  const trimmed = url.trim();
+  if (trimmed.startsWith('http://10.0.2.2:3000')) {
+    return trimmed.replace('http://10.0.2.2:3000', 'http://localhost:3000');
+  }
+  if (trimmed.startsWith('http://') || trimmed.startsWith('https://') || trimmed.startsWith('data:')) {
+    return trimmed;
+  }
+  const cleanPath = trimmed.startsWith('/') ? trimmed : `/${trimmed}`;
+  return `http://localhost:3000${cleanPath}`;
+};
+
 export interface PendingFarmer {
   id: string;
   user_id: string;
@@ -13,6 +29,7 @@ export interface PendingFarmer {
   phone?: string;
   detail_address?: string;
   avatar_url?: string;
+  selfie_image_url?: string | null;
   verification_status: 'pending' | 'verified' | 'rejected';
   poktan: string;
   village: string;
