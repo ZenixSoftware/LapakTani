@@ -1,5 +1,28 @@
+const fs = require('fs');
+const path = require('path');
 const { v4: uuidv4 } = require('uuid');
 const pool = require('../config/db');
+
+/**
+ * Helper to delete uploaded files on disk during transaction rollback
+ */
+const deleteUploadedFile = (fileUrl) => {
+  if (!fileUrl || typeof fileUrl !== 'string') return;
+  try {
+    let relativePath = fileUrl.trim();
+    if (relativePath.includes('/uploads/')) {
+      relativePath = relativePath.substring(relativePath.indexOf('/uploads/'));
+    }
+    const cleanPath = relativePath.startsWith('/') ? relativePath.slice(1) : relativePath;
+    const fullPath = path.join(__dirname, '../../public', cleanPath);
+    if (fs.existsSync(fullPath)) {
+      fs.unlinkSync(fullPath);
+      console.log(`[PROFILE] Rolled back orphan uploaded file: ${fullPath}`);
+    }
+  } catch (_) {
+    // Silently catch fs errors as specified
+  }
+};
 
 /**
  * Setup Farmer Profile and Legalities (US-05)
@@ -25,7 +48,8 @@ const setupFarmerProfile = async (req, res) => {
     farmer_group_id,
     farmer_group,
     ktp_image_url,
-    selfie_image_url
+    selfie_image_url,
+    birth_date
   } = req.body;
 
   const rawNik = nik_number || nik;
@@ -56,6 +80,14 @@ const setupFarmerProfile = async (req, res) => {
     });
   }
 
+  let formattedBirthDate = null;
+  if (birth_date) {
+    const d = new Date(birth_date);
+    if (!isNaN(d.getTime())) {
+      formattedBirthDate = d.toISOString().split('T')[0];
+    }
+  }
+
   let connection;
   try {
     connection = await pool.getConnection();
@@ -69,6 +101,8 @@ const setupFarmerProfile = async (req, res) => {
 
     if (userRows.length === 0) {
       await connection.rollback();
+      deleteUploadedFile(ktp_image_url);
+      deleteUploadedFile(selfie_image_url);
       return res.status(404).json({
         success: false,
         message: 'Pengguna tidak ditemukan dalam sistem.'
@@ -118,19 +152,32 @@ const setupFarmerProfile = async (req, res) => {
 
     const profileId = uuidv4();
 
-    // Query 1: Insert or update user_profiles
+    // 1. Insert or update user_profiles (with avatar_url and birth_date)
     await connection.query(
-      `INSERT INTO user_profiles (id, user_id, full_name, nik_number, village_id, avatar_url, verification_status)
-       VALUES (?, ?, COALESCE((SELECT full_name FROM users WHERE id = ?), ?), ?, ?, ?, 'pending')
+      `INSERT INTO user_profiles (id, user_id, full_name, nik_number, village_id, detail_address, avatar_url, birth_date, verification_status)
+       VALUES (?, ?, COALESCE((SELECT full_name FROM users WHERE id = ?), ?), ?, ?, ?, ?, ?, 'pending')
        ON DUPLICATE KEY UPDATE
-         nik_number = VALUES(nik_number),
-         village_id = VALUES(village_id),
+         full_name = COALESCE(VALUES(full_name), full_name),
+         nik_number = COALESCE(VALUES(nik_number), nik_number),
+         village_id = COALESCE(VALUES(village_id), village_id),
+         detail_address = COALESCE(VALUES(detail_address), detail_address),
          avatar_url = COALESCE(VALUES(avatar_url), avatar_url),
+         birth_date = COALESCE(VALUES(birth_date), birth_date),
          verification_status = 'pending'`,
-      [profileId, userId, userId, fallbackName, sanitizedNik, resolvedVillageId, selfie_image_url || null]
+      [
+        profileId,
+        userId,
+        userId,
+        fallbackName,
+        sanitizedNik,
+        resolvedVillageId,
+        req.body.home_address || req.body.address || req.body.detail_address || null,
+        selfie_image_url || null,
+        formattedBirthDate
+      ]
     );
 
-    // Query 2: Insert or update farmer_profiles
+    // 2. Insert or update farmer_profiles
     await connection.query(
       `INSERT INTO farmer_profiles (user_id, farmer_group_id, ktp_image_url)
        VALUES (?, ?, ?)
@@ -140,7 +187,7 @@ const setupFarmerProfile = async (req, res) => {
       [userId, resolvedFarmerGroupId, ktp_image_url || null]
     );
 
-    // Query 3: Save farm area details
+    // 3. Save farm area details
     const farmId = uuidv4();
     await connection.query(
       `INSERT INTO farms (id, farmer_id, land_area_ha)
@@ -167,6 +214,7 @@ const setupFarmerProfile = async (req, res) => {
         profile_id: profileId,
         user_id: userId,
         nik_number: sanitizedNik,
+        birth_date: formattedBirthDate,
         land_area_ha: landAreaNumber,
         village_id: resolvedVillageId,
         farmer_group_id: resolvedFarmerGroupId,
@@ -175,8 +223,14 @@ const setupFarmerProfile = async (req, res) => {
     });
   } catch (error) {
     if (connection) {
-      await connection.rollback();
+      try {
+        await connection.rollback();
+      } catch (_) {}
     }
+    // Delete orphan uploaded files on failure
+    deleteUploadedFile(ktp_image_url);
+    deleteUploadedFile(selfie_image_url);
+
     console.error('[PROFILE] Error setting up farmer profile:', error.message);
     return res.status(500).json({
       success: false,

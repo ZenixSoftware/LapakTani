@@ -144,6 +144,16 @@ export const AuditDesk: React.FC<AuditDeskProps> = ({
               )}
               <div className="p-2 bg-white text-[11px] space-y-0.5">
                 <p className="font-bold text-gray-800">NIK: {displayNik}</p>
+                <p className="text-gray-500">
+                  Tgl Lahir:{' '}
+                  {farmer.birth_date
+                    ? new Date(farmer.birth_date).toLocaleDateString('id-ID', {
+                        day: 'numeric',
+                        month: 'long',
+                        year: 'numeric',
+                      })
+                    : 'Belum diisi'}
+                </p>
               </div>
             </div>
 

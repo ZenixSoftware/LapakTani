@@ -33,11 +33,14 @@ class ProfileRepository {
     String? regency,
     String? district,
     String? village,
+    String? birthDate,
   }) async {
     final payload = <String, dynamic>{
       'user_id': userId,
       'nik_number': nikNumber,
       'nik': nikNumber,
+      if (birthDate != null && birthDate.isNotEmpty)
+        'birth_date': birthDate,
       'home_address': homeAddress,
       'farmer_group_id': farmerGroupId,
       'farmer_group': farmerGroupId,

@@ -50,6 +50,7 @@ class _CompleteFarmerProfileScreenState
 
   File? _selectedKtpFile;
   File? _selectedSelfieFile;
+  DateTime? _selectedBirthDate;
 
   List<RegionItem> _provinces = [];
   RegionItem? _selectedProvince;
@@ -107,6 +108,12 @@ class _CompleteFarmerProfileScreenState
         }
         if (userProfile['home_address'] != null) {
           _addressController.text = userProfile['home_address'] as String;
+        }
+        if (userProfile['birth_date'] != null) {
+          try {
+            _selectedBirthDate =
+                DateTime.parse(userProfile['birth_date'].toString());
+          } catch (_) {}
         }
       }
 
@@ -444,6 +451,16 @@ class _CompleteFarmerProfileScreenState
       return;
     }
 
+    if (_selectedBirthDate == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Silakan pilih tanggal lahir Anda sesuai KTP.'),
+          backgroundColor: Color(0xFFDC2626),
+        ),
+      );
+      return;
+    }
+
     if (!_formKey.currentState!.validate()) return;
 
     var user = _profileRepository.currentUser;
@@ -515,6 +532,7 @@ class _CompleteFarmerProfileScreenState
         selfieImageFile: _selectedSelfieFile,
         ktpImageUrl: ktpImageUrl,
         selfieImageUrl: selfieImageUrl,
+        birthDate: _selectedBirthDate?.toIso8601String().split('T')[0],
         nikNumber: _nikController.text.trim(),
         homeAddress: fullAddress,
         farmerGroupId: _selectedFarmerGroupId,
@@ -1775,6 +1793,103 @@ class _CompleteFarmerProfileScreenState
                               }
                               return null;
                             },
+                          ),
+                          const SizedBox(height: 14),
+
+                          // Tanggal Lahir Date Picker
+                          Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Row(
+                                children: [
+                                  const Text(
+                                    'Tanggal Lahir',
+                                    style: TextStyle(
+                                      fontSize: 13,
+                                      fontWeight: FontWeight.w600,
+                                      color: Color(0xFF1E293B),
+                                    ),
+                                  ),
+                                  const SizedBox(width: 4),
+                                  const Text(
+                                    '*',
+                                    style: TextStyle(
+                                      color: Color(0xFFDC2626),
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: 6),
+                              InkWell(
+                                onTap: () async {
+                                  final now = DateTime.now();
+                                  final initialDate = _selectedBirthDate ??
+                                      DateTime(now.year - 25, 1, 1);
+                                  final picked = await showDatePicker(
+                                    context: context,
+                                    initialDate: initialDate,
+                                    firstDate: DateTime(1920),
+                                    lastDate: DateTime(now.year - 15),
+                                    helpText: 'Pilih Tanggal Lahir Sesuai KTP',
+                                    cancelText: 'Batal',
+                                    confirmText: 'Pilih',
+                                  );
+                                  if (picked != null) {
+                                    setState(() {
+                                      _selectedBirthDate = picked;
+                                    });
+                                  }
+                                },
+                                borderRadius: BorderRadius.circular(14),
+                                child: Container(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 14,
+                                    vertical: 14,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    color: const Color(0xFFF8FAFC),
+                                    borderRadius: BorderRadius.circular(14),
+                                    border: Border.all(
+                                      color: const Color(0xFFE2E8F0),
+                                      width: 1,
+                                    ),
+                                  ),
+                                  child: Row(
+                                    children: [
+                                      const Icon(
+                                        LucideIcons.calendar,
+                                        size: 18,
+                                        color: Color(0xFF64748B),
+                                      ),
+                                      const SizedBox(width: 10),
+                                      Expanded(
+                                        child: Text(
+                                          _selectedBirthDate != null
+                                              ? '${_selectedBirthDate!.day.toString().padLeft(2, '0')}/${_selectedBirthDate!.month.toString().padLeft(2, '0')}/${_selectedBirthDate!.year}'
+                                              : 'Pilih tanggal lahir sesuai KTP',
+                                          style: TextStyle(
+                                            fontSize: 13,
+                                            fontWeight:
+                                                _selectedBirthDate != null
+                                                    ? FontWeight.w600
+                                                    : FontWeight.w400,
+                                            color: _selectedBirthDate != null
+                                                ? const Color(0xFF0F172A)
+                                                : const Color(0xFF94A3B8),
+                                          ),
+                                        ),
+                                      ),
+                                      const Icon(
+                                        LucideIcons.chevronDown,
+                                        size: 16,
+                                        color: Color(0xFF94A3B8),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                            ],
                           ),
                           const SizedBox(height: 14),
                           LapaktaniTextField(

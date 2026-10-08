@@ -30,6 +30,7 @@ export interface PendingFarmer {
   detail_address?: string;
   avatar_url?: string;
   selfie_image_url?: string | null;
+  birth_date?: string | null;
   verification_status: 'pending' | 'verified' | 'rejected';
   poktan: string;
   village: string;

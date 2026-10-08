@@ -52,4 +52,7 @@ node_modules/
 # Security Audit Skill (isolated)
 .agents/skills/security-audit/
 
+# Runtime Uploads
+lapaktani_backend/public/uploads/
+
 
