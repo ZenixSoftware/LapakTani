@@ -222,6 +222,30 @@ class _MyProductsScreenState extends State<MyProductsScreen> {
           const SizedBox(width: 8),
         ],
       ),
+      floatingActionButton: FloatingActionButton.extended(
+        onPressed: () async {
+          final result = await Navigator.push<bool>(
+            context,
+            MaterialPageRoute(
+              builder: (context) => const AddProductScreen(),
+            ),
+          );
+          if (result == true) {
+            fetchFarmerProducts();
+          }
+        },
+        backgroundColor: const Color(0xFF03AC0E),
+        foregroundColor: Colors.white,
+        elevation: 3,
+        icon: const Icon(LucideIcons.plus, size: 18),
+        label: Text(
+          'Tambah Komoditas',
+          style: GoogleFonts.plusJakartaSans(
+            fontSize: 12,
+            fontWeight: FontWeight.w700,
+          ),
+        ),
+      ),
       body: RefreshIndicator(
         color: const Color(0xFF03AC0E),
         onRefresh: fetchFarmerProducts,

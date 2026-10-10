@@ -71,7 +71,24 @@ class ProfileRepository {
     }
   }
 
+  Future<Map<String, dynamic>?> getMyProfile() async {
+    try {
+      final response = await ApiService.get('/profiles/me');
+      if (response.statusCode == 200) {
+        final decoded = jsonDecode(response.body);
+        if (decoded is Map && decoded['data'] is Map) {
+          final profileData = Map<String, dynamic>.from(decoded['data'] as Map);
+          await _apiService.saveUser(profileData);
+          return profileData;
+        }
+      }
+    } catch (_) {}
+    return await _apiService.getUser();
+  }
+
   Future<Map<String, dynamic>?> getUserProfile(String userId) async {
+    final myProfile = await getMyProfile();
+    if (myProfile != null) return myProfile;
     return {
       'user_id': userId,
       'verification_status': 'pending',
@@ -79,6 +96,8 @@ class ProfileRepository {
   }
 
   Future<Map<String, dynamic>?> getFarmerProfile(String userId) async {
+    final myProfile = await getMyProfile();
+    if (myProfile != null) return myProfile;
     return {
       'user_id': userId,
       'land_area_ha': 1.0,

@@ -3,9 +3,8 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 import '../../core/services/api_service.dart';
-import '../product/add_product_screen.dart';
-import '../product/my_products_screen.dart';
 import '../product/product_detail_screen.dart';
+import '../profile/profile_screen.dart';
 
 class HomeDashboardScreen extends StatefulWidget {
   const HomeDashboardScreen({super.key});
@@ -397,57 +396,51 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen> {
         backgroundColor: const Color(0xFFF5F6F8),
         body: SafeArea(
           top: false,
-          child: Column(
-            children: [
-              _buildTopStickyHeader(),
-              Expanded(
-                child: CustomScrollView(
-                  slivers: [
-                    SliverToBoxAdapter(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          _buildQuickActionServices(),
-                          _buildRecentlyViewedSection(),
-                          _buildCategoryTabBar(),
-                          _buildMainFeedSection(),
-                          _buildTrustGuaranteeBanner(),
-                          const SizedBox(height: 16),
-                        ],
-                      ),
-                    ),
+          child: _buildBodyForCurrentTab(),
+        ),
+        bottomNavigationBar: _buildBottomNavigationBar(),
+      ),
+    );
+  }
+
+  Widget _buildBodyForCurrentTab() {
+    switch (_currentBottomNavIndex) {
+      case 1:
+        return _buildFeedTab();
+      case 2:
+        return _buildTransaksiTab();
+      case 3:
+        return const ProfileScreen();
+      case 0:
+      default:
+        return _buildHomeCatalogBody();
+    }
+  }
+
+  Widget _buildHomeCatalogBody() {
+    return Column(
+      children: [
+        _buildTopStickyHeader(),
+        Expanded(
+          child: CustomScrollView(
+            slivers: [
+              SliverToBoxAdapter(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    _buildQuickActionServices(),
+                    _buildRecentlyViewedSection(),
+                    _buildCategoryTabBar(),
+                    _buildMainFeedSection(),
+                    _buildTrustGuaranteeBanner(),
+                    const SizedBox(height: 16),
                   ],
                 ),
               ),
             ],
           ),
         ),
-        floatingActionButton: FloatingActionButton.extended(
-          onPressed: () async {
-            final result = await Navigator.push<bool>(
-              context,
-              MaterialPageRoute(
-                builder: (context) => const AddProductScreen(),
-              ),
-            );
-            if (result == true) {
-              fetchProducts();
-            }
-          },
-          backgroundColor: const Color(0xFF03AC0E),
-          foregroundColor: Colors.white,
-          elevation: 3,
-          icon: const Icon(LucideIcons.plus, size: 18),
-          label: Text(
-            'Tambah Produk',
-            style: GoogleFonts.inter(
-              fontSize: 12,
-              fontWeight: FontWeight.w700,
-            ),
-          ),
-        ),
-        bottomNavigationBar: _buildBottomNavigationBar(),
-      ),
+      ],
     );
   }
 
@@ -1902,7 +1895,6 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen> {
     final navItems = [
       {'label': 'Beranda', 'icon': LucideIcons.home},
       {'label': 'Feed', 'icon': LucideIcons.compass},
-      {'label': 'Mitra Tani', 'icon': LucideIcons.store},
       {'label': 'Transaksi', 'icon': LucideIcons.receipt},
       {'label': 'Akun', 'icon': LucideIcons.user},
     ];
@@ -1933,19 +1925,12 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen> {
 
           return InkWell(
             onTap: () {
-              if (index == 2) {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (context) => const MyProductsScreen()),
-                ).then((_) => fetchProducts());
-              } else {
-                setState(() {
-                  _currentBottomNavIndex = index;
-                });
-              }
+              setState(() {
+                _currentBottomNavIndex = index;
+              });
             },
             child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 3),
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 4),
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
@@ -1954,7 +1939,7 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen> {
                     children: [
                       Icon(
                         item['icon'] as IconData,
-                        size: 19,
+                        size: 20,
                         color: isActive
                             ? const Color(0xFF03AC0E)
                             : const Color(0xFF94A3B8),
@@ -1964,8 +1949,8 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen> {
                           top: -1,
                           right: -3,
                           child: Container(
-                            width: 4.5,
-                            height: 4.5,
+                            width: 5,
+                            height: 5,
                             decoration: const BoxDecoration(
                               color: Color(0xFF03AC0E),
                               shape: BoxShape.circle,
@@ -1974,11 +1959,11 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen> {
                         ),
                     ],
                   ),
-                  const SizedBox(height: 2),
+                  const SizedBox(height: 3),
                   Text(
                     item['label'] as String,
                     style: GoogleFonts.inter(
-                      fontSize: 9.0,
+                      fontSize: 10.0,
                       fontWeight: isActive ? FontWeight.w700 : FontWeight.w500,
                       color: isActive
                           ? const Color(0xFF03AC0E)
@@ -1990,6 +1975,308 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen> {
             ),
           );
         }),
+      ),
+    );
+  }
+
+  Widget _buildFeedTab() {
+    return Scaffold(
+      backgroundColor: const Color(0xFFF8F9FF),
+      appBar: AppBar(
+        backgroundColor: Colors.white,
+        elevation: 0.5,
+        title: Text(
+          'Feed & Edukasi Petani',
+          style: GoogleFonts.plusJakartaSans(
+            fontSize: 17,
+            fontWeight: FontWeight.w700,
+            color: const Color(0xFF121C2A),
+          ),
+        ),
+      ),
+      body: ListView(
+        padding: const EdgeInsets.all(16),
+        children: [
+          Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(16),
+              boxShadow: const [
+                BoxShadow(
+                  color: Color(0x08000000),
+                  blurRadius: 8,
+                  offset: Offset(0, 2),
+                ),
+              ],
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Container(
+                      width: 40,
+                      height: 40,
+                      decoration: const BoxDecoration(
+                        color: Color(0xFFE8F8EC),
+                        shape: BoxShape.circle,
+                      ),
+                      child: const Icon(LucideIcons.sprout, color: Color(0xFF03AC0E), size: 20),
+                    ),
+                    const SizedBox(width: 12),
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Kelompok Tani Makmur Mandiri',
+                          style: GoogleFonts.plusJakartaSans(
+                            fontSize: 13,
+                            fontWeight: FontWeight.w700,
+                            color: const Color(0xFF121C2A),
+                          ),
+                        ),
+                        Text(
+                          'Lembang • 1 jam lalu',
+                          style: GoogleFonts.plusJakartaSans(
+                            fontSize: 11,
+                            color: const Color(0xFF64748B),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 12),
+                Text(
+                  'Panen raya brokoli dan wortel organik siap dikirim sore ini! Dipetik segar subuh tadi tanpa pestisida kimia sintetis.',
+                  style: GoogleFonts.plusJakartaSans(
+                    fontSize: 13,
+                    color: const Color(0xFF334155),
+                    height: 1.4,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 14),
+          Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(16),
+              boxShadow: const [
+                BoxShadow(
+                  color: Color(0x08000000),
+                  blurRadius: 8,
+                  offset: Offset(0, 2),
+                ),
+              ],
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Container(
+                      width: 40,
+                      height: 40,
+                      decoration: const BoxDecoration(
+                        color: Color(0xFFEFF6FF),
+                        shape: BoxShape.circle,
+                      ),
+                      child: const Icon(LucideIcons.lightbulb, color: Color(0xFF2563EB), size: 20),
+                    ),
+                    const SizedBox(width: 12),
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Tips Dapur LapakTani',
+                          style: GoogleFonts.plusJakartaSans(
+                            fontSize: 13,
+                            fontWeight: FontWeight.w700,
+                            color: const Color(0xFF121C2A),
+                          ),
+                        ),
+                        Text(
+                          'Edukasi Pangan • Kemarin',
+                          style: GoogleFonts.plusJakartaSans(
+                            fontSize: 11,
+                            color: const Color(0xFF64748B),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 12),
+                Text(
+                  'Cara menyimpan sayuran daun agar tetap renyah hingga 7 hari: bungkus dengan kertas penyerap dan simpan di wadah kedap udara.',
+                  style: GoogleFonts.plusJakartaSans(
+                    fontSize: 13,
+                    color: const Color(0xFF334155),
+                    height: 1.4,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildTransaksiTab() {
+    return Scaffold(
+      backgroundColor: const Color(0xFFF8F9FF),
+      appBar: AppBar(
+        backgroundColor: Colors.white,
+        elevation: 0.5,
+        title: Text(
+          'Riwayat Transaksi',
+          style: GoogleFonts.plusJakartaSans(
+            fontSize: 17,
+            fontWeight: FontWeight.w700,
+            color: const Color(0xFF121C2A),
+          ),
+        ),
+      ),
+      body: ListView(
+        padding: const EdgeInsets.all(16),
+        children: [
+          Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(16),
+              boxShadow: const [
+                BoxShadow(
+                  color: Color(0x08000000),
+                  blurRadius: 8,
+                  offset: Offset(0, 2),
+                ),
+              ],
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      'Belanja • 24 Feb 2026',
+                      style: GoogleFonts.plusJakartaSans(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600,
+                        color: const Color(0xFF64748B),
+                      ),
+                    ),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFE8F8EC),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Text(
+                        'Selesai',
+                        style: GoogleFonts.plusJakartaSans(
+                          fontSize: 10,
+                          fontWeight: FontWeight.w700,
+                          color: const Color(0xFF03AC0E),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 12),
+                Row(
+                  children: [
+                    Container(
+                      width: 48,
+                      height: 48,
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFEFF4FF),
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: const Icon(LucideIcons.packageCheck, color: Color(0xFF03AC0E), size: 24),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Jagung Manis Madu Organik Segar',
+                            style: GoogleFonts.plusJakartaSans(
+                              fontSize: 13,
+                              fontWeight: FontWeight.w700,
+                              color: const Color(0xFF121C2A),
+                            ),
+                          ),
+                          const SizedBox(height: 2),
+                          Text(
+                            '1 barang • Rp 14.500',
+                            style: GoogleFonts.plusJakartaSans(
+                              fontSize: 11,
+                              color: const Color(0xFF64748B),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 14),
+                const Divider(height: 1, color: Color(0xFFF1F5F9)),
+                const SizedBox(height: 12),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Total Belanja',
+                          style: GoogleFonts.plusJakartaSans(
+                            fontSize: 11,
+                            color: const Color(0xFF94A3B8),
+                          ),
+                        ),
+                        Text(
+                          'Rp 24.500',
+                          style: GoogleFonts.plusJakartaSans(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w700,
+                            color: const Color(0xFF121C2A),
+                          ),
+                        ),
+                      ],
+                    ),
+                    OutlinedButton(
+                      onPressed: () {},
+                      style: OutlinedButton.styleFrom(
+                        side: const BorderSide(color: Color(0xFF03AC0E)),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+                      ),
+                      child: Text(
+                        'Beli Lagi',
+                        style: GoogleFonts.plusJakartaSans(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w700,
+                          color: const Color(0xFF03AC0E),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        ],
       ),
     );
   }

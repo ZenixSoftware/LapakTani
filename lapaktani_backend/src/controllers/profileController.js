@@ -243,6 +243,67 @@ const setupFarmerProfile = async (req, res) => {
   }
 };
 
+/**
+ * Get current authenticated user profile
+ * Endpoint: GET /api/profiles/me
+ */
+const getMyProfile = async (req, res) => {
+  const userId = req.user ? req.user.id : null;
+  if (!userId) {
+    return res.status(401).json({
+      success: false,
+      message: 'Akses ditolak. Pengguna belum diautentikasi.'
+    });
+  }
+
+  try {
+    const [rows] = await pool.query(
+      `SELECT 
+        u.id, 
+        u.email, 
+        u.role, 
+        u.role_id, 
+        u.is_verified,
+        COALESCE(up.full_name, u.full_name) AS full_name,
+        up.nik_number, 
+        up.village_id, 
+        up.detail_address,
+        up.avatar_url, 
+        up.birth_date, 
+        COALESCE(up.verification_status, 'pending') AS verification_status,
+        fp.ktp_image_url, 
+        fp.farmer_group_id, 
+        fp.land_area_ha
+      FROM users u
+      LEFT JOIN user_profiles up ON u.id = up.user_id
+      LEFT JOIN farmer_profiles fp ON u.id = fp.user_id
+      WHERE u.id = ? 
+      LIMIT 1`,
+      [userId]
+    );
+
+    if (rows.length === 0) {
+      return res.status(404).json({
+        success: false,
+        message: 'Pengguna tidak ditemukan.'
+      });
+    }
+
+    return res.status(200).json({
+      success: true,
+      data: rows[0]
+    });
+  } catch (error) {
+    console.error('[PROFILE] Error fetching profile:', error.message);
+    return res.status(500).json({
+      success: false,
+      message: 'Gagal mengambil data profil.',
+      error: error.message
+    });
+  }
+};
+
 module.exports = {
-  setupFarmerProfile
+  setupFarmerProfile,
+  getMyProfile
 };
