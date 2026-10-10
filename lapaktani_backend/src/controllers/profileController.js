@@ -150,32 +150,31 @@ const setupFarmerProfile = async (req, res) => {
       }
     }
 
-    const profileId = uuidv4();
-
-    // 1. Insert or update user_profiles (with avatar_url and birth_date)
+    // 1. Standard UPDATE operation since user_profiles is guaranteed to exist from registration
     await connection.query(
-      `INSERT INTO user_profiles (id, user_id, full_name, nik_number, village_id, detail_address, avatar_url, birth_date, verification_status)
-       VALUES (?, ?, COALESCE((SELECT full_name FROM users WHERE id = ?), ?), ?, ?, ?, ?, ?, 'pending')
-       ON DUPLICATE KEY UPDATE
-         full_name = COALESCE(VALUES(full_name), full_name),
-         nik_number = COALESCE(VALUES(nik_number), nik_number),
-         village_id = COALESCE(VALUES(village_id), village_id),
-         detail_address = COALESCE(VALUES(detail_address), detail_address),
-         avatar_url = COALESCE(VALUES(avatar_url), avatar_url),
-         birth_date = COALESCE(VALUES(birth_date), birth_date),
-         verification_status = 'pending'`,
+      `UPDATE user_profiles 
+       SET nik_number = ?,
+           village_id = ?,
+           detail_address = ?,
+           avatar_url = ?,
+           birth_date = ?,
+           verification_status = 'pending'
+       WHERE user_id = ?`,
       [
-        profileId,
-        userId,
-        userId,
-        fallbackName,
         sanitizedNik,
         resolvedVillageId,
         req.body.home_address || req.body.address || req.body.detail_address || null,
         selfie_image_url || null,
-        formattedBirthDate
+        formattedBirthDate,
+        userId
       ]
     );
+
+    const [profileRows] = await connection.query(
+      'SELECT id FROM user_profiles WHERE user_id = ? LIMIT 1',
+      [userId]
+    );
+    const profileId = profileRows.length > 0 ? profileRows[0].id : userId;
 
     // 2. Insert or update farmer_profiles
     await connection.query(
