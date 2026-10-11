@@ -4,28 +4,13 @@ import 'package:lucide_icons/lucide_icons.dart';
 import '../product/my_products_screen.dart';
 import 'seller_dashboard_screen.dart';
 
-class SellerMainNavScreen extends StatefulWidget {
-  final int initialTabIndex;
+class PlaceholderScreen extends StatelessWidget {
+  final String title;
 
-  const SellerMainNavScreen({
-    super.key,
-    this.initialTabIndex = 2, // Default active tab is "Pesanan" as specified
-  });
+  const PlaceholderScreen(this.title, {super.key});
 
   @override
-  State<SellerMainNavScreen> createState() => _SellerMainNavScreenState();
-}
-
-class _SellerMainNavScreenState extends State<SellerMainNavScreen> {
-  late int _currentIndex;
-
-  @override
-  void initState() {
-    super.initState();
-    _currentIndex = widget.initialTabIndex;
-  }
-
-  Widget _buildPlaceholderTab(String title, String subtitle, IconData icon) {
+  Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFFF8F9FF),
       appBar: AppBar(
@@ -57,11 +42,12 @@ class _SellerMainNavScreenState extends State<SellerMainNavScreen> {
                   color: Color(0xFFB0F1CB),
                   shape: BoxShape.circle,
                 ),
-                child: Icon(icon, color: const Color(0xFF006E04), size: 36),
+                child: const Icon(Icons.storefront, color: Color(0xFF006E04), size: 36),
               ),
               const SizedBox(height: 18),
               Text(
                 title,
+                textAlign: TextAlign.center,
                 style: GoogleFonts.plusJakartaSans(
                   fontSize: 18,
                   fontWeight: FontWeight.w700,
@@ -70,32 +56,11 @@ class _SellerMainNavScreenState extends State<SellerMainNavScreen> {
               ),
               const SizedBox(height: 8),
               Text(
-                subtitle,
+                'Fitur $title sedang dalam pengembangan mitra tani.',
                 textAlign: TextAlign.center,
                 style: GoogleFonts.plusJakartaSans(
                   fontSize: 13,
                   color: const Color(0xFF64748B),
-                ),
-              ),
-              const SizedBox(height: 20),
-              ElevatedButton.icon(
-                onPressed: () {
-                  setState(() {
-                    _currentIndex = 2; // Switch to Pesanan
-                  });
-                },
-                icon: const Icon(LucideIcons.receipt, size: 16),
-                label: Text(
-                  'Buka Pesanan & Produk Saya',
-                  style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w700, fontSize: 13),
-                ),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFF03AC0E),
-                  foregroundColor: Colors.white,
-                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(10),
-                  ),
                 ),
               ),
             ],
@@ -104,27 +69,43 @@ class _SellerMainNavScreenState extends State<SellerMainNavScreen> {
       ),
     );
   }
+}
+
+class SellerMainNavScreen extends StatefulWidget {
+  final int initialTabIndex;
+
+  const SellerMainNavScreen({
+    super.key,
+    this.initialTabIndex = 1,
+  });
+
+  @override
+  State<SellerMainNavScreen> createState() => _SellerMainNavScreenState();
+}
+
+class _SellerMainNavScreenState extends State<SellerMainNavScreen> {
+  late int _currentIndex;
+
+  @override
+  void initState() {
+    super.initState();
+    _currentIndex = widget.initialTabIndex;
+  }
 
   Widget _buildBodyForCurrentTab() {
     switch (_currentIndex) {
       case 0:
-        return _buildPlaceholderTab(
-          'Beranda Toko Tani',
-          'Pantau performa penjualan ladang, grafik pendapatan panen, dan metrik kepuasan pembeli.',
-          LucideIcons.store,
-        );
+        return const PlaceholderScreen("Beranda Etalase Toko");
       case 1:
         return const MyProductsScreen();
       case 2:
         return const SellerDashboardScreen();
       case 3:
-        return _buildPlaceholderTab(
-          'Profil Mitra Petani',
-          'Informasi legalitas ladang, rekening bank pencairan LapakPay, dan pengaturan jam operasional toko.',
-          LucideIcons.user,
-        );
+        return const PlaceholderScreen("Penilaian Toko & Produk");
+      case 4:
+        return const PlaceholderScreen("Profil Khusus Petani");
       default:
-        return const SellerDashboardScreen();
+        return const MyProductsScreen();
     }
   }
 
@@ -187,6 +168,8 @@ class _SellerMainNavScreenState extends State<SellerMainNavScreen> {
                 const SizedBox(height: 4),
                 Text(
                   label,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                   style: GoogleFonts.plusJakartaSans(
                     fontSize: 10,
                     fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
@@ -224,23 +207,28 @@ class _SellerMainNavScreenState extends State<SellerMainNavScreen> {
             children: [
               _buildBottomNavItem(
                 index: 0,
-                icon: LucideIcons.store,
+                icon: Icons.store,
                 label: 'Beranda',
               ),
               _buildBottomNavItem(
                 index: 1,
-                icon: LucideIcons.package,
+                icon: Icons.inventory_2,
                 label: 'Produk Saya',
               ),
               _buildBottomNavItem(
                 index: 2,
-                icon: LucideIcons.receipt,
+                icon: Icons.receipt_long,
                 label: 'Pesanan',
                 badgeText: '12',
               ),
               _buildBottomNavItem(
                 index: 3,
-                icon: LucideIcons.user,
+                icon: Icons.star_rate,
+                label: 'Penilaian',
+              ),
+              _buildBottomNavItem(
+                index: 4,
+                icon: Icons.person,
                 label: 'Profil',
               ),
             ],

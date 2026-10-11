@@ -17,7 +17,6 @@ class _MyProductsScreenState extends State<MyProductsScreen> {
   List<dynamic> _products = [];
   bool _isLoading = true;
   bool _isStoreOpen = true;
-  int _selectedChipIndex = 0;
 
   static const String _defaultFarmerPhoto =
       'https://lh3.googleusercontent.com/aida-public/AB6AXuAYrwsStPtJO0HY3riSclVguw_MiWyGVUOPRq6V2x2AvRBOV23WSDcAoPzLzcgxxE5Wtphh-B0fFcCi4aTOKKIsugJWJdun-0DVQIRzl9AXagHxbikg9K-1RTtOvK9PWMGUgp6idMuAqdvtpEs-QyVSNbSKNdCPTDsNzFt0elDVrLQnQUkeJudRuyjAlxkpV6Ze0ktgemZY0yFM6gD6yT0wHVhGlcMhrm5XHHxq76T00jr2cr8VL1E1';
@@ -87,7 +86,6 @@ class _MyProductsScreenState extends State<MyProductsScreen> {
         }
       }
 
-      // Default sample items for high-fidelity demonstration
       setState(() {
         _products = List.from(_sampleEtalaseProducts);
       });
@@ -225,7 +223,7 @@ class _MyProductsScreenState extends State<MyProductsScreen> {
         elevation: 0.5,
         leading: IconButton(
           icon: const Icon(LucideIcons.arrowLeft, color: Color(0xFF121C2A), size: 22),
-          onPressed: () => Navigator.pop(context),
+          onPressed: () => Navigator.of(context, rootNavigator: true).pop(),
         ),
         title: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -264,7 +262,7 @@ class _MyProductsScreenState extends State<MyProductsScreen> {
             ),
             const SizedBox(height: 1),
             Text(
-              'Pesanan & Produk Saya',
+              'Katalog Produk Saya',
               style: GoogleFonts.plusJakartaSans(
                 fontSize: 15,
                 fontWeight: FontWeight.w700,
@@ -274,26 +272,9 @@ class _MyProductsScreenState extends State<MyProductsScreen> {
           ],
         ),
         actions: [
-          Stack(
-            alignment: Alignment.center,
-            children: [
-              IconButton(
-                icon: const Icon(LucideIcons.bell, color: Color(0xFF64748B), size: 20),
-                onPressed: () {},
-              ),
-              Positioned(
-                top: 11,
-                right: 11,
-                child: Container(
-                  width: 7,
-                  height: 7,
-                  decoration: const BoxDecoration(
-                    color: Color(0xFFBA1A1A),
-                    shape: BoxShape.circle,
-                  ),
-                ),
-              ),
-            ],
+          IconButton(
+            icon: const Icon(LucideIcons.search, color: Color(0xFF64748B), size: 20),
+            onPressed: () {},
           ),
           IconButton(
             icon: const Icon(LucideIcons.settings, color: Color(0xFF64748B), size: 20),
@@ -335,18 +316,10 @@ class _MyProductsScreenState extends State<MyProductsScreen> {
                   children: [
                     _buildStoreHeaderCard(),
                     const SizedBox(height: 14),
-                    _buildFarmerWalletCard(),
-                    const SizedBox(height: 14),
-                    _buildFilterChips(),
-                    const SizedBox(height: 14),
-                    _buildUrgencyNoticeBanner(),
-                    const SizedBox(height: 16),
-                    _buildIncomingOrdersSection(),
-                    const SizedBox(height: 18),
                     _buildEtalaseSection(),
                     const SizedBox(height: 16),
                     _buildFieldPickupBanner(),
-                    const SizedBox(height: 80), // Padding for FloatingActionButton
+                    const SizedBox(height: 80),
                   ],
                 ),
               ),
@@ -354,8 +327,6 @@ class _MyProductsScreenState extends State<MyProductsScreen> {
     );
   }
 
-  /// 1. Store Profile & Status Bar Card matching Stitch HTML:
-  /// bg-surface-container-lowest p-space-md rounded-xl shadow-sm
   Widget _buildStoreHeaderCard() {
     return Container(
       padding: const EdgeInsets.all(14),
@@ -452,7 +423,6 @@ class _MyProductsScreenState extends State<MyProductsScreen> {
               ],
             ),
           ),
-          // Interactive Toggle Status Button
           InkWell(
             onTap: () {
               setState(() {
@@ -496,609 +466,6 @@ class _MyProductsScreenState extends State<MyProductsScreen> {
     );
   }
 
-  /// 2. Farmer Wallet & Performance Summary (Gradient Green Card) matching Stitch HTML:
-  /// bg-gradient-to-br from-secondary to-on-secondary-fixed-variant text-on-secondary rounded-xl p-space-lg
-  Widget _buildFarmerWalletCard() {
-    return Container(
-      padding: const EdgeInsets.all(18),
-      decoration: BoxDecoration(
-        gradient: const LinearGradient(
-          colors: [Color(0xFF084E33), Color(0xFF0D5136)],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
-        borderRadius: BorderRadius.circular(18),
-        boxShadow: const [
-          BoxShadow(
-            color: Color(0x2B084E33),
-            blurRadius: 14,
-            offset: Offset(0, 6),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'SALDO PENGHASILAN',
-                    style: GoogleFonts.plusJakartaSans(
-                      fontSize: 10.5,
-                      fontWeight: FontWeight.w700,
-                      letterSpacing: 0.8,
-                      color: const Color(0xFF95D4B0),
-                    ),
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    'Rp 2.450.000',
-                    style: GoogleFonts.plusJakartaSans(
-                      fontSize: 26,
-                      fontWeight: FontWeight.w900,
-                      color: Colors.white,
-                      letterSpacing: -0.5,
-                    ),
-                  ),
-                ],
-              ),
-              ElevatedButton.icon(
-                onPressed: () {},
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFF03AC0E),
-                  foregroundColor: Colors.white,
-                  elevation: 1,
-                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                ),
-                icon: const Icon(LucideIcons.wallet, size: 16),
-                label: Text(
-                  'Tarik Saldo',
-                  style: GoogleFonts.plusJakartaSans(
-                    fontSize: 12,
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 16),
-          // 3-column stats divider grid
-          Container(
-            padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 8),
-            decoration: BoxDecoration(
-              color: Colors.white.withValues(alpha: 0.1),
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: Row(
-              children: [
-                Expanded(
-                  child: Column(
-                    children: [
-                      Text(
-                        '3',
-                        style: GoogleFonts.plusJakartaSans(
-                          fontSize: 18,
-                          fontWeight: FontWeight.w800,
-                          color: const Color(0xFF76FF64),
-                        ),
-                      ),
-                      const SizedBox(height: 2),
-                      Text(
-                        'Pesanan Baru',
-                        style: GoogleFonts.plusJakartaSans(
-                          fontSize: 10,
-                          color: const Color(0xFFD0DBED),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                Container(width: 1, height: 28, color: Colors.white.withValues(alpha: 0.2)),
-                Expanded(
-                  child: Column(
-                    children: [
-                      Text(
-                        '${_products.length}',
-                        style: GoogleFonts.plusJakartaSans(
-                          fontSize: 18,
-                          fontWeight: FontWeight.w800,
-                          color: const Color(0xFFB0F1CB),
-                        ),
-                      ),
-                      const SizedBox(height: 2),
-                      Text(
-                        'Komoditas Aktif',
-                        style: GoogleFonts.plusJakartaSans(
-                          fontSize: 10,
-                          color: const Color(0xFFD0DBED),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                Container(width: 1, height: 28, color: Colors.white.withValues(alpha: 0.2)),
-                Expanded(
-                  child: Column(
-                    children: [
-                      Text(
-                        '100%',
-                        style: GoogleFonts.plusJakartaSans(
-                          fontSize: 18,
-                          fontWeight: FontWeight.w800,
-                          color: const Color(0xFFFFDEA8),
-                        ),
-                      ),
-                      const SizedBox(height: 2),
-                      Text(
-                        'Terkirim Segar',
-                        style: GoogleFonts.plusJakartaSans(
-                          fontSize: 10,
-                          color: const Color(0xFFD0DBED),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  /// 3. Segment Filter Chips matching Stitch HTML:
-  /// flex gap-space-sm overflow-x-auto
-  Widget _buildFilterChips() {
-    final chips = [
-      {'label': 'Semua (8)', 'badge': null},
-      {'label': 'Perlu Diproses', 'badge': '3'},
-      {'label': 'Siap Dikirim', 'badge': '2'},
-      {'label': 'Selesai (3)', 'badge': null},
-    ];
-
-    return SingleChildScrollView(
-      scrollDirection: Axis.horizontal,
-      child: Row(
-        children: List.generate(chips.length, (index) {
-          final isSelected = _selectedChipIndex == index;
-          final item = chips[index];
-
-          return Padding(
-            padding: const EdgeInsets.only(right: 8),
-            child: InkWell(
-              onTap: () {
-                setState(() => _selectedChipIndex = index);
-              },
-              borderRadius: BorderRadius.circular(20),
-              child: AnimatedContainer(
-                duration: const Duration(milliseconds: 200),
-                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-                decoration: BoxDecoration(
-                  color: isSelected ? const Color(0xFF006E04) : Colors.white,
-                  borderRadius: BorderRadius.circular(20),
-                  boxShadow: const [
-                    BoxShadow(
-                      color: Color(0x0A000000),
-                      blurRadius: 4,
-                      offset: Offset(0, 1),
-                    ),
-                  ],
-                ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Text(
-                      item['label'] as String,
-                      style: GoogleFonts.plusJakartaSans(
-                        fontSize: 11.5,
-                        fontWeight: isSelected ? FontWeight.w700 : FontWeight.w600,
-                        color: isSelected ? Colors.white : const Color(0xFF3E4A39),
-                      ),
-                    ),
-                    if (item['badge'] != null) ...[
-                      const SizedBox(width: 5),
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
-                        decoration: BoxDecoration(
-                          color: isSelected ? Colors.white : const Color(0xFFBA1A1A),
-                          borderRadius: BorderRadius.circular(10),
-                        ),
-                        child: Text(
-                          item['badge'] as String,
-                          style: GoogleFonts.plusJakartaSans(
-                            fontSize: 9,
-                            fontWeight: FontWeight.w800,
-                            color: isSelected ? const Color(0xFF006E04) : Colors.white,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ],
-                ),
-              ),
-            ),
-          );
-        }),
-      ),
-    );
-  }
-
-  /// 4. Urgency Notice Banner matching Stitch HTML:
-  /// bg-tertiary-fixed/30 text-on-tertiary-fixed rounded-xl p-space-md
-  Widget _buildUrgencyNoticeBanner() {
-    return Container(
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: const Color(0xFFFEF3C7),
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: const Color(0xFFFDE68A)),
-      ),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Icon(LucideIcons.alarmClock, size: 20, color: Color(0xFFD97706)),
-          const SizedBox(width: 10),
-          Expanded(
-            child: RichText(
-              text: TextSpan(
-                text: 'Batas Petik & Serah Kurir: 10.00 WIB ',
-                style: GoogleFonts.plusJakartaSans(
-                  fontSize: 11.5,
-                  fontWeight: FontWeight.w700,
-                  color: const Color(0xFF92400E),
-                ),
-                children: [
-                  TextSpan(
-                    text: 'untuk menjaga garansi kesegaran daun dan buah di konsumen.',
-                    style: GoogleFonts.plusJakartaSans(
-                      fontSize: 11.5,
-                      fontWeight: FontWeight.w400,
-                      color: const Color(0xFFB45309),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  /// 5. Section: Pesanan Masuk Terbaru matching Stitch HTML:
-  /// Order Card 1 (#TANI-89211) & Order Card 2 (#TANI-89204)
-  Widget _buildIncomingOrdersSection() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Row(
-              children: [
-                const Icon(LucideIcons.checkSquare, size: 18, color: Color(0xFF006E04)),
-                const SizedBox(width: 6),
-                Text(
-                  'Pesanan Masuk Terbaru',
-                  style: GoogleFonts.plusJakartaSans(
-                    fontSize: 14.5,
-                    fontWeight: FontWeight.w700,
-                    color: const Color(0xFF121C2A),
-                  ),
-                ),
-              ],
-            ),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-              decoration: BoxDecoration(
-                color: const Color(0xFFB0F1CB),
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: Text(
-                '3 Perlu Dipetik',
-                style: GoogleFonts.plusJakartaSans(
-                  fontSize: 10,
-                  fontWeight: FontWeight.w700,
-                  color: const Color(0xFF005302),
-                ),
-              ),
-            ),
-          ],
-        ),
-        const SizedBox(height: 12),
-        // Order Card 1: #TANI-89211
-        _buildOrderCard(
-          orderId: '#TANI-89211',
-          timeAgo: '15 menit lalu',
-          badgeText: 'LapakPay (Lunas)',
-          badgeColor: const Color(0xFFB0F1CB),
-          badgeTextColor: const Color(0xFF005302),
-          buyerName: 'Ibu Ratna Dewi • Lembang',
-          courier: 'Kurir Instan (Motor)',
-          courierIcon: LucideIcons.bike,
-          items: const [
-            {'title': 'Tomat Merah Segar Organik', 'qty': 'x2 kg', 'price': 'Rp 24.000'},
-            {'title': 'Kangkung Organik Segar', 'qty': 'x3 ikat', 'price': 'Rp 18.000'},
-          ],
-          totalPrice: 'Rp 42.000',
-          secondaryActionText: 'Chat',
-          primaryActionText: 'Petik & Siapkan',
-        ),
-        const SizedBox(height: 12),
-        // Order Card 2: #TANI-89204
-        _buildOrderCard(
-          orderId: '#TANI-89204',
-          timeAgo: '1 jam lalu',
-          badgeText: 'COD (Tunai)',
-          badgeColor: const Color(0xFFFFDEA8),
-          badgeTextColor: const Color(0xFF5E4200),
-          buyerName: 'Resto Sambal Cobek • Bandung',
-          courier: 'Kargo Pendingin Mitra',
-          courierIcon: LucideIcons.truck,
-          items: const [
-            {'title': 'Kentang Dieng Super', 'qty': 'x5 kg', 'price': 'Rp 80.000'},
-          ],
-          totalPrice: 'Rp 80.000',
-          secondaryActionText: 'Rincian',
-          primaryActionText: 'Siapkan',
-        ),
-      ],
-    );
-  }
-
-  Widget _buildOrderCard({
-    required String orderId,
-    required String timeAgo,
-    required String badgeText,
-    required Color badgeColor,
-    required Color badgeTextColor,
-    required String buyerName,
-    required String courier,
-    required IconData courierIcon,
-    required List<Map<String, String>> items,
-    required String totalPrice,
-    required String secondaryActionText,
-    required String primaryActionText,
-  }) {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: const [
-          BoxShadow(
-            color: Color(0x0A000000),
-            blurRadius: 8,
-            offset: Offset(0, 2),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Order Header
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    orderId,
-                    style: GoogleFonts.plusJakartaSans(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w700,
-                      color: const Color(0xFF121C2A),
-                    ),
-                  ),
-                  Text(
-                    timeAgo,
-                    style: GoogleFonts.plusJakartaSans(
-                      fontSize: 11,
-                      color: const Color(0xFF94A3B8),
-                    ),
-                  ),
-                ],
-              ),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                decoration: BoxDecoration(
-                  color: badgeColor,
-                  borderRadius: BorderRadius.circular(20),
-                ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Icon(LucideIcons.checkCircle2, size: 12, color: badgeTextColor),
-                    const SizedBox(width: 4),
-                    Text(
-                      badgeText,
-                      style: GoogleFonts.plusJakartaSans(
-                        fontSize: 10,
-                        fontWeight: FontWeight.w700,
-                        color: badgeTextColor,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 12),
-          // Buyer Info Container
-          Container(
-            padding: const EdgeInsets.all(10),
-            decoration: BoxDecoration(
-              color: const Color(0xFFF8F9FF),
-              borderRadius: BorderRadius.circular(10),
-            ),
-            child: Row(
-              children: [
-                Icon(courierIcon, size: 18, color: const Color(0xFF2C694C)),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        buyerName,
-                        style: GoogleFonts.plusJakartaSans(
-                          fontSize: 12,
-                          fontWeight: FontWeight.w700,
-                          color: const Color(0xFF121C2A),
-                        ),
-                      ),
-                      Text(
-                        courier,
-                        style: GoogleFonts.plusJakartaSans(
-                          fontSize: 10.5,
-                          color: const Color(0xFF64748B),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(height: 10),
-          // Items Mini List
-          Column(
-            children: items.map((item) {
-              return Padding(
-                padding: const EdgeInsets.symmetric(vertical: 3),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Row(
-                      children: [
-                        Container(
-                          width: 6,
-                          height: 6,
-                          decoration: const BoxDecoration(
-                            color: Color(0xFF03AC0E),
-                            shape: BoxShape.circle,
-                          ),
-                        ),
-                        const SizedBox(width: 8),
-                        Text(
-                          item['title']!,
-                          style: GoogleFonts.plusJakartaSans(
-                            fontSize: 12,
-                            color: const Color(0xFF121C2A),
-                          ),
-                        ),
-                        const SizedBox(width: 6),
-                        Text(
-                          item['qty']!,
-                          style: GoogleFonts.plusJakartaSans(
-                            fontSize: 11,
-                            color: const Color(0xFF94A3B8),
-                          ),
-                        ),
-                      ],
-                    ),
-                    Text(
-                      item['price']!,
-                      style: GoogleFonts.plusJakartaSans(
-                        fontSize: 12,
-                        fontWeight: FontWeight.w600,
-                        color: const Color(0xFF121C2A),
-                      ),
-                    ),
-                  ],
-                ),
-              );
-            }).toList(),
-          ),
-          const SizedBox(height: 12),
-          const Divider(height: 1, color: Color(0xFFF1F5F9)),
-          const SizedBox(height: 10),
-          // Total & Actions
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'Total Belanja',
-                    style: GoogleFonts.plusJakartaSans(
-                      fontSize: 10.5,
-                      color: const Color(0xFF94A3B8),
-                    ),
-                  ),
-                  Text(
-                    totalPrice,
-                    style: GoogleFonts.plusJakartaSans(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w800,
-                      color: const Color(0xFF006E04),
-                    ),
-                  ),
-                ],
-              ),
-              Row(
-                children: [
-                  OutlinedButton(
-                    onPressed: () {},
-                    style: OutlinedButton.styleFrom(
-                      side: const BorderSide(color: Color(0xFFE2E8F0)),
-                      backgroundColor: const Color(0xFFF8F9FF),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-                    ),
-                    child: Text(
-                      secondaryActionText,
-                      style: GoogleFonts.plusJakartaSans(
-                        fontSize: 12,
-                        fontWeight: FontWeight.w700,
-                        color: const Color(0xFF334155),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 8),
-                  ElevatedButton(
-                    onPressed: () {},
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFF03AC0E),
-                      foregroundColor: Colors.white,
-                      elevation: 1,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-                    ),
-                    child: Text(
-                      primaryActionText,
-                      style: GoogleFonts.plusJakartaSans(
-                        fontSize: 12,
-                        fontWeight: FontWeight.w700,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-
-  /// 6. Section: Komoditas di Etalase matching Stitch HTML:
-  /// Item Card with image, title, price, stock, edit & delete buttons
   Widget _buildEtalaseSection() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -1318,10 +685,10 @@ class _MyProductsScreenState extends State<MyProductsScreen> {
                           width: 36,
                           height: 36,
                           decoration: BoxDecoration(
-                            color: const Color(0xFFFFDAD6),
+                            color: const Color(0xFFFEF2F2),
                             borderRadius: BorderRadius.circular(8),
                           ),
-                          child: const Icon(LucideIcons.trash2, size: 16, color: Color(0xFFBA1A1A)),
+                          child: const Icon(LucideIcons.trash2, size: 16, color: Color(0xFFEF4444)),
                         ),
                       ),
                     ],
@@ -1335,8 +702,6 @@ class _MyProductsScreenState extends State<MyProductsScreen> {
     );
   }
 
-  /// 7. Bantuan Armada Penjemputan Banner matching Stitch HTML:
-  /// bg-surface-container-low rounded-xl p-space-md flex items-center gap-space-md
   Widget _buildFieldPickupBanner() {
     return Container(
       padding: const EdgeInsets.all(14),
