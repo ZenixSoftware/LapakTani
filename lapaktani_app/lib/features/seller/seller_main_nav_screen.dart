@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:lucide_icons/lucide_icons.dart';
+import '../product/my_products_screen.dart';
 import 'seller_dashboard_screen.dart';
 
 class SellerMainNavScreen extends StatefulWidget {
@@ -104,7 +105,7 @@ class _SellerMainNavScreenState extends State<SellerMainNavScreen> {
     );
   }
 
-  Widget _buildBody() {
+  Widget _buildBodyForCurrentTab() {
     switch (_currentIndex) {
       case 0:
         return _buildPlaceholderTab(
@@ -113,11 +114,7 @@ class _SellerMainNavScreenState extends State<SellerMainNavScreen> {
           LucideIcons.store,
         );
       case 1:
-        return _buildPlaceholderTab(
-          'Katalog Produk Saya',
-          'Kelola daftar etalase komoditas, variasi bibit, dan foto dokumentasi kebun mitra.',
-          LucideIcons.package,
-        );
+        return const MyProductsScreen();
       case 2:
         return const SellerDashboardScreen();
       case 3:
@@ -257,7 +254,7 @@ class _SellerMainNavScreenState extends State<SellerMainNavScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFFF8F9FF),
-      body: _buildBody(),
+      body: _buildBodyForCurrentTab(),
       bottomNavigationBar: _buildBottomNavigationBar(),
     );
   }
