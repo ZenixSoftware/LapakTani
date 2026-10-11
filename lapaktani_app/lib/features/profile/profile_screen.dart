@@ -72,11 +72,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
         _currentUser?.fullName ??
         _userProfile?['name'] ??
         _userProfile?['email']?.toString().split('@').first;
-    return name?.toString() ?? 'Pengguna LapakTani';
+    return name?.toString() ?? 'Budi Santoso';
   }
 
   String get _displayEmailOrPhone {
-    final email = _userProfile?['email'] ?? _currentUser?.email;
     final phone = _userProfile?['phone'] ?? _userProfile?['nik_number'];
     if (phone != null && phone.toString().isNotEmpty) {
       final str = phone.toString();
@@ -85,7 +84,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
       }
       return str;
     }
-    return email?.toString() ?? 'Pengguna Terdaftar';
+    final email = _userProfile?['email'] ?? _currentUser?.email;
+    return email?.toString() ?? '0812 •••• 7890';
   }
 
   Future<void> _handleLogout() async {
@@ -125,6 +125,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
             style: ElevatedButton.styleFrom(
               backgroundColor: const Color(0xFFEF4444),
               foregroundColor: Colors.white,
+              elevation: 0,
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(8),
               ),
@@ -158,7 +159,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
     return Scaffold(
       backgroundColor: const Color(0xFFF8F9FF),
       appBar: AppBar(
-        backgroundColor: Colors.white,
+        backgroundColor: Colors.white.withValues(alpha: 0.95),
         elevation: 0.5,
         title: Text(
           'Akun Pengguna',
@@ -173,15 +174,41 @@ class _ProfileScreenState extends State<ProfileScreen> {
             icon: const Icon(LucideIcons.messageCircle, color: Color(0xFF475569), size: 20),
             onPressed: () {},
           ),
-          IconButton(
-            icon: const Icon(LucideIcons.bell, color: Color(0xFF475569), size: 20),
-            onPressed: () {},
+          Stack(
+            alignment: Alignment.center,
+            children: [
+              IconButton(
+                icon: const Icon(LucideIcons.shoppingCart, color: Color(0xFF475569), size: 20),
+                onPressed: () {},
+              ),
+              Positioned(
+                top: 10,
+                right: 10,
+                child: Container(
+                  width: 7,
+                  height: 7,
+                  decoration: const BoxDecoration(
+                    color: Color(0xFFBA1A1A),
+                    shape: BoxShape.circle,
+                  ),
+                ),
+              ),
+            ],
           ),
           IconButton(
             icon: const Icon(LucideIcons.settings, color: Color(0xFF475569), size: 20),
             onPressed: () {},
           ),
-          const SizedBox(width: 4),
+          Container(
+            width: 32,
+            height: 32,
+            margin: const EdgeInsets.only(right: 14, left: 4),
+            decoration: const BoxDecoration(
+              color: Color(0xFF03AC0E),
+              shape: BoxShape.circle,
+            ),
+            child: const Icon(LucideIcons.user, color: Colors.white, size: 17),
+          ),
         ],
       ),
       body: _isLoading
@@ -193,31 +220,35 @@ class _ProfileScreenState extends State<ProfileScreen> {
           : RefreshIndicator(
               color: const Color(0xFF03AC0E),
               onRefresh: _loadProfile,
-              child: ListView(
+              child: SingleChildScrollView(
                 physics: const AlwaysScrollableScrollPhysics(),
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-                children: [
-                  _buildProfileCard(),
-                  const SizedBox(height: 16),
-                  _buildDynamicSellerHubSection(),
-                  const SizedBox(height: 16),
-                  _buildWalletSummaryCard(),
-                  const SizedBox(height: 16),
-                  _buildOrderActivityCard(),
-                  const SizedBox(height: 16),
-                  _buildGuaranteeBanner(),
-                  const SizedBox(height: 16),
-                  _buildSettingsSection(),
-                  const SizedBox(height: 20),
-                  _buildLogoutButton(),
-                  const SizedBox(height: 32),
-                ],
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                child: Column(
+                  children: [
+                    _buildProfileHeaderCard(),
+                    const SizedBox(height: 14),
+                    _buildDynamicSellerHubSection(),
+                    const SizedBox(height: 14),
+                    _buildWalletStatsCard(),
+                    const SizedBox(height: 14),
+                    _buildOrdersActivityCard(),
+                    const SizedBox(height: 14),
+                    _buildWarrantyBanner(),
+                    const SizedBox(height: 14),
+                    _buildSettingsListCard(),
+                    const SizedBox(height: 18),
+                    _buildLogoutSection(),
+                    const SizedBox(height: 28),
+                  ],
+                ),
               ),
             ),
     );
   }
 
-  Widget _buildProfileCard() {
+  /// Profile Header Card matching Stitch HTML:
+  /// bg-surface-container-lowest rounded-xl p-space-lg shadow-sm flex items-center justify-between
+  Widget _buildProfileHeaderCard() {
     final avatarUrl = _userProfile?['avatar_url']?.toString();
     final isVerified = _verificationStatus == 'verified';
 
@@ -237,10 +268,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
       child: Row(
         children: [
           Stack(
+            clipBehavior: Clip.none,
             children: [
               Container(
-                width: 58,
-                height: 58,
+                width: 56,
+                height: 56,
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
                   color: const Color(0xFFE8F8EC),
@@ -255,7 +287,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 child: avatarUrl == null || avatarUrl.isEmpty
                     ? Center(
                         child: Text(
-                          _displayName.isNotEmpty ? _displayName[0].toUpperCase() : 'U',
+                          _displayName.isNotEmpty ? _displayName[0].toUpperCase() : 'B',
                           style: GoogleFonts.plusJakartaSans(
                             fontSize: 22,
                             fontWeight: FontWeight.w800,
@@ -265,23 +297,24 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       )
                     : null,
               ),
-              if (isVerified)
-                Positioned(
-                  bottom: 0,
-                  right: 0,
-                  child: Container(
-                    padding: const EdgeInsets.all(2),
-                    decoration: const BoxDecoration(
-                      color: Color(0xFF03AC0E),
-                      shape: BoxShape.circle,
-                    ),
-                    child: const Icon(
-                      LucideIcons.check,
-                      size: 11,
-                      color: Colors.white,
-                    ),
+              Positioned(
+                bottom: -1,
+                right: -1,
+                child: Container(
+                  width: 20,
+                  height: 20,
+                  decoration: BoxDecoration(
+                    color: isVerified ? const Color(0xFF03AC0E) : const Color(0xFFD97706),
+                    shape: BoxShape.circle,
+                    border: Border.all(color: Colors.white, width: 1.5),
+                  ),
+                  child: Icon(
+                    isVerified ? LucideIcons.check : LucideIcons.clock,
+                    size: 11,
+                    color: Colors.white,
                   ),
                 ),
+              ),
             ],
           ),
           const SizedBox(width: 14),
@@ -299,29 +332,44 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                 ),
-                const SizedBox(height: 4),
+                const SizedBox(height: 3),
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
                   decoration: BoxDecoration(
                     color: _userRole == 'petani'
-                        ? const Color(0xFFE8F8EC)
-                        : const Color(0xFFEFF6FF),
+                        ? (isVerified ? const Color(0xFFB0F1CB) : const Color(0xFFFEF3C7))
+                        : const Color(0xFFB0F1CB),
                     borderRadius: BorderRadius.circular(12),
                   ),
-                  child: Text(
-                    _userRole == 'petani'
-                        ? (isVerified ? 'Mitra Tani Terverifikasi' : 'Mitra Tani (Pending)')
-                        : 'Pembeli Prioritas',
-                    style: GoogleFonts.plusJakartaSans(
-                      fontSize: 10,
-                      fontWeight: FontWeight.w700,
-                      color: _userRole == 'petani'
-                          ? const Color(0xFF03AC0E)
-                          : const Color(0xFF2563EB),
-                    ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(
+                        _userRole == 'petani'
+                            ? (isVerified ? LucideIcons.checkCircle : LucideIcons.clock)
+                            : LucideIcons.sprout,
+                        size: 11,
+                        color: _userRole == 'petani'
+                            ? (isVerified ? const Color(0xFF065F46) : const Color(0xFFB45309))
+                            : const Color(0xFF065F46),
+                      ),
+                      const SizedBox(width: 4),
+                      Text(
+                        _userRole == 'petani'
+                            ? (isVerified ? 'Mitra Tani Terdaftar' : 'Mitra Tani (Pending)')
+                            : 'Prioritas Panen',
+                        style: GoogleFonts.plusJakartaSans(
+                          fontSize: 10,
+                          fontWeight: FontWeight.w700,
+                          color: _userRole == 'petani'
+                              ? (isVerified ? const Color(0xFF065F46) : const Color(0xFFB45309))
+                              : const Color(0xFF065F46),
+                        ),
+                      ),
+                    ],
                   ),
                 ),
-                const SizedBox(height: 4),
+                const SizedBox(height: 3),
                 Text(
                   _displayEmailOrPhone,
                   style: GoogleFonts.plusJakartaSans(
@@ -334,25 +382,34 @@ class _ProfileScreenState extends State<ProfileScreen> {
               ],
             ),
           ),
-          IconButton(
-            onPressed: () {},
-            icon: const Icon(LucideIcons.edit2, size: 18, color: Color(0xFF94A3B8)),
+          InkWell(
+            onTap: () {},
+            borderRadius: BorderRadius.circular(20),
+            child: Container(
+              width: 36,
+              height: 36,
+              decoration: const BoxDecoration(
+                color: Color(0xFFF1F5F9),
+                shape: BoxShape.circle,
+              ),
+              child: const Icon(LucideIcons.edit2, size: 16, color: Color(0xFF64748B)),
+            ),
           ),
         ],
       ),
     );
   }
 
-  /// Dynamic Seller Hub section that strictly implements:
-  /// CASE 1 (Role: pembeli): Render menu item "Daftar Mitra Tani" -> CompleteFarmerProfileScreen
-  /// CASE 2 (Role: petani, Status: pending): Render banner "Status Pendaftaran: Menunggu Verifikasi" -> VerificationPendingScreen
-  /// CASE 3 (Role: petani, Status: verified): Render prominent "Dasbor Toko Tani" / "Produk Saya" -> MyProductsScreen full screen
+  /// Dynamic Seller Hub section matching the 3 state flows:
+  /// CASE 1: Role pembeli -> "Daftar Mitra Tani"
+  /// CASE 2: Role petani, status pending -> "Status Pendaftaran: Menunggu Verifikasi"
+  /// CASE 3: Role petani, status verified -> "Dasbor Toko Tani" / "Produk Saya"
   Widget _buildDynamicSellerHubSection() {
     final role = _userRole;
     final status = _verificationStatus;
 
     if (role == 'pembeli') {
-      return _buildBuyerSellerEntryCard();
+      return _buildBuyerEntryCard();
     } else if (role == 'petani' && status != 'verified') {
       return _buildPendingVerificationBanner();
     } else {
@@ -361,7 +418,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
   }
 
   /// CASE 1: Role pembeli -> "Daftar Mitra Tani"
-  Widget _buildBuyerSellerEntryCard() {
+  Widget _buildBuyerEntryCard() {
     return Container(
       decoration: BoxDecoration(
         color: Colors.white,
@@ -391,8 +448,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
             child: Row(
               children: [
                 Container(
-                  width: 48,
-                  height: 48,
+                  width: 46,
+                  height: 46,
                   decoration: BoxDecoration(
                     color: const Color(0xFFE8F8EC),
                     borderRadius: BorderRadius.circular(12),
@@ -400,7 +457,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   child: const Icon(
                     LucideIcons.store,
                     color: Color(0xFF03AC0E),
-                    size: 24,
+                    size: 22,
                   ),
                 ),
                 const SizedBox(width: 14),
@@ -413,7 +470,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                           Text(
                             'Daftar Mitra Tani',
                             style: GoogleFonts.plusJakartaSans(
-                              fontSize: 15,
+                              fontSize: 14,
                               fontWeight: FontWeight.w700,
                               color: const Color(0xFF121C2A),
                             ),
@@ -438,7 +495,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       ),
                       const SizedBox(height: 3),
                       Text(
-                        'Jual langsung hasil panen Anda ke ribuan pembeli tanpa perantara.',
+                        'Jual langsung hasil panen ke konsumen tanpa perantara.',
                         style: GoogleFonts.plusJakartaSans(
                           fontSize: 11,
                           color: const Color(0xFF64748B),
@@ -448,7 +505,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     ],
                   ),
                 ),
-                const SizedBox(width: 8),
                 const Icon(
                   LucideIcons.chevronRight,
                   color: Color(0xFF03AC0E),
@@ -462,7 +518,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
   }
 
-  /// CASE 2: Role petani, Status pending -> "Status Pendaftaran: Menunggu Verifikasi"
+  /// CASE 2: Role petani, status pending -> "Status Pendaftaran: Menunggu Verifikasi"
   Widget _buildPendingVerificationBanner() {
     return Container(
       decoration: BoxDecoration(
@@ -471,7 +527,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
         border: Border.all(color: const Color(0xFFFDE68A), width: 1.2),
         boxShadow: const [
           BoxShadow(
-            color: Color(0x0A000000),
+            color: Color(0x08D97706),
             blurRadius: 8,
             offset: Offset(0, 2),
           ),
@@ -493,8 +549,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
             child: Row(
               children: [
                 Container(
-                  width: 48,
-                  height: 48,
+                  width: 46,
+                  height: 46,
                   decoration: BoxDecoration(
                     color: const Color(0xFFFEF3C7),
                     borderRadius: BorderRadius.circular(12),
@@ -502,7 +558,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   child: const Icon(
                     LucideIcons.clock,
                     color: Color(0xFFD97706),
-                    size: 24,
+                    size: 22,
                   ),
                 ),
                 const SizedBox(width: 14),
@@ -510,21 +566,15 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Row(
-                        children: [
-                          Expanded(
-                            child: Text(
-                              'Status Pendaftaran: Menunggu Verifikasi',
-                              style: GoogleFonts.plusJakartaSans(
-                                fontSize: 13,
-                                fontWeight: FontWeight.w700,
-                                color: const Color(0xFF92400E),
-                              ),
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                          ),
-                        ],
+                      Text(
+                        'Status Pendaftaran: Menunggu Verifikasi',
+                        style: GoogleFonts.plusJakartaSans(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w700,
+                          color: const Color(0xFF92400E),
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
                       ),
                       const SizedBox(height: 3),
                       Text(
@@ -538,7 +588,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     ],
                   ),
                 ),
-                const SizedBox(width: 8),
+                const SizedBox(width: 6),
                 const Icon(
                   LucideIcons.chevronRight,
                   color: Color(0xFFD97706),
@@ -552,20 +602,20 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
   }
 
-  /// CASE 3: Role petani, Status verified -> "Dasbor Toko Tani" / "Produk Saya"
+  /// CASE 3: Role petani, status verified -> "Dasbor Toko Tani" / "Produk Saya"
   Widget _buildVerifiedSellerDashboardBanner() {
     return Container(
       decoration: BoxDecoration(
         gradient: const LinearGradient(
           colors: [Color(0xFF084E33), Color(0xFF03AC0E)],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
+          begin: Alignment.centerLeft,
+          end: Alignment.centerRight,
         ),
         borderRadius: BorderRadius.circular(16),
         boxShadow: const [
           BoxShadow(
             color: Color(0x26084E33),
-            blurRadius: 12,
+            blurRadius: 10,
             offset: Offset(0, 4),
           ),
         ],
@@ -575,7 +625,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
         child: InkWell(
           borderRadius: BorderRadius.circular(16),
           onTap: () {
-            // Explicitly hides BottomNavigationBar via rootNavigator full-screen push
             Navigator.of(context, rootNavigator: true).push(
               MaterialPageRoute(
                 builder: (_) => const MyProductsScreen(),
@@ -587,8 +636,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
             child: Row(
               children: [
                 Container(
-                  width: 48,
-                  height: 48,
+                  width: 46,
+                  height: 46,
                   decoration: BoxDecoration(
                     color: Colors.white.withValues(alpha: 0.15),
                     borderRadius: BorderRadius.circular(12),
@@ -596,7 +645,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   child: const Icon(
                     LucideIcons.store,
                     color: Colors.white,
-                    size: 24,
+                    size: 22,
                   ),
                 ),
                 const SizedBox(width: 14),
@@ -607,66 +656,64 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       Row(
                         children: [
                           Text(
-                            'Dasbor Toko Tani',
+                            'Mitra Tani Terdaftar',
                             style: GoogleFonts.plusJakartaSans(
-                              fontSize: 15,
+                              fontSize: 14,
                               fontWeight: FontWeight.w700,
                               color: Colors.white,
                             ),
                           ),
                           const SizedBox(width: 6),
                           Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1.5),
-                            decoration: BoxDecoration(
-                              color: const Color(0xFF76FF64),
-                              borderRadius: BorderRadius.circular(8),
-                            ),
-                            child: Text(
-                              'Aktif',
-                              style: GoogleFonts.plusJakartaSans(
-                                fontSize: 9,
-                                fontWeight: FontWeight.w800,
-                                color: const Color(0xFF003501),
-                              ),
+                            width: 6,
+                            height: 6,
+                            decoration: const BoxDecoration(
+                              color: Color(0xFF76FF64),
+                              shape: BoxShape.circle,
                             ),
                           ),
                         ],
                       ),
                       const SizedBox(height: 3),
                       Text(
-                        'Kelola etalase komoditas, stok panen, dan pesanan pembeli.',
+                        'Ladang Organik Lembang (Aktif)',
                         style: GoogleFonts.plusJakartaSans(
                           fontSize: 11,
-                          color: const Color(0xFFD1F2D6),
-                          height: 1.3,
+                          color: const Color(0xFFB0F1CB),
                         ),
                       ),
                     ],
                   ),
                 ),
-                const SizedBox(width: 8),
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
                   decoration: BoxDecoration(
                     color: Colors.white,
                     borderRadius: BorderRadius.circular(20),
+                    boxShadow: const [
+                      BoxShadow(
+                        color: Color(0x1A000000),
+                        blurRadius: 4,
+                        offset: Offset(0, 2),
+                      ),
+                    ],
                   ),
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       Text(
-                        'Produk Saya',
+                        'Kelola Ladang',
                         style: GoogleFonts.plusJakartaSans(
                           fontSize: 11,
                           fontWeight: FontWeight.w700,
-                          color: const Color(0xFF03AC0E),
+                          color: const Color(0xFF006E04),
                         ),
                       ),
-                      const SizedBox(width: 3),
+                      const SizedBox(width: 4),
                       const Icon(
                         LucideIcons.arrowRight,
                         size: 13,
-                        color: Color(0xFF03AC0E),
+                        color: Color(0xFF006E04),
                       ),
                     ],
                   ),
@@ -679,9 +726,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
   }
 
-  Widget _buildWalletSummaryCard() {
+  /// Wallet / Stats Card matching Stitch HTML:
+  /// 3-column grid/row (LapakPay, Koin Panen, Kupon Saya) with vertical dividers
+  Widget _buildWalletStatsCard() {
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(16),
@@ -694,39 +743,179 @@ class _ProfileScreenState extends State<ProfileScreen> {
         ],
       ),
       child: Row(
+        crossAxisAlignment: CrossAxisAlignment.center,
         children: [
+          // Column 1: LapakPay
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Row(
                   children: [
-                    const Icon(LucideIcons.wallet, size: 16, color: Color(0xFF03AC0E)),
-                    const SizedBox(width: 6),
+                    const Icon(LucideIcons.wallet, size: 15, color: Color(0xFF03AC0E)),
+                    const SizedBox(width: 5),
                     Text(
                       'LapakPay',
                       style: GoogleFonts.plusJakartaSans(
                         fontSize: 12,
-                        fontWeight: FontWeight.w600,
-                        color: const Color(0xFF64748B),
+                        fontWeight: FontWeight.w700,
+                        color: const Color(0xFF121C2A),
                       ),
                     ),
                   ],
                 ),
-                const SizedBox(height: 4),
+                const SizedBox(height: 3),
                 Text(
                   'Rp 250.000',
                   style: GoogleFonts.plusJakartaSans(
-                    fontSize: 14,
+                    fontSize: 13.5,
                     fontWeight: FontWeight.w700,
                     color: const Color(0xFF121C2A),
                   ),
                 ),
                 const SizedBox(height: 2),
+                Row(
+                  children: [
+                    Text(
+                      '+ Isi',
+                      style: GoogleFonts.plusJakartaSans(
+                        fontSize: 10.5,
+                        fontWeight: FontWeight.w700,
+                        color: const Color(0xFF03AC0E),
+                      ),
+                    ),
+                    const SizedBox(width: 4),
+                    const Text('•', style: TextStyle(fontSize: 10, color: Color(0xFF94A3B8))),
+                    const SizedBox(width: 4),
+                    Text(
+                      'Riwayat',
+                      style: GoogleFonts.plusJakartaSans(
+                        fontSize: 10.5,
+                        color: const Color(0xFF64748B),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+          Container(
+            width: 1,
+            height: 44,
+            color: const Color(0xFFE2E8F0),
+            margin: const EdgeInsets.symmetric(horizontal: 10),
+          ),
+          // Column 2: Koin Panen
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    const Icon(LucideIcons.coins, size: 15, color: Color(0xFFFFB800)),
+                    const SizedBox(width: 5),
+                    Text(
+                      'Koin Panen',
+                      style: GoogleFonts.plusJakartaSans(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w700,
+                        color: const Color(0xFF121C2A),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 3),
+                RichText(
+                  text: TextSpan(
+                    text: '1.250 ',
+                    style: GoogleFonts.plusJakartaSans(
+                      fontSize: 13.5,
+                      fontWeight: FontWeight.w700,
+                      color: const Color(0xFF121C2A),
+                    ),
+                    children: [
+                      TextSpan(
+                        text: 'Koin',
+                        style: GoogleFonts.plusJakartaSans(
+                          fontSize: 10.5,
+                          fontWeight: FontWeight.w400,
+                          color: const Color(0xFF64748B),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 2),
                 Text(
-                  'Isi Saldo',
+                  'Tukar Koin',
                   style: GoogleFonts.plusJakartaSans(
-                    fontSize: 11,
+                    fontSize: 10.5,
+                    fontWeight: FontWeight.w700,
+                    color: const Color(0xFFD97706),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          Container(
+            width: 1,
+            height: 44,
+            color: const Color(0xFFE2E8F0),
+            margin: const EdgeInsets.symmetric(horizontal: 10),
+          ),
+          // Column 3: Kupon Saya
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    const Icon(LucideIcons.ticket, size: 15, color: Color(0xFF03AC0E)),
+                    const SizedBox(width: 5),
+                    Text(
+                      'Kupon Saya',
+                      style: GoogleFonts.plusJakartaSans(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w700,
+                        color: const Color(0xFF121C2A),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 3),
+                Row(
+                  children: [
+                    Text(
+                      '8',
+                      style: GoogleFonts.plusJakartaSans(
+                        fontSize: 13.5,
+                        fontWeight: FontWeight.w700,
+                        color: const Color(0xFF121C2A),
+                      ),
+                    ),
+                    const SizedBox(width: 4),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFFFDAD6),
+                        borderRadius: BorderRadius.circular(6),
+                      ),
+                      child: Text(
+                        'Panen Hemat',
+                        style: GoogleFonts.plusJakartaSans(
+                          fontSize: 8,
+                          fontWeight: FontWeight.w700,
+                          color: const Color(0xFFBA1A1A),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  'Pakai Promo',
+                  style: GoogleFonts.plusJakartaSans(
+                    fontSize: 10.5,
                     fontWeight: FontWeight.w700,
                     color: const Color(0xFF03AC0E),
                   ),
@@ -734,98 +923,14 @@ class _ProfileScreenState extends State<ProfileScreen> {
               ],
             ),
           ),
-          Container(width: 1, height: 42, color: const Color(0xFFE2E8F0)),
-          Expanded(
-            child: Padding(
-              padding: const EdgeInsets.only(left: 12),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    children: [
-                      const Icon(LucideIcons.coins, size: 16, color: Color(0xFFFFB800)),
-                      const SizedBox(width: 6),
-                      Text(
-                        'Koin Panen',
-                        style: GoogleFonts.plusJakartaSans(
-                          fontSize: 12,
-                          fontWeight: FontWeight.w600,
-                          color: const Color(0xFF64748B),
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    '1.250 Koin',
-                    style: GoogleFonts.plusJakartaSans(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w700,
-                      color: const Color(0xFF121C2A),
-                    ),
-                  ),
-                  const SizedBox(height: 2),
-                  Text(
-                    'Tukar Koin',
-                    style: GoogleFonts.plusJakartaSans(
-                      fontSize: 11,
-                      fontWeight: FontWeight.w700,
-                      color: const Color(0xFFD97706),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-          Container(width: 1, height: 42, color: const Color(0xFFE2E8F0)),
-          Expanded(
-            child: Padding(
-              padding: const EdgeInsets.only(left: 12),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    children: [
-                      const Icon(LucideIcons.ticket, size: 16, color: Color(0xFF2563EB)),
-                      const SizedBox(width: 6),
-                      Text(
-                        'Kupon',
-                        style: GoogleFonts.plusJakartaSans(
-                          fontSize: 12,
-                          fontWeight: FontWeight.w600,
-                          color: const Color(0xFF64748B),
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    '8 Kupon',
-                    style: GoogleFonts.plusJakartaSans(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w700,
-                      color: const Color(0xFF121C2A),
-                    ),
-                  ),
-                  const SizedBox(height: 2),
-                  Text(
-                    'Pakai Promo',
-                    style: GoogleFonts.plusJakartaSans(
-                      fontSize: 11,
-                      fontWeight: FontWeight.w700,
-                      color: const Color(0xFF2563EB),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
         ],
       ),
     );
   }
 
-  Widget _buildOrderActivityCard() {
+  /// Orders Activity Card matching Stitch HTML:
+  /// Aktivitas Pesanan Panen + 4 order status icon buttons + Wishlist / Ulasan sub-box
+  Widget _buildOrdersActivityCard() {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -846,19 +951,27 @@ class _ProfileScreenState extends State<ProfileScreen> {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text(
-                'Aktivitas Pesanan',
+                'Aktivitas Pesanan Panen',
                 style: GoogleFonts.plusJakartaSans(
-                  fontSize: 15,
+                  fontSize: 14.5,
                   fontWeight: FontWeight.w700,
                   color: const Color(0xFF121C2A),
                 ),
               ),
-              Text(
-                'Semua Transaksi',
-                style: GoogleFonts.plusJakartaSans(
-                  fontSize: 12,
-                  fontWeight: FontWeight.w600,
-                  color: const Color(0xFF03AC0E),
+              InkWell(
+                onTap: () {},
+                child: Row(
+                  children: [
+                    Text(
+                      'Semua Transaksi',
+                      style: GoogleFonts.plusJakartaSans(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600,
+                        color: const Color(0xFF03AC0E),
+                      ),
+                    ),
+                    const Icon(LucideIcons.chevronRight, size: 15, color: Color(0xFF03AC0E)),
+                  ],
                 ),
               ),
             ],
@@ -872,6 +985,98 @@ class _ProfileScreenState extends State<ProfileScreen> {
               _buildOrderStatusItem(LucideIcons.checkCircle2, 'Selesai', null),
               _buildOrderStatusItem(LucideIcons.xCircle, 'Dibatalkan', null),
             ],
+          ),
+          const SizedBox(height: 14),
+          // Sub-box: Wishlist Panen & Ulasan Saya (from Stitch HTML)
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+            decoration: BoxDecoration(
+              color: const Color(0xFFF8F9FF),
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: Row(
+              children: [
+                Expanded(
+                  child: Row(
+                    children: [
+                      Container(
+                        width: 32,
+                        height: 32,
+                        decoration: const BoxDecoration(
+                          color: Colors.white,
+                          shape: BoxShape.circle,
+                        ),
+                        child: const Icon(LucideIcons.heart, size: 16, color: Color(0xFF03AC0E)),
+                      ),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'Wishlist Panen',
+                              style: GoogleFonts.plusJakartaSans(
+                                fontSize: 11.5,
+                                fontWeight: FontWeight.w700,
+                                color: const Color(0xFF121C2A),
+                              ),
+                            ),
+                            Text(
+                              '14 Komoditas',
+                              style: GoogleFonts.plusJakartaSans(
+                                fontSize: 10,
+                                color: const Color(0xFF64748B),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                Container(width: 1, height: 26, color: const Color(0xFFE2E8F0)),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Row(
+                    children: [
+                      Container(
+                        width: 32,
+                        height: 32,
+                        decoration: const BoxDecoration(
+                          color: Colors.white,
+                          shape: BoxShape.circle,
+                        ),
+                        child: const Icon(LucideIcons.star, size: 16, color: Color(0xFFFFB800)),
+                      ),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'Ulasan Saya',
+                              style: GoogleFonts.plusJakartaSans(
+                                fontSize: 11.5,
+                                fontWeight: FontWeight.w700,
+                                color: const Color(0xFF121C2A),
+                              ),
+                            ),
+                            Text(
+                              '2 Perlu Ditinjau',
+                              style: GoogleFonts.plusJakartaSans(
+                                fontSize: 10,
+                                fontWeight: FontWeight.w600,
+                                color: const Color(0xFF03AC0E),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
           ),
         ],
       ),
@@ -887,28 +1092,31 @@ class _ProfileScreenState extends State<ProfileScreen> {
             Container(
               width: 44,
               height: 44,
-              decoration: BoxDecoration(
-                color: const Color(0xFFF1F5F9),
-                borderRadius: BorderRadius.circular(12),
+              decoration: const BoxDecoration(
+                color: Color(0xFFF1F5F9),
+                shape: BoxShape.circle,
               ),
               child: Icon(icon, size: 20, color: const Color(0xFF475569)),
             ),
             if (badge != null)
               Positioned(
-                top: -3,
-                right: -3,
+                top: -2,
+                right: -2,
                 child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFFEF4444),
-                    borderRadius: BorderRadius.circular(10),
+                  width: 16,
+                  height: 16,
+                  decoration: const BoxDecoration(
+                    color: Color(0xFFBA1A1A),
+                    shape: BoxShape.circle,
                   ),
-                  child: Text(
-                    badge,
-                    style: GoogleFonts.plusJakartaSans(
-                      fontSize: 9,
-                      fontWeight: FontWeight.w700,
-                      color: Colors.white,
+                  child: Center(
+                    child: Text(
+                      badge,
+                      style: GoogleFonts.plusJakartaSans(
+                        fontSize: 9,
+                        fontWeight: FontWeight.w800,
+                        color: Colors.white,
+                      ),
                     ),
                   ),
                 ),
@@ -921,30 +1129,39 @@ class _ProfileScreenState extends State<ProfileScreen> {
           style: GoogleFonts.plusJakartaSans(
             fontSize: 10,
             fontWeight: FontWeight.w600,
-            color: const Color(0xFF64748B),
+            color: const Color(0xFF121C2A),
           ),
         ),
       ],
     );
   }
 
-  Widget _buildGuaranteeBanner() {
+  /// Warranty Banner matching Stitch HTML:
+  /// bg-secondary-container text-on-secondary-container rounded-xl p-space-md flex items-center gap-space-md
+  Widget _buildWarrantyBanner() {
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: const Color(0xFFE8F8EC),
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: const Color(0xFFD1F2D6)),
+        color: const Color(0xFFB0F1CB),
+        borderRadius: BorderRadius.circular(16),
       ),
       child: Row(
         children: [
           Container(
-            padding: const EdgeInsets.all(8),
+            width: 40,
+            height: 40,
             decoration: const BoxDecoration(
               color: Colors.white,
               shape: BoxShape.circle,
+              boxShadow: [
+                BoxShadow(
+                  color: Color(0x14000000),
+                  blurRadius: 4,
+                  offset: Offset(0, 1),
+                ),
+              ],
             ),
-            child: const Icon(LucideIcons.shieldCheck, color: Color(0xFF03AC0E), size: 20),
+            child: const Icon(LucideIcons.shieldCheck, color: Color(0xFF006E04), size: 22),
           ),
           const SizedBox(width: 12),
           Expanded(
@@ -956,25 +1173,30 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   style: GoogleFonts.plusJakartaSans(
                     fontSize: 13,
                     fontWeight: FontWeight.w700,
-                    color: const Color(0xFF084E33),
+                    color: const Color(0xFF002113),
                   ),
                 ),
+                const SizedBox(height: 1),
                 Text(
                   'Sayur & buah layu sampai di rumah? Ajukan klaim instan tanpa ribet.',
                   style: GoogleFonts.plusJakartaSans(
-                    fontSize: 11,
-                    color: const Color(0xFF2C694C),
+                    fontSize: 10.5,
+                    color: const Color(0xFF327052),
+                    height: 1.25,
                   ),
                 ),
               ],
             ),
           ),
+          const Icon(LucideIcons.chevronRight, size: 18, color: Color(0xFF327052)),
         ],
       ),
     );
   }
 
-  Widget _buildSettingsSection() {
+  /// Settings List matching Stitch HTML (Custom Containers, NO ListTile):
+  /// bg-surface-container-lowest rounded-xl shadow-sm overflow-hidden
+  Widget _buildSettingsListCard() {
     return Container(
       decoration: BoxDecoration(
         color: Colors.white,
@@ -988,101 +1210,176 @@ class _ProfileScreenState extends State<ProfileScreen> {
         ],
       ),
       child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          _buildSettingsMenuItem(
+          Padding(
+            padding: const EdgeInsets.only(left: 16, top: 16, bottom: 8),
+            child: Text(
+              'Pengaturan & Bantuan',
+              style: GoogleFonts.plusJakartaSans(
+                fontSize: 14.5,
+                fontWeight: FontWeight.w700,
+                color: const Color(0xFF121C2A),
+              ),
+            ),
+          ),
+          _buildCustomMenuItem(
             icon: LucideIcons.mapPin,
             title: 'Alamat Pengiriman',
-            subtitle: 'Atur alamat utama & titik jemput panen',
+            subtitle: 'Rumah (Jl. Cikutra No. 42, Bandung) • Utama',
           ),
-          const Divider(height: 1, indent: 56, endIndent: 16),
-          _buildSettingsMenuItem(
+          const Divider(height: 1, indent: 64, endIndent: 16, color: Color(0xFFF1F5F9)),
+          _buildCustomMenuItem(
             icon: LucideIcons.creditCard,
-            title: 'Rekening Bank & Pembayaran',
-            subtitle: 'BCA, BRI, QRIS & Akun LapakPay',
+            title: 'Rekening Bank & Pembayaran Instan',
+            subtitle: 'BCA, Mandiri, QRIS Terhubung',
           ),
-          const Divider(height: 1, indent: 56, endIndent: 16),
-          _buildSettingsMenuItem(
-            icon: LucideIcons.lock,
-            title: 'Keamanan Akun',
-            subtitle: 'PIN transaksi & kata sandi',
+          const Divider(height: 1, indent: 64, endIndent: 16, color: Color(0xFFF1F5F9)),
+          _buildCustomMenuItem(
+            icon: LucideIcons.shield,
+            title: 'Keamanan Akun & PIN LapakPay',
+            subtitle: 'Biometrik & PIN 6 Digit Aktif',
           ),
-          const Divider(height: 1, indent: 56, endIndent: 16),
-          _buildSettingsMenuItem(
-            icon: LucideIcons.helpCircle,
-            title: 'LapakTani Care (Pusat Bantuan)',
-            subtitle: 'Hubungi CS & pertanyaan umum 24/7',
+          const Divider(height: 1, indent: 64, endIndent: 16, color: Color(0xFFF1F5F9)),
+          _buildCustomMenuItem(
+            icon: LucideIcons.headphones,
+            title: 'LapakTani Care 24/7',
+            subtitle: 'Bantuan pesanan & respon cepat',
+            trailingTag: 'CS Siap Bantu',
           ),
-          const Divider(height: 1, indent: 56, endIndent: 16),
-          _buildSettingsMenuItem(
+          const Divider(height: 1, indent: 64, endIndent: 16, color: Color(0xFFF1F5F9)),
+          _buildCustomMenuItem(
             icon: LucideIcons.info,
             title: 'Tentang LapakTani',
             subtitle: 'Versi 4.12.0 (Dari Ladang ke Meja)',
           ),
+          const SizedBox(height: 6),
         ],
       ),
     );
   }
 
-  Widget _buildSettingsMenuItem({
+  /// Custom Menu Item without ListTile
+  Widget _buildCustomMenuItem({
     required IconData icon,
     required String title,
     required String subtitle,
+    String? trailingTag,
     VoidCallback? onTap,
   }) {
-    return ListTile(
-      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 2),
-      leading: Container(
-        width: 38,
-        height: 38,
-        decoration: BoxDecoration(
-          color: const Color(0xFFF8FAFC),
-          borderRadius: BorderRadius.circular(10),
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onTap ?? () {},
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+          child: Row(
+            children: [
+              Container(
+                width: 36,
+                height: 36,
+                decoration: const BoxDecoration(
+                  color: Color(0xFFF1F5F9),
+                  shape: BoxShape.circle,
+                ),
+                child: Icon(icon, size: 18, color: const Color(0xFF475569)),
+              ),
+              const SizedBox(width: 14),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Flexible(
+                          child: Text(
+                            title,
+                            style: GoogleFonts.plusJakartaSans(
+                              fontSize: 13,
+                              fontWeight: FontWeight.w600,
+                              color: const Color(0xFF121C2A),
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                        if (trailingTag != null) ...[
+                          const SizedBox(width: 6),
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1.5),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFFE8F8EC),
+                              borderRadius: BorderRadius.circular(4),
+                            ),
+                            child: Text(
+                              trailingTag,
+                              style: GoogleFonts.plusJakartaSans(
+                                fontSize: 9,
+                                fontWeight: FontWeight.w700,
+                                color: const Color(0xFF03AC0E),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ],
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      subtitle,
+                      style: GoogleFonts.plusJakartaSans(
+                        fontSize: 11,
+                        color: const Color(0xFF94A3B8),
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(width: 6),
+              const Icon(LucideIcons.chevronRight, size: 16, color: Color(0xFF94A3B8)),
+            ],
+          ),
         ),
-        child: Icon(icon, size: 18, color: const Color(0xFF64748B)),
       ),
-      title: Text(
-        title,
-        style: GoogleFonts.plusJakartaSans(
-          fontSize: 13,
-          fontWeight: FontWeight.w600,
-          color: const Color(0xFF121C2A),
-        ),
-      ),
-      subtitle: Text(
-        subtitle,
-        style: GoogleFonts.plusJakartaSans(
-          fontSize: 11,
-          color: const Color(0xFF94A3B8),
-        ),
-      ),
-      trailing: const Icon(LucideIcons.chevronRight, size: 16, color: Color(0xFF94A3B8)),
-      onTap: onTap,
     );
   }
 
-  Widget _buildLogoutButton() {
-    return SizedBox(
-      width: double.infinity,
-      height: 48,
-      child: OutlinedButton.icon(
-        onPressed: _handleLogout,
-        style: OutlinedButton.styleFrom(
-          side: const BorderSide(color: Color(0xFFFCA5A5)),
-          backgroundColor: const Color(0xFFFEF2F2),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
+  Widget _buildLogoutSection() {
+    return Column(
+      children: [
+        SizedBox(
+          width: double.infinity,
+          height: 48,
+          child: OutlinedButton.icon(
+            onPressed: _handleLogout,
+            style: OutlinedButton.styleFrom(
+              side: const BorderSide(color: Color(0xFFFFDAD6)),
+              backgroundColor: Colors.white,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(14),
+              ),
+            ),
+            icon: const Icon(LucideIcons.logOut, size: 18, color: Color(0xFFBA1A1A)),
+            label: Text(
+              'Keluar dari Akun',
+              style: GoogleFonts.plusJakartaSans(
+                fontSize: 13.5,
+                fontWeight: FontWeight.w700,
+                color: const Color(0xFFBA1A1A),
+              ),
+            ),
           ),
         ),
-        icon: const Icon(LucideIcons.logOut, size: 18, color: Color(0xFFDC2626)),
-        label: Text(
-          'Keluar dari Akun',
+        const SizedBox(height: 12),
+        Text(
+          'LapakTani Indonesia • Menghubungkan Petani Nusantara',
           style: GoogleFonts.plusJakartaSans(
-            fontSize: 13,
-            fontWeight: FontWeight.w700,
-            color: const Color(0xFFDC2626),
+            fontSize: 10.5,
+            color: const Color(0xFF94A3B8),
           ),
         ),
-      ),
+      ],
     );
   }
 }
