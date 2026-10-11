@@ -273,10 +273,12 @@ const getMyProfile = async (req, res) => {
         COALESCE(up.verification_status, 'pending') AS verification_status,
         fp.ktp_image_url, 
         fp.farmer_group_id, 
-        fp.land_area_ha
+        COALESCE(f.land_area_ha, 0) AS farm_area_hectares,
+        COALESCE(f.land_area_ha, 0) AS land_area_ha
       FROM users u
       LEFT JOIN user_profiles up ON u.id = up.user_id
       LEFT JOIN farmer_profiles fp ON u.id = fp.user_id
+      LEFT JOIN farms f ON u.id = f.farmer_id
       WHERE u.id = ? 
       LIMIT 1`,
       [userId]
