@@ -3,7 +3,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 import '../../core/services/api_service.dart';
 import '../auth/auth_repository.dart';
-import '../product/my_products_screen.dart';
+import '../seller/seller_main_nav_screen.dart';
 import 'complete_farmer_profile_screen.dart';
 import 'profile_repository.dart';
 import 'verification_pending_screen.dart';
@@ -627,7 +627,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
           onTap: () {
             Navigator.of(context, rootNavigator: true).push(
               MaterialPageRoute(
-                builder: (_) => const MyProductsScreen(),
+                builder: (_) => const SellerMainNavScreen(),
               ),
             ).then((_) => _loadProfile());
           },
@@ -686,7 +686,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   ),
                 ),
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
                   decoration: BoxDecoration(
                     color: Colors.white,
                     borderRadius: BorderRadius.circular(20),
@@ -698,24 +697,40 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       ),
                     ],
                   ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Text(
-                        'Kelola Ladang',
-                        style: GoogleFonts.plusJakartaSans(
-                          fontSize: 11,
-                          fontWeight: FontWeight.w700,
-                          color: const Color(0xFF006E04),
+                  child: Material(
+                    color: Colors.transparent,
+                    child: InkWell(
+                      onTap: () {
+                        Navigator.of(context, rootNavigator: true).push(
+                          MaterialPageRoute(
+                            builder: (_) => const SellerMainNavScreen(),
+                          ),
+                        ).then((_) => _loadProfile());
+                      },
+                      borderRadius: BorderRadius.circular(20),
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Text(
+                              'Kelola Ladang',
+                              style: GoogleFonts.plusJakartaSans(
+                                fontSize: 11,
+                                fontWeight: FontWeight.w700,
+                                color: const Color(0xFF006E04),
+                              ),
+                            ),
+                            const SizedBox(width: 4),
+                            const Icon(
+                              LucideIcons.arrowRight,
+                              size: 13,
+                              color: Color(0xFF006E04),
+                            ),
+                          ],
                         ),
                       ),
-                      const SizedBox(width: 4),
-                      const Icon(
-                        LucideIcons.arrowRight,
-                        size: 13,
-                        color: Color(0xFF006E04),
-                      ),
-                    ],
+                    ),
                   ),
                 ),
               ],

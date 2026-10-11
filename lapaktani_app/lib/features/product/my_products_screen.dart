@@ -1147,7 +1147,7 @@ class _MyProductsScreenState extends State<MyProductsScreen> {
                     const Icon(LucideIcons.plusCircle, size: 14, color: Color(0xFF005302)),
                     const SizedBox(width: 4),
                     Text(
-                      'Tambah',
+                      '+ Tambah Komoditas Panen',
                       style: GoogleFonts.plusJakartaSans(
                         fontSize: 11,
                         fontWeight: FontWeight.w700,
