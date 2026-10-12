@@ -76,6 +76,40 @@ class ApiService {
 
   static Future<http.Response> get(String path) => _instance._fetchGet(path);
 
+  Future<List<dynamic>> getProducts({String? query}) async {
+    try {
+      final String path = (query != null && query.trim().isNotEmpty)
+          ? '/products?search=${Uri.encodeComponent(query.trim())}'
+          : '/products';
+      final response = await _fetchGet(path);
+      if (response.statusCode == 200) {
+        final Map<String, dynamic> body =
+            jsonDecode(response.body) as Map<String, dynamic>;
+        final List<dynamic> list = (body['data'] as List<dynamic>?) ?? [];
+        if (query != null && query.trim().isNotEmpty) {
+          final q = query.trim().toLowerCase();
+          return list.where((item) {
+            if (item is! Map) return false;
+            final title = (item['title'] ?? '').toString().toLowerCase();
+            final category = (item['category'] ?? '').toString().toLowerCase();
+            final grade = (item['grade'] ?? '').toString().toLowerCase();
+            final poktan = (item['poktan_name'] ?? '').toString().toLowerCase();
+            final village = (item['village_name'] ?? '').toString().toLowerCase();
+            return title.contains(q) ||
+                category.contains(q) ||
+                grade.contains(q) ||
+                poktan.contains(q) ||
+                village.contains(q);
+          }).toList();
+        }
+        return list;
+      }
+      return [];
+    } catch (_) {
+      return [];
+    }
+  }
+
   Future<http.Response> _fetchGet(String path) async {
     final normalizedPath = path.startsWith('/') ? path : '/$path';
     final url = Uri.parse('$baseUrl$normalizedPath');

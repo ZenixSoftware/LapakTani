@@ -5,6 +5,7 @@ import 'package:lucide_icons/lucide_icons.dart';
 import '../../core/services/api_service.dart';
 import '../product/product_detail_screen.dart';
 import '../profile/profile_screen.dart';
+import 'search_screen.dart';
 
 class HomeDashboardScreen extends StatefulWidget {
   const HomeDashboardScreen({super.key});
@@ -473,107 +474,98 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen> {
               Row(
                 children: [
                   Expanded(
-                    child: Container(
-                      height: 38,
-                      padding: const EdgeInsets.symmetric(horizontal: 10),
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(10),
-                        border: Border.all(
-                          color: const Color(0xFFE2E8F0),
+                    child: InkWell(
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => const SearchScreen(),
+                          ),
+                        );
+                      },
+                      borderRadius: BorderRadius.circular(10),
+                      child: Container(
+                        height: 38,
+                        padding: const EdgeInsets.symmetric(horizontal: 10),
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(10),
+                          border: Border.all(
+                            color: const Color(0xFFE2E8F0),
+                          ),
+                          boxShadow: const [
+                            BoxShadow(
+                              color: Color(0x0A000000),
+                              blurRadius: 4,
+                              offset: Offset(0, 1),
+                            ),
+                          ],
                         ),
-                        boxShadow: const [
-                          BoxShadow(
-                            color: Color(0x0A000000),
-                            blurRadius: 4,
-                            offset: Offset(0, 1),
-                          ),
-                        ],
-                      ),
-                      child: Row(
-                        children: [
-                          const Icon(
-                            LucideIcons.search,
-                            size: 15,
-                            color: Color(0xFF94A3B8),
-                          ),
-                          const SizedBox(width: 8),
-                          Expanded(
-                            child: TextField(
-                              controller: _searchController,
-                              onChanged: (value) {
-                                setState(() {
-                                  _searchQuery = value;
-                                });
-                              },
-                              style: GoogleFonts.inter(
-                                fontSize: 12,
-                                color: const Color(0xFF1F2937),
-                              ),
-                              decoration: InputDecoration(
-                                isDense: true,
-                                contentPadding: EdgeInsets.zero,
-                                hintText: 'Cari sayur hidroponik, buah segar...',
-                                hintStyle: GoogleFonts.inter(
-                                  fontSize: 11.5,
-                                  color: const Color(0xFF94A3B8),
+                        child: Row(
+                          children: [
+                            const Icon(
+                              LucideIcons.search,
+                              size: 15,
+                              color: Color(0xFF94A3B8),
+                            ),
+                            const SizedBox(width: 8),
+                            Expanded(
+                              child: TextField(
+                                controller: _searchController,
+                                enabled: false,
+                                style: GoogleFonts.inter(
+                                  fontSize: 12,
+                                  color: const Color(0xFF1F2937),
                                 ),
-                                border: InputBorder.none,
-                                focusedBorder: InputBorder.none,
-                                enabledBorder: InputBorder.none,
+                                decoration: InputDecoration(
+                                  isDense: true,
+                                  contentPadding: EdgeInsets.zero,
+                                  hintText: 'Cari sayur hidroponik, buah segar...',
+                                  hintStyle: GoogleFonts.inter(
+                                    fontSize: 11.5,
+                                    color: const Color(0xFF94A3B8),
+                                  ),
+                                  border: InputBorder.none,
+                                  focusedBorder: InputBorder.none,
+                                  enabledBorder: InputBorder.none,
+                                  disabledBorder: InputBorder.none,
+                                ),
                               ),
                             ),
-                          ),
-                          if (_searchQuery.isNotEmpty)
                             InkWell(
                               onTap: () {
-                                setState(() {
-                                  _searchController.clear();
-                                  _searchQuery = '';
-                                });
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(
+                                    content: Text('Fitur pemindai panen aktif.'),
+                                    duration: Duration(seconds: 1),
+                                  ),
+                                );
                               },
                               child: const Padding(
                                 padding: EdgeInsets.all(4.0),
                                 child: Icon(
-                                  LucideIcons.x,
-                                  size: 14,
+                                  LucideIcons.camera,
+                                  size: 15,
                                   color: Color(0xFF94A3B8),
                                 ),
                               ),
                             ),
-                          InkWell(
-                            onTap: () {
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(
-                                  content: Text('Fitur pemindai panen aktif.'),
-                                  duration: Duration(seconds: 1),
-                                ),
-                              );
-                            },
-                            child: const Padding(
-                              padding: EdgeInsets.all(4.0),
-                              child: Icon(
-                                LucideIcons.camera,
-                                size: 15,
-                                color: Color(0xFF94A3B8),
+                            Container(
+                              height: 14,
+                              width: 1,
+                              color: const Color(0xFFE2E8F0),
+                              margin: const EdgeInsets.symmetric(horizontal: 6),
+                            ),
+                            Text(
+                              'Cari',
+                              style: GoogleFonts.inter(
+                                fontSize: 11.5,
+                                fontWeight: FontWeight.w700,
+                                color: const Color(0xFF1F2937),
                               ),
                             ),
-                          ),
-                          Container(
-                            height: 14,
-                            width: 1,
-                            color: const Color(0xFFE2E8F0),
-                            margin: const EdgeInsets.symmetric(horizontal: 6),
-                          ),
-                          Text(
-                            'Cari',
-                            style: GoogleFonts.inter(
-                              fontSize: 11.5,
-                              fontWeight: FontWeight.w700,
-                              color: const Color(0xFF1F2937),
-                            ),
-                          ),
-                        ],
+                          ],
+                        ),
                       ),
                     ),
                   ),
