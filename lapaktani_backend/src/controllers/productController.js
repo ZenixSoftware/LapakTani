@@ -7,7 +7,9 @@ const redisClient = require('../config/redis');
  */
 const getProducts = async (req, res) => {
   try {
-    if (redisClient.isOpen) {
+    const search = req.query.search || req.query.query || req.query.q;
+
+    if (!search && redisClient.isOpen) {
       try {
         const cachedCatalog = await redisClient.get('lapaktani_catalog');
         if (cachedCatalog) {
@@ -24,7 +26,7 @@ const getProducts = async (req, res) => {
       }
     }
 
-    const query = `
+    let query = `
       SELECT 
         p.id, 
         p.title, 
@@ -46,10 +48,17 @@ const getProducts = async (req, res) => {
       JOIN farmer_groups fg ON fp.farmer_group_id = fg.id 
       JOIN villages v ON fg.village_id = v.id
     `;
+    const params = [];
 
-    const [rows] = await pool.query(query);
+    if (search && typeof search === 'string' && search.trim() !== '') {
+      query += ` WHERE (p.title LIKE ? OR c.specific_name LIKE ? OR pg.grade_label LIKE ? OR fg.group_name LIKE ? OR v.name LIKE ?)`;
+      const searchPattern = `%${search.trim()}%`;
+      params.push(searchPattern, searchPattern, searchPattern, searchPattern, searchPattern);
+    }
 
-    if (redisClient.isOpen) {
+    const [rows] = await pool.query(query, params);
+
+    if (!search && redisClient.isOpen) {
       try {
         await redisClient.setEx('lapaktani_catalog', 3600, JSON.stringify(rows));
       } catch (redisErr) {
