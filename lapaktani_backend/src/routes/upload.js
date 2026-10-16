@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const upload = require('../middlewares/uploadMiddleware');
+const { upload, validateUploadMagicBytes } = require('../middlewares/uploadMiddleware');
 const uploadController = require('../controllers/uploadController');
 const { verifyToken } = require('../middlewares/authMiddleware');
 
@@ -27,6 +27,12 @@ const handleUploadField = (req, res, next) => {
   });
 };
 
-router.post('/product-image', verifyToken, handleUploadField, uploadController.uploadProductImage);
+router.post(
+  '/product-image',
+  verifyToken,
+  handleUploadField,
+  validateUploadMagicBytes,
+  uploadController.uploadProductImage
+);
 
 module.exports = router;

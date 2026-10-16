@@ -48,7 +48,11 @@ const getProducts = async (req, res) => {
         c.specific_name as category, 
         pg.grade_label as grade, 
         fg.group_name as poktan_name, 
-        v.name as village_name 
+        v.name as village_name,
+        COALESCE(cart_stats.in_cart_count, 0) AS in_cart_count,
+        COALESCE(cart_stats.in_cart_count, 0) AS in_cart_users_count,
+        COALESCE(cart_stats.in_cart_qty, 0) AS in_cart_qty,
+        COALESCE(cart_stats.in_cart_qty, 0) AS in_cart_total_qty
       FROM products p 
       JOIN commodities c ON p.commodity_id = c.id 
       JOIN product_grades pg ON p.grade_id = pg.id 
@@ -56,6 +60,14 @@ const getProducts = async (req, res) => {
       JOIN farmer_profiles fp ON p.farmer_id = fp.user_id 
       JOIN farmer_groups fg ON fp.farmer_group_id = fg.id 
       JOIN villages v ON fg.village_id = v.id
+      LEFT JOIN (
+        SELECT 
+          product_id,
+          COUNT(DISTINCT user_id) AS in_cart_count,
+          COALESCE(SUM(quantity), 0) AS in_cart_qty
+        FROM cart_items
+        GROUP BY product_id
+      ) cart_stats ON p.id = cart_stats.product_id
     `;
     const params = [];
 
@@ -69,9 +81,17 @@ const getProducts = async (req, res) => {
 
     const [rows] = await pool.query(query, params);
 
+    const formattedRows = rows.map(row => ({
+      ...row,
+      in_cart_count: Number(row.in_cart_count || 0),
+      in_cart_users_count: Number(row.in_cart_users_count || 0),
+      in_cart_qty: Number(row.in_cart_qty || 0),
+      in_cart_total_qty: Number(row.in_cart_total_qty || 0)
+    }));
+
     if (!sanitizedSearch && redisClient.isOpen) {
       try {
-        await redisClient.setEx('lapaktani_catalog', 3600, JSON.stringify(rows));
+        await redisClient.setEx('lapaktani_catalog', 3600, JSON.stringify(formattedRows));
       } catch (redisErr) {
         console.warn('[REDIS] Cache set warning:', redisErr.message);
       }
@@ -80,8 +100,8 @@ const getProducts = async (req, res) => {
     return res.status(200).json({
       success: true,
       source: 'mysql_db',
-      count: rows.length,
-      data: rows
+      count: formattedRows.length,
+      data: formattedRows
     });
   } catch (error) {
     console.error('[PRODUCTS] Error fetching catalog:', error.message);
@@ -122,11 +142,23 @@ const getFarmerProducts = async (req, res) => {
         c.specific_name as category, 
         c.specific_name as commodity_name,
         pg.grade_label as grade, 
-        p.created_at
+        p.created_at,
+        COALESCE(cart_stats.in_cart_count, 0) AS in_cart_count,
+        COALESCE(cart_stats.in_cart_count, 0) AS in_cart_users_count,
+        COALESCE(cart_stats.in_cart_qty, 0) AS in_cart_qty,
+        COALESCE(cart_stats.in_cart_qty, 0) AS in_cart_total_qty
       FROM products p 
       LEFT JOIN commodities c ON p.commodity_id = c.id 
       LEFT JOIN product_grades pg ON p.grade_id = pg.id 
       LEFT JOIN commodity_units cu ON p.unit_id = cu.id
+      LEFT JOIN (
+        SELECT 
+          product_id,
+          COUNT(DISTINCT user_id) AS in_cart_count,
+          COALESCE(SUM(quantity), 0) AS in_cart_qty
+        FROM cart_items
+        GROUP BY product_id
+      ) cart_stats ON p.id = cart_stats.product_id
       WHERE p.farmer_id = ?
       ORDER BY p.created_at DESC
       LIMIT 100
@@ -134,10 +166,18 @@ const getFarmerProducts = async (req, res) => {
 
     const [rows] = await pool.query(query, [farmerId]);
 
+    const formattedRows = rows.map(row => ({
+      ...row,
+      in_cart_count: Number(row.in_cart_count || 0),
+      in_cart_users_count: Number(row.in_cart_users_count || 0),
+      in_cart_qty: Number(row.in_cart_qty || 0),
+      in_cart_total_qty: Number(row.in_cart_total_qty || 0)
+    }));
+
     return res.status(200).json({
       success: true,
-      count: rows.length,
-      data: rows
+      count: formattedRows.length,
+      data: formattedRows
     });
   } catch (error) {
     console.error('[PRODUCTS] Error fetching farmer products:', error.message);

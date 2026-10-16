@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'dart:io';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:http/http.dart' as http;
 import 'package:http_parser/http_parser.dart';
 import 'package:mime/mime.dart';
@@ -14,22 +15,57 @@ class ApiService {
   static const String tokenKey = 'jwt_token';
   static const String userKey = 'auth_user';
 
+  static const FlutterSecureStorage _secureStorage = FlutterSecureStorage(
+    aOptions: AndroidOptions(
+      encryptedSharedPreferences: true,
+    ),
+    iOptions: IOSOptions(
+      accessibility: KeychainAccessibility.first_unlock,
+    ),
+  );
+
   final http.Client _client = http.Client();
 
   Future<String?> getToken() async {
-    final prefs = await SharedPreferences.getInstance();
-    final token = prefs.getString(tokenKey) ??
-        prefs.getString('lapaktani_token') ??
-        prefs.getString('token') ??
-        prefs.getString('auth_token');
-    return token;
+    try {
+      final secureToken = await _secureStorage.read(key: tokenKey);
+      if (secureToken != null && secureToken.isNotEmpty) {
+        return secureToken;
+      }
+    } catch (_) {}
+
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final legacyToken = prefs.getString(tokenKey) ??
+          prefs.getString('lapaktani_token') ??
+          prefs.getString('token') ??
+          prefs.getString('auth_token');
+
+      if (legacyToken != null && legacyToken.isNotEmpty) {
+        await _secureStorage.write(key: tokenKey, value: legacyToken);
+        await prefs.remove(tokenKey);
+        await prefs.remove('lapaktani_token');
+        await prefs.remove('token');
+        await prefs.remove('auth_token');
+        return legacyToken;
+      }
+    } catch (_) {}
+
+    return null;
   }
 
   Future<void> saveToken(String token) async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setString(tokenKey, token);
-    await prefs.setString('lapaktani_token', token);
-    await prefs.setString('token', token);
+    try {
+      await _secureStorage.write(key: tokenKey, value: token);
+    } catch (_) {}
+
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.remove(tokenKey);
+      await prefs.remove('lapaktani_token');
+      await prefs.remove('token');
+      await prefs.remove('auth_token');
+    } catch (_) {}
   }
 
   Future<void> saveUser(Map<String, dynamic> user) async {
@@ -49,12 +85,19 @@ class ApiService {
   }
 
   Future<void> clearAuth() async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.remove(tokenKey);
-    await prefs.remove('lapaktani_token');
-    await prefs.remove('token');
-    await prefs.remove(userKey);
-    await prefs.remove('user');
+    try {
+      await _secureStorage.deleteAll();
+    } catch (_) {}
+
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.remove(tokenKey);
+      await prefs.remove('lapaktani_token');
+      await prefs.remove('token');
+      await prefs.remove('auth_token');
+      await prefs.remove(userKey);
+      await prefs.remove('user');
+    } catch (_) {}
   }
 
   Future<Map<String, String>> _buildHeaders({
