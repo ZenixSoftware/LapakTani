@@ -1,12 +1,16 @@
 const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
+const { v4: uuidv4 } = require('uuid');
 
-const uploadDir = path.join(__dirname, '../../public/uploads/products');
+const uploadDir = path.resolve(__dirname, '../../public/uploads/products');
 
 if (!fs.existsSync(uploadDir)) {
   fs.mkdirSync(uploadDir, { recursive: true });
 }
+
+const ALLOWED_MIME_TYPES = new Set(['image/jpeg', 'image/png', 'image/webp']);
+const ALLOWED_EXTENSIONS = new Set(['.jpg', '.jpeg', '.png', '.webp']);
 
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
@@ -16,26 +20,29 @@ const storage = multer.diskStorage({
     cb(null, uploadDir);
   },
   filename: (req, file, cb) => {
-    const uniqueSuffix = `${Date.now()}-${Math.round(Math.random() * 1e9)}`;
-    const ext = path.extname(file.originalname).toLowerCase();
-    cb(null, `product-${uniqueSuffix}${ext}`);
+    const rawExt = path.extname(file.originalname || '').toLowerCase();
+    const safeExt = ALLOWED_EXTENSIONS.has(rawExt) ? rawExt : '.jpg';
+    cb(null, `upload-${uuidv4()}${safeExt}`);
   }
 });
 
 const fileFilter = (req, file, cb) => {
-  const allowedTypes = /jpeg|jpg|png|webp/;
-  const extname = allowedTypes.test(path.extname(file.originalname).toLowerCase());
-  const mimetype = allowedTypes.test(file.mimetype);
+  const rawExt = path.extname(file.originalname || '').toLowerCase();
+  const isMimeValid = ALLOWED_MIME_TYPES.has(file.mimetype);
+  const isExtValid = ALLOWED_EXTENSIONS.has(rawExt);
 
-  if (extname && mimetype) {
+  if (isMimeValid && isExtValid) {
     return cb(null, true);
   }
-  cb(new Error('Hanya file gambar (jpg, jpeg, png, webp) yang diperbolehkan!'));
+  return cb(new Error('Hanya file gambar (image/jpeg, image/png, image/webp) yang diperbolehkan!'));
 };
 
 const upload = multer({
   storage: storage,
-  limits: { fileSize: 10 * 1024 * 1024 }, // 10MB
+  limits: {
+    fileSize: 10 * 1024 * 1024,
+    files: 1
+  },
   fileFilter: fileFilter
 });
 

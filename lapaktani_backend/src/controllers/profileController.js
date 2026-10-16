@@ -14,8 +14,9 @@ const deleteUploadedFile = (fileUrl) => {
       relativePath = relativePath.substring(relativePath.indexOf('/uploads/'));
     }
     const cleanPath = relativePath.startsWith('/') ? relativePath.slice(1) : relativePath;
-    const fullPath = path.join(__dirname, '../../public', cleanPath);
-    if (fs.existsSync(fullPath)) {
+    const baseUploadsDir = path.resolve(__dirname, '../../public/uploads');
+    const fullPath = path.resolve(__dirname, '../../public', cleanPath);
+    if (fullPath.startsWith(baseUploadsDir) && fs.existsSync(fullPath)) {
       fs.unlinkSync(fullPath);
       console.log(`[PROFILE] Rolled back orphan uploaded file: ${fullPath}`);
     }
@@ -233,8 +234,7 @@ const setupFarmerProfile = async (req, res) => {
     console.error('[PROFILE] Error setting up farmer profile:', error.message);
     return res.status(500).json({
       success: false,
-      message: 'Gagal menyimpan profil petani.',
-      error: error.message
+      message: 'Gagal menyimpan profil petani.'
     });
   } finally {
     if (connection) {
@@ -299,8 +299,7 @@ const getMyProfile = async (req, res) => {
     console.error('[PROFILE] Error fetching profile:', error.message);
     return res.status(500).json({
       success: false,
-      message: 'Gagal mengambil data profil.',
-      error: error.message
+      message: 'Gagal mengambil data profil.'
     });
   }
 };

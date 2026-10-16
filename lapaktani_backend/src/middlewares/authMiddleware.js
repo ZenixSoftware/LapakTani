@@ -25,6 +25,38 @@ const verifyToken = (req, res, next) => {
   }
 };
 
+const requireRole = (...allowedRoles) => {
+  return (req, res, next) => {
+    if (!req.user) {
+      return res.status(401).json({
+        success: false,
+        message: 'Akses tidak sah. Token otentikasi diperlukan.'
+      });
+    }
+
+    const userRole = (req.user.role || '').toLowerCase();
+    const userRoleId = req.user.role_id;
+
+    const isAuthorized = allowedRoles.some((role) => {
+      if (typeof role === 'number') {
+        return userRoleId === role;
+      }
+      const target = String(role).toLowerCase();
+      return userRole === target || (target === 'penyuluh' && userRoleId === 2);
+    });
+
+    if (!isAuthorized) {
+      return res.status(403).json({
+        success: false,
+        message: 'Akses ditolak. Anda tidak memiliki izin untuk mengakses resource ini.'
+      });
+    }
+
+    next();
+  };
+};
+
 module.exports = {
-  verifyToken
+  verifyToken,
+  requireRole
 };

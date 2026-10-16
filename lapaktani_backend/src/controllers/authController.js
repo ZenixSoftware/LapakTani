@@ -77,10 +77,10 @@ const register = async (req, res) => {
       }
     });
   } catch (error) {
+    console.error('[AUTH] Error during registration:', error.message);
     return res.status(500).json({
       success: false,
-      message: 'Terjadi kesalahan server saat registrasi.',
-      error: error.message
+      message: 'Terjadi kesalahan server saat registrasi.'
     });
   }
 };
@@ -140,10 +140,10 @@ const login = async (req, res) => {
       }
     });
   } catch (error) {
+    console.error('[AUTH] Error during login:', error.message);
     return res.status(500).json({
       success: false,
-      message: 'Terjadi kesalahan server saat login.',
-      error: error.message
+      message: 'Terjadi kesalahan server saat login.'
     });
   }
 };

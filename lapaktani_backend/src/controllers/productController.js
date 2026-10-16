@@ -9,7 +9,16 @@ const getProducts = async (req, res) => {
   try {
     const search = req.query.search || req.query.query || req.query.q;
 
-    if (!search && redisClient.isOpen) {
+    let sanitizedSearch = '';
+    if (search && typeof search === 'string') {
+      const trimmed = search.trim();
+      if (trimmed.length > 0) {
+        const capped = trimmed.slice(0, 100);
+        sanitizedSearch = capped.replace(/([%_\\])/g, '\\$1');
+      }
+    }
+
+    if (!sanitizedSearch && redisClient.isOpen) {
       try {
         const cachedCatalog = await redisClient.get('lapaktani_catalog');
         if (cachedCatalog) {
@@ -50,15 +59,17 @@ const getProducts = async (req, res) => {
     `;
     const params = [];
 
-    if (search && typeof search === 'string' && search.trim() !== '') {
+    if (sanitizedSearch.length > 0) {
       query += ` WHERE (p.title LIKE ? OR c.specific_name LIKE ? OR pg.grade_label LIKE ? OR fg.group_name LIKE ? OR v.name LIKE ?)`;
-      const searchPattern = `%${search.trim()}%`;
+      const searchPattern = `%${sanitizedSearch}%`;
       params.push(searchPattern, searchPattern, searchPattern, searchPattern, searchPattern);
     }
 
+    query += ` ORDER BY p.id DESC LIMIT 50`;
+
     const [rows] = await pool.query(query, params);
 
-    if (!search && redisClient.isOpen) {
+    if (!sanitizedSearch && redisClient.isOpen) {
       try {
         await redisClient.setEx('lapaktani_catalog', 3600, JSON.stringify(rows));
       } catch (redisErr) {
@@ -73,10 +84,10 @@ const getProducts = async (req, res) => {
       data: rows
     });
   } catch (error) {
+    console.error('[PRODUCTS] Error fetching catalog:', error.message);
     return res.status(500).json({
       success: false,
-      message: 'Gagal mengambil katalog produk.',
-      error: error.message
+      message: 'Gagal mengambil katalog produk.'
     });
   }
 };
@@ -118,6 +129,7 @@ const getFarmerProducts = async (req, res) => {
       LEFT JOIN commodity_units cu ON p.unit_id = cu.id
       WHERE p.farmer_id = ?
       ORDER BY p.created_at DESC
+      LIMIT 100
     `;
 
     const [rows] = await pool.query(query, [farmerId]);
@@ -128,10 +140,10 @@ const getFarmerProducts = async (req, res) => {
       data: rows
     });
   } catch (error) {
+    console.error('[PRODUCTS] Error fetching farmer products:', error.message);
     return res.status(500).json({
       success: false,
-      message: 'Gagal mengambil produk petani.',
-      error: error.message
+      message: 'Gagal mengambil produk petani.'
     });
   }
 };
@@ -259,10 +271,10 @@ const createProduct = async (req, res) => {
     });
 
   } catch (error) {
+    console.error('[PRODUCTS] Error creating product:', error.message);
     return res.status(500).json({
       success: false,
-      message: 'Gagal menambahkan produk ke katalog.',
-      error: error.message
+      message: 'Gagal menambahkan produk ke katalog.'
     });
   }
 };
@@ -309,10 +321,10 @@ const deleteProduct = async (req, res) => {
       message: 'Produk berhasil dihapus.'
     });
   } catch (error) {
+    console.error('[PRODUCTS] Error deleting product:', error.message);
     return res.status(500).json({
       success: false,
-      message: 'Gagal menghapus produk.',
-      error: error.message
+      message: 'Gagal menghapus produk.'
     });
   }
 };
@@ -424,10 +436,10 @@ const updateProduct = async (req, res) => {
       message: 'Produk berhasil diperbarui.'
     });
   } catch (error) {
+    console.error('[PRODUCTS] Error updating product:', error.message);
     return res.status(500).json({
       success: false,
-      message: 'Gagal memperbarui produk.',
-      error: error.message
+      message: 'Gagal memperbarui produk.'
     });
   }
 };

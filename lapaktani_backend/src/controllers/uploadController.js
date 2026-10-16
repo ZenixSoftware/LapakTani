@@ -24,10 +24,10 @@ const uploadProductImage = async (req, res) => {
       }
     });
   } catch (error) {
+    console.error('[UPLOAD] Error processing upload:', error.message);
     return res.status(500).json({
       success: false,
-      message: 'Gagal memproses unggahan foto produk.',
-      error: error.message
+      message: 'Gagal memproses unggahan foto produk.'
     });
   }
 };
