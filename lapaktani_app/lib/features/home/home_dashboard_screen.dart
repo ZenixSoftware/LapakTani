@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 import '../../core/services/api_service.dart';
+import '../orders/screens/buyer_orders_screen.dart';
 import '../product/product_detail_screen.dart';
 import '../profile/profile_screen.dart';
 import 'search_screen.dart';
@@ -409,7 +410,7 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen> {
       case 1:
         return _buildFeedTab();
       case 2:
-        return _buildTransaksiTab();
+        return const BuyerOrdersScreen(isTabEmbedded: true);
       case 3:
         return const ProfileScreen();
       case 0:

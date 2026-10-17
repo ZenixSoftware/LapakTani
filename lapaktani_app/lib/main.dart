@@ -6,6 +6,8 @@ import 'features/home/home_dashboard_screen.dart';
 import 'features/onboarding/onboarding_screen.dart';
 import 'features/onboarding/splash_screen.dart';
 
+import 'features/orders/screens/buyer_orders_screen.dart';
+
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
   runApp(const LapakTaniApp());
@@ -37,6 +39,7 @@ class _LapakTaniAppState extends State<LapakTaniApp> {
         '/register': (context) => const RegisterScreen(),
         '/home': (context) => const HomeDashboardScreen(),
         '/dashboard': (context) => const HomeDashboardScreen(),
+        '/orders': (context) => const BuyerOrdersScreen(),
       },
     );
   }

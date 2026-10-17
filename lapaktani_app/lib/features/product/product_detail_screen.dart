@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:lucide_icons/lucide_icons.dart';
+import '../orders/models/order_model.dart';
+import '../orders/services/order_service.dart';
+import '../orders/screens/order_tracking_screen.dart';
 
 class ProductDetailScreen extends StatefulWidget {
   final dynamic product;
@@ -140,15 +143,55 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                   width: double.infinity,
                   height: 46,
                   child: ElevatedButton(
-                    onPressed: () {
+                    onPressed: () async {
                       Navigator.pop(ctx);
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content: Text('Pesanan berhasil dibuat.'),
-                          backgroundColor: Color(0xFF03AC0E),
-                          behavior: SnackBarBehavior.floating,
-                        ),
+                      final title = _data['title']?.toString() ?? 'Produk Tani Segar';
+                      final priceNum = _data['price_per_kg'] ?? _data['price'] ?? 15000;
+                      final price = priceNum is num ? priceNum.toInt() : 15000;
+                      final image = _data['image_url']?.toString() ?? '';
+                      final grade = _data['grade']?.toString() ?? 'Grade A';
+
+                      final newOrder = await OrderService().createNewOrder(
+                        buyerName: 'Ibu Ratna Dewi',
+                        buyerAddress: 'Jl. Maribaya No. 42, Lembang, Kab. Bandung Barat',
+                        buyerPhone: '0813-2940-1182',
+                        items: [
+                          OrderItem(
+                            id: 'item-${DateTime.now().millisecondsSinceEpoch}',
+                            title: title,
+                            qty: 1,
+                            unit: 'kg',
+                            price: price,
+                            imageUrl: image,
+                            grade: grade,
+                          ),
+                        ],
+                        totalPrice: price,
+                        shippingFee: 8000,
+                        paymentMethod: 'LapakPay (Saldo Terpotong)',
                       );
+
+                      if (context.mounted) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text('Pesanan ${newOrder.id} berhasil dibuat.'),
+                            backgroundColor: const Color(0xFF03AC0E),
+                            behavior: SnackBarBehavior.floating,
+                            action: SnackBarAction(
+                              label: 'Lacak Logistik',
+                              textColor: Colors.white,
+                              onPressed: () {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (_) => OrderTrackingScreen(orderId: newOrder.id),
+                                  ),
+                                );
+                              },
+                            ),
+                          ),
+                        );
+                      }
                     },
                     style: ElevatedButton.styleFrom(
                       backgroundColor: const Color(0xFF03AC0E),

@@ -3,6 +3,8 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 import '../../core/services/api_service.dart';
 import '../auth/auth_repository.dart';
+import '../orders/models/order_model.dart';
+import '../orders/screens/buyer_orders_screen.dart';
 import '../seller/seller_main_nav_screen.dart';
 import 'complete_farmer_profile_screen.dart';
 import 'profile_repository.dart';
@@ -974,7 +976,14 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 ),
               ),
               InkWell(
-                onTap: () {},
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => const BuyerOrdersScreen(),
+                    ),
+                  );
+                },
                 child: Row(
                   children: [
                     Text(
@@ -995,10 +1004,58 @@ class _ProfileScreenState extends State<ProfileScreen> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceAround,
             children: [
-              _buildOrderStatusItem(LucideIcons.clock, 'Menunggu Bayar', '1'),
-              _buildOrderStatusItem(LucideIcons.truck, 'Sedang Kirim', '2'),
-              _buildOrderStatusItem(LucideIcons.checkCircle2, 'Selesai', null),
-              _buildOrderStatusItem(LucideIcons.xCircle, 'Dibatalkan', null),
+              _buildOrderStatusItem(
+                LucideIcons.clock,
+                'Menunggu Bayar',
+                '1',
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => const BuyerOrdersScreen(initialStatus: OrderStatus.pendingPayment),
+                    ),
+                  );
+                },
+              ),
+              _buildOrderStatusItem(
+                LucideIcons.truck,
+                'Sedang Kirim',
+                '2',
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => const BuyerOrdersScreen(initialStatus: OrderStatus.inTransit),
+                    ),
+                  );
+                },
+              ),
+              _buildOrderStatusItem(
+                LucideIcons.checkCircle2,
+                'Selesai',
+                null,
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => const BuyerOrdersScreen(initialStatus: OrderStatus.completed),
+                    ),
+                  );
+                },
+              ),
+              _buildOrderStatusItem(
+                LucideIcons.xCircle,
+                'Dibatalkan',
+                null,
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => const BuyerOrdersScreen(initialStatus: OrderStatus.cancelled),
+                    ),
+                  );
+                },
+              ),
             ],
           ),
           const SizedBox(height: 14),
@@ -1098,26 +1155,31 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
   }
 
-  Widget _buildOrderStatusItem(IconData icon, String label, String? badge) {
-    return Column(
-      children: [
-        Stack(
-          clipBehavior: Clip.none,
+  Widget _buildOrderStatusItem(IconData icon, String label, String? badge, {VoidCallback? onTap}) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(12),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+        child: Column(
           children: [
-            Container(
-              width: 44,
-              height: 44,
-              decoration: const BoxDecoration(
-                color: Color(0xFFF1F5F9),
-                shape: BoxShape.circle,
-              ),
-              child: Icon(icon, size: 20, color: const Color(0xFF475569)),
-            ),
-            if (badge != null)
-              Positioned(
-                top: -2,
-                right: -2,
-                child: Container(
+            Stack(
+              clipBehavior: Clip.none,
+              children: [
+                Container(
+                  width: 44,
+                  height: 44,
+                  decoration: const BoxDecoration(
+                    color: Color(0xFFF1F5F9),
+                    shape: BoxShape.circle,
+                  ),
+                  child: Icon(icon, size: 20, color: const Color(0xFF475569)),
+                ),
+                if (badge != null)
+                  Positioned(
+                    top: -2,
+                    right: -2,
+                    child: Container(
                   width: 16,
                   height: 16,
                   decoration: const BoxDecoration(
