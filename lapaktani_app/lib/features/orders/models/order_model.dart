@@ -74,6 +74,7 @@ extension OrderStatusExtension on OrderStatus {
 
 class OrderItem {
   final String id;
+  final String? productId;
   final String title;
   final int qty;
   final String unit;
@@ -83,6 +84,7 @@ class OrderItem {
 
   const OrderItem({
     required this.id,
+    this.productId,
     required this.title,
     required this.qty,
     required this.unit,
@@ -91,9 +93,12 @@ class OrderItem {
     this.grade,
   });
 
+  String get effectiveProductId => productId ?? id;
+
   Map<String, dynamic> toMap() {
     return {
       'id': id,
+      'productId': productId ?? id,
       'title': title,
       'qty': qty,
       'unit': unit,
@@ -106,6 +111,7 @@ class OrderItem {
   factory OrderItem.fromMap(Map<String, dynamic> map) {
     return OrderItem(
       id: map['id']?.toString() ?? '',
+      productId: map['productId']?.toString() ?? map['id']?.toString(),
       title: map['title']?.toString() ?? '',
       qty: (map['qty'] as num?)?.toInt() ?? 1,
       unit: map['unit']?.toString() ?? 'kg',

@@ -484,10 +484,140 @@ const updateProduct = async (req, res) => {
   }
 };
 
+const deductStock = async (req, res) => {
+  const { id } = req.params;
+  const { qty } = req.body;
+  const numQty = parseFloat(qty);
+
+  if (isNaN(numQty) || numQty <= 0) {
+    return res.status(400).json({
+      success: false,
+      message: 'Jumlah pengurangan stok harus bernilai angka positif.'
+    });
+  }
+
+  const connection = await pool.getConnection();
+  try {
+    await connection.beginTransaction();
+
+    const [rows] = await connection.query('SELECT stock_kg FROM products WHERE id = ? FOR UPDATE', [id]);
+    if (rows.length === 0) {
+      await connection.rollback();
+      return res.status(404).json({
+        success: false,
+        message: 'Produk tidak ditemukan.'
+      });
+    }
+
+    const currentStock = parseFloat(rows[0].stock_kg);
+    if (currentStock < numQty) {
+      await connection.rollback();
+      return res.status(400).json({
+        success: false,
+        message: 'Stok komoditas tidak mencukupi.'
+      });
+    }
+
+    const newStock = Math.max(0, currentStock - numQty);
+    await connection.query('UPDATE products SET stock_kg = ? WHERE id = ?', [newStock, id]);
+    await connection.commit();
+
+    if (redisClient.isOpen) {
+      try {
+        await redisClient.del('lapaktani_catalog');
+      } catch (redisErr) {
+        console.warn('[REDIS] Invalidation warning:', redisErr.message);
+      }
+    }
+
+    return res.status(200).json({
+      success: true,
+      message: 'Pengurangan stok berhasil diproses.',
+      data: {
+        id,
+        previous_stock: currentStock,
+        deducted: numQty,
+        remaining_stock: newStock
+      }
+    });
+  } catch (error) {
+    await connection.rollback();
+    console.error('[PRODUCTS] Error deducting stock:', error.message);
+    return res.status(500).json({
+      success: false,
+      message: 'Gagal memproses pengurangan stok.'
+    });
+  } finally {
+    connection.release();
+  }
+};
+
+const restoreStock = async (req, res) => {
+  const { id } = req.params;
+  const { qty } = req.body;
+  const numQty = parseFloat(qty);
+
+  if (isNaN(numQty) || numQty <= 0) {
+    return res.status(400).json({
+      success: false,
+      message: 'Jumlah pengembalian stok harus bernilai angka positif.'
+    });
+  }
+
+  const connection = await pool.getConnection();
+  try {
+    await connection.beginTransaction();
+
+    const [rows] = await connection.query('SELECT stock_kg FROM products WHERE id = ? FOR UPDATE', [id]);
+    if (rows.length === 0) {
+      await connection.rollback();
+      return res.status(404).json({
+        success: false,
+        message: 'Produk tidak ditemukan.'
+      });
+    }
+
+    const currentStock = parseFloat(rows[0].stock_kg);
+    const newStock = currentStock + numQty;
+    await connection.query('UPDATE products SET stock_kg = ? WHERE id = ?', [newStock, id]);
+    await connection.commit();
+
+    if (redisClient.isOpen) {
+      try {
+        await redisClient.del('lapaktani_catalog');
+      } catch (redisErr) {
+        console.warn('[REDIS] Invalidation warning:', redisErr.message);
+      }
+    }
+
+    return res.status(200).json({
+      success: true,
+      message: 'Pengembalian stok berhasil diproses.',
+      data: {
+        id,
+        previous_stock: currentStock,
+        restored: numQty,
+        remaining_stock: newStock
+      }
+    });
+  } catch (error) {
+    await connection.rollback();
+    console.error('[PRODUCTS] Error restoring stock:', error.message);
+    return res.status(500).json({
+      success: false,
+      message: 'Gagal memproses pengembalian stok.'
+    });
+  } finally {
+    connection.release();
+  }
+};
+
 module.exports = {
   getProducts,
   getFarmerProducts,
   createProduct,
   deleteProduct,
-  updateProduct
+  updateProduct,
+  deductStock,
+  restoreStock
 };

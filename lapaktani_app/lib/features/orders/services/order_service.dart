@@ -2,6 +2,9 @@ import 'dart:convert';
 import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../models/order_model.dart';
+import '../models/notification_model.dart';
+import 'notification_service.dart';
+import '../../product/services/stock_service.dart';
 
 class OrderService {
   static final OrderService _instance = OrderService._internal();
@@ -95,8 +98,31 @@ class OrderService {
       checkpoints: updatedCheckpoints,
     );
 
+    if (newStatus == OrderStatus.cancelled && target.status != OrderStatus.cancelled) {
+      for (final item in target.items) {
+        final pid = item.productId ?? item.id;
+        await StockService().restoreStock(pid, item.qty);
+      }
+    }
+
     ordersNotifier.value = currentList;
     await _saveToStorage();
+  }
+
+  /// Membatalkan pesanan dan mengembalikan stok otomatis
+  Future<void> cancelOrder(String orderId, {String? reason}) async {
+    final target = getOrderById(orderId);
+    if (target == null) return;
+    for (final item in target.items) {
+      final pid = item.productId ?? item.id;
+      await StockService().restoreStock(pid, item.qty);
+    }
+    await updateOrderStatus(
+      orderId,
+      OrderStatus.cancelled,
+      checkpointTitle: 'Pesanan Dibatalkan',
+      checkpointDesc: reason ?? 'Pesanan telah dibatalkan. Stok komoditas otomatis dikembalikan ke etalase.',
+    );
   }
 
   /// Petani menyelesaikan petik panen & pengemasan di ladang
@@ -280,6 +306,20 @@ class OrderService {
     currentList.insert(0, newOrder);
     ordersNotifier.value = currentList;
     await _saveToStorage();
+
+    // Otomatis kurangi stok komoditas dan kirim notifikasi ke petani
+    for (final item in items) {
+      final pid = item.productId ?? item.id;
+      await StockService().deductStock(pid, item.qty);
+      await NotificationService().addOrderNotification(
+        orderId: orderId,
+        buyerName: buyerName,
+        productName: item.title,
+        qty: item.qty,
+        unit: item.unit,
+      );
+    }
+
     return newOrder;
   }
 

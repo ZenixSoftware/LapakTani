@@ -4,6 +4,7 @@ import 'package:lucide_icons/lucide_icons.dart';
 import '../orders/models/order_model.dart';
 import '../orders/services/order_service.dart';
 import '../orders/screens/order_tracking_screen.dart';
+import 'services/stock_service.dart';
 
 class ProductDetailScreen extends StatefulWidget {
   final dynamic product;
@@ -23,11 +24,25 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
   bool _isDescriptionExpanded = false;
   int _cartItemCount = 4;
 
+  @override
+  void initState() {
+    super.initState();
+    StockService().init();
+  }
+
   Map<String, dynamic> get _data {
     if (widget.product is Map) {
       return Map<String, dynamic>.from(widget.product as Map);
     }
     return <String, dynamic>{};
+  }
+
+  String get _productId => (_data['id'] ?? 'demo-1').toString();
+
+  int get _currentStock {
+    final raw = _data['stock_kg'] ?? _data['stock'] ?? 50;
+    final fallback = (raw is num) ? raw.toInt() : int.tryParse(raw.toString()) ?? 50;
+    return StockService().getStock(_productId, fallback: fallback);
   }
 
   String _formatRupiah(dynamic price) {
@@ -50,6 +65,19 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
   }
 
   void _handleAddToCart() {
+    if (_currentStock <= 0) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            'Maaf, stok komoditas ini telah habis.',
+            style: GoogleFonts.inter(fontSize: 12),
+          ),
+          backgroundColor: const Color(0xFFEF4444),
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+      return;
+    }
     setState(() {
       _cartItemCount++;
     });
@@ -67,6 +95,20 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
   }
 
   void _handleBuyNow() {
+    if (_currentStock <= 0) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            'Maaf, komoditas ini sedang habis stok dan tidak dapat dipesan.',
+            style: GoogleFonts.inter(fontSize: 12),
+          ),
+          backgroundColor: const Color(0xFFEF4444),
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+      return;
+    }
+
     showModalBottomSheet(
       context: context,
       shape: const RoundedRectangleBorder(
@@ -158,6 +200,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                         items: [
                           OrderItem(
                             id: 'item-${DateTime.now().millisecondsSinceEpoch}',
+                            productId: _productId,
                             title: title,
                             qty: 1,
                             unit: 'kg',
@@ -736,6 +779,68 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                               ),
                             ],
                           ),
+                        ),
+                        ValueListenableBuilder<Map<String, int>>(
+                          valueListenable: StockService().stockNotifier,
+                          builder: (context, stockMap, _) {
+                            final liveStock = stockMap[_productId] ?? _currentStock;
+                            final bool isOut = liveStock <= 0;
+                            final bool isLow = liveStock > 0 && liveStock <= 10;
+                            return Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
+                              decoration: BoxDecoration(
+                                color: isOut
+                                    ? const Color(0xFFFEE2E2)
+                                    : isLow
+                                        ? const Color(0xFFFEF3C7)
+                                        : const Color(0xFFDCFCE7),
+                                borderRadius: BorderRadius.circular(4),
+                                border: Border.all(
+                                  color: isOut
+                                      ? const Color(0xFFEF4444)
+                                      : isLow
+                                          ? const Color(0xFFF59E0B)
+                                          : const Color(0xFF03AC0E),
+                                  width: 0.8,
+                                ),
+                              ),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Icon(
+                                    isOut
+                                        ? LucideIcons.alertCircle
+                                        : isLow
+                                            ? LucideIcons.alertTriangle
+                                            : LucideIcons.packageCheck,
+                                    size: 11,
+                                    color: isOut
+                                        ? const Color(0xFFEF4444)
+                                        : isLow
+                                            ? const Color(0xFFB45309)
+                                            : const Color(0xFF006E04),
+                                  ),
+                                  const SizedBox(width: 4),
+                                  Text(
+                                    isOut
+                                        ? 'Stok Habis'
+                                        : isLow
+                                            ? 'Sisa $liveStock kg (Stok Menipis)'
+                                            : 'Stok: $liveStock kg',
+                                    style: GoogleFonts.inter(
+                                      fontSize: 9.5,
+                                      fontWeight: FontWeight.w700,
+                                      color: isOut
+                                          ? const Color(0xFFEF4444)
+                                          : isLow
+                                              ? const Color(0xFFB45309)
+                                              : const Color(0xFF006E04),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            );
+                          },
                         ),
                         Container(
                           padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
@@ -1693,70 +1798,106 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
             ),
             const SizedBox(width: 8),
             Expanded(
-              child: SizedBox(
-                height: 44,
-                child: OutlinedButton(
-                  onPressed: _handleBuyNow,
-                  style: OutlinedButton.styleFrom(
-                    side: const BorderSide(color: Color(0xFF03AC0E), width: 1.2),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                    padding: const EdgeInsets.symmetric(vertical: 4),
-                  ),
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Text(
-                        'Beli langsung',
-                        style: GoogleFonts.inter(
-                          fontSize: 12,
-                          fontWeight: FontWeight.w700,
-                          color: const Color(0xFF03AC0E),
+              child: ValueListenableBuilder<Map<String, int>>(
+                valueListenable: StockService().stockNotifier,
+                builder: (context, stockMap, _) {
+                  final liveStock = stockMap[_productId] ?? _currentStock;
+                  final bool isOut = liveStock <= 0;
+
+                  if (isOut) {
+                    return SizedBox(
+                      height: 44,
+                      child: Container(
+                        alignment: Alignment.center,
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFF1F5F9),
+                          borderRadius: BorderRadius.circular(10),
+                          border: Border.all(color: const Color(0xFFCBD5E1)),
+                        ),
+                        child: Text(
+                          'Stok Habis (Menunggu Panen)',
+                          style: GoogleFonts.inter(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w700,
+                            color: const Color(0xFF94A3B8),
+                          ),
                         ),
                       ),
-                      Text(
-                        'dengan voucher',
-                        style: GoogleFonts.inter(
-                          fontSize: 9,
-                          color: const Color(0xFF64748B),
+                    );
+                  }
+
+                  return Row(
+                    children: [
+                      Expanded(
+                        child: SizedBox(
+                          height: 44,
+                          child: OutlinedButton(
+                            onPressed: _handleBuyNow,
+                            style: OutlinedButton.styleFrom(
+                              side: const BorderSide(color: Color(0xFF03AC0E), width: 1.2),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(10),
+                              ),
+                              padding: const EdgeInsets.symmetric(vertical: 4),
+                            ),
+                            child: Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Text(
+                                  'Beli langsung',
+                                  style: GoogleFonts.inter(
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.w700,
+                                    color: const Color(0xFF03AC0E),
+                                  ),
+                                ),
+                                Text(
+                                  'dengan voucher',
+                                  style: GoogleFonts.inter(
+                                    fontSize: 9,
+                                    color: const Color(0xFF64748B),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: SizedBox(
+                          height: 44,
+                          child: ElevatedButton(
+                            onPressed: _handleAddToCart,
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: const Color(0xFF03AC0E),
+                              foregroundColor: Colors.white,
+                              elevation: 1,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(10),
+                              ),
+                              padding: const EdgeInsets.symmetric(vertical: 4),
+                            ),
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                const Icon(LucideIcons.shoppingCart, size: 16),
+                                const SizedBox(width: 4),
+                                Text(
+                                  '+ Keranjang',
+                                  style: GoogleFonts.inter(
+                                    fontSize: 12.5,
+                                    fontWeight: FontWeight.w700,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
                         ),
                       ),
                     ],
-                  ),
-                ),
-              ),
-            ),
-            const SizedBox(width: 8),
-            Expanded(
-              child: SizedBox(
-                height: 44,
-                child: ElevatedButton(
-                  onPressed: _handleAddToCart,
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFF03AC0E),
-                    foregroundColor: Colors.white,
-                    elevation: 1,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                    padding: const EdgeInsets.symmetric(vertical: 4),
-                  ),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      const Icon(LucideIcons.shoppingCart, size: 16),
-                      const SizedBox(width: 4),
-                      Text(
-                        '+ Keranjang',
-                        style: GoogleFonts.inter(
-                          fontSize: 12.5,
-                          fontWeight: FontWeight.w700,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
+                  );
+                },
               ),
             ),
           ],

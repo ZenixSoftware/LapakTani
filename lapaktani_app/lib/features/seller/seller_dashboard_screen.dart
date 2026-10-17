@@ -2,7 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 import '../orders/models/order_model.dart';
+import '../orders/models/notification_model.dart';
 import '../orders/services/order_service.dart';
+import '../orders/services/notification_service.dart';
 import '../orders/screens/order_tracking_screen.dart';
 
 class SellerDashboardScreen extends StatefulWidget {
@@ -21,10 +23,303 @@ class _SellerDashboardScreenState extends State<SellerDashboardScreen> {
   void initState() {
     super.initState();
     _orderService.init();
+    NotificationService().init();
   }
 
   static const String _defaultFarmerPhoto =
       'https://lh3.googleusercontent.com/aida-public/AB6AXuAYrwsStPtJO0HY3riSclVguw_MiWyGVUOPRq6V2x2AvRBOV23WSDcAoPzLzcgxxE5Wtphh-B0fFcCi4aTOKKIsugJWJdun-0DVQIRzl9AXagHxbikg9K-1RTtOvK9PWMGUgp6idMuAqdvtpEs-QyVSNbSKNdCPTDsNzFt0elDVrLQnQUkeJudRuyjAlxkpV6Ze0ktgemZY0yFM6gD6yT0wHVhGlcMhrm5XHHxq76T00jr2cr8VL1E1';
+
+  String _formatTimeAgo(DateTime dt) {
+    final diff = DateTime.now().difference(dt);
+    if (diff.inMinutes < 1) return 'Baru saja';
+    if (diff.inMinutes < 60) return '${diff.inMinutes} menit lalu';
+    if (diff.inHours < 24) return '${diff.inHours} jam lalu';
+    return '${diff.inDays} hari lalu';
+  }
+
+  void _showNotificationCenter(BuildContext context) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.white,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      builder: (ctx) {
+        return SafeArea(
+          child: Container(
+            constraints: BoxConstraints(
+              maxHeight: MediaQuery.of(context).size.height * 0.8,
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(20, 16, 16, 12),
+                  child: Row(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(8),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFDCFCE7),
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        child: const Icon(LucideIcons.bellRing, color: Color(0xFF006E04), size: 18),
+                      ),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'Pusat Notifikasi Pesanan Masuk',
+                              style: GoogleFonts.plusJakartaSans(
+                                fontSize: 15,
+                                fontWeight: FontWeight.w700,
+                                color: const Color(0xFF121C2A),
+                              ),
+                            ),
+                            ValueListenableBuilder<int>(
+                              valueListenable: NotificationService().unreadCountNotifier,
+                              builder: (context, unread, _) {
+                                return Text(
+                                  unread > 0 ? '$unread pesanan baru belum dibaca' : 'Semua notifikasi telah dibaca',
+                                  style: GoogleFonts.plusJakartaSans(
+                                    fontSize: 11,
+                                    color: unread > 0 ? const Color(0xFFEF4444) : const Color(0xFF64748B),
+                                    fontWeight: unread > 0 ? FontWeight.w600 : FontWeight.w400,
+                                  ),
+                                );
+                              },
+                            ),
+                          ],
+                        ),
+                      ),
+                      TextButton(
+                        onPressed: () async {
+                          await NotificationService().markAllAsRead();
+                        },
+                        child: Text(
+                          'Tandai Semua Dibaca',
+                          style: GoogleFonts.plusJakartaSans(
+                            fontSize: 11,
+                            fontWeight: FontWeight.w700,
+                            color: const Color(0xFF03AC0E),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const Divider(height: 1, color: Color(0xFFF1F5F9)),
+                Expanded(
+                  child: ValueListenableBuilder<List<NotificationModel>>(
+                    valueListenable: NotificationService().notificationsNotifier,
+                    builder: (context, notifs, _) {
+                      if (notifs.isEmpty) {
+                        return Center(
+                          child: Padding(
+                            padding: const EdgeInsets.all(32),
+                            child: Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                const Icon(LucideIcons.bellOff, size: 48, color: Color(0xFF94A3B8)),
+                                const SizedBox(height: 12),
+                                Text(
+                                  'Belum Ada Notifikasi Pesanan',
+                                  style: GoogleFonts.plusJakartaSans(
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.w700,
+                                    color: const Color(0xFF121C2A),
+                                  ),
+                                ),
+                                const SizedBox(height: 4),
+                                Text(
+                                  'Setiap ada pembeli memesan komoditas panen, pemberitahuan instan akan muncul di sini.',
+                                  textAlign: TextAlign.center,
+                                  style: GoogleFonts.plusJakartaSans(
+                                    fontSize: 12,
+                                    color: const Color(0xFF64748B),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        );
+                      }
+
+                      return ListView.separated(
+                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                        itemCount: notifs.length,
+                        separatorBuilder: (_, __) => const SizedBox(height: 8),
+                        itemBuilder: (context, index) {
+                          final notif = notifs[index];
+                          final isOrder = notif.type == 'order_incoming';
+                          final isCourier = notif.type == 'courier_pickup';
+
+                          final Color iconBg = isOrder
+                              ? const Color(0xFFDCFCE7)
+                              : isCourier
+                                  ? const Color(0xFFEFF6FF)
+                                  : const Color(0xFFFEF3C7);
+                          final Color iconColor = isOrder
+                              ? const Color(0xFF006E04)
+                              : isCourier
+                                  ? const Color(0xFF2563EB)
+                                  : const Color(0xFFD97706);
+                          final IconData icon = isOrder
+                              ? LucideIcons.sprout
+                              : isCourier
+                                  ? LucideIcons.truck
+                                  : LucideIcons.checkCircle;
+
+                          return Container(
+                            padding: const EdgeInsets.all(12),
+                            decoration: BoxDecoration(
+                              color: notif.isRead ? Colors.white : const Color(0xFFF0FDF4),
+                              borderRadius: BorderRadius.circular(12),
+                              border: Border.all(
+                                color: notif.isRead ? const Color(0xFFE2E8F0) : const Color(0xFF86EFAC),
+                                width: notif.isRead ? 1 : 1.2,
+                              ),
+                            ),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Row(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Container(
+                                      width: 36,
+                                      height: 36,
+                                      decoration: BoxDecoration(
+                                        color: iconBg,
+                                        shape: BoxShape.circle,
+                                      ),
+                                      child: Icon(icon, color: iconColor, size: 18),
+                                    ),
+                                    const SizedBox(width: 10),
+                                    Expanded(
+                                      child: Column(
+                                        crossAxisAlignment: CrossAxisAlignment.start,
+                                        children: [
+                                          Row(
+                                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                            children: [
+                                              Expanded(
+                                                child: Text(
+                                                  notif.title,
+                                                  style: GoogleFonts.plusJakartaSans(
+                                                    fontSize: 13,
+                                                    fontWeight: notif.isRead ? FontWeight.w600 : FontWeight.w800,
+                                                    color: const Color(0xFF121C2A),
+                                                  ),
+                                                ),
+                                              ),
+                                              if (!notif.isRead)
+                                                Container(
+                                                  width: 7,
+                                                  height: 7,
+                                                  decoration: const BoxDecoration(
+                                                    color: Color(0xFF03AC0E),
+                                                    shape: BoxShape.circle,
+                                                  ),
+                                                ),
+                                            ],
+                                          ),
+                                          const SizedBox(height: 2),
+                                          Text(
+                                            _formatTimeAgo(notif.createdAt),
+                                            style: GoogleFonts.plusJakartaSans(
+                                              fontSize: 10,
+                                              color: const Color(0xFF94A3B8),
+                                            ),
+                                          ),
+                                          const SizedBox(height: 6),
+                                          Text(
+                                            notif.message,
+                                            style: GoogleFonts.plusJakartaSans(
+                                              fontSize: 12,
+                                              color: const Color(0xFF475569),
+                                              height: 1.35,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                                const SizedBox(height: 10),
+                                Row(
+                                  mainAxisAlignment: MainAxisAlignment.end,
+                                  children: [
+                                    if (!notif.isRead)
+                                      TextButton(
+                                        onPressed: () {
+                                          NotificationService().markAsRead(notif.id);
+                                        },
+                                        style: TextButton.styleFrom(
+                                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                                          minimumSize: const Size(44, 32),
+                                        ),
+                                        child: Text(
+                                          'Tandai Dibaca',
+                                          style: GoogleFonts.plusJakartaSans(
+                                            fontSize: 11,
+                                            color: const Color(0xFF64748B),
+                                          ),
+                                        ),
+                                      ),
+                                    const SizedBox(width: 6),
+                                    ElevatedButton(
+                                      onPressed: () {
+                                        Navigator.pop(ctx);
+                                        NotificationService().markAsRead(notif.id);
+                                        final targetOrder = _orderService.getOrderById(notif.orderId);
+                                        if (targetOrder != null) {
+                                          Navigator.push(
+                                            context,
+                                            MaterialPageRoute(
+                                              builder: (_) => OrderTrackingScreen(orderId: targetOrder.id),
+                                            ),
+                                          );
+                                        } else {
+                                          setState(() => _selectedChipIndex = 1);
+                                        }
+                                      },
+                                      style: ElevatedButton.styleFrom(
+                                        backgroundColor: const Color(0xFF03AC0E),
+                                        foregroundColor: Colors.white,
+                                        elevation: 0,
+                                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                                        minimumSize: const Size(80, 32),
+                                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                                      ),
+                                      child: Text(
+                                        'Lihat Detail Pesanan',
+                                        style: GoogleFonts.plusJakartaSans(
+                                          fontSize: 11,
+                                          fontWeight: FontWeight.w700,
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ],
+                            ),
+                          );
+                        },
+                      );
+                    },
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -84,96 +379,46 @@ class _SellerDashboardScreenState extends State<SellerDashboardScreen> {
           ],
         ),
         actions: [
-          Stack(
-            alignment: Alignment.center,
-            children: [
-              IconButton(
-                icon: const Icon(LucideIcons.bell, color: Color(0xFF64748B), size: 20),
-                onPressed: () {
-                  showModalBottomSheet(
-                    context: context,
-                    backgroundColor: Colors.white,
-                    shape: const RoundedRectangleBorder(
-                      borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-                    ),
-                    builder: (ctx) {
-                      return SafeArea(
-                        child: Padding(
-                          padding: const EdgeInsets.all(20),
-                          child: Column(
-                            mainAxisSize: MainAxisSize.min,
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                'Notifikasi Pesanan Panen',
-                                style: GoogleFonts.plusJakartaSans(
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.w700,
-                                  color: const Color(0xFF121C2A),
-                                ),
-                              ),
-                              const SizedBox(height: 12),
-                              ListTile(
-                                contentPadding: EdgeInsets.zero,
-                                leading: Container(
-                                  width: 38,
-                                  height: 38,
-                                  decoration: const BoxDecoration(
-                                    color: Color(0xFFDCFCE7),
-                                    shape: BoxShape.circle,
-                                  ),
-                                  child: const Icon(LucideIcons.sprout, color: Color(0xFF006E04), size: 18),
-                                ),
-                                title: Text(
-                                  'Pesanan baru #TANI-89211 masuk',
-                                  style: GoogleFonts.plusJakartaSans(fontSize: 13, fontWeight: FontWeight.w700),
-                                ),
-                                subtitle: Text(
-                                  'Ibu Ratna Dewi memesan 2kg Tomat & 3 ikat Kangkung. Siapkan sebelum 10.00 WIB.',
-                                  style: GoogleFonts.plusJakartaSans(fontSize: 11, color: const Color(0xFF64748B)),
-                                ),
-                              ),
-                              ListTile(
-                                contentPadding: EdgeInsets.zero,
-                                leading: Container(
-                                  width: 38,
-                                  height: 38,
-                                  decoration: const BoxDecoration(
-                                    color: Color(0xFFEFF6FF),
-                                    shape: BoxShape.circle,
-                                  ),
-                                  child: const Icon(LucideIcons.truck, color: Color(0xFF2563EB), size: 18),
-                                ),
-                                title: Text(
-                                  'Kurir logistik menuju ladang',
-                                  style: GoogleFonts.plusJakartaSans(fontSize: 13, fontWeight: FontWeight.w700),
-                                ),
-                                subtitle: Text(
-                                  'Kurir Dadang (Kargo Pendingin) sedang mengambil pesanan Resto Sambal Cobek.',
-                                  style: GoogleFonts.plusJakartaSans(fontSize: 11, color: const Color(0xFF64748B)),
-                                ),
-                              ),
-                            ],
+          ValueListenableBuilder<int>(
+            valueListenable: NotificationService().unreadCountNotifier,
+            builder: (context, unreadCount, _) {
+              return Stack(
+                alignment: Alignment.center,
+                children: [
+                  IconButton(
+                    icon: const Icon(LucideIcons.bell, color: Color(0xFF121C2A), size: 21),
+                    onPressed: () => _showNotificationCenter(context),
+                  ),
+                  if (unreadCount > 0)
+                    Positioned(
+                      top: 8,
+                      right: 8,
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFEF4444),
+                          borderRadius: BorderRadius.circular(10),
+                          border: Border.all(color: Colors.white, width: 1.2),
+                        ),
+                        constraints: const BoxConstraints(
+                          minWidth: 16,
+                          minHeight: 16,
+                        ),
+                        child: Center(
+                          child: Text(
+                            unreadCount > 9 ? '9+' : '$unreadCount',
+                            style: GoogleFonts.plusJakartaSans(
+                              color: Colors.white,
+                              fontSize: 9,
+                              fontWeight: FontWeight.w800,
+                            ),
                           ),
                         ),
-                      );
-                    },
-                  );
-                },
-              ),
-              Positioned(
-                top: 11,
-                right: 11,
-                child: Container(
-                  width: 7,
-                  height: 7,
-                  decoration: const BoxDecoration(
-                    color: Color(0xFFBA1A1A),
-                    shape: BoxShape.circle,
-                  ),
-                ),
-              ),
-            ],
+                      ),
+                    ),
+                ],
+              );
+            },
           ),
           IconButton(
             icon: const Icon(LucideIcons.settings, color: Color(0xFF64748B), size: 20),

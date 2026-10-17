@@ -5,6 +5,7 @@ import 'package:lucide_icons/lucide_icons.dart';
 import '../../core/services/api_service.dart';
 import 'add_product_screen.dart';
 import 'edit_product_screen.dart';
+import 'services/stock_service.dart';
 
 class MyProductsScreen extends StatefulWidget {
   const MyProductsScreen({super.key});
@@ -57,6 +58,7 @@ class _MyProductsScreenState extends State<MyProductsScreen> {
   @override
   void initState() {
     super.initState();
+    StockService().init();
     fetchFarmerProducts();
   }
 
@@ -98,6 +100,104 @@ class _MyProductsScreenState extends State<MyProductsScreen> {
         setState(() => _isLoading = false);
       }
     }
+  }
+
+  void _showQuickStockDialog(String id, String title, int currentStock) {
+    final controller = TextEditingController(text: currentStock.toString());
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: Text(
+          'Atur Stok Komoditas',
+          style: GoogleFonts.plusJakartaSans(
+            fontSize: 16,
+            fontWeight: FontWeight.w700,
+            color: const Color(0xFF121C2A),
+          ),
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              title,
+              style: GoogleFonts.plusJakartaSans(
+                fontSize: 13,
+                fontWeight: FontWeight.w600,
+                color: const Color(0xFF121C2A),
+              ),
+            ),
+            const SizedBox(height: 12),
+            TextField(
+              controller: controller,
+              keyboardType: TextInputType.number,
+              autofocus: true,
+              decoration: InputDecoration(
+                labelText: 'Jumlah Stok Tersedia',
+                hintText: 'Misal: 50',
+                suffixText: 'kg',
+                border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+                focusedBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(10),
+                  borderSide: const BorderSide(color: Color(0xFF03AC0E), width: 1.8),
+                ),
+              ),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              'Stok berkurang otomatis saat pembeli membuat pesanan dan bertambah jika pesanan dibatalkan.',
+              style: GoogleFonts.plusJakartaSans(
+                fontSize: 11,
+                color: const Color(0xFF64748B),
+              ),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: Text(
+              'Batal',
+              style: GoogleFonts.plusJakartaSans(
+                fontSize: 13,
+                fontWeight: FontWeight.w600,
+                color: const Color(0xFF64748B),
+              ),
+            ),
+          ),
+          ElevatedButton(
+            onPressed: () async {
+              final val = int.tryParse(controller.text) ?? currentStock;
+              await StockService().updateStock(id, val);
+              if (ctx.mounted) Navigator.pop(ctx);
+              if (mounted) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text('Stok $title berhasil disesuaikan menjadi $val kg.'),
+                    backgroundColor: const Color(0xFF03AC0E),
+                    behavior: SnackBarBehavior.floating,
+                  ),
+                );
+              }
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFF03AC0E),
+              foregroundColor: Colors.white,
+              elevation: 0,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+            ),
+            child: Text(
+              'Simpan',
+              style: GoogleFonts.plusJakartaSans(
+                fontSize: 13,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
   }
 
   Future<void> _deleteProduct(String id, String title) async {
@@ -613,42 +713,66 @@ class _MyProductsScreenState extends State<MyProductsScreen> {
                           ],
                         ),
                         const SizedBox(height: 3),
-                        Row(
-                          children: [
-                            Text(
-                              'Stok: ',
-                              style: GoogleFonts.plusJakartaSans(
-                                fontSize: 11,
-                                color: const Color(0xFF64748B),
-                              ),
-                            ),
-                            Text(
-                              '$stock $stockUnit',
-                              style: GoogleFonts.plusJakartaSans(
-                                fontSize: 11,
-                                fontWeight: FontWeight.w700,
-                                color: const Color(0xFF121C2A),
-                              ),
-                            ),
-                            const SizedBox(width: 6),
-                            Container(
-                              width: 3,
-                              height: 3,
-                              decoration: const BoxDecoration(
-                                color: Color(0xFF94A3B8),
-                                shape: BoxShape.circle,
-                              ),
-                            ),
-                            const SizedBox(width: 6),
-                            Text(
-                              'Tersedia',
-                              style: GoogleFonts.plusJakartaSans(
-                                fontSize: 10,
-                                fontWeight: FontWeight.w700,
-                                color: const Color(0xFF006E04),
-                              ),
-                            ),
-                          ],
+                        ValueListenableBuilder<Map<String, int>>(
+                          valueListenable: StockService().stockNotifier,
+                          builder: (context, stockMap, _) {
+                            final rawStock = item['stock_kg'] ?? item['stock'] ?? 0;
+                            final fallbackStock = (rawStock is num) ? rawStock.toInt() : 0;
+                            final liveStock = stockMap[id] ?? fallbackStock;
+                            final bool isOutOfStock = liveStock <= 0;
+                            final bool isLowStock = liveStock > 0 && liveStock <= 10;
+
+                            final Color statusColor = isOutOfStock
+                                ? const Color(0xFFEF4444)
+                                : isLowStock
+                                    ? const Color(0xFFD97706)
+                                    : const Color(0xFF006E04);
+                            final String statusText = isOutOfStock
+                                ? 'Stok Habis'
+                                : isLowStock
+                                    ? 'Stok Menipis'
+                                    : 'Tersedia';
+
+                            return Row(
+                              children: [
+                                Text(
+                                  'Stok: ',
+                                  style: GoogleFonts.plusJakartaSans(
+                                    fontSize: 11,
+                                    color: const Color(0xFF64748B),
+                                  ),
+                                ),
+                                Text(
+                                  '$liveStock $stockUnit',
+                                  style: GoogleFonts.plusJakartaSans(
+                                    fontSize: 11,
+                                    fontWeight: FontWeight.w700,
+                                    color: isOutOfStock
+                                        ? const Color(0xFFEF4444)
+                                        : const Color(0xFF121C2A),
+                                  ),
+                                ),
+                                const SizedBox(width: 6),
+                                Container(
+                                  width: 3,
+                                  height: 3,
+                                  decoration: BoxDecoration(
+                                    color: statusColor,
+                                    shape: BoxShape.circle,
+                                  ),
+                                ),
+                                const SizedBox(width: 6),
+                                Text(
+                                  statusText,
+                                  style: GoogleFonts.plusJakartaSans(
+                                    fontSize: 10,
+                                    fontWeight: FontWeight.w700,
+                                    color: statusColor,
+                                  ),
+                                ),
+                              ],
+                            );
+                          },
                         ),
                       ],
                     ),
@@ -656,6 +780,25 @@ class _MyProductsScreenState extends State<MyProductsScreen> {
                   Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
+                      InkWell(
+                        onTap: () {
+                          final rawStock = item['stock_kg'] ?? item['stock'] ?? 0;
+                          final fallbackStock = (rawStock is num) ? rawStock.toInt() : 0;
+                          final liveStock = StockService().getStock(id, fallback: fallbackStock);
+                          _showQuickStockDialog(id, title, liveStock);
+                        },
+                        borderRadius: BorderRadius.circular(8),
+                        child: Container(
+                          width: 36,
+                          height: 36,
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFDCFCE7),
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: const Icon(LucideIcons.packagePlus, size: 16, color: Color(0xFF006E04)),
+                        ),
+                      ),
+                      const SizedBox(width: 6),
                       InkWell(
                         onTap: () async {
                           final result = await Navigator.push<bool>(
