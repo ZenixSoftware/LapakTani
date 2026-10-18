@@ -940,7 +940,7 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
                         ? Image.network(
                             item.imageUrl,
                             fit: BoxFit.cover,
-                            errorBuilder: (_, __, ___) => const Icon(LucideIcons.sprout, size: 18, color: Color(0xFF03AC0E)),
+                            errorBuilder: (context, error, stackTrace) => const Icon(LucideIcons.sprout, size: 18, color: Color(0xFF03AC0E)),
                           )
                         : const Icon(LucideIcons.sprout, size: 18, color: Color(0xFF03AC0E)),
                   ),

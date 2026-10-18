@@ -151,7 +151,7 @@ class _SellerDashboardScreenState extends State<SellerDashboardScreen> {
                       return ListView.separated(
                         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                         itemCount: notifs.length,
-                        separatorBuilder: (_, __) => const SizedBox(height: 8),
+                        separatorBuilder: (context, index) => const SizedBox(height: 8),
                         itemBuilder: (context, index) {
                           final notif = notifs[index];
                           final isOrder = notif.type == 'order_incoming';
@@ -948,20 +948,20 @@ class _SellerDashboardScreenState extends State<SellerDashboardScreen> {
                   onPressed: (!checkedQuality || !checkedCoolBox)
                       ? null
                       : () async {
+                          final messenger = ScaffoldMessenger.of(context);
                           Navigator.pop(ctx);
                           await _orderService.processHarvest(
                             order.id,
                             notes: 'Petani telah memetik panen segar di ladang dan mengemas dengan insulated box dingin.',
                           );
-                          if (mounted) {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(
-                                content: Text('Pesanan ${order.id} siap dijemput kurir logistik.'),
-                                backgroundColor: const Color(0xFF03AC0E),
-                                behavior: SnackBarBehavior.floating,
-                              ),
-                            );
-                          }
+                          if (!mounted) return;
+                          messenger.showSnackBar(
+                            SnackBar(
+                              content: Text('Pesanan ${order.id} siap dijemput kurir logistik.'),
+                              backgroundColor: const Color(0xFF03AC0E),
+                              behavior: SnackBarBehavior.floating,
+                            ),
+                          );
                         },
                   style: ElevatedButton.styleFrom(
                     backgroundColor: const Color(0xFF03AC0E),
@@ -1198,6 +1198,46 @@ class _SellerDashboardScreenState extends State<SellerDashboardScreen> {
           ),
         );
       },
+    );
+  }
+
+  Widget _buildUrgencyNoticeBanner() {
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: const Color(0xFFFEF3C7),
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: const Color(0xFFFDE68A)),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Icon(LucideIcons.alarmClock, size: 20, color: Color(0xFFD97706)),
+          const SizedBox(width: 10),
+          Expanded(
+            child: RichText(
+              text: TextSpan(
+                text: 'Batas Petik & Serah Kurir: 10.00 WIB ',
+                style: GoogleFonts.plusJakartaSans(
+                  fontSize: 11.5,
+                  fontWeight: FontWeight.w700,
+                  color: const Color(0xFF92400E),
+                ),
+                children: [
+                  TextSpan(
+                    text: 'untuk menjaga garansi kesegaran daun dan buah di konsumen.',
+                    style: GoogleFonts.plusJakartaSans(
+                      fontSize: 11.5,
+                      fontWeight: FontWeight.w400,
+                      color: const Color(0xFFB45309),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ],
+      ),
     );
   }
 
