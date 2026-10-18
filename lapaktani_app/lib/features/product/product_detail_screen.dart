@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:lucide_icons/lucide_icons.dart';
+import '../../core/services/api_service.dart';
+import '../cart/cart_screen.dart';
 import '../orders/models/order_model.dart';
 import '../orders/services/order_service.dart';
 import '../orders/screens/order_tracking_screen.dart';
@@ -81,6 +83,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
     setState(() {
       _cartItemCount++;
     });
+    ApiService().addToCart(productId: _productId, quantity: 1).catchError((_) => false);
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(
@@ -214,8 +217,8 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                         paymentMethod: 'LapakPay (Saldo Terpotong)',
                       );
 
-                      if (context.mounted) {
-                        ScaffoldMessenger.of(context).showSnackBar(
+                      if (!mounted) return;
+                      ScaffoldMessenger.of(context).showSnackBar(
                           SnackBar(
                             content: Text('Pesanan ${newOrder.id} berhasil dibuat.'),
                             backgroundColor: const Color(0xFF03AC0E),
@@ -234,7 +237,6 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                             ),
                           ),
                         );
-                      }
                     },
                     style: ElevatedButton.styleFrom(
                       backgroundColor: const Color(0xFF03AC0E),
@@ -426,11 +428,10 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                 icon: LucideIcons.shoppingCart,
                 badgeText: '$_cartItemCount',
                 onTap: () {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text('Keranjang belanja: $_cartItemCount barang.'),
-                      duration: const Duration(seconds: 1),
-                      behavior: SnackBarBehavior.floating,
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => const CartScreen(),
                     ),
                   );
                 },

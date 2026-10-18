@@ -634,7 +634,6 @@ class _MyProductsScreenState extends State<MyProductsScreen> {
             final title = (item['title'] ?? item['name'] ?? 'Komoditas').toString();
             final price = item['price_per_kg'] ?? item['price'] ?? 0;
             final unit = (item['unit'] ?? '/kg').toString();
-            final stock = item['stock_kg'] ?? item['stock'] ?? 0;
             final stockUnit = (item['stock_unit'] ?? 'kg').toString();
             final imageUrl = (item['image_url'] ?? '').toString();
 

@@ -153,6 +153,70 @@ class ApiService {
     }
   }
 
+  Future<List<Map<String, dynamic>>> getCartItems() async {
+    try {
+      final response = await _fetchGet('/cart');
+      if (response.statusCode == 200) {
+        final Map<String, dynamic> body =
+            jsonDecode(response.body) as Map<String, dynamic>;
+        final List<dynamic> list = (body['data'] as List<dynamic>?) ?? [];
+        return list.map((e) => Map<String, dynamic>.from(e as Map)).toList();
+      }
+      return [];
+    } catch (_) {
+      return [];
+    }
+  }
+
+  Future<bool> addToCart({
+    required String productId,
+    int quantity = 1,
+    String? gradeId,
+  }) async {
+    try {
+      final response = await _post('/cart', {
+        'product_id': productId,
+        'quantity': quantity,
+        'grade_id': ?gradeId,
+      });
+      return response.statusCode >= 200 && response.statusCode < 300;
+    } catch (_) {
+      return false;
+    }
+  }
+
+  Future<bool> updateCartQty({
+    required String cartItemId,
+    required int quantity,
+  }) async {
+    try {
+      final response = await _put('/cart/$cartItemId', {
+        'quantity': quantity,
+      });
+      return response.statusCode >= 200 && response.statusCode < 300;
+    } catch (_) {
+      return false;
+    }
+  }
+
+  Future<bool> removeCartItem(String cartItemId) async {
+    try {
+      final response = await _delete('/cart/$cartItemId');
+      return response.statusCode >= 200 && response.statusCode < 300;
+    } catch (_) {
+      return false;
+    }
+  }
+
+  Future<bool> clearCart() async {
+    try {
+      final response = await _delete('/cart');
+      return response.statusCode >= 200 && response.statusCode < 300;
+    } catch (_) {
+      return false;
+    }
+  }
+
   Future<http.Response> _fetchGet(String path) async {
     final normalizedPath = path.startsWith('/') ? path : '/$path';
     final url = Uri.parse('$baseUrl$normalizedPath');

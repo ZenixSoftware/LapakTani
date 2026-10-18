@@ -193,7 +193,7 @@ class _BuyerOrdersScreenState extends State<BuyerOrdersScreen> with SingleTicker
                             ),
                             clipBehavior: Clip.antiAlias,
                             child: item.imageUrl.isNotEmpty
-                                ? Image.network(item.imageUrl, fit: BoxFit.cover, errorBuilder: (_, __, ___) => const Icon(LucideIcons.sprout, size: 16))
+                                ? Image.network(item.imageUrl, fit: BoxFit.cover, errorBuilder: (context, error, stackTrace) => const Icon(LucideIcons.sprout, size: 16))
                                 : const Icon(LucideIcons.sprout, size: 16),
                           ),
                           const SizedBox(width: 10),
@@ -533,7 +533,7 @@ class _BuyerOrdersScreenState extends State<BuyerOrdersScreen> with SingleTicker
                       ? Image.network(
                           firstItem.imageUrl,
                           fit: BoxFit.cover,
-                          errorBuilder: (_, __, ___) => const Icon(LucideIcons.sprout, size: 20, color: Color(0xFF03AC0E)),
+                          errorBuilder: (context, error, stackTrace) => const Icon(LucideIcons.sprout, size: 20, color: Color(0xFF03AC0E)),
                         )
                       : const Icon(LucideIcons.sprout, size: 20, color: Color(0xFF03AC0E)),
                 ),
