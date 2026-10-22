@@ -217,6 +217,47 @@ class ApiService {
     }
   }
 
+  Future<Map<String, dynamic>?> createCheckoutOrder({
+    required List<Map<String, dynamic>> items,
+    required String deliveryAddress,
+    required int shippingFee,
+    required String courierService,
+    String paymentMethod = 'LAPAKPAY_SIMULATOR',
+  }) async {
+    final response = await _post('/orders/checkout', {
+      'items': items,
+      'delivery_address': deliveryAddress,
+      'shipping_fee': shippingFee,
+      'courier_service': courierService,
+      'payment_method': paymentMethod,
+    });
+
+    final decoded = jsonDecode(response.body);
+    if (response.statusCode >= 200 && response.statusCode < 300) {
+      if (decoded['success'] == true) {
+        return decoded['data'] as Map<String, dynamic>?;
+      }
+    } else {
+      throw Exception(decoded['message'] ?? 'Gagal memproses pesanan (${response.statusCode})');
+    }
+    return null;
+  }
+
+  Future<List<Map<String, dynamic>>> getMyOrders() async {
+    try {
+      final response = await _fetchGet('/orders/my-orders');
+      if (response.statusCode >= 200 && response.statusCode < 300) {
+        final decoded = jsonDecode(response.body);
+        if (decoded['success'] == true && decoded['data'] is List) {
+          return List<Map<String, dynamic>>.from(decoded['data']);
+        }
+      }
+      return [];
+    } catch (_) {
+      return [];
+    }
+  }
+
   Future<http.Response> _fetchGet(String path) async {
     final normalizedPath = path.startsWith('/') ? path : '/$path';
     final url = Uri.parse('$baseUrl$normalizedPath');

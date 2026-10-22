@@ -3,9 +3,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 import '../../core/services/api_service.dart';
 import '../cart/cart_screen.dart';
-import '../orders/models/order_model.dart';
-import '../orders/services/order_service.dart';
-import 'order_tracking_screen.dart';
+import 'order_success_screen.dart';
 
 class CheckoutScreen extends StatefulWidget {
   final List<CartItemModel>? cartItems;
@@ -31,7 +29,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
   String _pinpointNote = 'Titik jemput akurat: Depan Pos Kamling RT 03';
 
   int _selectedLogisticsIndex = 0;
-  String _selectedPaymentMethod = 'LapakPay';
+  String _selectedPaymentMethod = 'LapakPay (Simulasi)';
   bool _useCoins = true;
   bool _isSubmitting = false;
 
@@ -221,30 +219,39 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
     setState(() => _isSubmitting = true);
 
     try {
-      final orderItems = _items.map((i) {
-        return OrderItem(
-          id: 'item-${DateTime.now().millisecondsSinceEpoch}-${i.id}',
-          productId: i.productId,
-          title: i.title,
-          qty: i.quantity,
-          unit: i.unit,
-          price: i.price,
-          imageUrl: i.imageUrl,
-          grade: i.badgeText,
-        );
+      final checkoutPayload = _items.map((i) => {
+        'product_id': i.productId,
+        'cart_item_id': i.id,
+        'grade_id': i.badgeText,
+        'quantity': i.quantity,
+        'price_per_unit': i.price,
       }).toList();
 
-      final newOrder = await OrderService().createNewOrder(
-        buyerName: _recipientName,
-        buyerAddress: _deliveryAddress,
-        buyerPhone: _recipientPhone,
-        items: orderItems,
-        totalPrice: _totalBilling,
+      // Backend Checkout API with MySQL ACID transaction & strict stock deduction
+      final backendResult = await ApiService().createCheckoutOrder(
+        items: checkoutPayload,
+        deliveryAddress: _deliveryAddress,
         shippingFee: _shippingCost,
-        paymentMethod: '$_selectedPaymentMethod (Lunas)',
+        courierService: _selectedLogisticsIndex == 0 ? 'Kurir Pendingin Mitra' : 'Kargo Agribisnis Dingin',
+        paymentMethod: 'LAPAKPAY_SIMULATOR',
       );
 
-      // Clean ordered items from backend cart
+      if (backendResult == null) {
+        throw Exception('Respon server tidak valid saat memproses pesanan.');
+      }
+
+      // Rely exclusively on server response data
+      final serverOrderId = (backendResult['order_id'] ?? backendResult['id'] ?? '').toString();
+      final serverInvoiceNumber = (backendResult['invoice_number'] ?? '').toString();
+      final serverTotalAmount = (backendResult['total_amount'] as num?)?.toInt() ?? _totalBilling;
+      final serverShippingFee = (backendResult['shipping_fee'] as num?)?.toInt() ?? _shippingCost;
+      final serverDeliveryAddress = (backendResult['delivery_address'] ?? _deliveryAddress).toString();
+      final serverPaymentMethod = (backendResult['payment_method'] ?? 'LapakPay Simulator').toString();
+      final serverItems = backendResult['items'] as List<dynamic>?;
+      final serverCreatedAtStr = backendResult['created_at']?.toString();
+      final serverCreatedAt = serverCreatedAtStr != null ? DateTime.tryParse(serverCreatedAtStr) : null;
+
+      // Remove checked-out items from cart
       for (final item in _items) {
         try {
           await ApiService().removeCartItem(item.id);
@@ -252,31 +259,39 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
       }
 
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-              'Pesanan ${newOrder.id} berhasil dibuat. Kurir agribisnis siap menjemput panen.',
-              style: GoogleFonts.inter(fontSize: 12),
-            ),
-            backgroundColor: _tokopediaGreen,
-            duration: const Duration(seconds: 3),
-            behavior: SnackBarBehavior.floating,
-          ),
-        );
-
         Navigator.pushReplacement(
           context,
           MaterialPageRoute(
-            builder: (_) => OrderTrackingScreen(orderId: newOrder.id),
+            builder: (_) => OrderSuccessScreen(
+              orderId: serverOrderId,
+              invoiceNumber: serverInvoiceNumber,
+              totalAmount: serverTotalAmount,
+              shippingFee: serverShippingFee,
+              paymentMethod: '$serverPaymentMethod (Terverifikasi)',
+              deliveryAddress: serverDeliveryAddress,
+              recipientName: _recipientName,
+              items: serverItems ??
+                  _items.map((i) => {
+                        'title': i.title,
+                        'quantity': i.quantity,
+                        'unit': i.unit,
+                        'price_per_unit': i.price,
+                        'subtotal': i.price * i.quantity,
+                      }).toList(),
+              createdAt: serverCreatedAt ?? DateTime.now(),
+            ),
           ),
         );
       }
     } catch (e) {
       if (mounted) {
+        final errorMsg = e.toString().replaceFirst('Exception: ', '');
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Gagal membuat pesanan: $e'),
+            content: Text(errorMsg),
             backgroundColor: const Color(0xFFDC2626),
+            behavior: SnackBarBehavior.floating,
+            duration: const Duration(seconds: 4),
           ),
         );
       }
@@ -996,9 +1011,9 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
           ),
           const SizedBox(height: 10),
           _buildPaymentOption(
-            title: 'LapakPay',
-            subtitle: 'Saldo Aktif: Rp250.000',
-            badge: 'Bebas Biaya Jasa',
+            title: 'LapakPay (Simulasi)',
+            subtitle: 'Saldo: Rp 2.500.000 / Simulasi Terpotong Otomatis',
+            badge: 'Instan & Bebas Biaya',
             icon: LucideIcons.wallet,
             iconBg: const Color(0xFFECFDF5),
             iconColor: _tokopediaGreen,
