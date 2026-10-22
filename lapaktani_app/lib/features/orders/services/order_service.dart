@@ -259,14 +259,17 @@ class OrderService {
     required int totalPrice,
     required int shippingFee,
     required String paymentMethod,
+    String? orderId,
+    String? invoiceNumber,
+    String? trackingNumber,
   }) async {
     final now = DateTime.now();
     final numSuffix = (now.millisecondsSinceEpoch % 90000 + 10000).toString();
-    final orderId = '#TANI-$numSuffix';
-    final trackingNo = 'LT-LOG-${now.year}${now.month.toString().padLeft(2, '0')}-$numSuffix';
+    final effectiveOrderId = orderId ?? '#TANI-$numSuffix';
+    final trackingNo = invoiceNumber ?? trackingNumber ?? 'LT-LOG-${now.year}${now.month.toString().padLeft(2, '0')}-$numSuffix';
 
     final newOrder = OrderModel(
-      id: orderId,
+      id: effectiveOrderId,
       buyerName: buyerName,
       buyerPhone: buyerPhone,
       buyerAddress: buyerAddress,
@@ -311,7 +314,7 @@ class OrderService {
       final pid = item.productId ?? item.id;
       await StockService().deductStock(pid, item.qty);
       await NotificationService().addOrderNotification(
-        orderId: orderId,
+        orderId: effectiveOrderId,
         buyerName: buyerName,
         productName: item.title,
         qty: item.qty,

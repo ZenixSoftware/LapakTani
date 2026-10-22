@@ -217,6 +217,34 @@ class ApiService {
     }
   }
 
+  Future<Map<String, dynamic>?> createCheckoutOrder({
+    required List<Map<String, dynamic>> items,
+    required String deliveryAddress,
+    required int shippingFee,
+    required String courierService,
+    String paymentMethod = 'LAPAKPAY_SIMULATOR',
+  }) async {
+    try {
+      final response = await _post('/orders/checkout', {
+        'items': items,
+        'delivery_address': deliveryAddress,
+        'shipping_fee': shippingFee,
+        'courier_service': courierService,
+        'payment_method': paymentMethod,
+      });
+
+      if (response.statusCode >= 200 && response.statusCode < 300) {
+        final decoded = jsonDecode(response.body);
+        if (decoded['success'] == true) {
+          return decoded['data'] as Map<String, dynamic>?;
+        }
+      }
+      return null;
+    } catch (_) {
+      return null;
+    }
+  }
+
   Future<http.Response> _fetchGet(String path) async {
     final normalizedPath = path.startsWith('/') ? path : '/$path';
     final url = Uri.parse('$baseUrl$normalizedPath');

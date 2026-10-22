@@ -12,6 +12,7 @@ const penyuluhRoutes = require('./src/routes/penyuluh');
 const masterRoutes = require('./src/routes/master');
 const uploadRoutes = require('./src/routes/upload');
 const cartRoutes = require('./src/routes/cart');
+const orderRoutes = require('./src/routes/orders');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -71,6 +72,7 @@ app.use('/api/penyuluh', penyuluhRoutes);
 app.use('/api/master', masterRoutes);
 app.use('/api/upload', uploadRoutes);
 app.use('/api/cart', cartRoutes);
+app.use('/api/orders', orderRoutes);
 
 
 app.use((req, res) => {
@@ -108,6 +110,40 @@ const startServer = async () => {
         )
       `);
       console.log('[MYSQL] cart_items table verified');
+
+      await conn.query(`
+        CREATE TABLE IF NOT EXISTS orders (
+          id VARCHAR(50) PRIMARY KEY,
+          user_id VARCHAR(50) NOT NULL,
+          invoice_number VARCHAR(100) NOT NULL UNIQUE,
+          total_amount DECIMAL(14, 2) NOT NULL DEFAULT 0,
+          shipping_fee DECIMAL(14, 2) NOT NULL DEFAULT 0,
+          payment_method VARCHAR(50) NOT NULL DEFAULT 'LAPAKPAY_SIMULATOR',
+          payment_status VARCHAR(50) NOT NULL DEFAULT 'PAID',
+          order_status VARCHAR(50) NOT NULL DEFAULT 'PROCESSING',
+          delivery_address TEXT,
+          created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+          updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+          INDEX idx_orders_user (user_id),
+          INDEX idx_orders_invoice (invoice_number)
+        )
+      `);
+
+      await conn.query(`
+        CREATE TABLE IF NOT EXISTS order_items (
+          id VARCHAR(50) PRIMARY KEY,
+          order_id VARCHAR(50) NOT NULL,
+          product_id VARCHAR(50) NOT NULL,
+          grade_id VARCHAR(50),
+          quantity INT NOT NULL DEFAULT 1,
+          price_per_unit DECIMAL(14, 2) NOT NULL DEFAULT 0,
+          subtotal DECIMAL(14, 2) NOT NULL DEFAULT 0,
+          created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+          INDEX idx_order_items_order (order_id),
+          INDEX idx_order_items_product (product_id)
+        )
+      `);
+      console.log('[MYSQL] orders and order_items tables verified');
 
       conn.release();
     } catch (dbErr) {
