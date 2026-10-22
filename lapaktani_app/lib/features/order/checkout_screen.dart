@@ -3,8 +3,6 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 import '../../core/services/api_service.dart';
 import '../cart/cart_screen.dart';
-import '../orders/models/order_model.dart';
-import '../orders/services/order_service.dart';
 import 'order_success_screen.dart';
 
 class CheckoutScreen extends StatefulWidget {
@@ -229,52 +227,31 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
         'price_per_unit': i.price,
       }).toList();
 
-      // 1. Backend Checkout API with MySQL ACID transaction & stock deduction
-      Map<String, dynamic>? backendResult;
-      try {
-        backendResult = await ApiService().createCheckoutOrder(
-          items: checkoutPayload,
-          deliveryAddress: _deliveryAddress,
-          shippingFee: _shippingCost,
-          courierService: _selectedLogisticsIndex == 0 ? 'Kurir Pendingin Mitra' : 'Kargo Agribisnis Dingin',
-          paymentMethod: 'LAPAKPAY_SIMULATOR',
-        );
-      } catch (_) {}
-
-      final now = DateTime.now();
-      final fallbackHex = now.millisecondsSinceEpoch.toRadixString(16).toUpperCase();
-      final fallbackInvoice = 'INV/${now.year}${now.month.toString().padLeft(2, '0')}${now.day.toString().padLeft(2, '0')}/TANI/$fallbackHex';
-
-      final effectiveOrderId = (backendResult?['order_id'] ?? backendResult?['id'] ?? 'ORD-${now.millisecondsSinceEpoch}').toString();
-      final effectiveInvoiceNumber = (backendResult?['invoice_number'] ?? fallbackInvoice).toString();
-
-      // 2. Synchronize to local order service
-      final orderItems = _items.map((i) {
-        return OrderItem(
-          id: 'item-${now.millisecondsSinceEpoch}-${i.id}',
-          productId: i.productId,
-          title: i.title,
-          qty: i.quantity,
-          unit: i.unit,
-          price: i.price,
-          imageUrl: i.imageUrl,
-          grade: i.badgeText,
-        );
-      }).toList();
-
-      await OrderService().createNewOrder(
-        orderId: effectiveOrderId,
-        invoiceNumber: effectiveInvoiceNumber,
-        buyerName: _recipientName,
-        buyerAddress: _deliveryAddress,
-        buyerPhone: _recipientPhone,
-        items: orderItems,
-        totalPrice: _totalBilling,
+      // Backend Checkout API with MySQL ACID transaction & strict stock deduction
+      final backendResult = await ApiService().createCheckoutOrder(
+        items: checkoutPayload,
+        deliveryAddress: _deliveryAddress,
         shippingFee: _shippingCost,
-        paymentMethod: '$_selectedPaymentMethod (Lunas)',
+        courierService: _selectedLogisticsIndex == 0 ? 'Kurir Pendingin Mitra' : 'Kargo Agribisnis Dingin',
+        paymentMethod: 'LAPAKPAY_SIMULATOR',
       );
 
-      // 3. Remove checked-out items from cart
+      if (backendResult == null) {
+        throw Exception('Respon server tidak valid saat memproses pesanan.');
+      }
+
+      // Rely exclusively on server response data
+      final serverOrderId = (backendResult['order_id'] ?? backendResult['id'] ?? '').toString();
+      final serverInvoiceNumber = (backendResult['invoice_number'] ?? '').toString();
+      final serverTotalAmount = (backendResult['total_amount'] as num?)?.toInt() ?? _totalBilling;
+      final serverShippingFee = (backendResult['shipping_fee'] as num?)?.toInt() ?? _shippingCost;
+      final serverDeliveryAddress = (backendResult['delivery_address'] ?? _deliveryAddress).toString();
+      final serverPaymentMethod = (backendResult['payment_method'] ?? 'LapakPay Simulator').toString();
+      final serverItems = backendResult['items'] as List<dynamic>?;
+      final serverCreatedAtStr = backendResult['created_at']?.toString();
+      final serverCreatedAt = serverCreatedAtStr != null ? DateTime.tryParse(serverCreatedAtStr) : null;
+
+      // Remove checked-out items from cart
       for (final item in _items) {
         try {
           await ApiService().removeCartItem(item.id);
@@ -286,31 +263,35 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
           context,
           MaterialPageRoute(
             builder: (_) => OrderSuccessScreen(
-              orderId: effectiveOrderId,
-              invoiceNumber: effectiveInvoiceNumber,
-              totalAmount: _totalBilling,
-              shippingFee: _shippingCost,
-              paymentMethod: '$_selectedPaymentMethod (Terverifikasi)',
-              deliveryAddress: _deliveryAddress,
+              orderId: serverOrderId,
+              invoiceNumber: serverInvoiceNumber,
+              totalAmount: serverTotalAmount,
+              shippingFee: serverShippingFee,
+              paymentMethod: '$serverPaymentMethod (Terverifikasi)',
+              deliveryAddress: serverDeliveryAddress,
               recipientName: _recipientName,
-              items: _items.map((i) => {
-                'title': i.title,
-                'quantity': i.quantity,
-                'unit': i.unit,
-                'price_per_unit': i.price,
-                'subtotal': i.price * i.quantity,
-              }).toList(),
-              createdAt: now,
+              items: serverItems ??
+                  _items.map((i) => {
+                        'title': i.title,
+                        'quantity': i.quantity,
+                        'unit': i.unit,
+                        'price_per_unit': i.price,
+                        'subtotal': i.price * i.quantity,
+                      }).toList(),
+              createdAt: serverCreatedAt ?? DateTime.now(),
             ),
           ),
         );
       }
     } catch (e) {
       if (mounted) {
+        final errorMsg = e.toString().replaceFirst('Exception: ', '');
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Gagal membuat pesanan: $e'),
+            content: Text(errorMsg),
             backgroundColor: const Color(0xFFDC2626),
+            behavior: SnackBarBehavior.floating,
+            duration: const Duration(seconds: 4),
           ),
         );
       }

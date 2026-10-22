@@ -1,6 +1,8 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:lucide_icons/lucide_icons.dart';
+import '../../core/services/api_service.dart';
 import '../cart/cart_screen.dart';
 import '../orders/models/order_model.dart';
 import '../orders/services/order_service.dart';
@@ -20,6 +22,7 @@ class OrderHistoryScreen extends StatefulWidget {
 
 class _OrderHistoryScreenState extends State<OrderHistoryScreen> {
   final OrderService _orderService = OrderService();
+  final ApiService _apiService = ApiService();
   final TextEditingController _searchController = TextEditingController();
 
   static const Color _tokopediaGreen = Color(0xFF03AC0E);
@@ -30,10 +33,106 @@ class _OrderHistoryScreenState extends State<OrderHistoryScreen> {
   String _selectedProductFilter = 'Semua produk';
   String _selectedDateFilter = 'Semua tanggal';
 
+  List<OrderModel> _serverOrders = [];
+  bool _isLoading = true;
+
   @override
   void initState() {
     super.initState();
     _orderService.init();
+    _fetchOrdersFromBackend();
+  }
+
+  Future<void> _fetchOrdersFromBackend() async {
+    setState(() => _isLoading = true);
+    try {
+      final List<Map<String, dynamic>> rawOrders = await _apiService.getMyOrders();
+      final parsed = rawOrders.map((row) {
+        List<dynamic> itemsList = [];
+        if (row['items'] is String) {
+          try {
+            itemsList = jsonDecode(row['items'] as String);
+          } catch (_) {}
+        } else if (row['items'] is List) {
+          itemsList = row['items'] as List;
+        }
+
+        final items = itemsList
+            .where((item) => item != null && item is Map && item['id'] != null)
+            .map((item) {
+          final iMap = Map<String, dynamic>.from(item as Map);
+          return OrderItem(
+            id: iMap['id']?.toString() ?? '',
+            productId: iMap['product_id']?.toString() ?? '',
+            title: iMap['title']?.toString() ?? 'Komoditas Tani',
+            qty: (iMap['quantity_kg'] as num?)?.toInt() ?? 1,
+            unit: 'kg',
+            price: (iMap['price_per_kg'] as num?)?.toInt() ??
+                (iMap['subtotal'] as num?)?.toInt() ??
+                0,
+            imageUrl: iMap['image_url']?.toString() ?? '',
+            grade: 'Grade A',
+          );
+        }).toList();
+
+        final statusStr = row['order_status']?.toString() ?? 'paid';
+        final OrderStatus status;
+        if (statusStr == 'pending_payment') {
+          status = OrderStatus.pendingPayment;
+        } else if (statusStr == 'completed') {
+          status = OrderStatus.completed;
+        } else if (statusStr == 'cancelled') {
+          status = OrderStatus.cancelled;
+        } else if (statusStr == 'shipped' || statusStr == 'in_transit') {
+          status = OrderStatus.inTransit;
+        } else if (statusStr == 'delivered') {
+          status = OrderStatus.delivered;
+        } else if (statusStr == 'ready_to_ship') {
+          status = OrderStatus.readyToShip;
+        } else {
+          status = OrderStatus.needHarvest;
+        }
+
+        return OrderModel(
+          id: row['invoice_number']?.toString() ?? 'ORD-${row['id']}',
+          buyerName: row['recipient_name']?.toString() ?? 'Pembeli',
+          buyerPhone: row['recipient_phone']?.toString() ?? '',
+          buyerAddress: row['shipping_address']?.toString() ?? '',
+          sellerName: 'Mitra Tani',
+          sellerLocation: 'Jawa Timur',
+          createdAt:
+              DateTime.tryParse(row['created_at']?.toString() ?? '') ??
+                  DateTime.now(),
+          status: status,
+          paymentMethod: row['payment_method']?.toString() ?? 'LapakPay',
+          paymentStatus: row['payment_status']?.toString() ?? 'Lunas',
+          items: items,
+          totalPrice: (row['total_amount'] as num?)?.toInt() ?? 0,
+          shippingFee: (row['shipping_cost'] as num?)?.toInt() ?? 0,
+          trackingNumber: row['invoice_number']?.toString() ?? '',
+          estimatedDelivery: '1-2 Hari',
+          temperature: '4-8°C',
+          courier: const CourierInfo(
+            name: 'Kurir LapakTani',
+            phone: '08123456789',
+            vehicle: 'Armada Berpendingin',
+            serviceName: 'LapakTani Cold-Chain',
+          ),
+          checkpoints: const [],
+        );
+      }).toList();
+
+      if (mounted) {
+        setState(() {
+          _serverOrders = parsed;
+          _isLoading = false;
+        });
+      }
+    } catch (_) {
+      if (mounted) {
+        setState(() => _isLoading = false);
+      }
+    }
   }
 
   @override
@@ -238,6 +337,7 @@ class _OrderHistoryScreenState extends State<OrderHistoryScreen> {
                                   checkpointTitle: 'Pesanan Selesai',
                                   checkpointDesc: 'Pembeli mengonfirmasi kualitas dan timbangan panen prima.',
                                 );
+                                await _fetchOrdersFromBackend();
                                 if (context.mounted) {
                                   ScaffoldMessenger.of(context).showSnackBar(
                                     SnackBar(
@@ -330,56 +430,71 @@ class _OrderHistoryScreenState extends State<OrderHistoryScreen> {
             _buildSearchBar(),
             _buildFilterChips(),
             Expanded(
-              child: ValueListenableBuilder<List<OrderModel>>(
-                valueListenable: _orderService.ordersNotifier,
-                builder: (context, orders, _) {
-                  var filtered = orders.where((order) {
-                    if (_searchQuery.isNotEmpty) {
-                      final q = _searchQuery.toLowerCase();
-                      final matchId = order.id.toLowerCase().contains(q);
-                      final matchSeller = order.sellerName.toLowerCase().contains(q);
-                      final matchProduct = order.items.any((i) => i.title.toLowerCase().contains(q));
-                      if (!matchId && !matchSeller && !matchProduct) return false;
-                    }
+              child: _isLoading
+                  ? const Center(
+                      child: CircularProgressIndicator(color: _tokopediaGreen),
+                    )
+                  : RefreshIndicator(
+                      color: _tokopediaGreen,
+                      onRefresh: _fetchOrdersFromBackend,
+                      child: Builder(
+                        builder: (context) {
+                          final orders = _serverOrders;
+                          var filtered = orders.where((order) {
+                            if (_searchQuery.isNotEmpty) {
+                              final q = _searchQuery.toLowerCase();
+                              final matchId = order.id.toLowerCase().contains(q);
+                              final matchSeller = order.sellerName.toLowerCase().contains(q);
+                              final matchProduct = order.items.any((i) => i.title.toLowerCase().contains(q));
+                              if (!matchId && !matchSeller && !matchProduct) return false;
+                            }
 
-                    if (_selectedStatusFilter != 'Semua status') {
-                      if (_selectedStatusFilter == 'Diproses' &&
-                          order.status != OrderStatus.needHarvest &&
-                          order.status != OrderStatus.readyToShip) {
-                        return false;
-                      }
-                      if (_selectedStatusFilter == 'Sedang Dikirim' &&
-                          order.status != OrderStatus.inTransit &&
-                          order.status != OrderStatus.delivered) {
-                        return false;
-                      }
-                      if (_selectedStatusFilter == 'Selesai' && order.status != OrderStatus.completed) {
-                        return false;
-                      }
-                      if (_selectedStatusFilter == 'Menunggu Bayar' && order.status != OrderStatus.pendingPayment) {
-                        return false;
-                      }
-                      if (_selectedStatusFilter == 'Dibatalkan' && order.status != OrderStatus.cancelled) {
-                        return false;
-                      }
-                    }
+                            if (_selectedStatusFilter != 'Semua status') {
+                              if (_selectedStatusFilter == 'Diproses' &&
+                                  order.status != OrderStatus.needHarvest &&
+                                  order.status != OrderStatus.readyToShip) {
+                                return false;
+                              }
+                              if (_selectedStatusFilter == 'Sedang Dikirim' &&
+                                  order.status != OrderStatus.inTransit &&
+                                  order.status != OrderStatus.delivered) {
+                                return false;
+                              }
+                              if (_selectedStatusFilter == 'Selesai' && order.status != OrderStatus.completed) {
+                                return false;
+                              }
+                              if (_selectedStatusFilter == 'Menunggu Bayar' && order.status != OrderStatus.pendingPayment) {
+                                return false;
+                              }
+                              if (_selectedStatusFilter == 'Dibatalkan' && order.status != OrderStatus.cancelled) {
+                                return false;
+                              }
+                            }
 
-                    return true;
-                  }).toList();
+                            return true;
+                          }).toList();
 
-                  if (filtered.isEmpty) {
-                    return _buildEmptyState();
-                  }
+                          if (filtered.isEmpty) {
+                            return SingleChildScrollView(
+                              physics: const AlwaysScrollableScrollPhysics(),
+                              child: SizedBox(
+                                height: MediaQuery.of(context).size.height * 0.6,
+                                child: _buildEmptyState(),
+                              ),
+                            );
+                          }
 
-                  return ListView.builder(
-                    padding: const EdgeInsets.fromLTRB(14, 10, 14, 24),
-                    itemCount: filtered.length,
-                    itemBuilder: (ctx, idx) {
-                      return _buildTokopediaOrderCard(filtered[idx]);
-                    },
-                  );
-                },
-              ),
+                          return ListView.builder(
+                            physics: const AlwaysScrollableScrollPhysics(),
+                            padding: const EdgeInsets.fromLTRB(14, 10, 14, 24),
+                            itemCount: filtered.length,
+                            itemBuilder: (ctx, idx) {
+                              return _buildTokopediaOrderCard(filtered[idx]);
+                            },
+                          );
+                        },
+                      ),
+                    ),
             ),
           ],
         ),

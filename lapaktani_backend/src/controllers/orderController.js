@@ -63,50 +63,77 @@ const checkoutOrder = async (req, res) => {
     let itemsSubtotal = 0;
     const validatedOrderItems = [];
 
-    // 1. Verify stock availability and lock product rows
-    for (const item of items) {
-      const productId = item.product_id || item.productId || item.id;
-      const quantity = Math.max(1, parseInt(item.quantity || item.qty || 1, 10));
-
-      if (!productId) {
-        await connection.rollback();
-        return res.status(400).json({
-          success: false,
-          message: 'Item pesanan memiliki ID produk yang tidak valid.'
-        });
+    // 1. Extract unique product IDs and sort deterministically to prevent deadlocks
+    const sortedProductIds = [...new Set(items.map(i => i.product_id || i.productId || i.id))].sort((a, b) => {
+      const numA = Number(a);
+      const numB = Number(b);
+      if (!isNaN(numA) && !isNaN(numB)) {
+        return numA - numB;
       }
+      return String(a).localeCompare(String(b));
+    });
 
-      // Query product with FOR UPDATE to prevent race condition overbooking
-      const [productRows] = await connection.query(
-        'SELECT id, title, price_per_kg, stock_kg, image_url, farmer_id FROM products WHERE id = ? FOR UPDATE',
-        [productId]
-      );
+    if (sortedProductIds.length === 0 || sortedProductIds.some(id => !id)) {
+      await connection.rollback();
+      return res.status(400).json({
+        success: false,
+        message: 'Item pesanan memiliki ID produk yang tidak valid.'
+      });
+    }
 
-      if (productRows.length === 0) {
+    // 2. Query and lock rows in explicit ascending order
+    const [productRows] = await connection.query(
+      'SELECT id, stock_kg, COALESCE(price_per_kg, price, 0) AS price, title, image_url, farmer_id FROM products WHERE id IN (?) ORDER BY id ASC FOR UPDATE',
+      [sortedProductIds]
+    );
+
+    const productMap = new Map();
+    for (const p of productRows) {
+      productMap.set(String(p.id), p);
+    }
+
+    // Aggregate requested quantities per product
+    const requestedQtyMap = new Map();
+    for (const item of items) {
+      const pid = String(item.product_id || item.productId || item.id);
+      const qty = Math.max(1, parseInt(item.quantity || item.qty || 1, 10));
+      requestedQtyMap.set(pid, (requestedQtyMap.get(pid) || 0) + qty);
+    }
+
+    // 3. Validate availability strictly
+    for (const pid of sortedProductIds) {
+      const product = productMap.get(String(pid));
+      if (!product) {
         await connection.rollback();
         return res.status(404).json({
           success: false,
-          message: `Produk pertanian dengan ID #${productId} tidak ditemukan dalam etalase.`
+          message: `Produk pertanian dengan ID #${pid} tidak ditemukan dalam etalase.`
         });
       }
 
-      const product = productRows[0];
+      const requestedQty = requestedQtyMap.get(String(pid)) || 0;
       const availableStock = Number(product.stock_kg || 0);
 
-      if (availableStock < quantity) {
+      if (availableStock < requestedQty) {
         await connection.rollback();
         return res.status(400).json({
           success: false,
-          message: `Stok produk "${product.title}" tidak mencukupi (Tersedia: ${availableStock} kg, diminta: ${quantity} kg).`
+          message: `Stok untuk produk ${product.title} tidak mencukupi (Tersedia: ${availableStock} kg, diminta: ${requestedQty} kg).`
         });
       }
+    }
 
-      const pricePerUnit = Number(item.price_per_unit || item.price || product.price_per_kg || 0);
+    // Build validated order items and calculate subtotal
+    for (const item of items) {
+      const pid = String(item.product_id || item.productId || item.id);
+      const product = productMap.get(pid);
+      const quantity = Math.max(1, parseInt(item.quantity || item.qty || 1, 10));
+      const pricePerUnit = Number(item.price_per_unit || item.price || product.price || 0);
       const subtotal = pricePerUnit * quantity;
       itemsSubtotal += subtotal;
 
       validatedOrderItems.push({
-        product_id: productId,
+        product_id: pid,
         title: product.title,
         grade_id: item.grade_id || item.gradeId || null,
         quantity: quantity,
@@ -119,11 +146,11 @@ const checkoutOrder = async (req, res) => {
 
     const totalAmount = itemsSubtotal + numericShippingFee;
 
-    // 2. Deduct ordered quantity from products.stock_kg
-    for (const item of validatedOrderItems) {
+    // 4. Exact deduction: UPDATE products SET stock_kg = stock_kg - ? WHERE id = ?
+    for (const [pid, qty] of requestedQtyMap.entries()) {
       await connection.query(
-        'UPDATE products SET stock_kg = GREATEST(0, stock_kg - ?) WHERE id = ?',
-        [item.quantity, item.product_id]
+        'UPDATE products SET stock_kg = stock_kg - ? WHERE id = ?',
+        [qty, pid]
       );
     }
 
