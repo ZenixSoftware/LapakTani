@@ -94,16 +94,18 @@ const addToCart = async (req, res) => {
       });
     }
 
-    const { product_id, quantity = 1, grade_id } = req.body;
+    const productId = req.body.product_id || req.body.productId || req.body.id;
+    const rawQty = req.body.quantity !== undefined ? req.body.quantity : (req.body.qty !== undefined ? req.body.qty : 1);
+    const gradeId = req.body.grade_id || req.body.gradeId;
 
-    if (!product_id) {
+    if (!productId) {
       return res.status(400).json({
         success: false,
         message: 'Product ID wajib disertakan.'
       });
     }
 
-    const numericQty = parseInt(quantity, 10);
+    const numericQty = parseInt(rawQty, 10);
     if (isNaN(numericQty) || numericQty <= 0) {
       return res.status(400).json({
         success: false,
@@ -114,7 +116,7 @@ const addToCart = async (req, res) => {
     // Verify product exists and check stock
     const [products] = await pool.query(
       'SELECT id, title, stock_kg, grade_id FROM products WHERE id = ? LIMIT 1',
-      [product_id]
+      [productId]
     );
 
     if (products.length === 0) {
@@ -125,16 +127,16 @@ const addToCart = async (req, res) => {
     }
 
     const product = products[0];
-    const resolvedGradeId = grade_id || product.grade_id;
+    const resolvedGradeId = gradeId || product.grade_id || null;
 
     // Check if already in cart for this user
     const [existing] = await pool.query(
       'SELECT id, quantity FROM cart_items WHERE user_id = ? AND product_id = ? LIMIT 1',
-      [userId, product_id]
+      [userId, productId]
     );
 
     if (existing.length > 0) {
-      const newQty = existing[0].quantity + numericQty;
+      const newQty = Number(existing[0].quantity) + numericQty;
       await pool.query(
         'UPDATE cart_items SET quantity = ?, grade_id = ? WHERE id = ?',
         [newQty, resolvedGradeId, existing[0].id]
@@ -145,7 +147,7 @@ const addToCart = async (req, res) => {
         message: 'Kuantitas produk di keranjang berhasil diperbarui.',
         data: {
           id: existing[0].id,
-          product_id,
+          product_id: productId,
           quantity: newQty
         }
       });
@@ -155,7 +157,7 @@ const addToCart = async (req, res) => {
     await pool.query(
       `INSERT INTO cart_items (id, user_id, product_id, grade_id, quantity)
        VALUES (?, ?, ?, ?, ?)`,
-      [cartItemId, userId, product_id, resolvedGradeId, numericQty]
+      [cartItemId, userId, productId, resolvedGradeId, numericQty]
     );
 
     return res.status(201).json({
@@ -163,7 +165,7 @@ const addToCart = async (req, res) => {
       message: 'Produk berhasil ditambahkan ke keranjang belanja.',
       data: {
         id: cartItemId,
-        product_id,
+        product_id: productId,
         quantity: numericQty
       }
     });

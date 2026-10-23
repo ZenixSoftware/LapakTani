@@ -335,7 +335,6 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
 
   Widget _buildHeader() {
     return Container(
-      color: Colors.white,
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
       decoration: const BoxDecoration(
         color: Colors.white,
@@ -425,7 +424,6 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
 
   Widget _buildStepIndicator() {
     return Container(
-      color: Colors.white,
       padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 10),
       decoration: const BoxDecoration(
         color: Colors.white,
@@ -1207,7 +1205,6 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
 
   Widget _buildStickyBottomBar() {
     return Container(
-      color: Colors.white,
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
       decoration: const BoxDecoration(
         color: Colors.white,

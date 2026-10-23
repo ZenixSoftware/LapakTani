@@ -380,7 +380,6 @@ class _CartScreenState extends State<CartScreen> {
 
   Widget _buildStickyHeader() {
     return Container(
-      color: Colors.white,
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
       decoration: const BoxDecoration(
         color: Colors.white,
@@ -527,7 +526,6 @@ class _CartScreenState extends State<CartScreen> {
 
   Widget _buildSelectAllRow() {
     return Container(
-      color: Colors.white,
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
       decoration: const BoxDecoration(
         color: Colors.white,
@@ -1141,7 +1139,6 @@ class _CartScreenState extends State<CartScreen> {
 
   Widget _buildStickyBottomBar() {
     return Container(
-      color: Colors.white,
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
       decoration: const BoxDecoration(
         color: Colors.white,
