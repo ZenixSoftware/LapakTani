@@ -647,7 +647,9 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                       height: 48,
                       color: const Color(0xFFF1F5F9),
                       child: Image.network(
-                        item.imageUrl,
+                        item.imageUrl.startsWith('http')
+                            ? item.imageUrl
+                            : '${ApiService.baseUrl.replaceAll('/api', '')}/${item.imageUrl.startsWith('/') ? item.imageUrl.substring(1) : item.imageUrl}',
                         fit: BoxFit.cover,
                         errorBuilder: (context, error, stackTrace) => const Icon(LucideIcons.image, size: 18, color: Color(0xFFCBD5E1)),
                       ),
