@@ -326,66 +326,82 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
         border: Border(bottom: BorderSide(color: Color(0xFFF1F5F9), width: 1)),
       ),
       child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Row(
-            children: [
-              InkWell(
-                onTap: () => Navigator.pop(context),
-                borderRadius: BorderRadius.circular(8),
-                child: const Padding(
-                  padding: EdgeInsets.all(4),
-                  child: Icon(LucideIcons.arrowLeft, size: 20, color: Color(0xFF1E293B)),
-                ),
-              ),
-              const SizedBox(width: 8),
-              Text(
-                'Pengiriman & Pembayaran',
-                style: GoogleFonts.inter(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w700,
-                  color: const Color(0xFF0F172A),
-                ),
-              ),
-              const SizedBox(width: 8),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                decoration: BoxDecoration(
-                  color: const Color(0xFFECFDF5),
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: const Color(0xFFA7F3D0)),
-                ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    const Icon(LucideIcons.shieldCheck, size: 11, color: Color(0xFF059669)),
-                    const SizedBox(width: 4),
-                    Text(
-                      'Aman',
-                      style: GoogleFonts.inter(
-                        fontSize: 10.5,
-                        fontWeight: FontWeight.w700,
-                        color: const Color(0xFF047857),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ],
+          InkWell(
+            onTap: () => Navigator.pop(context),
+            borderRadius: BorderRadius.circular(8),
+            child: const Padding(
+              padding: EdgeInsets.all(4),
+              child: Icon(LucideIcons.arrowLeft, size: 20, color: Color(0xFF1E293B)),
+            ),
           ),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Flexible(
+                  child: Text(
+                    'Pengiriman & Pembayaran',
+                    style: GoogleFonts.inter(
+                      fontSize: 15,
+                      fontWeight: FontWeight.w700,
+                      color: const Color(0xFF0F172A),
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+                const SizedBox(width: 6),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFECFDF5),
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: const Color(0xFFA7F3D0)),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const Icon(LucideIcons.shieldCheck, size: 11, color: Color(0xFF059669)),
+                      const SizedBox(width: 3),
+                      Text(
+                        'Aman',
+                        style: GoogleFonts.inter(
+                          fontSize: 10,
+                          fontWeight: FontWeight.w700,
+                          color: const Color(0xFF047857),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(width: 6),
           Row(
+            mainAxisSize: MainAxisSize.min,
             children: [
               IconButton(
+                visualDensity: VisualDensity.compact,
+                padding: const EdgeInsets.all(4),
+                constraints: const BoxConstraints(),
                 icon: const Icon(LucideIcons.share2, size: 18, color: Color(0xFF475569)),
                 onPressed: () {},
               ),
+              const SizedBox(width: 8),
               IconButton(
+                visualDensity: VisualDensity.compact,
+                padding: const EdgeInsets.all(4),
+                constraints: const BoxConstraints(),
                 icon: const Icon(LucideIcons.bell, size: 18, color: Color(0xFF475569)),
                 onPressed: () {},
               ),
+              const SizedBox(width: 8),
               Container(
-                width: 28,
-                height: 28,
+                width: 26,
+                height: 26,
                 decoration: const BoxDecoration(
                   color: _tokopediaGreen,
                   shape: BoxShape.circle,
@@ -394,7 +410,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                 child: Text(
                   'B',
                   style: GoogleFonts.inter(
-                    fontSize: 12,
+                    fontSize: 11,
                     fontWeight: FontWeight.w700,
                     color: Colors.white,
                   ),
@@ -409,15 +425,15 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
 
   Widget _buildStepIndicator() {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 10),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
       decoration: const BoxDecoration(
         color: Colors.white,
         border: Border(bottom: BorderSide(color: Color(0xFFF1F5F9))),
       ),
       child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           Row(
+            mainAxisSize: MainAxisSize.min,
             children: [
               Container(
                 width: 18,
@@ -426,15 +442,22 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                 alignment: Alignment.center,
                 child: Text('1', style: GoogleFonts.inter(fontSize: 10, fontWeight: FontWeight.w700, color: Colors.white)),
               ),
-              const SizedBox(width: 6),
+              const SizedBox(width: 4),
               Text(
                 'Pengiriman',
-                style: GoogleFonts.inter(fontSize: 11.5, fontWeight: FontWeight.w700, color: _tokopediaGreen),
+                style: GoogleFonts.inter(fontSize: 11, fontWeight: FontWeight.w700, color: _tokopediaGreen),
               ),
             ],
           ),
-          Container(width: 32, height: 2, color: _tokopediaGreen),
+          Expanded(
+            child: Container(
+              margin: const EdgeInsets.symmetric(horizontal: 8),
+              height: 2,
+              color: _tokopediaGreen,
+            ),
+          ),
           Row(
+            mainAxisSize: MainAxisSize.min,
             children: [
               Container(
                 width: 18,
@@ -443,15 +466,22 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                 alignment: Alignment.center,
                 child: Text('2', style: GoogleFonts.inter(fontSize: 10, fontWeight: FontWeight.w700, color: Colors.white)),
               ),
-              const SizedBox(width: 6),
+              const SizedBox(width: 4),
               Text(
                 'Pembayaran',
-                style: GoogleFonts.inter(fontSize: 11.5, fontWeight: FontWeight.w700, color: _tokopediaGreen),
+                style: GoogleFonts.inter(fontSize: 11, fontWeight: FontWeight.w700, color: _tokopediaGreen),
               ),
             ],
           ),
-          Container(width: 32, height: 2, color: const Color(0xFFE2E8F0)),
+          Expanded(
+            child: Container(
+              margin: const EdgeInsets.symmetric(horizontal: 8),
+              height: 2,
+              color: const Color(0xFFE2E8F0),
+            ),
+          ),
           Row(
+            mainAxisSize: MainAxisSize.min,
             children: [
               Container(
                 width: 18,
@@ -460,10 +490,10 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                 alignment: Alignment.center,
                 child: Text('3', style: GoogleFonts.inter(fontSize: 10, fontWeight: FontWeight.w600, color: const Color(0xFF94A3B8))),
               ),
-              const SizedBox(width: 6),
+              const SizedBox(width: 4),
               Text(
                 'Selesai',
-                style: GoogleFonts.inter(fontSize: 11.5, fontWeight: FontWeight.w500, color: const Color(0xFF94A3B8)),
+                style: GoogleFonts.inter(fontSize: 11, fontWeight: FontWeight.w500, color: const Color(0xFF94A3B8)),
               ),
             ],
           ),

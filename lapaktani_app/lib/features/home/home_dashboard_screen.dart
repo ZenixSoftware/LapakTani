@@ -1120,7 +1120,7 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen> {
                 crossAxisCount: 2,
                 crossAxisSpacing: 8,
                 mainAxisSpacing: 8,
-                childAspectRatio: 0.68,
+                childAspectRatio: 0.60,
               ),
               itemBuilder: (context, index) {
                 final product =
@@ -1676,15 +1676,18 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen> {
                           ),
                         ),
                       ),
-                    Text(
-                      title,
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                      style: GoogleFonts.inter(
-                        fontSize: 12.0,
-                        fontWeight: FontWeight.w600,
-                        color: const Color(0xFF0F172A),
-                        height: 1.25,
+                    SizedBox(
+                      height: 36,
+                      child: Text(
+                        title,
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                        style: GoogleFonts.inter(
+                          fontSize: 12.0,
+                          fontWeight: FontWeight.w600,
+                          color: const Color(0xFF0F172A),
+                          height: 1.25,
+                        ),
                       ),
                     ),
                     const SizedBox(height: 3),

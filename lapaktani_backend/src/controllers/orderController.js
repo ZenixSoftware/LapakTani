@@ -212,7 +212,7 @@ const checkoutOrder = async (req, res) => {
 
     // 5. Insert detail records into order_items table (dual-schema alignment for quantity/qty_kg and price_per_unit/unit_price)
     for (const item of validatedOrderItems) {
-      const orderItemId = `OI-${uuidv4()}`;
+      const orderItemId = `OI-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`;
       await connection.query(
         `INSERT INTO order_items 
          (id, order_id, product_id, grade_id, quantity, qty_kg, price_per_unit, unit_price, subtotal, created_at) 
