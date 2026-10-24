@@ -3,8 +3,11 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:http/http.dart' as http;
+import 'package:http_parser/http_parser.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:lucide_icons/lucide_icons.dart';
+import 'package:mime/mime.dart';
 import '../../core/services/api_service.dart';
 
 class AddProductScreen extends StatefulWidget {
@@ -283,38 +286,39 @@ class _AddProductScreenState extends State<AddProductScreen> {
     });
 
     try {
-      final List<String> uploadedUrls = [];
+      final token = await ApiService().getToken();
+      final uri = Uri.parse('${ApiService.baseUrl}/products');
+      final request = http.MultipartRequest('POST', uri);
+      if (token != null && token.isNotEmpty) {
+        request.headers['Authorization'] = 'Bearer $token';
+      }
+      request.headers['Accept'] = 'application/json';
+
+      request.fields['title'] = _titleController.text.trim();
+      request.fields['price_per_kg'] = double.parse(_priceController.text.trim()).toString();
+      request.fields['stock_kg'] = double.parse(_stockController.text.trim()).toString();
+      request.fields['commodity_id'] = _selectedCommodity!;
+      request.fields['grade_id'] = _selectedGrade!;
+      request.fields['unit_id'] = _selectedUnitId ?? 'unit-kg';
+      if (_descriptionController.text.trim().isNotEmpty) {
+        request.fields['description'] = _descriptionController.text.trim();
+      }
+
       if (_selectedImages.isNotEmpty) {
-        for (int i = 0; i < _selectedImages.length; i++) {
-          try {
-            final res = await ApiService.uploadImage('/upload/product-image', _selectedImages[i]);
-            if (res['data'] != null && res['data']['image_url'] != null) {
-              uploadedUrls.add(res['data']['image_url'].toString());
-            }
-          } catch (uploadErr) {
-            debugPrint('[ADD_PRODUCT] Gagal mengunggah foto ke-$i: $uploadErr');
-          }
-        }
+        final file = _selectedImages.first;
+        final mimeType = lookupMimeType(file.path) ?? 'image/jpeg';
+        final mimeSplit = mimeType.split('/');
+        request.files.add(
+          await http.MultipartFile.fromPath(
+            'image',
+            file.path,
+            contentType: MediaType(mimeSplit[0], mimeSplit[1]),
+          ),
+        );
       }
 
-      final payload = <String, dynamic>{
-        'title': _titleController.text.trim(),
-        'price_per_kg': double.parse(_priceController.text.trim()),
-        'stock_kg': double.parse(_stockController.text.trim()),
-        'commodity_id': _selectedCommodity,
-        'grade_id': _selectedGrade,
-        'unit_id': _selectedUnitId ?? 'unit-kg',
-        'description': _descriptionController.text.trim().isNotEmpty
-            ? _descriptionController.text.trim()
-            : null,
-      };
-
-      if (uploadedUrls.isNotEmpty) {
-        payload['image_urls'] = uploadedUrls;
-        payload['image_url'] = uploadedUrls.first;
-      }
-
-      final response = await ApiService.post('/products', payload);
+      final streamedResponse = await request.send().timeout(const Duration(seconds: 30));
+      final response = await http.Response.fromStream(streamedResponse);
       final dynamic body = jsonDecode(response.body);
 
       if (response.statusCode == 201 || (body is Map && body['success'] == true)) {

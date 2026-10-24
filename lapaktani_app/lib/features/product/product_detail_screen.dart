@@ -39,7 +39,10 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
     return <String, dynamic>{};
   }
 
-  String get _productId => (_data['id'] ?? 'demo-1').toString();
+  String get _productId {
+    final raw = _data['id']?.toString().trim();
+    return (raw != null && raw.isNotEmpty && !raw.startsWith('demo-')) ? raw : '';
+  }
 
   int get _currentStock {
     final raw = _data['stock_kg'] ?? _data['stock'] ?? 50;
@@ -67,6 +70,19 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
   }
 
   void _handleAddToCart() {
+    if (_productId.isEmpty || _productId.startsWith('mock-')) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            'Komoditas tidak valid atau belum terdaftar di sistem.',
+            style: GoogleFonts.inter(fontSize: 12),
+          ),
+          backgroundColor: const Color(0xFFEF4444),
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+      return;
+    }
     if (_currentStock <= 0) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
@@ -83,7 +99,10 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
     setState(() {
       _cartItemCount++;
     });
-    ApiService().addToCart(productId: _productId, quantity: 1).catchError((_) => false);
+    ApiService().addToCart(productId: _productId, quantity: 1).catchError((err) {
+      debugPrint('[CART] Gagal menambahkan ke keranjang: $err');
+      return false;
+    });
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(
@@ -269,8 +288,12 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
         child: const Icon(LucideIcons.image, size: 28, color: Color(0xFF94A3B8)),
       );
     }
+    final resolvedUrl = url.startsWith('http')
+        ? url
+        : '${ApiService.baseUrl.replaceAll('/api', '')}/${url.startsWith('/') ? url.substring(1) : url}';
+
     return Image.network(
-      url,
+      resolvedUrl,
       fit: BoxFit.cover,
       errorBuilder: (context, error, stackTrace) => Container(
         color: const Color(0xFFE2E8F0),

@@ -94,14 +94,22 @@ const addToCart = async (req, res) => {
       });
     }
 
-    const productId = req.body.product_id || req.body.productId || req.body.id;
+    const rawProductId = req.body.product_id || req.body.productId || req.body.id;
     const rawQty = req.body.quantity !== undefined ? req.body.quantity : (req.body.qty !== undefined ? req.body.qty : 1);
     const gradeId = req.body.grade_id || req.body.gradeId;
 
-    if (!productId) {
+    if (!rawProductId) {
       return res.status(400).json({
         success: false,
         message: 'Product ID wajib disertakan.'
+      });
+    }
+
+    const productId = String(rawProductId).trim();
+    if (productId.length === 0) {
+      return res.status(400).json({
+        success: false,
+        message: 'Product ID tidak boleh kosong.'
       });
     }
 
@@ -113,13 +121,14 @@ const addToCart = async (req, res) => {
       });
     }
 
-    // Verify product exists and check stock
+    // Verify product exists and check stock (handling string or integer coercion)
     const [products] = await pool.query(
-      'SELECT id, title, stock_kg, grade_id FROM products WHERE id = ? LIMIT 1',
-      [productId]
+      'SELECT id, title, stock_kg, grade_id FROM products WHERE id = ? OR CAST(id AS CHAR) = ? LIMIT 1',
+      [productId, productId]
     );
 
     if (products.length === 0) {
+      console.warn(`[CART] Product lookup failed for product_id: "${productId}" (user_id: "${userId}"). Product not found in database.`);
       return res.status(404).json({
         success: false,
         message: 'Produk tidak ditemukan.'
@@ -127,12 +136,13 @@ const addToCart = async (req, res) => {
     }
 
     const product = products[0];
+    const resolvedProductId = product.id;
     const resolvedGradeId = gradeId || product.grade_id || null;
 
     // Check if already in cart for this user
     const [existing] = await pool.query(
       'SELECT id, quantity FROM cart_items WHERE user_id = ? AND product_id = ? LIMIT 1',
-      [userId, productId]
+      [userId, resolvedProductId]
     );
 
     if (existing.length > 0) {
@@ -147,7 +157,7 @@ const addToCart = async (req, res) => {
         message: 'Kuantitas produk di keranjang berhasil diperbarui.',
         data: {
           id: existing[0].id,
-          product_id: productId,
+          product_id: resolvedProductId,
           quantity: newQty
         }
       });
@@ -157,7 +167,7 @@ const addToCart = async (req, res) => {
     await pool.query(
       `INSERT INTO cart_items (id, user_id, product_id, grade_id, quantity)
        VALUES (?, ?, ?, ?, ?)`,
-      [cartItemId, userId, productId, resolvedGradeId, numericQty]
+      [cartItemId, userId, resolvedProductId, resolvedGradeId, numericQty]
     );
 
     return res.status(201).json({
@@ -165,7 +175,7 @@ const addToCart = async (req, res) => {
       message: 'Produk berhasil ditambahkan ke keranjang belanja.',
       data: {
         id: cartItemId,
-        product_id: productId,
+        product_id: resolvedProductId,
         quantity: numericQty
       }
     });
