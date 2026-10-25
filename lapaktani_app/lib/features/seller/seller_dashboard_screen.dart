@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:lucide_icons/lucide_icons.dart';
+import '../../core/services/api_service.dart';
 import '../orders/models/order_model.dart';
 import '../orders/models/notification_model.dart';
 import '../orders/services/order_service.dart';
@@ -15,15 +16,45 @@ class SellerDashboardScreen extends StatefulWidget {
 }
 
 class _SellerDashboardScreenState extends State<SellerDashboardScreen> {
+  final ApiService _apiService = ApiService();
   final OrderService _orderService = OrderService();
   bool _isStoreOpen = true;
   int _selectedChipIndex = 0;
+  List<OrderModel> _farmerOrders = [];
+  bool _isLoadingOrders = false;
 
   @override
   void initState() {
     super.initState();
     _orderService.init();
     NotificationService().init();
+    _fetchFarmerOrders();
+  }
+
+  Future<void> _fetchFarmerOrders() async {
+    if (!mounted) return;
+    setState(() => _isLoadingOrders = true);
+    try {
+      final rawList = await _apiService.getFarmerOrders();
+      if (rawList.isNotEmpty) {
+        final parsed = rawList.map((m) => OrderModel.fromMap(m)).toList();
+        if (mounted) {
+          setState(() {
+            _farmerOrders = parsed;
+            _isLoadingOrders = false;
+          });
+        }
+        return;
+      }
+    } catch (e) {
+      debugPrint('[SELLER_DASHBOARD] Error fetching farmer orders: $e');
+    }
+    if (mounted) {
+      setState(() {
+        _farmerOrders = _orderService.ordersNotifier.value;
+        _isLoadingOrders = false;
+      });
+    }
   }
 
   static const String _defaultFarmerPhoto =
@@ -435,25 +466,29 @@ class _SellerDashboardScreenState extends State<SellerDashboardScreen> {
           const SizedBox(width: 4),
         ],
       ),
-      body: SingleChildScrollView(
-        physics: const AlwaysScrollableScrollPhysics(),
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            _buildStoreHeaderCard(),
-            const SizedBox(height: 14),
-            _buildFarmerWalletCard(),
-            const SizedBox(height: 14),
-            _buildFilterChips(),
-            const SizedBox(height: 14),
-            _buildUrgencyNoticeBanner(),
-            const SizedBox(height: 16),
-            _buildIncomingOrdersSection(),
-            const SizedBox(height: 16),
-            _buildFieldPickupBanner(),
-            const SizedBox(height: 30),
-          ],
+      body: RefreshIndicator(
+        onRefresh: _fetchFarmerOrders,
+        color: const Color(0xFF006E04),
+        child: SingleChildScrollView(
+          physics: const AlwaysScrollableScrollPhysics(),
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              _buildStoreHeaderCard(),
+              const SizedBox(height: 14),
+              _buildFarmerWalletCard(),
+              const SizedBox(height: 14),
+              _buildFilterChips(),
+              const SizedBox(height: 14),
+              _buildUrgencyNoticeBanner(),
+              const SizedBox(height: 16),
+              _buildIncomingOrdersSection(),
+              const SizedBox(height: 16),
+              _buildFieldPickupBanner(),
+              const SizedBox(height: 30),
+            ],
+          ),
         ),
       ),
     );
@@ -723,21 +758,19 @@ class _SellerDashboardScreenState extends State<SellerDashboardScreen> {
   }
 
   Widget _buildFilterChips() {
-    return ValueListenableBuilder<List<OrderModel>>(
-      valueListenable: _orderService.ordersNotifier,
-      builder: (context, orders, _) {
-        final needHarvestCount = orders.where((o) => o.status == OrderStatus.needHarvest).length;
-        final readyCount = orders.where((o) => o.status == OrderStatus.readyToShip).length;
-        final inTransitCount = orders.where((o) => o.status == OrderStatus.inTransit).length;
-        final completedCount = orders.where((o) => o.status == OrderStatus.completed).length;
+    final orders = _farmerOrders.isNotEmpty ? _farmerOrders : _orderService.ordersNotifier.value;
+    final needHarvestCount = orders.where((o) => o.status == OrderStatus.needHarvest).length;
+    final readyCount = orders.where((o) => o.status == OrderStatus.readyToShip).length;
+    final inTransitCount = orders.where((o) => o.status == OrderStatus.inTransit).length;
+    final completedCount = orders.where((o) => o.status == OrderStatus.completed).length;
 
-        final chips = [
-          {'label': 'Semua', 'badge': '${orders.length}'},
-          {'label': 'Perlu Dipetik', 'badge': '$needHarvestCount'},
-          {'label': 'Siap Kirim', 'badge': '$readyCount'},
-          {'label': 'Dalam Perjalanan', 'badge': '$inTransitCount'},
-          {'label': 'Selesai', 'badge': '$completedCount'},
-        ];
+    final chips = [
+      {'label': 'Semua', 'badge': '${orders.length}'},
+      {'label': 'Perlu Dipetik', 'badge': '$needHarvestCount'},
+      {'label': 'Siap Kirim', 'badge': '$readyCount'},
+      {'label': 'Dalam Perjalanan', 'badge': '$inTransitCount'},
+      {'label': 'Selesai', 'badge': '$completedCount'},
+    ];
 
         return SingleChildScrollView(
           scrollDirection: Axis.horizontal,
@@ -800,8 +833,6 @@ class _SellerDashboardScreenState extends State<SellerDashboardScreen> {
             }),
           ),
         );
-      },
-    );
   }
 
   void _showHarvestProcessingDialog(OrderModel order) {
@@ -950,10 +981,12 @@ class _SellerDashboardScreenState extends State<SellerDashboardScreen> {
                       : () async {
                           final messenger = ScaffoldMessenger.of(context);
                           Navigator.pop(ctx);
+                          await _apiService.updateOrderStatus(order.id, 'IN_TRANSIT');
                           await _orderService.processHarvest(
                             order.id,
                             notes: 'Petani telah memetik panen segar di ladang dan mengemas dengan insulated box dingin.',
                           );
+                          await _fetchFarmerOrders();
                           if (!mounted) return;
                           messenger.showSnackBar(
                             SnackBar(
@@ -1097,7 +1130,9 @@ class _SellerDashboardScreenState extends State<SellerDashboardScreen> {
             ElevatedButton(
               onPressed: () async {
                 Navigator.pop(ctx);
+                await _apiService.updateOrderStatus(order.id, 'DELIVERED');
                 await _orderService.handoverToCourier(order.id);
+                await _fetchFarmerOrders();
                 if (mounted) {
                   ScaffoldMessenger.of(context).showSnackBar(
                     SnackBar(
@@ -1242,102 +1277,105 @@ class _SellerDashboardScreenState extends State<SellerDashboardScreen> {
   }
 
   Widget _buildIncomingOrdersSection() {
-    return ValueListenableBuilder<List<OrderModel>>(
-      valueListenable: _orderService.ordersNotifier,
-      builder: (context, orders, _) {
-        List<OrderModel> filtered;
-        switch (_selectedChipIndex) {
-          case 1:
-            filtered = orders.where((o) => o.status == OrderStatus.needHarvest).toList();
-            break;
-          case 2:
-            filtered = orders.where((o) => o.status == OrderStatus.readyToShip).toList();
-            break;
-          case 3:
-            filtered = orders.where((o) => o.status == OrderStatus.inTransit).toList();
-            break;
-          case 4:
-            filtered = orders.where((o) => o.status == OrderStatus.completed).toList();
-            break;
-          case 0:
-          default:
-            filtered = orders;
-        }
+    final orders = _farmerOrders.isNotEmpty ? _farmerOrders : _orderService.ordersNotifier.value;
+    List<OrderModel> filtered;
+    switch (_selectedChipIndex) {
+      case 1:
+        filtered = orders.where((o) => o.status == OrderStatus.needHarvest).toList();
+        break;
+      case 2:
+        filtered = orders.where((o) => o.status == OrderStatus.readyToShip).toList();
+        break;
+      case 3:
+        filtered = orders.where((o) => o.status == OrderStatus.inTransit).toList();
+        break;
+      case 4:
+        filtered = orders.where((o) => o.status == OrderStatus.completed).toList();
+        break;
+      case 0:
+      default:
+        filtered = orders;
+    }
 
-        final needHarvestTotal = orders.where((o) => o.status == OrderStatus.needHarvest).length;
+    final needHarvestTotal = orders.where((o) => o.status == OrderStatus.needHarvest).length;
 
-        return Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        if (_isLoadingOrders) ...[
+          const LinearProgressIndicator(
+            backgroundColor: Color(0xFFDCFCE7),
+            valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF006E04)),
+          ),
+          const SizedBox(height: 10),
+        ],
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
             Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Row(
-                  children: [
-                    const Icon(LucideIcons.checkSquare, size: 18, color: Color(0xFF006E04)),
-                    const SizedBox(width: 6),
-                    Text(
-                      'Pemrosesan Pesanan Ladang',
-                      style: GoogleFonts.plusJakartaSans(
-                        fontSize: 14.5,
-                        fontWeight: FontWeight.w700,
-                        color: const Color(0xFF121C2A),
-                      ),
-                    ),
-                  ],
-                ),
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFFB0F1CB),
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: Text(
-                    '$needHarvestTotal Perlu Dipetik',
-                    style: GoogleFonts.plusJakartaSans(
-                      fontSize: 10,
-                      fontWeight: FontWeight.w700,
-                      color: const Color(0xFF005302),
-                    ),
+                const Icon(LucideIcons.checkSquare, size: 18, color: Color(0xFF006E04)),
+                const SizedBox(width: 6),
+                Text(
+                  'Pemrosesan Pesanan Ladang',
+                  style: GoogleFonts.plusJakartaSans(
+                    fontSize: 14.5,
+                    fontWeight: FontWeight.w700,
+                    color: const Color(0xFF121C2A),
                   ),
                 ),
               ],
             ),
-            const SizedBox(height: 12),
-            if (filtered.isEmpty)
-              Container(
-                padding: const EdgeInsets.all(24),
-                alignment: Alignment.center,
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(16),
-                  border: Border.all(color: const Color(0xFFE2E8F0)),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+              decoration: BoxDecoration(
+                color: const Color(0xFFB0F1CB),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Text(
+                '$needHarvestTotal Perlu Dipetik',
+                style: GoogleFonts.plusJakartaSans(
+                  fontSize: 10,
+                  fontWeight: FontWeight.w700,
+                  color: const Color(0xFF005302),
                 ),
-                child: Column(
-                  children: [
-                    const Icon(LucideIcons.inbox, size: 36, color: Color(0xFF94A3B8)),
-                    const SizedBox(height: 8),
-                    Text(
-                      'Tidak ada pesanan pada filter ini.',
-                      style: GoogleFonts.plusJakartaSans(
-                        fontSize: 13,
-                        color: const Color(0xFF64748B),
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                  ],
-                ),
-              )
-            else
-              ...filtered.map((order) {
-                return Padding(
-                  padding: const EdgeInsets.only(bottom: 12),
-                  child: _buildDynamicOrderCard(order),
-                );
-              }),
+              ),
+            ),
           ],
-        );
-      },
+        ),
+        const SizedBox(height: 12),
+        if (filtered.isEmpty)
+          Container(
+            padding: const EdgeInsets.all(24),
+            alignment: Alignment.center,
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(color: const Color(0xFFE2E8F0)),
+            ),
+            child: Column(
+              children: [
+                const Icon(LucideIcons.inbox, size: 36, color: Color(0xFF94A3B8)),
+                const SizedBox(height: 8),
+                Text(
+                  'Tidak ada pesanan pada filter ini.',
+                  style: GoogleFonts.plusJakartaSans(
+                    fontSize: 13,
+                    color: const Color(0xFF64748B),
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ],
+            ),
+          )
+        else
+          ...filtered.map((order) {
+            return Padding(
+              padding: const EdgeInsets.only(bottom: 12),
+              child: _buildDynamicOrderCard(order),
+            );
+          }),
+      ],
     );
   }
 

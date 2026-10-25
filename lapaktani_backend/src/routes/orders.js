@@ -17,6 +17,8 @@ router.post('/:id/simulate-payment', orderController.simulatePaymentWebhook);
 router.use(verifyToken);
 
 router.post('/checkout', orderController.checkoutOrder);
+router.get('/farmer/orders', verifyToken, orderController.getFarmerOrders);
+router.put('/:id/status', verifyToken, orderController.updateOrderStatus);
 router.get('/my-orders', orderController.getMyOrders);
 router.get('/', orderController.getMyOrders);
 router.get('/:id', orderController.getOrderById);

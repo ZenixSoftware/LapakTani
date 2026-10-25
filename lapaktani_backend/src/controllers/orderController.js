@@ -775,11 +775,22 @@ const getOrderById = async (req, res) => {
         o.order_status,
         COALESCE(o.delivery_address, o.shipping_address) as delivery_address,
         o.created_at,
-        COALESCE(o.updated_at, o.created_at) as updated_at
+        COALESCE(o.updated_at, o.created_at) as updated_at,
+        u.full_name as buyer_name,
+        COALESCE(u.phone_number, u.phone, '081234567890') as buyer_phone
       FROM orders o
-      WHERE o.id = ? AND (o.user_id = ? OR o.buyer_id = ?)
+      LEFT JOIN users u ON (o.user_id = u.id OR o.buyer_id = u.id)
+      WHERE (o.id = ? OR o.invoice_number = ?)
+        AND (
+          o.user_id = ? OR o.buyer_id = ?
+          OR EXISTS (
+            SELECT 1 FROM order_items oi
+            JOIN products p ON (oi.product_id = p.id OR CAST(oi.product_id AS CHAR) = CAST(p.id AS CHAR))
+            WHERE oi.order_id = o.id AND (p.farmer_id = ? OR p.farmer_id = (SELECT user_id FROM farmer_profiles WHERE user_id = ? LIMIT 1))
+          )
+        )
       LIMIT 1`,
-      [id, userId, userId]
+      [id, id, userId, userId, userId, userId]
     );
 
     if (orderRows.length === 0) {
@@ -823,11 +834,177 @@ const getOrderById = async (req, res) => {
   }
 };
 
+/**
+ * Get orders containing products owned by the authenticated farmer
+ * Endpoint: GET /api/orders/farmer/orders
+ */
+const getFarmerOrders = async (req, res) => {
+  const userId = req.user ? req.user.id : null;
+  if (!userId) {
+    return res.status(401).json({
+      success: false,
+      message: 'Akses ditolak. Pengguna belum diautentikasi.'
+    });
+  }
+
+  try {
+    const [orderRows] = await pool.query(
+      `SELECT DISTINCT 
+        o.id,
+        COALESCE(o.invoice_number, o.order_code) as invoice_number,
+        COALESCE(o.total_amount, o.total_payment, 0) as total_amount,
+        COALESCE(o.shipping_fee, 0) as shipping_fee,
+        COALESCE(o.payment_method, 'LAPAKPAY_SIMULATOR') as payment_method,
+        COALESCE(o.payment_status, 'PAID') as payment_status,
+        o.order_status,
+        COALESCE(o.delivery_address, o.shipping_address) as delivery_address,
+        o.created_at,
+        COALESCE(o.updated_at, o.created_at) as updated_at,
+        u.full_name as buyer_name,
+        COALESCE(u.phone_number, u.phone, '081234567890') as buyer_phone
+      FROM orders o
+      JOIN order_items oi ON o.id = oi.order_id
+      JOIN products p ON (oi.product_id = p.id OR CAST(oi.product_id AS CHAR) = CAST(p.id AS CHAR))
+      LEFT JOIN users u ON (o.user_id = u.id OR o.buyer_id = u.id)
+      WHERE (p.farmer_id = ? OR p.farmer_id = (SELECT user_id FROM farmer_profiles WHERE user_id = ? LIMIT 1))
+      ORDER BY o.created_at DESC`,
+      [userId, userId]
+    );
+
+    if (orderRows.length === 0) {
+      return res.status(200).json({
+        success: true,
+        count: 0,
+        data: []
+      });
+    }
+
+    const orderIds = orderRows.map((o) => o.id);
+    const placeholders = orderIds.map(() => '?').join(',');
+
+    const [itemRows] = await pool.query(
+      `SELECT 
+        oi.id,
+        oi.order_id,
+        oi.product_id,
+        oi.grade_id,
+        COALESCE(oi.quantity, oi.qty_kg, 1) as quantity,
+        COALESCE(oi.price_per_unit, oi.unit_price, 0) as price_per_unit,
+        oi.subtotal,
+        p.title as product_title,
+        p.image_url as product_image_url
+      FROM order_items oi
+      LEFT JOIN products p ON (oi.product_id = p.id OR CAST(oi.product_id AS CHAR) = CAST(p.id AS CHAR))
+      WHERE oi.order_id IN (${placeholders})`,
+      orderIds
+    );
+
+    const itemsByOrder = new Map();
+    for (const item of itemRows) {
+      if (!itemsByOrder.has(item.order_id)) {
+        itemsByOrder.set(item.order_id, []);
+      }
+      itemsByOrder.get(item.order_id).push(item);
+    }
+
+    const result = orderRows.map((order) => {
+      const items = itemsByOrder.get(order.id) || [];
+      return {
+        ...order,
+        items: items,
+        payment_details: generatePaymentDetails(order.payment_method, order.total_amount, order.id, order.invoice_number)
+      };
+    });
+
+    return res.status(200).json({
+      success: true,
+      count: result.length,
+      data: result
+    });
+  } catch (error) {
+    console.error('[ORDER] Error fetching farmer orders:', error.message);
+    return res.status(500).json({
+      success: false,
+      message: 'Gagal mengambil daftar pesanan petani.'
+    });
+  }
+};
+
+/**
+ * Update order status (Farmer harvest / courier dispatch / delivery confirmation)
+ * Endpoint: PUT /api/orders/:id/status
+ */
+const updateOrderStatus = async (req, res) => {
+  const userId = req.user ? req.user.id : null;
+  const { id } = req.params;
+  const { status, order_status } = req.body || {};
+  const requestedStatus = (status || order_status || '').toUpperCase();
+
+  if (!userId) {
+    return res.status(401).json({
+      success: false,
+      message: 'Akses ditolak. Pengguna belum diautentikasi.'
+    });
+  }
+
+  // Allowed transitions
+  const validStatuses = ['WAITING_PAYMENT', 'PROCESSING', 'NEED_HARVEST', 'SHIPPED', 'IN_TRANSIT', 'DELIVERED', 'COMPLETED', 'CANCELLED'];
+  if (!requestedStatus || !validStatuses.includes(requestedStatus)) {
+    return res.status(400).json({
+      success: false,
+      message: `Status pesanan tidak valid: "${requestedStatus}". Status yang diizinkan: ${validStatuses.join(', ')}`
+    });
+  }
+
+  try {
+    const [existing] = await pool.query(
+      'SELECT id, order_status, payment_status, total_amount, invoice_number, payment_method FROM orders WHERE id = ? OR invoice_number = ? LIMIT 1',
+      [id, id]
+    );
+
+    if (existing.length === 0) {
+      return res.status(404).json({
+        success: false,
+        message: 'Pesanan tidak ditemukan.'
+      });
+    }
+
+    const order = existing[0];
+
+    await pool.query(
+      'UPDATE orders SET order_status = ?, updated_at = NOW() WHERE id = ?',
+      [requestedStatus, order.id]
+    );
+
+    console.log(`[ORDER] Order ${order.id} status transitioned from ${order.order_status} to ${requestedStatus} by user: ${userId}`);
+
+    return res.status(200).json({
+      success: true,
+      message: `Status pesanan berhasil diperbarui menjadi ${requestedStatus}.`,
+      data: {
+        id: order.id,
+        invoice_number: order.invoice_number,
+        previous_status: order.order_status,
+        order_status: requestedStatus,
+        updated_at: new Date().toISOString()
+      }
+    });
+  } catch (error) {
+    console.error('[ORDER] Error updating order status:', error.message);
+    return res.status(500).json({
+      success: false,
+      message: 'Gagal memperbarui status pesanan.'
+    });
+  }
+};
+
 module.exports = {
   checkoutOrder,
   handlePaymentWebhook,
   simulatePaymentWebhook,
   getPaymentStatus,
   getMyOrders,
+  getFarmerOrders,
+  updateOrderStatus,
   getOrderById
 };
