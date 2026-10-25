@@ -475,12 +475,17 @@ class OrderSuccessScreen extends StatelessWidget {
             color: const Color(0xFF64748B),
           ),
         ),
-        Text(
-          value,
-          style: GoogleFonts.inter(
-            fontSize: 11.5,
-            fontWeight: isBold ? FontWeight.w700 : FontWeight.w600,
-            color: statusColor ?? _forestDark,
+        const SizedBox(width: 8),
+        Expanded(
+          child: Text(
+            value,
+            textAlign: TextAlign.end,
+            overflow: TextOverflow.ellipsis,
+            style: GoogleFonts.inter(
+              fontSize: 11.5,
+              fontWeight: isBold ? FontWeight.w700 : FontWeight.w600,
+              color: statusColor ?? _forestDark,
+            ),
           ),
         ),
       ],

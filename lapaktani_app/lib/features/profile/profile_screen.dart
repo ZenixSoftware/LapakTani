@@ -3,8 +3,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 import '../../core/services/api_service.dart';
 import '../auth/auth_repository.dart';
-import '../orders/models/order_model.dart';
-import '../orders/screens/buyer_orders_screen.dart';
+import '../order/order_history_screen.dart';
 import '../seller/seller_main_nav_screen.dart';
 import 'complete_farmer_profile_screen.dart';
 import 'profile_repository.dart';
@@ -980,7 +979,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   Navigator.push(
                     context,
                     MaterialPageRoute(
-                      builder: (_) => const BuyerOrdersScreen(),
+                      builder: (_) => const OrderHistoryScreen(),
                     ),
                   );
                 },
@@ -1012,7 +1011,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   Navigator.push(
                     context,
                     MaterialPageRoute(
-                      builder: (_) => const BuyerOrdersScreen(initialStatus: OrderStatus.pendingPayment),
+                      builder: (_) => const OrderHistoryScreen(initialFilter: 'Menunggu Bayar'),
                     ),
                   );
                 },
@@ -1025,7 +1024,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   Navigator.push(
                     context,
                     MaterialPageRoute(
-                      builder: (_) => const BuyerOrdersScreen(initialStatus: OrderStatus.inTransit),
+                      builder: (_) => const OrderHistoryScreen(initialFilter: 'Sedang Dikirim'),
                     ),
                   );
                 },
@@ -1038,7 +1037,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   Navigator.push(
                     context,
                     MaterialPageRoute(
-                      builder: (_) => const BuyerOrdersScreen(initialStatus: OrderStatus.completed),
+                      builder: (_) => const OrderHistoryScreen(initialFilter: 'Selesai'),
                     ),
                   );
                 },
@@ -1051,7 +1050,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   Navigator.push(
                     context,
                     MaterialPageRoute(
-                      builder: (_) => const BuyerOrdersScreen(initialStatus: OrderStatus.cancelled),
+                      builder: (_) => const OrderHistoryScreen(initialFilter: 'Dibatalkan'),
                     ),
                   );
                 },

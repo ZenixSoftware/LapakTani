@@ -725,11 +725,18 @@ const getMyOrders = async (req, res) => {
     }
 
     const result = orderRows.map((order) => {
-      const items = itemsByOrder.get(order.id) || [];
+      const items = (itemsByOrder.get(order.id) || []).map((item) => ({
+        ...item,
+        quantity: Number(item.quantity || 1),
+        price_per_unit: Number(item.price_per_unit || 0),
+        subtotal: Number(item.subtotal || 0)
+      }));
       return {
         ...order,
+        total_amount: Number(order.total_amount || 0),
+        shipping_fee: Number(order.shipping_fee || 0),
         items: items,
-        payment_details: generatePaymentDetails(order.payment_method, order.total_amount, order.id, order.invoice_number)
+        payment_details: generatePaymentDetails(order.payment_method, Number(order.total_amount || 0), order.id, order.invoice_number)
       };
     });
 
@@ -818,7 +825,14 @@ const getOrderById = async (req, res) => {
       [order.id]
     );
 
-    order.items = items;
+    order.total_amount = Number(order.total_amount || 0);
+    order.shipping_fee = Number(order.shipping_fee || 0);
+    order.items = items.map((item) => ({
+      ...item,
+      quantity: Number(item.quantity || 1),
+      price_per_unit: Number(item.price_per_unit || 0),
+      subtotal: Number(item.subtotal || 0)
+    }));
     order.payment_details = generatePaymentDetails(order.payment_method, order.total_amount, order.id, order.invoice_number);
 
     return res.status(200).json({
@@ -908,11 +922,18 @@ const getFarmerOrders = async (req, res) => {
     }
 
     const result = orderRows.map((order) => {
-      const items = itemsByOrder.get(order.id) || [];
+      const items = (itemsByOrder.get(order.id) || []).map((item) => ({
+        ...item,
+        quantity: Number(item.quantity || 1),
+        price_per_unit: Number(item.price_per_unit || 0),
+        subtotal: Number(item.subtotal || 0)
+      }));
       return {
         ...order,
+        total_amount: Number(order.total_amount || 0),
+        shipping_fee: Number(order.shipping_fee || 0),
         items: items,
-        payment_details: generatePaymentDetails(order.payment_method, order.total_amount, order.id, order.invoice_number)
+        payment_details: generatePaymentDetails(order.payment_method, Number(order.total_amount || 0), order.id, order.invoice_number)
       };
     });
 

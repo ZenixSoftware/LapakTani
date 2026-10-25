@@ -1,4 +1,3 @@
-import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:lucide_icons/lucide_icons.dart';
@@ -10,10 +9,12 @@ import 'order_tracking_screen.dart';
 
 class OrderHistoryScreen extends StatefulWidget {
   final bool isTabEmbedded;
+  final String? initialFilter;
 
   const OrderHistoryScreen({
     super.key,
     this.isTabEmbedded = false,
+    this.initialFilter,
   });
 
   @override
@@ -39,6 +40,22 @@ class _OrderHistoryScreenState extends State<OrderHistoryScreen> {
   @override
   void initState() {
     super.initState();
+    if (widget.initialFilter != null && widget.initialFilter!.isNotEmpty) {
+      final f = widget.initialFilter!;
+      if (f.toLowerCase().contains('bayar')) {
+        _selectedStatusFilter = 'Menunggu Bayar';
+      } else if (f.toLowerCase().contains('kirim')) {
+        _selectedStatusFilter = 'Sedang Dikirim';
+      } else if (f.toLowerCase().contains('selesai')) {
+        _selectedStatusFilter = 'Selesai';
+      } else if (f.toLowerCase().contains('proses') || f.toLowerCase().contains('petik')) {
+        _selectedStatusFilter = 'Diproses';
+      } else if (f.toLowerCase().contains('batal')) {
+        _selectedStatusFilter = 'Dibatalkan';
+      } else {
+        _selectedStatusFilter = f;
+      }
+    }
     _orderService.init();
     _fetchOrdersFromBackend();
   }
@@ -47,90 +64,21 @@ class _OrderHistoryScreenState extends State<OrderHistoryScreen> {
     setState(() => _isLoading = true);
     try {
       final List<Map<String, dynamic>> rawOrders = await _apiService.getMyOrders();
-      final parsed = rawOrders.map((row) {
-        List<dynamic> itemsList = [];
-        if (row['items'] is String) {
-          try {
-            itemsList = jsonDecode(row['items'] as String);
-          } catch (_) {}
-        } else if (row['items'] is List) {
-          itemsList = row['items'] as List;
-        }
-
-        final items = itemsList
-            .where((item) => item != null && item is Map && item['id'] != null)
-            .map((item) {
-          final iMap = Map<String, dynamic>.from(item as Map);
-          return OrderItem(
-            id: iMap['id']?.toString() ?? '',
-            productId: iMap['product_id']?.toString() ?? '',
-            title: iMap['title']?.toString() ?? 'Komoditas Tani',
-            qty: (iMap['quantity_kg'] as num?)?.toInt() ?? 1,
-            unit: 'kg',
-            price: (iMap['price_per_kg'] as num?)?.toInt() ??
-                (iMap['subtotal'] as num?)?.toInt() ??
-                0,
-            imageUrl: iMap['image_url']?.toString() ?? '',
-            grade: 'Grade A',
-          );
-        }).toList();
-
-        final statusStr = row['order_status']?.toString() ?? 'paid';
-        final OrderStatus status;
-        if (statusStr == 'pending_payment') {
-          status = OrderStatus.pendingPayment;
-        } else if (statusStr == 'completed') {
-          status = OrderStatus.completed;
-        } else if (statusStr == 'cancelled') {
-          status = OrderStatus.cancelled;
-        } else if (statusStr == 'shipped' || statusStr == 'in_transit') {
-          status = OrderStatus.inTransit;
-        } else if (statusStr == 'delivered') {
-          status = OrderStatus.delivered;
-        } else if (statusStr == 'ready_to_ship') {
-          status = OrderStatus.readyToShip;
-        } else {
-          status = OrderStatus.needHarvest;
-        }
-
-        return OrderModel(
-          id: row['invoice_number']?.toString() ?? 'ORD-${row['id']}',
-          buyerName: row['recipient_name']?.toString() ?? 'Pembeli',
-          buyerPhone: row['recipient_phone']?.toString() ?? '',
-          buyerAddress: row['shipping_address']?.toString() ?? '',
-          sellerName: 'Mitra Tani',
-          sellerLocation: 'Jawa Timur',
-          createdAt:
-              DateTime.tryParse(row['created_at']?.toString() ?? '') ??
-                  DateTime.now(),
-          status: status,
-          paymentMethod: row['payment_method']?.toString() ?? 'LapakPay',
-          paymentStatus: row['payment_status']?.toString() ?? 'Lunas',
-          items: items,
-          totalPrice: (row['total_amount'] as num?)?.toInt() ?? 0,
-          shippingFee: (row['shipping_cost'] as num?)?.toInt() ?? 0,
-          trackingNumber: row['invoice_number']?.toString() ?? '',
-          estimatedDelivery: '1-2 Hari',
-          temperature: '4-8°C',
-          courier: const CourierInfo(
-            name: 'Kurir LapakTani',
-            phone: '08123456789',
-            vehicle: 'Armada Berpendingin',
-            serviceName: 'LapakTani Cold-Chain',
-          ),
-          checkpoints: const [],
-        );
-      }).toList();
+      final parsed = rawOrders.map((row) => OrderModel.fromMap(row)).toList();
 
       if (mounted) {
         setState(() {
-          _serverOrders = parsed;
+          _serverOrders = parsed.isNotEmpty ? parsed : _orderService.ordersNotifier.value;
           _isLoading = false;
         });
       }
-    } catch (_) {
+    } catch (e) {
+      debugPrint('[ORDER_HISTORY] Error fetching orders: $e');
       if (mounted) {
-        setState(() => _isLoading = false);
+        setState(() {
+          _serverOrders = _orderService.ordersNotifier.value;
+          _isLoading = false;
+        });
       }
     }
   }
