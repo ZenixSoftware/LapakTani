@@ -628,7 +628,7 @@ class _SearchScreenState extends State<SearchScreen> {
             crossAxisCount: 2,
             crossAxisSpacing: 8,
             mainAxisSpacing: 8,
-            mainAxisExtent: 290,
+            childAspectRatio: 0.68,
           ),
           itemBuilder: (context, index) {
             final product = Map<String, dynamic>.from(list[index] as Map);
@@ -752,7 +752,7 @@ class _SearchScreenState extends State<SearchScreen> {
               crossAxisCount: 2,
               crossAxisSpacing: 8,
               mainAxisSpacing: 8,
-              mainAxisExtent: 290,
+              childAspectRatio: 0.68,
             ),
             itemBuilder: (context, index) {
               final product =
@@ -813,7 +813,9 @@ class _SearchScreenState extends State<SearchScreen> {
                 aspectRatio: 1.15,
                 child: imageUrl.isNotEmpty
                     ? Image.network(
-                        imageUrl,
+                        imageUrl.startsWith('http')
+                            ? imageUrl
+                            : '${ApiService.baseUrl.replaceAll('/api', '')}/${imageUrl.startsWith('/') ? imageUrl.substring(1) : imageUrl}',
                         fit: BoxFit.cover,
                         errorBuilder: (context, error, stackTrace) => Container(
                           color: const Color(0xFFF1F5F9),

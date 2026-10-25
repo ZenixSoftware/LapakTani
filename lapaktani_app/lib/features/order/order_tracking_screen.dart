@@ -161,7 +161,6 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
 
   Widget _buildStickyHeader() {
     return Container(
-      color: Colors.white,
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
       decoration: const BoxDecoration(
         color: Colors.white,
@@ -251,7 +250,6 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
 
   Widget _buildStatusHeroCard(OrderModel order) {
     return Container(
-      color: Colors.white,
       padding: const EdgeInsets.all(16),
       decoration: const BoxDecoration(
         color: Colors.white,

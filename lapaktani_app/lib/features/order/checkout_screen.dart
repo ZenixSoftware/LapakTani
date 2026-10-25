@@ -32,45 +32,18 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
   String _selectedPaymentMethod = 'LapakPay (Simulasi)';
   bool _useCoins = true;
   bool _isSubmitting = false;
+  late bool _protectionActive;
 
   late List<CartItemModel> _items;
 
   @override
   void initState() {
     super.initState();
+    _protectionActive = widget.protectionActive;
     if (widget.cartItems != null && widget.cartItems!.isNotEmpty) {
       _items = List.from(widget.cartItems!);
     } else {
-      _items = [
-        CartItemModel(
-          id: 'item-101',
-          productId: 'prod-101',
-          title: 'Tomat Merah Segar Organik',
-          price: 18000,
-          originalPrice: 20000,
-          unit: '1 Kg • Dipanen H-0',
-          imageUrl:
-              'https://lh3.googleusercontent.com/aida-public/AB6AXuBBUeQQkLkwA0I2VXF5irHUKe8vRN40RaSKjeYY3tcfETF6lLLZ9RBEBp5c9Uz7pvCNf1i_gTNYJGXD53u57_ySh7-pSMw0VHVhKykayGa8she-MFBkA8F4Yy13pKEmifO2be2NjHwc0go6tKNOLBxw5UvnJWGspjM6Mvjm3GaW3ELU96QY67buby_ENZE4rK7sXyot9QBF8eI8QMsQ2HNZ3XYjf12xKn59wyj-PsbmVAOb2bvo5Omi',
-          farmerId: 'farmer-wayan',
-          farmerName: 'Kebun Manik Sari (Pak Wayan)',
-          originLocation: 'Lembang, Jawa Barat',
-          quantity: 1,
-        ),
-        CartItemModel(
-          id: 'item-102',
-          productId: 'prod-102',
-          title: 'Kangkung Hidroponik Bebas Pestisida',
-          price: 12000,
-          originalPrice: 15000,
-          unit: '3 Ikat (±750 gr)',
-          imageUrl:
-              'https://lh3.googleusercontent.com/aida-public/AB6AXuAT_eYBcUG1R1OC_LNsuwsPoDDZ7z1EY5DeJbWlyFaniPn_pCcLN2qEZfGPDPJtPjgAVT97xV64X9hq1kSZWldMt96SjOkuPARKczQOVwiOXu3AbfUNOMbi66iOVPvYglml_Q4G2ZqihHtwkTpA1hDCAzoUBtoJasQtz8nA7NGsHeZguW7VNlsgJY9qTnerIeYk3ZPuthD45YxBSTFwarUKhD2TME7R9Pc2Mngb_oQgW01w3DKjOo95',
-          farmerId: 'farmer-wayan',
-          farmerName: 'Kebun Manik Sari (Pak Wayan)',
-          originLocation: 'Lembang, Jawa Barat',
-          quantity: 1,
-        ),
-      ];
+      _items = [];
     }
   }
 
@@ -80,11 +53,12 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
   int get _shippingOriginalCost => _selectedLogisticsIndex == 0 ? 10000 : 15000;
   int get _shippingDiscount => _shippingOriginalCost - _shippingCost;
   int get _shoppingDiscount => 5000;
+  int get _harvestProtectionFee => _protectionActive ? 1000 : 0;
   int get _serviceFee => 1000;
   int get _coinDiscount => _useCoins ? 350 : 0;
 
   int get _totalBilling {
-    final raw = _itemsSubtotal + _shippingCost - _shoppingDiscount + _serviceFee - _coinDiscount;
+    final raw = _itemsSubtotal + _shippingCost - _shoppingDiscount + _harvestProtectionFee + _serviceFee - _coinDiscount;
     return raw > 0 ? raw : 0;
   }
 
@@ -216,6 +190,16 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
 
   Future<void> _handleCreateOrder() async {
     if (_isSubmitting) return;
+    if (_items.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Tidak ada produk untuk dicheckout.'),
+          backgroundColor: Color(0xFFDC2626),
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+      return;
+    }
     setState(() => _isSubmitting = true);
 
     try {
@@ -320,6 +304,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                     _buildLogisticsSelectorCard(),
                     _buildVouchersAndBenefitsCard(),
                     _buildPaymentMethodCard(),
+                    _buildHarvestProtectionCard(),
                     _buildCostBreakdownCard(),
                     const SizedBox(height: 24),
                   ],
@@ -335,73 +320,88 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
 
   Widget _buildHeader() {
     return Container(
-      color: Colors.white,
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
       decoration: const BoxDecoration(
         color: Colors.white,
         border: Border(bottom: BorderSide(color: Color(0xFFF1F5F9), width: 1)),
       ),
       child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Row(
-            children: [
-              InkWell(
-                onTap: () => Navigator.pop(context),
-                borderRadius: BorderRadius.circular(8),
-                child: const Padding(
-                  padding: EdgeInsets.all(4),
-                  child: Icon(LucideIcons.arrowLeft, size: 20, color: Color(0xFF1E293B)),
-                ),
-              ),
-              const SizedBox(width: 8),
-              Text(
-                'Pengiriman & Pembayaran',
-                style: GoogleFonts.inter(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w700,
-                  color: const Color(0xFF0F172A),
-                ),
-              ),
-              const SizedBox(width: 8),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                decoration: BoxDecoration(
-                  color: const Color(0xFFECFDF5),
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: const Color(0xFFA7F3D0)),
-                ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    const Icon(LucideIcons.shieldCheck, size: 11, color: Color(0xFF059669)),
-                    const SizedBox(width: 4),
-                    Text(
-                      'Aman',
-                      style: GoogleFonts.inter(
-                        fontSize: 10.5,
-                        fontWeight: FontWeight.w700,
-                        color: const Color(0xFF047857),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ],
+          InkWell(
+            onTap: () => Navigator.pop(context),
+            borderRadius: BorderRadius.circular(8),
+            child: const Padding(
+              padding: EdgeInsets.all(4),
+              child: Icon(LucideIcons.arrowLeft, size: 20, color: Color(0xFF1E293B)),
+            ),
           ),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Flexible(
+                  child: Text(
+                    'Pengiriman & Pembayaran',
+                    style: GoogleFonts.inter(
+                      fontSize: 15,
+                      fontWeight: FontWeight.w700,
+                      color: const Color(0xFF0F172A),
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+                const SizedBox(width: 6),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFECFDF5),
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: const Color(0xFFA7F3D0)),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const Icon(LucideIcons.shieldCheck, size: 11, color: Color(0xFF059669)),
+                      const SizedBox(width: 3),
+                      Text(
+                        'Aman',
+                        style: GoogleFonts.inter(
+                          fontSize: 10,
+                          fontWeight: FontWeight.w700,
+                          color: const Color(0xFF047857),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(width: 6),
           Row(
+            mainAxisSize: MainAxisSize.min,
             children: [
               IconButton(
+                visualDensity: VisualDensity.compact,
+                padding: const EdgeInsets.all(4),
+                constraints: const BoxConstraints(),
                 icon: const Icon(LucideIcons.share2, size: 18, color: Color(0xFF475569)),
                 onPressed: () {},
               ),
+              const SizedBox(width: 8),
               IconButton(
+                visualDensity: VisualDensity.compact,
+                padding: const EdgeInsets.all(4),
+                constraints: const BoxConstraints(),
                 icon: const Icon(LucideIcons.bell, size: 18, color: Color(0xFF475569)),
                 onPressed: () {},
               ),
+              const SizedBox(width: 8),
               Container(
-                width: 28,
-                height: 28,
+                width: 26,
+                height: 26,
                 decoration: const BoxDecoration(
                   color: _tokopediaGreen,
                   shape: BoxShape.circle,
@@ -410,7 +410,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                 child: Text(
                   'B',
                   style: GoogleFonts.inter(
-                    fontSize: 12,
+                    fontSize: 11,
                     fontWeight: FontWeight.w700,
                     color: Colors.white,
                   ),
@@ -425,16 +425,15 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
 
   Widget _buildStepIndicator() {
     return Container(
-      color: Colors.white,
-      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 10),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
       decoration: const BoxDecoration(
         color: Colors.white,
         border: Border(bottom: BorderSide(color: Color(0xFFF1F5F9))),
       ),
       child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           Row(
+            mainAxisSize: MainAxisSize.min,
             children: [
               Container(
                 width: 18,
@@ -443,15 +442,22 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                 alignment: Alignment.center,
                 child: Text('1', style: GoogleFonts.inter(fontSize: 10, fontWeight: FontWeight.w700, color: Colors.white)),
               ),
-              const SizedBox(width: 6),
+              const SizedBox(width: 4),
               Text(
                 'Pengiriman',
-                style: GoogleFonts.inter(fontSize: 11.5, fontWeight: FontWeight.w700, color: _tokopediaGreen),
+                style: GoogleFonts.inter(fontSize: 11, fontWeight: FontWeight.w700, color: _tokopediaGreen),
               ),
             ],
           ),
-          Container(width: 32, height: 2, color: _tokopediaGreen),
+          Expanded(
+            child: Container(
+              margin: const EdgeInsets.symmetric(horizontal: 8),
+              height: 2,
+              color: _tokopediaGreen,
+            ),
+          ),
           Row(
+            mainAxisSize: MainAxisSize.min,
             children: [
               Container(
                 width: 18,
@@ -460,15 +466,22 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                 alignment: Alignment.center,
                 child: Text('2', style: GoogleFonts.inter(fontSize: 10, fontWeight: FontWeight.w700, color: Colors.white)),
               ),
-              const SizedBox(width: 6),
+              const SizedBox(width: 4),
               Text(
                 'Pembayaran',
-                style: GoogleFonts.inter(fontSize: 11.5, fontWeight: FontWeight.w700, color: _tokopediaGreen),
+                style: GoogleFonts.inter(fontSize: 11, fontWeight: FontWeight.w700, color: _tokopediaGreen),
               ),
             ],
           ),
-          Container(width: 32, height: 2, color: const Color(0xFFE2E8F0)),
+          Expanded(
+            child: Container(
+              margin: const EdgeInsets.symmetric(horizontal: 8),
+              height: 2,
+              color: const Color(0xFFE2E8F0),
+            ),
+          ),
           Row(
+            mainAxisSize: MainAxisSize.min,
             children: [
               Container(
                 width: 18,
@@ -477,10 +490,10 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                 alignment: Alignment.center,
                 child: Text('3', style: GoogleFonts.inter(fontSize: 10, fontWeight: FontWeight.w600, color: const Color(0xFF94A3B8))),
               ),
-              const SizedBox(width: 6),
+              const SizedBox(width: 4),
               Text(
                 'Selesai',
-                style: GoogleFonts.inter(fontSize: 11.5, fontWeight: FontWeight.w500, color: const Color(0xFF94A3B8)),
+                style: GoogleFonts.inter(fontSize: 11, fontWeight: FontWeight.w500, color: const Color(0xFF94A3B8)),
               ),
             ],
           ),
@@ -664,7 +677,9 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                       height: 48,
                       color: const Color(0xFFF1F5F9),
                       child: Image.network(
-                        item.imageUrl,
+                        item.imageUrl.startsWith('http')
+                            ? item.imageUrl
+                            : '${ApiService.baseUrl.replaceAll('/api', '')}/${item.imageUrl.startsWith('/') ? item.imageUrl.substring(1) : item.imageUrl}',
                         fit: BoxFit.cover,
                         errorBuilder: (context, error, stackTrace) => const Icon(LucideIcons.image, size: 18, color: Color(0xFFCBD5E1)),
                       ),
@@ -818,26 +833,47 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Row(
-                  children: [
-                    Icon(icon, size: 16, color: _tokopediaGreen),
-                    const SizedBox(width: 8),
-                    Text(
-                      title,
-                      style: GoogleFonts.inter(fontSize: 12, fontWeight: FontWeight.w700, color: const Color(0xFF0F172A)),
-                    ),
-                  ],
+                Expanded(
+                  child: Row(
+                    children: [
+                      Icon(icon, size: 16, color: _tokopediaGreen),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          title,
+                          overflow: TextOverflow.ellipsis,
+                          style: GoogleFonts.inter(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w700,
+                            color: const Color(0xFF0F172A),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
+                const SizedBox(width: 8),
                 Row(
+                  mainAxisSize: MainAxisSize.min,
                   children: [
-                    Text(
-                      originalPrice,
-                      style: GoogleFonts.inter(fontSize: 10, decoration: TextDecoration.lineThrough, color: const Color(0xFF94A3B8)),
-                    ),
-                    const SizedBox(width: 4),
+                    if (originalPrice.isNotEmpty) ...[
+                      Text(
+                        originalPrice,
+                        style: GoogleFonts.inter(
+                          fontSize: 10,
+                          decoration: TextDecoration.lineThrough,
+                          color: const Color(0xFF94A3B8),
+                        ),
+                      ),
+                      const SizedBox(width: 4),
+                    ],
                     Text(
                       price,
-                      style: GoogleFonts.inter(fontSize: 12, fontWeight: FontWeight.w700, color: _tokopediaGreen),
+                      style: GoogleFonts.inter(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w700,
+                        color: _tokopediaGreen,
+                      ),
                     ),
                   ],
                 ),
@@ -859,13 +895,19 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                 border: Border.all(color: const Color(0xFFA7F3D0)),
               ),
               child: Row(
-                mainAxisSize: MainAxisSize.min,
                 children: [
                   const Icon(LucideIcons.snowflake, size: 10, color: Color(0xFF059669)),
                   const SizedBox(width: 4),
-                  Text(
-                    featureBadge,
-                    style: GoogleFonts.inter(fontSize: 9.5, fontWeight: FontWeight.w600, color: const Color(0xFF065F46)),
+                  Expanded(
+                    child: Text(
+                      featureBadge,
+                      overflow: TextOverflow.ellipsis,
+                      style: GoogleFonts.inter(
+                        fontSize: 9.5,
+                        fontWeight: FontWeight.w600,
+                        color: const Color(0xFF065F46),
+                      ),
+                    ),
                   ),
                 ],
               ),
@@ -901,6 +943,100 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
             ],
           ),
           const SizedBox(height: 10),
+          // Coupon Selection Tile (Relocated from Cart Screen)
+          InkWell(
+            onTap: () {
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  content: Text('Voucher diskon otomatis diterapkan untuk pesanan Anda.'),
+                  backgroundColor: _tokopediaGreen,
+                  behavior: SnackBarBehavior.floating,
+                  duration: Duration(seconds: 2),
+                ),
+              );
+            },
+            borderRadius: BorderRadius.circular(10),
+            child: Container(
+              padding: const EdgeInsets.all(10),
+              decoration: BoxDecoration(
+                gradient: const LinearGradient(
+                  colors: [Color(0xFFECFDF5), Colors.white],
+                ),
+                borderRadius: BorderRadius.circular(10),
+                border: Border.all(color: const Color(0xFFA7F3D0)),
+              ),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Expanded(
+                    child: Row(
+                      children: [
+                        Container(
+                          width: 30,
+                          height: 30,
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFD1FAE5),
+                            borderRadius: BorderRadius.circular(6),
+                          ),
+                          child: const Icon(LucideIcons.ticket, size: 16, color: _tokopediaGreen),
+                        ),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                'Pakai promo makin hemat',
+                                overflow: TextOverflow.ellipsis,
+                                style: GoogleFonts.inter(
+                                  fontSize: 11.5,
+                                  fontWeight: FontWeight.w700,
+                                  color: const Color(0xFF0F172A),
+                                ),
+                              ),
+                              Text(
+                                'Hemat hingga Rp25.000 tersedia',
+                                overflow: TextOverflow.ellipsis,
+                                style: GoogleFonts.inter(
+                                  fontSize: 10,
+                                  fontWeight: FontWeight.w600,
+                                  color: _tokopediaGreen,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFD1FAE5),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(
+                          '2 Kupon',
+                          style: GoogleFonts.inter(
+                            fontSize: 10.5,
+                            fontWeight: FontWeight.w700,
+                            color: const Color(0xFF065F46),
+                          ),
+                        ),
+                        const SizedBox(width: 4),
+                        const Icon(LucideIcons.chevronRight, size: 11, color: Color(0xFF065F46)),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+          const SizedBox(height: 10),
           Container(
             padding: const EdgeInsets.all(10),
             decoration: BoxDecoration(
@@ -911,33 +1047,40 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Row(
-                  children: [
-                    Container(
-                      width: 32,
-                      height: 32,
-                      decoration: BoxDecoration(
-                        color: _tokopediaGreen,
-                        borderRadius: BorderRadius.circular(8),
+                Expanded(
+                  child: Row(
+                    children: [
+                      Container(
+                        width: 32,
+                        height: 32,
+                        decoration: BoxDecoration(
+                          color: _tokopediaGreen,
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: const Icon(LucideIcons.tag, size: 16, color: Colors.white),
                       ),
-                      child: const Icon(LucideIcons.tag, size: 16, color: Colors.white),
-                    ),
-                    const SizedBox(width: 10),
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          'BEBAS ONGKIR & Diskon Panen 10%',
-                          style: GoogleFonts.inter(fontSize: 11.5, fontWeight: FontWeight.w700, color: const Color(0xFF0F172A)),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'BEBAS ONGKIR & Diskon Panen 10%',
+                              overflow: TextOverflow.ellipsis,
+                              style: GoogleFonts.inter(fontSize: 11.5, fontWeight: FontWeight.w700, color: const Color(0xFF0F172A)),
+                            ),
+                            Text(
+                              'Hemat total Rp15.000 untuk pengiriman instan',
+                              overflow: TextOverflow.ellipsis,
+                              style: GoogleFonts.inter(fontSize: 10, color: const Color(0xFF047857)),
+                            ),
+                          ],
                         ),
-                        Text(
-                          'Hemat total Rp15.000 untuk pengiriman instan',
-                          style: GoogleFonts.inter(fontSize: 10, color: const Color(0xFF047857)),
-                        ),
-                      ],
-                    ),
-                  ],
+                      ),
+                    ],
+                  ),
                 ),
+                const SizedBox(width: 6),
                 const Icon(LucideIcons.checkCircle2, size: 18, color: _tokopediaGreen),
               ],
             ),
@@ -946,33 +1089,40 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Row(
-                children: [
-                  Container(
-                    width: 26,
-                    height: 26,
-                    decoration: const BoxDecoration(
-                      color: Color(0xFFFEF3C7),
-                      shape: BoxShape.circle,
+              Expanded(
+                child: Row(
+                  children: [
+                    Container(
+                      width: 26,
+                      height: 26,
+                      decoration: const BoxDecoration(
+                        color: Color(0xFFFEF3C7),
+                        shape: BoxShape.circle,
+                      ),
+                      child: const Icon(LucideIcons.coins, size: 14, color: Color(0xFFD97706)),
                     ),
-                    child: const Icon(LucideIcons.coins, size: 14, color: Color(0xFFD97706)),
-                  ),
-                  const SizedBox(width: 8),
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'Tukarkan 350 Koin LapakTani',
-                        style: GoogleFonts.inter(fontSize: 11.5, fontWeight: FontWeight.w700, color: const Color(0xFF0F172A)),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Tukarkan 350 Koin LapakTani',
+                            overflow: TextOverflow.ellipsis,
+                            style: GoogleFonts.inter(fontSize: 11.5, fontWeight: FontWeight.w700, color: const Color(0xFF0F172A)),
+                          ),
+                          Text(
+                            'Hemat Rp350 dari saldo koin panen',
+                            overflow: TextOverflow.ellipsis,
+                            style: GoogleFonts.inter(fontSize: 10, color: const Color(0xFF64748B)),
+                          ),
+                        ],
                       ),
-                      Text(
-                        'Hemat Rp350 dari saldo koin panen',
-                        style: GoogleFonts.inter(fontSize: 10, color: const Color(0xFF64748B)),
-                      ),
-                    ],
-                  ),
-                ],
+                    ),
+                  ],
+                ),
               ),
+              const SizedBox(width: 8),
               Switch(
                 value: _useCoins,
                 onChanged: (val) => setState(() => _useCoins = val),
@@ -981,6 +1131,87 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
             ],
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildHarvestProtectionCard() {
+    return Container(
+      margin: const EdgeInsets.only(top: 8),
+      padding: const EdgeInsets.all(14),
+      decoration: const BoxDecoration(
+        color: Colors.white,
+        border: Border.symmetric(horizontal: BorderSide(color: Color(0xFFF1F5F9))),
+      ),
+      child: InkWell(
+        onTap: () {
+          setState(() {
+            _protectionActive = !_protectionActive;
+          });
+        },
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            SizedBox(
+              width: 22,
+              height: 22,
+              child: Checkbox(
+                value: _protectionActive,
+                onChanged: (val) {
+                  setState(() {
+                    _protectionActive = val ?? true;
+                  });
+                },
+                activeColor: _tokopediaGreen,
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(4)),
+              ),
+            ),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Row(
+                        children: [
+                          Text(
+                            'Protokol Kesegaran Panen',
+                            style: GoogleFonts.inter(
+                              fontSize: 12,
+                              fontWeight: FontWeight.w700,
+                              color: const Color(0xFF0F172A),
+                            ),
+                          ),
+                          const SizedBox(width: 4),
+                          const Icon(LucideIcons.checkCircle2, size: 13, color: _tokopediaGreen),
+                        ],
+                      ),
+                      Text(
+                        '+Rp1.000',
+                        style: GoogleFonts.inter(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w700,
+                          color: const Color(0xFF0F172A),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    'Jaminan ganti rugi 100% jika sayur & buah layu atau busuk saat tiba di alamat tujuan.',
+                    style: GoogleFonts.inter(
+                      fontSize: 10.5,
+                      color: const Color(0xFF64748B),
+                      height: 1.3,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -1154,6 +1385,10 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
           _buildBreakdownRow('Diskon Ongkos Kirim', '-${_formatRupiah(_shippingDiscount)}', isHighlight: true),
           const SizedBox(height: 6),
           _buildBreakdownRow('Diskon Belanja Pertanian', '-${_formatRupiah(_shoppingDiscount)}', isHighlight: true),
+          if (_protectionActive) ...[
+            const SizedBox(height: 6),
+            _buildBreakdownRow('Protokol Kesegaran Panen', _formatRupiah(_harvestProtectionFee)),
+          ],
           if (_useCoins) ...[
             const SizedBox(height: 6),
             _buildBreakdownRow('Penggunaan Koin LapakTani', '-${_formatRupiah(_coinDiscount)}', isHighlight: true),
@@ -1207,7 +1442,6 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
 
   Widget _buildStickyBottomBar() {
     return Container(
-      color: Colors.white,
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
       decoration: const BoxDecoration(
         color: Colors.white,
