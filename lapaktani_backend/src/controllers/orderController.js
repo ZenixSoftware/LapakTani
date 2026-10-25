@@ -784,7 +784,7 @@ const getOrderById = async (req, res) => {
         o.created_at,
         COALESCE(o.updated_at, o.created_at) as updated_at,
         u.full_name as buyer_name,
-        COALESCE(u.phone_number, u.phone, '081234567890') as buyer_phone
+        COALESCE(u.phone, '') as buyer_phone
       FROM orders o
       LEFT JOIN users u ON (o.user_id = u.id OR o.buyer_id = u.id)
       WHERE (o.id = ? OR o.invoice_number = ?)
@@ -875,7 +875,7 @@ const getFarmerOrders = async (req, res) => {
         o.created_at,
         COALESCE(o.updated_at, o.created_at) as updated_at,
         u.full_name as buyer_name,
-        COALESCE(u.phone_number, u.phone, '081234567890') as buyer_phone
+        COALESCE(u.phone, '') as buyer_phone
       FROM orders o
       JOIN order_items oi ON o.id = oi.order_id
       JOIN products p ON (oi.product_id = p.id OR CAST(oi.product_id AS CHAR) = CAST(p.id AS CHAR))

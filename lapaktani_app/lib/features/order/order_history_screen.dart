@@ -791,23 +791,28 @@ class _OrderHistoryScreenState extends State<OrderHistoryScreen> {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             crossAxisAlignment: CrossAxisAlignment.end,
             children: [
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'Total belanja',
-                    style: GoogleFonts.inter(fontSize: 10.5, color: const Color(0xFF94A3B8)),
-                  ),
-                  Text(
-                    _formatRupiah(order.totalPrice),
-                    style: GoogleFonts.inter(fontSize: 13, fontWeight: FontWeight.w800, color: const Color(0xFF0F172A)),
-                  ),
-                  Text(
-                    'Hemat Rp12.000 • 360 Koin',
-                    style: GoogleFonts.inter(fontSize: 9.5, color: const Color(0xFF047857), fontWeight: FontWeight.w600),
-                  ),
-                ],
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Total belanja',
+                      style: GoogleFonts.inter(fontSize: 10.5, color: const Color(0xFF94A3B8)),
+                    ),
+                    Text(
+                      _formatRupiah(order.totalPrice),
+                      style: GoogleFonts.inter(fontSize: 13, fontWeight: FontWeight.w800, color: const Color(0xFF0F172A)),
+                    ),
+                    Text(
+                      'Hemat Rp12.000 • 360 Koin',
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: GoogleFonts.inter(fontSize: 9.5, color: const Color(0xFF047857), fontWeight: FontWeight.w600),
+                    ),
+                  ],
+                ),
               ),
+              const SizedBox(width: 8),
               if (isCompleted)
                 ElevatedButton(
                   onPressed: () {
@@ -829,7 +834,7 @@ class _OrderHistoryScreenState extends State<OrderHistoryScreen> {
                     foregroundColor: Colors.white,
                     elevation: 0,
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                   ),
                   child: Text(
                     'Beli lagi',
@@ -838,6 +843,7 @@ class _OrderHistoryScreenState extends State<OrderHistoryScreen> {
                 )
               else if (isInProgress)
                 Row(
+                  mainAxisSize: MainAxisSize.min,
                   children: [
                     OutlinedButton(
                       onPressed: () {
@@ -854,11 +860,11 @@ class _OrderHistoryScreenState extends State<OrderHistoryScreen> {
                         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
                       ),
                       child: Text(
-                        'Lacak Pengiriman',
+                        'Lacak',
                         style: GoogleFonts.inter(fontSize: 11, fontWeight: FontWeight.w700, color: _tokopediaGreen),
                       ),
                     ),
-                    const SizedBox(width: 8),
+                    const SizedBox(width: 6),
                     ElevatedButton(
                       onPressed: () => _showOrderCompletionModal(context, order),
                       style: ElevatedButton.styleFrom(
@@ -866,10 +872,10 @@ class _OrderHistoryScreenState extends State<OrderHistoryScreen> {
                         foregroundColor: Colors.white,
                         elevation: 0,
                         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
                       ),
                       child: Text(
-                        'Selesaikan Pesanan',
+                        'Selesai',
                         style: GoogleFonts.inter(fontSize: 11, fontWeight: FontWeight.w700),
                       ),
                     ),
