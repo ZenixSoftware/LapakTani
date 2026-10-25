@@ -71,7 +71,6 @@ class CartScreen extends StatefulWidget {
 class _CartScreenState extends State<CartScreen> {
   final ApiService _apiService = ApiService();
   bool _isLoading = true;
-  bool _protectionActive = true;
   List<CartItemModel> _cartItems = [];
 
   static const Color _tokopediaGreen = Color(0xFF03AC0E);
@@ -90,67 +89,14 @@ class _CartScreenState extends State<CartScreen> {
       if (backendItems.isNotEmpty) {
         _cartItems = backendItems.map((e) => CartItemModel.fromJson(e)).toList();
       } else {
-        _cartItems = _getSeedCartItems();
+        _cartItems = [];
       }
     } catch (_) {
-      _cartItems = _getSeedCartItems();
+      _cartItems = [];
     }
     if (mounted) {
       setState(() => _isLoading = false);
     }
-  }
-
-  List<CartItemModel> _getSeedCartItems() {
-    return [
-      CartItemModel(
-        id: 'cart-1',
-        productId: 'prod-101',
-        title: 'Tomat Merah Segar Organik (Dipetik Subuh)',
-        price: 12000,
-        originalPrice: 15000,
-        unit: '1 Kg (Standar)',
-        imageUrl:
-            'https://lh3.googleusercontent.com/aida-public/AB6AXuB72MDqJpIZxPdB33yef59116IB61KiSvguTbDb84G625UgvZtpYdF1KxejQBnZtLm1Eyf1-Wct58q-iQcdG361CjrQtDE_XxyhAmVdaGxH8NwuBQ4rSAwiG-8XLeVWyVAE5GyzHNmmIXBdyAeNzhv75StjMEp2yHLIoxWC63kvgySPR965hmzN4HYqbdtO8K3irHZfrnLx0JKoP3veQFWyRK8nzyIieZfpoug9dkNvlxUafvdcg9R6',
-        farmerId: 'farmer-wayan',
-        farmerName: 'Kebun Manik Sari (Pak Wayan)',
-        originLocation: 'Lembang, Bandung Barat',
-        badgeText: 'Mitra Official',
-        quantity: 1,
-        isChecked: true,
-      ),
-      CartItemModel(
-        id: 'cart-2',
-        productId: 'prod-102',
-        title: 'Kangkung Organik Hidroponik Akar Utuh',
-        price: 18000,
-        originalPrice: 20000,
-        unit: '3 Ikat (±750g)',
-        imageUrl:
-            'https://lh3.googleusercontent.com/aida-public/AB6AXuC0Z2HszcLtDIjFZvuN9EOInjZmd8uGxUFCbmKKWlP5qfmE_lAvCPU5u1DYecNI8XBM8RlvZ8YnFRc3vchCEQwtS-x4SAuURmWKL7GwW1pE7YewqaPMDvWT1K0lDOyFpB6gpOW2W-oPiKY1dmgjhDiKpd_2Pb3GBGqfHTbxacBfB5ss29vuKGk1LZ5ggvpASAwalzjtz23YPcNNRz8l9FbE7svddc3mJYm1TUffXeQRf5IY8RCQV7eZ',
-        farmerId: 'farmer-wayan',
-        farmerName: 'Kebun Manik Sari (Pak Wayan)',
-        originLocation: 'Lembang, Bandung Barat',
-        badgeText: 'Mitra Official',
-        quantity: 3,
-        isChecked: true,
-      ),
-      CartItemModel(
-        id: 'cart-3',
-        productId: 'prod-103',
-        title: 'Kentang Dieng Super Grade A (Kulit Bersih)',
-        price: 32000,
-        originalPrice: 35500,
-        unit: '2 Kg',
-        imageUrl:
-            'https://lh3.googleusercontent.com/aida-public/AB6AXuBxbZF4FPSN5wHDkekcopNbaqkEc07lerfAGyMOJQYb1OZhg8AZ_WaGRqVeAthFatBFfseRanNLOa_mn_l0Mu89iO5s64RhwD9WlFwOU8MZ8WZnioEolCIM0sxcGYtWS2TgxOc2faiuscc5dMFbxRce3cs5rEyMx4LH50C3DJ9KJm45dxWqQX5Y69Cp50FpTxDZbezBq5EOdFZZ67zJq5MsfkaX8tzYzyRlqYaD-pyzETHrV63y18Ch',
-        farmerId: 'farmer-dieng',
-        farmerName: 'Ladang Berkah Dieng',
-        originLocation: 'Wonosobo, Jawa Tengah',
-        badgeText: 'Mitra Pro',
-        quantity: 1,
-        isChecked: true,
-      ),
-    ];
   }
 
   bool get _isAllSelected => _cartItems.isNotEmpty && _cartItems.every((item) => item.isChecked);
@@ -158,11 +104,7 @@ class _CartScreenState extends State<CartScreen> {
   int get _selectedItemCount => _cartItems.where((i) => i.isChecked).fold(0, (sum, i) => sum + i.quantity);
 
   int get _totalPrice {
-    int total = _cartItems.where((i) => i.isChecked).fold(0, (sum, i) => sum + (i.price * i.quantity));
-    if (_protectionActive && _selectedItemCount > 0) {
-      total += 1000;
-    }
-    return total;
+    return _cartItems.where((i) => i.isChecked).fold(0, (sum, i) => sum + (i.price * i.quantity));
   }
 
   int get _totalSavings {
@@ -324,7 +266,6 @@ class _CartScreenState extends State<CartScreen> {
       MaterialPageRoute(
         builder: (_) => CheckoutScreen(
           cartItems: selectedItems,
-          protectionActive: _protectionActive,
         ),
       ),
     );
@@ -363,8 +304,6 @@ class _CartScreenState extends State<CartScreen> {
                                 ...groupedItems.entries.map((entry) {
                                   return _buildFarmerGroupCard(entry.key, entry.value);
                                 }),
-                                _buildVoucherAndProtectionCard(),
-                                _buildSocialImpactCard(),
                                 const SizedBox(height: 24),
                               ],
                             ),
@@ -380,7 +319,6 @@ class _CartScreenState extends State<CartScreen> {
 
   Widget _buildStickyHeader() {
     return Container(
-      color: Colors.white,
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
       decoration: const BoxDecoration(
         color: Colors.white,
@@ -488,22 +426,28 @@ class _CartScreenState extends State<CartScreen> {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Row(
-            children: [
-              const Icon(LucideIcons.truck, size: 15, color: _tokopediaGreen),
-              const SizedBox(width: 8),
-              RichText(
-                text: TextSpan(
-                  style: GoogleFonts.inter(fontSize: 11, color: const Color(0xFF064E3B)),
-                  children: const [
-                    TextSpan(text: 'Bebas Ongkir s.d. '),
-                    TextSpan(text: 'Rp20.000', style: TextStyle(fontWeight: FontWeight.w700)),
-                    TextSpan(text: ' min. belanja Rp30.000'),
-                  ],
+          Expanded(
+            child: Row(
+              children: [
+                const Icon(LucideIcons.truck, size: 15, color: _tokopediaGreen),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: RichText(
+                    overflow: TextOverflow.ellipsis,
+                    text: TextSpan(
+                      style: GoogleFonts.inter(fontSize: 11, color: const Color(0xFF064E3B)),
+                      children: const [
+                        TextSpan(text: 'Bebas Ongkir s.d. '),
+                        TextSpan(text: 'Rp20.000', style: TextStyle(fontWeight: FontWeight.w700)),
+                        TextSpan(text: ' min. belanja Rp30.000'),
+                      ],
+                    ),
+                  ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
+          const SizedBox(width: 8),
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
             decoration: BoxDecoration(
@@ -527,7 +471,6 @@ class _CartScreenState extends State<CartScreen> {
 
   Widget _buildSelectAllRow() {
     return Container(
-      color: Colors.white,
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
       decoration: const BoxDecoration(
         color: Colors.white,
@@ -656,9 +599,12 @@ class _CartScreenState extends State<CartScreen> {
               children: [
                 const Icon(LucideIcons.mapPin, size: 11, color: _tokopediaGreen),
                 const SizedBox(width: 4),
-                Text(
-                  first.originLocation,
-                  style: GoogleFonts.inter(fontSize: 10.5, color: const Color(0xFF64748B)),
+                Expanded(
+                  child: Text(
+                    first.originLocation,
+                    overflow: TextOverflow.ellipsis,
+                    style: GoogleFonts.inter(fontSize: 10.5, color: const Color(0xFF64748B)),
+                  ),
                 ),
               ],
             ),
@@ -709,7 +655,9 @@ class _CartScreenState extends State<CartScreen> {
                   height: 68,
                   color: const Color(0xFFF1F5F9),
                   child: Image.network(
-                    item.imageUrl,
+                    item.imageUrl.startsWith('http')
+                        ? item.imageUrl
+                        : '${ApiService.baseUrl.replaceAll('/api', '')}/${item.imageUrl.startsWith('/') ? item.imageUrl.substring(1) : item.imageUrl}',
                     fit: BoxFit.cover,
                     errorBuilder: (context, error, stackTrace) => const Icon(
                       LucideIcons.image,
@@ -901,193 +849,6 @@ class _CartScreenState extends State<CartScreen> {
     );
   }
 
-  Widget _buildVoucherAndProtectionCard() {
-    return Container(
-      margin: const EdgeInsets.only(top: 8),
-      padding: const EdgeInsets.all(14),
-      decoration: const BoxDecoration(
-        color: Colors.white,
-        border: Border.symmetric(horizontal: BorderSide(color: Color(0xFFF1F5F9))),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Container(
-            padding: const EdgeInsets.all(10),
-            decoration: BoxDecoration(
-              gradient: const LinearGradient(
-                colors: [Color(0xFFECFDF5), Colors.white],
-              ),
-              borderRadius: BorderRadius.circular(10),
-              border: Border.all(color: const Color(0xFFA7F3D0)),
-            ),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Row(
-                  children: [
-                    Container(
-                      width: 30,
-                      height: 30,
-                      decoration: BoxDecoration(
-                        color: const Color(0xFFD1FAE5),
-                        borderRadius: BorderRadius.circular(6),
-                      ),
-                      child: const Icon(LucideIcons.ticket, size: 16, color: _tokopediaGreen),
-                    ),
-                    const SizedBox(width: 8),
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          'Pakai promo makin hemat',
-                          style: GoogleFonts.inter(
-                            fontSize: 11.5,
-                            fontWeight: FontWeight.w700,
-                            color: const Color(0xFF0F172A),
-                          ),
-                        ),
-                        Text(
-                          'Hemat hingga Rp25.000 tersedia',
-                          style: GoogleFonts.inter(
-                            fontSize: 10,
-                            fontWeight: FontWeight.w600,
-                            color: _tokopediaGreen,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFFD1FAE5),
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: Row(
-                    children: [
-                      Text(
-                        '2 Kupon',
-                        style: GoogleFonts.inter(
-                          fontSize: 10.5,
-                          fontWeight: FontWeight.w700,
-                          color: const Color(0xFF065F46),
-                        ),
-                      ),
-                      const SizedBox(width: 4),
-                      const Icon(LucideIcons.chevronRight, size: 11, color: Color(0xFF065F46)),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(height: 12),
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              SizedBox(
-                width: 22,
-                height: 22,
-                child: Checkbox(
-                  value: _protectionActive,
-                  onChanged: (val) {
-                    setState(() {
-                      _protectionActive = val ?? true;
-                    });
-                  },
-                  activeColor: _tokopediaGreen,
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(4)),
-                ),
-              ),
-              const SizedBox(width: 8),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Row(
-                          children: [
-                            Text(
-                              'Proteksi Kesegaran Panen',
-                              style: GoogleFonts.inter(
-                                fontSize: 12,
-                                fontWeight: FontWeight.w700,
-                                color: const Color(0xFF0F172A),
-                              ),
-                            ),
-                            const SizedBox(width: 4),
-                            const Icon(LucideIcons.checkCircle2, size: 12, color: _tokopediaGreen),
-                          ],
-                        ),
-                        Text(
-                          '+Rp1.000',
-                          style: GoogleFonts.inter(
-                            fontSize: 12,
-                            fontWeight: FontWeight.w700,
-                            color: const Color(0xFF0F172A),
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 2),
-                    Text(
-                      'Jaminan ganti rugi 100% jika sayur & buah layu atau busuk saat tiba di alamat tujuan.',
-                      style: GoogleFonts.inter(
-                        fontSize: 10.5,
-                        color: const Color(0xFF64748B),
-                        height: 1.3,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildSocialImpactCard() {
-    return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: const Color(0xFFECFDF5),
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: const Color(0xFFA7F3D0)),
-      ),
-      child: Row(
-        children: [
-          Container(
-            width: 32,
-            height: 32,
-            decoration: const BoxDecoration(
-              color: _tokopediaGreen,
-              shape: BoxShape.circle,
-            ),
-            child: const Icon(LucideIcons.sprout, color: Colors.white, size: 16),
-          ),
-          const SizedBox(width: 10),
-          Expanded(
-            child: Text(
-              'Dengan membeli di LapakTani, Anda langsung memberdayakan 2 keluarga petani lokal di Jawa Barat & Jawa Tengah.',
-              style: GoogleFonts.inter(
-                fontSize: 11,
-                color: const Color(0xFF064E3B),
-                height: 1.3,
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
   Widget _buildEmptyCart() {
     return Center(
       child: Padding(
@@ -1141,7 +902,6 @@ class _CartScreenState extends State<CartScreen> {
 
   Widget _buildStickyBottomBar() {
     return Container(
-      color: Colors.white,
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
       decoration: const BoxDecoration(
         color: Colors.white,

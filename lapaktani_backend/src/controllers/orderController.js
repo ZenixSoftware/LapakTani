@@ -240,7 +240,7 @@ const checkoutOrder = async (req, res) => {
     }
 
     // 5. Payment method handling (LapakPay Simulator vs Payment Gateway Channels)
-    const isSimulator = String(payment_method).toUpperCase() === 'LAPAKPAY_SIMULATOR';
+    const isSimulator = String(payment_method || 'LAPAKPAY_SIMULATOR').toUpperCase() === 'LAPAKPAY_SIMULATOR';
     const paymentDetails = generatePaymentDetails(payment_method, totalAmount, orderId, invoiceNumber);
 
     let initialPaymentStatus = isSimulator ? 'PAID' : 'PENDING';
@@ -252,8 +252,8 @@ const checkoutOrder = async (req, res) => {
       let hasWalletColumn = false;
       try {
         const [walletRows] = await connection.query(
-          'SELECT wallet_balance FROM user_profiles WHERE user_id = ? LIMIT 1',
-          [userId]
+          'SELECT wallet_balance FROM user_profiles WHERE id = ? OR user_id = ? LIMIT 1',
+          [userId, userId]
         );
         if (walletRows.length > 0 && walletRows[0].wallet_balance !== null && walletRows[0].wallet_balance !== undefined) {
           userWalletBalance = Number(walletRows[0].wallet_balance);
@@ -272,26 +272,30 @@ const checkoutOrder = async (req, res) => {
       remainingBalance = Math.max(0, userWalletBalance - totalAmount);
       if (hasWalletColumn) {
         await connection.query(
-          'UPDATE user_profiles SET wallet_balance = ? WHERE user_id = ?',
-          [remainingBalance, userId]
+          'UPDATE user_profiles SET wallet_balance = ? WHERE id = ? OR user_id = ?',
+          [remainingBalance, userId, userId]
         );
       }
     }
 
-    // 6. Insert record into orders table
+    // 6. Insert record into orders table (dual-schema alignment + US-14 payment gateway support)
     try {
       await connection.query(
-        `INSERT INTO orders 
-         (id, user_id, invoice_number, total_amount, payment_method, payment_status, order_status, delivery_address, shipping_fee, payment_channel, payment_reference, payment_expired_at, created_at, updated_at) 
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW(), NOW())`,
+        `INSERT INTO orders
+         (id, user_id, buyer_id, invoice_number, order_code, total_amount, total_payment, payment_method, payment_status, order_status, delivery_address, shipping_address, shipping_fee, payment_channel, payment_reference, payment_expired_at, created_at, updated_at)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW(), NOW())`,
         [
           orderId,
           userId,
+          userId,
+          invoiceNumber,
           invoiceNumber,
           totalAmount,
-          payment_method,
+          totalAmount,
+          payment_method || 'LAPAKPAY_SIMULATOR',
           initialPaymentStatus,
           initialOrderStatus,
+          cleanAddress,
           cleanAddress,
           numericShippingFee,
           paymentDetails.payment_channel,
@@ -302,36 +306,42 @@ const checkoutOrder = async (req, res) => {
     } catch (_) {
       // Fallback if payment_channel / payment_reference columns are not in legacy table
       await connection.query(
-        `INSERT INTO orders 
-         (id, user_id, invoice_number, total_amount, payment_method, payment_status, order_status, delivery_address, shipping_fee, created_at, updated_at) 
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, NOW(), NOW())`,
+        `INSERT INTO orders
+         (id, user_id, buyer_id, invoice_number, order_code, total_amount, total_payment, payment_method, payment_status, order_status, delivery_address, shipping_address, shipping_fee, created_at, updated_at)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW(), NOW())`,
         [
           orderId,
           userId,
+          userId,
+          invoiceNumber,
           invoiceNumber,
           totalAmount,
-          payment_method,
+          totalAmount,
+          payment_method || 'LAPAKPAY_SIMULATOR',
           initialPaymentStatus,
           initialOrderStatus,
+          cleanAddress,
           cleanAddress,
           numericShippingFee
         ]
       );
     }
 
-    // 7. Insert detail records into order_items table
+    // 7. Insert detail records into order_items table (dual-schema alignment for quantity/qty_kg and price_per_unit/unit_price)
     for (const item of validatedOrderItems) {
-      const orderItemId = `OI-${uuidv4()}`;
+      const orderItemId = `OI-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`;
       await connection.query(
-        `INSERT INTO order_items 
-         (id, order_id, product_id, grade_id, quantity, price_per_unit, subtotal, created_at) 
-         VALUES (?, ?, ?, ?, ?, ?, ?, NOW())`,
+        `INSERT INTO order_items
+         (id, order_id, product_id, grade_id, quantity, qty_kg, price_per_unit, unit_price, subtotal, created_at)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())`,
         [
           orderItemId,
           orderId,
           item.product_id,
           item.grade_id,
           item.quantity,
+          item.quantity,
+          item.price_per_unit,
           item.price_per_unit,
           item.subtotal
         ]
@@ -378,16 +388,23 @@ const checkoutOrder = async (req, res) => {
       }
     });
   } catch (error) {
+    console.error('[ORDER] Checkout Transaction Error Details:', {
+      message: error.message,
+      code: error.code,
+      errno: error.errno,
+      sql: error.sql,
+      sqlMessage: error.sqlMessage,
+      stack: error.stack
+    });
     if (connection) {
       try {
         await connection.rollback();
-        console.log('[ORDER] Transaction rolled back due to error:', error.message);
+        console.log('[ORDER] Transaction successfully rolled back due to error.');
       } catch (rollbackErr) {
         console.error('[ORDER] Error during rollback:', rollbackErr.message);
       }
     }
 
-    console.error('[ORDER] Error during checkout transaction:', error.message);
     return res.status(500).json({
       success: false,
       message: error.message || 'Terjadi kesalahan sistem saat memproses checkout dan pembuatan invoice.'
@@ -655,24 +672,26 @@ const getMyOrders = async (req, res) => {
     const [orderRows] = await pool.query(
       `SELECT 
         o.id,
-        o.invoice_number,
-        o.total_amount,
-        o.shipping_fee,
-        o.payment_method,
-        o.payment_status,
+        COALESCE(o.user_id, o.buyer_id) as user_id,
+        COALESCE(o.invoice_number, o.order_code) as invoice_number,
+        COALESCE(o.total_amount, o.total_payment, 0) as total_amount,
+        COALESCE(o.shipping_fee, 0) as shipping_fee,
+        COALESCE(o.payment_method, 'LAPAKPAY_SIMULATOR') as payment_method,
+        COALESCE(o.payment_status, 'PAID') as payment_status,
         o.order_status,
-        o.delivery_address,
+        COALESCE(o.delivery_address, o.shipping_address) as delivery_address,
         o.created_at,
-        o.updated_at
+        COALESCE(o.updated_at, o.created_at) as updated_at
       FROM orders o
-      WHERE o.user_id = ?
+      WHERE (o.user_id = ? OR o.buyer_id = ?)
       ORDER BY o.created_at DESC`,
-      [userId]
+      [userId, userId]
     );
 
     if (orderRows.length === 0) {
       return res.status(200).json({
         success: true,
+        count: 0,
         data: []
       });
     }
@@ -686,8 +705,8 @@ const getMyOrders = async (req, res) => {
         oi.order_id,
         oi.product_id,
         oi.grade_id,
-        oi.quantity,
-        oi.price_per_unit,
+        COALESCE(oi.quantity, oi.qty_kg, 1) as quantity,
+        COALESCE(oi.price_per_unit, oi.unit_price, 0) as price_per_unit,
         oi.subtotal,
         p.title as product_title,
         p.image_url as product_image_url
@@ -709,12 +728,14 @@ const getMyOrders = async (req, res) => {
       const items = itemsByOrder.get(order.id) || [];
       return {
         ...order,
-        items: items
+        items: items,
+        payment_details: generatePaymentDetails(order.payment_method, order.total_amount, order.id, order.invoice_number)
       };
     });
 
     return res.status(200).json({
       success: true,
+      count: result.length,
       data: result
     });
   } catch (error) {
@@ -745,19 +766,20 @@ const getOrderById = async (req, res) => {
     const [orderRows] = await pool.query(
       `SELECT 
         o.id,
-        o.invoice_number,
-        o.total_amount,
-        o.shipping_fee,
-        o.payment_method,
-        o.payment_status,
+        COALESCE(o.user_id, o.buyer_id) as user_id,
+        COALESCE(o.invoice_number, o.order_code) as invoice_number,
+        COALESCE(o.total_amount, o.total_payment, 0) as total_amount,
+        COALESCE(o.shipping_fee, 0) as shipping_fee,
+        COALESCE(o.payment_method, 'LAPAKPAY_SIMULATOR') as payment_method,
+        COALESCE(o.payment_status, 'PAID') as payment_status,
         o.order_status,
-        o.delivery_address,
+        COALESCE(o.delivery_address, o.shipping_address) as delivery_address,
         o.created_at,
-        o.updated_at
+        COALESCE(o.updated_at, o.created_at) as updated_at
       FROM orders o
-      WHERE o.id = ? AND o.user_id = ?
+      WHERE o.id = ? AND (o.user_id = ? OR o.buyer_id = ?)
       LIMIT 1`,
-      [id, userId]
+      [id, userId, userId]
     );
 
     if (orderRows.length === 0) {
@@ -774,8 +796,8 @@ const getOrderById = async (req, res) => {
         oi.id,
         oi.product_id,
         oi.grade_id,
-        oi.quantity,
-        oi.price_per_unit,
+        COALESCE(oi.quantity, oi.qty_kg, 1) as quantity,
+        COALESCE(oi.price_per_unit, oi.unit_price, 0) as price_per_unit,
         oi.subtotal,
         p.title as product_title,
         p.image_url as product_image_url

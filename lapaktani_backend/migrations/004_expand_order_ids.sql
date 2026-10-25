@@ -1,0 +1,11 @@
+-- Migration: 004_expand_order_ids.sql
+-- US-13: Expand orders and order_items ID columns to VARCHAR(100)
+
+SET FOREIGN_KEY_CHECKS = 0;
+
+ALTER TABLE orders MODIFY COLUMN id VARCHAR(100) NOT NULL;
+ALTER TABLE orders MODIFY COLUMN invoice_number VARCHAR(100) NOT NULL;
+ALTER TABLE order_items MODIFY COLUMN id VARCHAR(100) NOT NULL;
+ALTER TABLE order_items MODIFY COLUMN order_id VARCHAR(100) NOT NULL;
+
+SET FOREIGN_KEY_CHECKS = 1;

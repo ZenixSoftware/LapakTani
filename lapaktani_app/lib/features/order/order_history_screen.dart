@@ -608,7 +608,6 @@ class _OrderHistoryScreenState extends State<OrderHistoryScreen> {
 
   Widget _buildFilterChips() {
     return Container(
-      color: Colors.white,
       padding: const EdgeInsets.fromLTRB(14, 0, 14, 8),
       decoration: const BoxDecoration(
         color: Colors.white,

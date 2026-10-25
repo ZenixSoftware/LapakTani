@@ -204,18 +204,24 @@ const createProduct = async (req, res) => {
 
     const { title, price_per_kg, stock_kg, commodity_id, grade_id, unit_id, description, image_url, image_urls } = req.body;
 
-    if (
-      !title ||
-      price_per_kg === undefined ||
-      price_per_kg === null ||
-      stock_kg === undefined ||
-      stock_kg === null ||
-      !commodity_id ||
-      !grade_id
-    ) {
+    if (!title || String(title).trim().length === 0) {
       return res.status(400).json({
         success: false,
-        message: 'Field title, price_per_kg, stock_kg, commodity_id, dan grade_id wajib diisi.'
+        message: 'Judul komoditas wajib diisi.'
+      });
+    }
+
+    if (price_per_kg === undefined || price_per_kg === null || String(price_per_kg).trim() === '') {
+      return res.status(400).json({
+        success: false,
+        message: 'Harga per kg wajib diisi.'
+      });
+    }
+
+    if (stock_kg === undefined || stock_kg === null || String(stock_kg).trim() === '') {
+      return res.status(400).json({
+        success: false,
+        message: 'Stok komoditas wajib diisi.'
       });
     }
 
@@ -229,20 +235,44 @@ const createProduct = async (req, res) => {
       });
     }
 
-    const [farmerProfiles] = await pool.query(
+    // Automatically associate farmer_id from req.user.id or farmer_profiles
+    let [farmerProfiles] = await pool.query(
       'SELECT user_id, farmer_group_id FROM farmer_profiles WHERE user_id = ? LIMIT 1',
       [farmerId]
     );
 
     if (farmerProfiles.length === 0) {
-      return res.status(403).json({
-        success: false,
-        message: 'Profil petani tidak ditemukan. Silakan lengkapi profil petani terlebih dahulu.'
-      });
+      const [groups] = await pool.query('SELECT id FROM farmer_groups LIMIT 1');
+      const fallbackGroupId = groups.length > 0 ? groups[0].id : '3be588df-b4b6-496b-aeac-efa43e3a7735';
+      await pool.query(
+        'INSERT INTO farmer_profiles (user_id, farmer_group_id) VALUES (?, ?) ON DUPLICATE KEY UPDATE farmer_group_id = VALUES(farmer_group_id)',
+        [farmerId, fallbackGroupId]
+      );
+    }
+
+    // Resolve commodity_id (fallback to first commodity if missing)
+    let resolvedCommodityId = commodity_id;
+    if (!resolvedCommodityId) {
+      const [comms] = await pool.query('SELECT id FROM commodities LIMIT 1');
+      resolvedCommodityId = comms.length > 0 ? comms[0].id : 'com-tomat';
+    }
+
+    // Resolve grade_id (fallback to grade-1 if missing)
+    let resolvedGradeId = grade_id;
+    if (!resolvedGradeId) {
+      const [grds] = await pool.query('SELECT id FROM product_grades LIMIT 1');
+      resolvedGradeId = grds.length > 0 ? grds[0].id : 'grade-1';
     }
 
     const productId = uuidv4();
     const selectedUnitId = unit_id || 'unit-kg';
+
+    // Handle image path saving cleanly with default fallback placeholder if no file uploaded
+    const DEFAULT_PLACEHOLDER = 'uploads/products/tomat.jpg';
+    let fileUploadedPath = null;
+    if (req.file) {
+      fileUploadedPath = `uploads/products/${req.file.filename}`;
+    }
 
     let formattedImageUrls = [];
     if (Array.isArray(image_urls)) {
@@ -251,25 +281,33 @@ const createProduct = async (req, res) => {
       formattedImageUrls = [image_urls.trim()];
     }
 
-    if (image_url && typeof image_url === 'string' && image_url.trim().length > 0 && !formattedImageUrls.includes(image_url.trim())) {
+    if (fileUploadedPath) {
+      formattedImageUrls.unshift(fileUploadedPath);
+    } else if (image_url && typeof image_url === 'string' && image_url.trim().length > 0 && !formattedImageUrls.includes(image_url.trim())) {
       formattedImageUrls.unshift(image_url.trim());
     }
 
-    const primaryImageUrl = formattedImageUrls.length > 0 ? formattedImageUrls[0] : (image_url || null);
+    const primaryImageUrl = formattedImageUrls.length > 0 ? formattedImageUrls[0] : DEFAULT_PLACEHOLDER;
+    if (formattedImageUrls.length === 0) {
+      formattedImageUrls.push(DEFAULT_PLACEHOLDER);
+    }
 
     await pool.query(
-      `INSERT INTO products (id, farmer_id, commodity_id, grade_id, unit_id, title, price_per_kg, stock_kg, description, image_url)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      `INSERT INTO products 
+       (id, farmer_id, commodity_id, grade_id, unit_id, title, description, price_per_kg, stock_kg, price, stock, image_url, created_at)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())`,
       [
         productId,
         farmerId,
-        commodity_id,
-        grade_id,
+        resolvedCommodityId,
+        resolvedGradeId,
         selectedUnitId,
         title.trim(),
+        description ? String(description).trim() : null,
         numericPrice,
         numericStock,
-        description || null,
+        numericPrice,
+        Math.floor(numericStock),
         primaryImageUrl
       ]
     );
@@ -300,8 +338,9 @@ const createProduct = async (req, res) => {
       data: {
         id: productId,
         farmer_id: farmerId,
-        commodity_id,
-        grade_id,
+        commodity_id: resolvedCommodityId,
+        grade_id: resolvedGradeId,
+        unit_id: selectedUnitId,
         title: title.trim(),
         price_per_kg: numericPrice,
         stock_kg: numericStock,
