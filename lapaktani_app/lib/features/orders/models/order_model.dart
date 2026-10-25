@@ -50,8 +50,9 @@ extension OrderStatusExtension on OrderStatus {
   }
 
   static OrderStatus fromKey(String key) {
-    switch (key) {
+    switch (key.toLowerCase()) {
       case 'pending_payment':
+      case 'waiting_payment':
         return OrderStatus.pendingPayment;
       case 'need_harvest':
       case 'processing':
@@ -59,6 +60,7 @@ extension OrderStatusExtension on OrderStatus {
       case 'ready_to_ship':
         return OrderStatus.readyToShip;
       case 'in_transit':
+      case 'shipped':
         return OrderStatus.inTransit;
       case 'delivered':
         return OrderStatus.delivered;
@@ -111,13 +113,13 @@ class OrderItem {
   factory OrderItem.fromMap(Map<String, dynamic> map) {
     return OrderItem(
       id: map['id']?.toString() ?? '',
-      productId: map['productId']?.toString() ?? map['id']?.toString(),
-      title: map['title']?.toString() ?? '',
-      qty: (map['qty'] as num?)?.toInt() ?? 1,
-      unit: map['unit']?.toString() ?? 'kg',
-      price: (map['price'] as num?)?.toInt() ?? 0,
-      imageUrl: map['imageUrl']?.toString() ?? '',
-      grade: map['grade']?.toString(),
+      productId: (map['productId'] ?? map['product_id'] ?? map['id'])?.toString(),
+      title: (map['title'] ?? map['product_title'])?.toString() ?? '',
+      qty: ((map['qty'] ?? map['quantity'] ?? map['qty_kg']) as num?)?.toInt() ?? 1,
+      unit: (map['unit'] ?? map['unit_name'])?.toString() ?? 'kg',
+      price: ((map['price'] ?? map['price_per_unit'] ?? map['unit_price']) as num?)?.toInt() ?? 0,
+      imageUrl: (map['imageUrl'] ?? map['image_url'] ?? map['product_image_url'])?.toString() ?? '',
+      grade: (map['grade'] ?? map['grade_name'] ?? map['grade_id'])?.toString(),
     );
   }
 }
@@ -305,31 +307,89 @@ class OrderModel {
   }
 
   factory OrderModel.fromMap(Map<String, dynamic> map) {
+    final statusKey = (map['status'] ?? map['order_status'])?.toString() ?? '';
+    final orderStatus = OrderStatusExtension.fromKey(statusKey);
+    final rawCheckpoints = map['checkpoints'] as List<dynamic>?;
+
+    List<TrackingCheckpoint> checkpointsList = [];
+    if (rawCheckpoints != null && rawCheckpoints.isNotEmpty) {
+      checkpointsList = rawCheckpoints
+          .map((x) => TrackingCheckpoint.fromMap(x as Map<String, dynamic>))
+          .toList();
+    } else {
+      final isHarvestDone = orderStatus == OrderStatus.readyToShip ||
+          orderStatus == OrderStatus.inTransit ||
+          orderStatus == OrderStatus.delivered ||
+          orderStatus == OrderStatus.completed;
+      final isTransitDone = orderStatus == OrderStatus.inTransit ||
+          orderStatus == OrderStatus.delivered ||
+          orderStatus == OrderStatus.completed;
+      final isDeliveredDone = orderStatus == OrderStatus.delivered ||
+          orderStatus == OrderStatus.completed;
+
+      checkpointsList = [
+        TrackingCheckpoint(
+          title: 'Pesanan Dikonfirmasi & Masuk Antrean Panen',
+          description: 'Petani telah menerima pesanan dan menyiapkan jadwal panen segar.',
+          timestamp: 'Hari ini',
+          location: (map['sellerLocation'] ?? map['seller_location'])?.toString() ?? 'Kebun Petani Mitra Lembang',
+          isCompleted: true,
+          isCurrent: orderStatus == OrderStatus.needHarvest,
+        ),
+        TrackingCheckpoint(
+          title: 'Panen Selesai & Diserahkan ke Kurir Pendingin Mitra',
+          description: 'Komoditas dipetik langsung dari ladang dan dimasukkan ke coolbox suhu 4-8°C.',
+          timestamp: isHarvestDone ? 'Hari ini' : '-',
+          location: 'Hub Logistik LapakTani',
+          isCompleted: isHarvestDone,
+          isCurrent: orderStatus == OrderStatus.readyToShip,
+        ),
+        TrackingCheckpoint(
+          title: 'Dalam Perjalanan Menuju Alamat Pembeli',
+          description: 'Armada cold-chain kurir sedang menuju ke lokasi pengantaran.',
+          timestamp: isTransitDone ? 'Hari ini' : '-',
+          location: (map['buyerAddress'] ?? map['delivery_address'] ?? map['shipping_address'])?.toString() ?? 'Alamat Tujuan',
+          isCompleted: isTransitDone,
+          isCurrent: orderStatus == OrderStatus.inTransit,
+        ),
+        TrackingCheckpoint(
+          title: 'Pesanan Tiba di Alamat Pembeli',
+          description: 'Paket telah diterima dengan garansi kesegaran 100%.',
+          timestamp: isDeliveredDone ? 'Hari ini' : '-',
+          location: (map['buyerAddress'] ?? map['delivery_address'] ?? map['shipping_address'])?.toString() ?? 'Alamat Tujuan',
+          isCompleted: isDeliveredDone,
+          isCurrent: isDeliveredDone,
+        ),
+      ];
+    }
+
     return OrderModel(
       id: map['id']?.toString() ?? '',
-      buyerName: map['buyerName']?.toString() ?? '',
-      buyerPhone: map['buyerPhone']?.toString() ?? '',
-      buyerAddress: map['buyerAddress']?.toString() ?? '',
-      sellerName: map['sellerName']?.toString() ?? '',
-      sellerLocation: map['sellerLocation']?.toString() ?? '',
-      createdAt: DateTime.tryParse(map['createdAt']?.toString() ?? '') ?? DateTime.now(),
-      status: OrderStatusExtension.fromKey(map['status']?.toString() ?? ''),
-      paymentMethod: map['paymentMethod']?.toString() ?? 'LapakPay',
-      paymentStatus: map['paymentStatus']?.toString() ?? 'Lunas',
+      buyerName: (map['buyerName'] ?? map['buyer_name'])?.toString() ?? 'Pembeli',
+      buyerPhone: (map['buyerPhone'] ?? map['buyer_phone'])?.toString() ?? '081234567890',
+      buyerAddress: (map['buyerAddress'] ?? map['delivery_address'] ?? map['shipping_address'])?.toString() ?? 'Alamat Pembeli',
+      sellerName: (map['sellerName'] ?? map['seller_name'])?.toString() ?? 'Kelompok Tani Mitra',
+      sellerLocation: (map['sellerLocation'] ?? map['seller_location'])?.toString() ?? 'Lembang, Jawa Barat',
+      createdAt: DateTime.tryParse((map['createdAt'] ?? map['created_at'])?.toString() ?? '') ?? DateTime.now(),
+      status: orderStatus,
+      paymentMethod: (map['paymentMethod'] ?? map['payment_method'])?.toString() ?? 'LapakPay',
+      paymentStatus: (map['paymentStatus'] ?? map['payment_status'])?.toString() ?? 'Lunas',
       items: (map['items'] as List<dynamic>?)
               ?.map((x) => OrderItem.fromMap(x as Map<String, dynamic>))
               .toList() ??
           [],
-      totalPrice: (map['totalPrice'] as num?)?.toInt() ?? 0,
-      shippingFee: (map['shippingFee'] as num?)?.toInt() ?? 0,
-      trackingNumber: map['trackingNumber']?.toString() ?? '',
-      estimatedDelivery: map['estimatedDelivery']?.toString() ?? '',
+      totalPrice: ((map['totalPrice'] ?? map['total_amount'] ?? map['total_payment']) as num?)?.toInt() ?? 0,
+      shippingFee: ((map['shippingFee'] ?? map['shipping_fee']) as num?)?.toInt() ?? 0,
+      trackingNumber: (map['trackingNumber'] ?? map['invoice_number'] ?? map['order_code'])?.toString() ?? '',
+      estimatedDelivery: (map['estimatedDelivery'] ?? map['estimated_delivery'])?.toString() ?? 'Hari ini, Pukul 15:00 WIB',
       temperature: map['temperature']?.toString() ?? '4-8°C',
-      courier: CourierInfo.fromMap((map['courier'] as Map<String, dynamic>?) ?? {}),
-      checkpoints: (map['checkpoints'] as List<dynamic>?)
-              ?.map((x) => TrackingCheckpoint.fromMap(x as Map<String, dynamic>))
-              .toList() ??
-          [],
+      courier: CourierInfo.fromMap((map['courier'] as Map<String, dynamic>?) ?? {
+        'name': 'Kang Asep Kurnia',
+        'phone': '081234567890',
+        'vehicle': 'D 4321 LT (Refrigerated Van)',
+        'serviceName': 'Kurir Pendingin Mitra',
+      }),
+      checkpoints: checkpointsList,
     );
   }
 

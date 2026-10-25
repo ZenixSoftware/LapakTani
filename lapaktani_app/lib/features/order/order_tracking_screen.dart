@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:lucide_icons/lucide_icons.dart';
+import '../../core/services/api_service.dart';
 import '../orders/models/order_model.dart';
 import '../orders/services/order_service.dart';
 
@@ -18,7 +19,10 @@ class OrderTrackingScreen extends StatefulWidget {
 }
 
 class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
+  final ApiService _apiService = ApiService();
   final OrderService _orderService = OrderService();
+  OrderModel? _serverOrder;
+  bool _isLoading = true;
 
   static const Color _tokopediaGreen = Color(0xFF03AC0E);
   static const Color _bgCanvas = Color(0xFFF4F5F7);
@@ -27,6 +31,33 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
   void initState() {
     super.initState();
     _orderService.init();
+    _loadOrderDetails();
+  }
+
+  Future<void> _loadOrderDetails() async {
+    if (!mounted) return;
+    setState(() => _isLoading = true);
+    try {
+      final data = await _apiService.getOrderDetails(widget.orderId);
+      if (data != null) {
+        if (mounted) {
+          setState(() {
+            _serverOrder = OrderModel.fromMap(data);
+            _isLoading = false;
+          });
+        }
+        return;
+      }
+    } catch (e) {
+      debugPrint('[TRACKING] Error fetching order detail: $e');
+    }
+
+    if (mounted) {
+      setState(() {
+        _serverOrder = _orderService.getOrderById(widget.orderId);
+        _isLoading = false;
+      });
+    }
   }
 
   void _copyToClipboard(String text, String label) {
@@ -96,64 +127,89 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
 
   @override
   Widget build(BuildContext context) {
+    if (_isLoading) {
+      return const Scaffold(
+        backgroundColor: _bgCanvas,
+        body: Center(
+          child: CircularProgressIndicator(color: _tokopediaGreen),
+        ),
+      );
+    }
+
+    final order = _serverOrder;
+    if (order == null) {
+      return Scaffold(
+        backgroundColor: _bgCanvas,
+        appBar: AppBar(
+          backgroundColor: Colors.white,
+          elevation: 0.5,
+          leading: IconButton(
+            icon: const Icon(LucideIcons.arrowLeft, color: Color(0xFF1E293B)),
+            onPressed: () => Navigator.pop(context),
+          ),
+          title: Text(
+            'Lacak Pesanan',
+            style: GoogleFonts.inter(fontSize: 16, fontWeight: FontWeight.w700, color: const Color(0xFF0F172A)),
+          ),
+        ),
+        body: Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              const Icon(LucideIcons.packageX, size: 54, color: Color(0xFF94A3B8)),
+              const SizedBox(height: 14),
+              Text(
+                'Pesanan Tidak Ditemukan',
+                style: GoogleFonts.inter(fontSize: 15, fontWeight: FontWeight.w700, color: const Color(0xFF1E293B)),
+              ),
+              const SizedBox(height: 6),
+              Text(
+                'ID: ${widget.orderId}',
+                style: GoogleFonts.inter(fontSize: 12, color: const Color(0xFF64748B)),
+              ),
+              const SizedBox(height: 18),
+              ElevatedButton(
+                onPressed: () => Navigator.pop(context),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: _tokopediaGreen,
+                  foregroundColor: Colors.white,
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                ),
+                child: const Text('Kembali'),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+
+    final courier = order.courier;
+
     return Scaffold(
       backgroundColor: _bgCanvas,
       body: SafeArea(
-        child: ValueListenableBuilder<List<OrderModel>>(
-          valueListenable: _orderService.ordersNotifier,
-          builder: (context, orders, _) {
-            final order = _orderService.getOrderById(widget.orderId) ??
-                (orders.isNotEmpty
-                    ? orders.first
-                    : OrderModel(
-                        id: widget.orderId,
-                        trackingNumber: 'LT-2024-8841-B',
-                        createdAt: DateTime.now(),
-                        buyerName: 'Budi Santoso',
-                        buyerAddress: 'Jl. Maribaya No. 42, Lembang, Kab. Bandung Barat',
-                        buyerPhone: '081234567890',
-                        sellerName: 'Kebun Manik Sari (Pak Wayan)',
-                        sellerLocation: 'Lembang, Bandung Barat',
-                        status: OrderStatus.inTransit,
-                        totalPrice: 58000,
-                        shippingFee: 0,
-                        paymentMethod: 'LapakPay (Lunas)',
-                        paymentStatus: 'Lunas',
-                        estimatedDelivery: 'Hari ini, 15:30 WIB',
-                        temperature: '4.2°C',
-                        items: [],
-                        courier: const CourierInfo(
-                          name: 'Kang Asep Kurnia',
-                          phone: '0813-8821-9902',
-                          vehicle: 'Honda Vario • D 4821 ABZ',
-                          serviceName: 'Kurir Pendingin Mitra',
-                          photoUrl:
-                              'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150',
-                        ),
-                        checkpoints: [],
-                      ));
-
-            final courier = order.courier;
-
-            return Column(
-              children: [
-                _buildStickyHeader(),
-                Expanded(
-                  child: SingleChildScrollView(
-                    child: Column(
-                      children: [
-                        _buildStatusHeroCard(order),
-                        _buildMapInteractiveCard(order),
-                        _buildCourierProfileCard(courier),
-                        _buildTimelineStepperCard(order),
-                        const SizedBox(height: 24),
-                      ],
-                    ),
+        child: RefreshIndicator(
+          onRefresh: _loadOrderDetails,
+          color: _tokopediaGreen,
+          child: Column(
+            children: [
+              _buildStickyHeader(),
+              Expanded(
+                child: SingleChildScrollView(
+                  physics: const AlwaysScrollableScrollPhysics(),
+                  child: Column(
+                    children: [
+                      _buildStatusHeroCard(order),
+                      _buildMapInteractiveCard(order),
+                      _buildCourierProfileCard(courier),
+                      _buildTimelineStepperCard(order),
+                      const SizedBox(height: 24),
+                    ],
                   ),
                 ),
-              ],
-            );
-          },
+              ),
+            ],
+          ),
         ),
       ),
     );
@@ -421,7 +477,7 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text('ASAL KEBUN', style: GoogleFonts.inter(fontSize: 8, fontWeight: FontWeight.w700, color: const Color(0xFF94A3B8))),
-                        Text('Kebun Manik Sari (Lembang)', style: GoogleFonts.inter(fontSize: 10, fontWeight: FontWeight.w700, color: const Color(0xFF0F172A))),
+                        Text(order.sellerLocation.isNotEmpty ? order.sellerLocation : (order.sellerName.isNotEmpty ? order.sellerName : 'Kebun Mitra LapakTani'), style: GoogleFonts.inter(fontSize: 10, fontWeight: FontWeight.w700, color: const Color(0xFF0F172A))),
                       ],
                     ),
                   ],
@@ -483,7 +539,7 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text('TUJUAN ANDA', style: GoogleFonts.inter(fontSize: 8, fontWeight: FontWeight.w700, color: const Color(0xFF94A3B8))),
-                        Text('Jl. Maribaya No. 42', style: GoogleFonts.inter(fontSize: 10, fontWeight: FontWeight.w700, color: const Color(0xFF0F172A))),
+                        Text(order.buyerAddress.isNotEmpty ? (order.buyerAddress.length > 25 ? '${order.buyerAddress.substring(0, 25)}...' : order.buyerAddress) : 'Alamat Pembeli', style: GoogleFonts.inter(fontSize: 10, fontWeight: FontWeight.w700, color: const Color(0xFF0F172A))),
                       ],
                     ),
                   ],
@@ -664,6 +720,16 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
   }
 
   Widget _buildTimelineStepperCard(OrderModel order) {
+    // Dynamic timeline stepper mapped directly to real order_status
+    final isStep1Active = order.status == OrderStatus.needHarvest || order.status == OrderStatus.pendingPayment;
+    final isStep2Completed = order.status == OrderStatus.readyToShip ||
+        order.status == OrderStatus.inTransit ||
+        order.status == OrderStatus.delivered ||
+        order.status == OrderStatus.completed;
+    final isStep2Active = order.status == OrderStatus.readyToShip || order.status == OrderStatus.inTransit;
+    final isStep3Completed = order.status == OrderStatus.delivered || order.status == OrderStatus.completed;
+    final isStep3Active = order.status == OrderStatus.delivered || order.status == OrderStatus.completed;
+
     return Container(
       margin: const EdgeInsets.only(top: 8),
       padding: const EdgeInsets.all(14),
@@ -702,37 +768,30 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
             ],
           ),
           const SizedBox(height: 16),
-          // Vertical stepper list
+
           _buildTimelineStep(
             isFirst: true,
             isCompleted: true,
-            isActive: false,
-            title: 'Dipetik Segar di Ladang',
-            time: '05:00 WIB',
-            description: 'Petani Pak Wayan selesai memetik sayur berembun subuh di petak hidroponik Blok B.',
+            isActive: isStep1Active,
+            title: 'Pesanan Dikonfirmasi & Masuk Antrean Panen',
+            time: 'Terjadwal',
+            description: 'Petani telah mengonfirmasi pesanan dan menyiapkan jadwal panen segar di ladang.',
           ),
           _buildTimelineStep(
-            isCompleted: true,
-            isActive: false,
-            title: 'Sortir Mutu & Kemasan Daun Pisang',
-            time: '05:45 WIB',
-            description: 'Melewati quality control bebas pestisida dan dikemas higienis dengan pembungkus daun alami ramah lingkungan.',
-          ),
-          _buildTimelineStep(
-            isCompleted: true,
-            isActive: order.status != OrderStatus.completed,
+            isCompleted: isStep2Completed,
+            isActive: isStep2Active,
             isColdboxActive: true,
-            title: 'Paket Dibawa Kurir',
-            time: '06:30 WIB',
-            description: 'Kurir Kang Asep membawa boks pendingin termal terisolasi menuju alamat pemesan. Suhu terpantau stabil di 4°C.',
+            title: 'Panen Selesai & Diserahkan ke Kurir Pendingin Mitra',
+            time: isStep2Completed ? 'Diproses' : 'Menunggu Petik',
+            description: 'Komoditas dipetik langsung dari ladang dan dimasukkan ke coolbox suhu ${order.temperature}.',
           ),
           _buildTimelineStep(
             isLast: true,
-            isCompleted: order.status == OrderStatus.completed,
-            isActive: false,
-            title: 'Tiba di Alamat Pembeli',
-            time: order.status == OrderStatus.completed ? '07:40 WIB' : 'Estimasi 07:45 WIB',
-            description: 'Sayuran segar diserahterimakan langsung ke tangan pembeli dengan jaminan pasti segar 100%.',
+            isCompleted: isStep3Completed,
+            isActive: isStep3Active,
+            title: 'Pesanan Tiba di Alamat Pembeli',
+            time: isStep3Completed ? 'Selesai' : order.estimatedDelivery,
+            description: 'Paket tiba di ${order.buyerAddress.isNotEmpty ? order.buyerAddress : "alamat pembeli"} dengan garansi kesegaran 100%.',
           ),
         ],
       ),

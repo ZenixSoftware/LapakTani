@@ -261,6 +261,54 @@ class ApiService {
     }
   }
 
+  Future<List<Map<String, dynamic>>> getFarmerOrders() async {
+    try {
+      final response = await _fetchGet('/orders/farmer/orders');
+      if (response.statusCode >= 200 && response.statusCode < 300) {
+        final decoded = jsonDecode(response.body);
+        if (decoded['success'] == true && decoded['data'] is List) {
+          return List<Map<String, dynamic>>.from(decoded['data']);
+        }
+      }
+      return [];
+    } catch (_) {
+      return [];
+    }
+  }
+
+  Future<Map<String, dynamic>?> updateOrderStatus(String orderId, String newStatus) async {
+    try {
+      final response = await _put('/orders/$orderId/status', {
+        'status': newStatus,
+        'order_status': newStatus,
+      });
+      if (response.statusCode >= 200 && response.statusCode < 300) {
+        final decoded = jsonDecode(response.body);
+        if (decoded['success'] == true && decoded['data'] is Map) {
+          return Map<String, dynamic>.from(decoded['data']);
+        }
+      }
+      return null;
+    } catch (_) {
+      return null;
+    }
+  }
+
+  Future<Map<String, dynamic>?> getOrderDetails(String orderId) async {
+    try {
+      final response = await _fetchGet('/orders/$orderId');
+      if (response.statusCode >= 200 && response.statusCode < 300) {
+        final decoded = jsonDecode(response.body);
+        if (decoded['success'] == true && decoded['data'] is Map) {
+          return Map<String, dynamic>.from(decoded['data']);
+        }
+      }
+      return null;
+    } catch (_) {
+      return null;
+    }
+  }
+
   Future<Map<String, dynamic>?> getOrderPaymentStatus(String orderId) async {
     try {
       final response = await _fetchGet('/orders/$orderId/payment');

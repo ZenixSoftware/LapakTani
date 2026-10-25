@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:lucide_icons/lucide_icons.dart';
+import '../../../core/services/api_service.dart';
 import '../models/order_model.dart';
 import '../services/order_service.dart';
 
@@ -18,8 +19,44 @@ class OrderTrackingScreen extends StatefulWidget {
 }
 
 class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
+  final ApiService _apiService = ApiService();
   final OrderService _orderService = OrderService();
+  OrderModel? _serverOrder;
+  bool _isLoading = true;
   bool _isActionLoading = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _orderService.init();
+    _loadOrderDetails();
+  }
+
+  Future<void> _loadOrderDetails() async {
+    if (!mounted) return;
+    setState(() => _isLoading = true);
+    try {
+      final data = await _apiService.getOrderDetails(widget.orderId);
+      if (data != null) {
+        if (mounted) {
+          setState(() {
+            _serverOrder = OrderModel.fromMap(data);
+            _isLoading = false;
+          });
+        }
+        return;
+      }
+    } catch (e) {
+      debugPrint('[TRACKING] Error fetching order details: $e');
+    }
+
+    if (mounted) {
+      setState(() {
+        _serverOrder = _orderService.getOrderById(widget.orderId);
+        _isLoading = false;
+      });
+    }
+  }
 
   void _copyToClipboard(String text, String label) {
     Clipboard.setData(ClipboardData(text: text));
@@ -244,7 +281,9 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
 
     if (confirm == true) {
       setState(() => _isActionLoading = true);
+      await _apiService.updateOrderStatus(order.id, 'COMPLETED');
       await _orderService.confirmDelivered(order.id);
+      await _loadOrderDetails();
       if (mounted) {
         setState(() => _isActionLoading = false);
         ScaffoldMessenger.of(context).showSnackBar(
@@ -260,12 +299,18 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return ValueListenableBuilder<List<OrderModel>>(
-      valueListenable: _orderService.ordersNotifier,
-      builder: (context, orders, _) {
-        final order = _orderService.getOrderById(widget.orderId);
+    if (_isLoading) {
+      return const Scaffold(
+        backgroundColor: Color(0xFFF8F9FF),
+        body: Center(
+          child: CircularProgressIndicator(color: Color(0xFF03AC0E)),
+        ),
+      );
+    }
 
-        if (order == null) {
+    final order = _serverOrder ?? _orderService.getOrderById(widget.orderId);
+
+    if (order == null) {
           return Scaffold(
             backgroundColor: const Color(0xFFF8F9FF),
             appBar: AppBar(
@@ -350,30 +395,33 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
               ),
             ],
           ),
-          body: SingleChildScrollView(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                _buildLiveStatusHeroCard(order),
-                const SizedBox(height: 12),
-                _buildColdChainBadgeCard(order),
-                const SizedBox(height: 14),
-                _buildCourierCard(order),
-                const SizedBox(height: 14),
-                _buildRouteLocationCard(order),
-                const SizedBox(height: 16),
-                _buildStepperTimelineSection(order),
-                const SizedBox(height: 16),
-                _buildShippedItemsCard(order),
-                const SizedBox(height: 80),
-              ],
+          body: RefreshIndicator(
+            onRefresh: _loadOrderDetails,
+            color: const Color(0xFF03AC0E),
+            child: SingleChildScrollView(
+              physics: const AlwaysScrollableScrollPhysics(),
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  _buildLiveStatusHeroCard(order),
+                  const SizedBox(height: 12),
+                  _buildColdChainBadgeCard(order),
+                  const SizedBox(height: 14),
+                  _buildCourierCard(order),
+                  const SizedBox(height: 14),
+                  _buildRouteLocationCard(order),
+                  const SizedBox(height: 16),
+                  _buildStepperTimelineSection(order),
+                  const SizedBox(height: 16),
+                  _buildShippedItemsCard(order),
+                  const SizedBox(height: 80),
+                ],
+              ),
             ),
           ),
           bottomSheet: _buildBottomActionBar(order),
         );
-      },
-    );
   }
 
   Widget _buildLiveStatusHeroCard(OrderModel order) {
