@@ -258,6 +258,36 @@ class ApiService {
     }
   }
 
+  Future<Map<String, dynamic>?> getOrderPaymentStatus(String orderId) async {
+    try {
+      final response = await _fetchGet('/orders/$orderId/payment');
+      if (response.statusCode >= 200 && response.statusCode < 300) {
+        final decoded = jsonDecode(response.body);
+        if (decoded['success'] == true && decoded['data'] is Map) {
+          return Map<String, dynamic>.from(decoded['data']);
+        }
+      }
+      return null;
+    } catch (_) {
+      return null;
+    }
+  }
+
+  Future<bool> simulatePaymentWebhook(String orderId, {String status = 'settlement'}) async {
+    try {
+      final response = await _post('/orders/$orderId/simulate-payment', {
+        'status': status,
+      });
+      if (response.statusCode >= 200 && response.statusCode < 300) {
+        final decoded = jsonDecode(response.body);
+        return decoded['success'] == true;
+      }
+      return false;
+    } catch (_) {
+      return false;
+    }
+  }
+
   Future<http.Response> _fetchGet(String path) async {
     final normalizedPath = path.startsWith('/') ? path : '/$path';
     final url = Uri.parse('$baseUrl$normalizedPath');

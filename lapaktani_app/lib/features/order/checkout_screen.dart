@@ -4,6 +4,8 @@ import 'package:lucide_icons/lucide_icons.dart';
 import '../../core/services/api_service.dart';
 import '../cart/cart_screen.dart';
 import 'order_success_screen.dart';
+import 'payment_method_selection_screen.dart';
+import 'payment_instruction_screen.dart';
 
 class CheckoutScreen extends StatefulWidget {
   final List<CartItemModel>? cartItems;
@@ -30,6 +32,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
 
   int _selectedLogisticsIndex = 0;
   String _selectedPaymentMethod = 'LapakPay (Simulasi)';
+  String _selectedPaymentCode = 'LAPAKPAY_SIMULATOR';
   bool _useCoins = true;
   bool _isSubmitting = false;
 
@@ -227,13 +230,13 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
         'price_per_unit': i.price,
       }).toList();
 
-      // Backend Checkout API with MySQL ACID transaction & strict stock deduction
+      // Backend Checkout API with MySQL ACID transaction & payment gateway support
       final backendResult = await ApiService().createCheckoutOrder(
         items: checkoutPayload,
         deliveryAddress: _deliveryAddress,
         shippingFee: _shippingCost,
         courierService: _selectedLogisticsIndex == 0 ? 'Kurir Pendingin Mitra' : 'Kargo Agribisnis Dingin',
-        paymentMethod: 'LAPAKPAY_SIMULATOR',
+        paymentMethod: _selectedPaymentCode,
       );
 
       if (backendResult == null) {
@@ -246,7 +249,9 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
       final serverTotalAmount = (backendResult['total_amount'] as num?)?.toInt() ?? _totalBilling;
       final serverShippingFee = (backendResult['shipping_fee'] as num?)?.toInt() ?? _shippingCost;
       final serverDeliveryAddress = (backendResult['delivery_address'] ?? _deliveryAddress).toString();
-      final serverPaymentMethod = (backendResult['payment_method'] ?? 'LapakPay Simulator').toString();
+      final serverPaymentMethod = (backendResult['payment_method'] ?? _selectedPaymentMethod).toString();
+      final serverPaymentStatus = (backendResult['payment_status'] ?? '').toString().toUpperCase();
+      final paymentDetails = backendResult['payment_details'] as Map<String, dynamic>?;
       final serverItems = backendResult['items'] as List<dynamic>?;
       final serverCreatedAtStr = backendResult['created_at']?.toString();
       final serverCreatedAt = serverCreatedAtStr != null ? DateTime.tryParse(serverCreatedAtStr) : null;
@@ -259,29 +264,56 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
       }
 
       if (mounted) {
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(
-            builder: (_) => OrderSuccessScreen(
-              orderId: serverOrderId,
-              invoiceNumber: serverInvoiceNumber,
-              totalAmount: serverTotalAmount,
-              shippingFee: serverShippingFee,
-              paymentMethod: '$serverPaymentMethod (Terverifikasi)',
-              deliveryAddress: serverDeliveryAddress,
-              recipientName: _recipientName,
-              items: serverItems ??
-                  _items.map((i) => {
-                        'title': i.title,
-                        'quantity': i.quantity,
-                        'unit': i.unit,
-                        'price_per_unit': i.price,
-                        'subtotal': i.price * i.quantity,
-                      }).toList(),
-              createdAt: serverCreatedAt ?? DateTime.now(),
+        if (serverPaymentStatus == 'PENDING' || serverPaymentStatus == 'WAITING_PAYMENT') {
+          final paymentRef = (paymentDetails?['payment_reference'] ?? serverInvoiceNumber).toString();
+          final paymentChannel = (paymentDetails?['payment_channel'] ?? _selectedPaymentCode).toString();
+          final channelName = (paymentDetails?['channel_name'] ?? _selectedPaymentMethod).toString();
+          final expiredAtStr = paymentDetails?['payment_expired_at']?.toString();
+          final expiredAt = expiredAtStr != null ? DateTime.tryParse(expiredAtStr) : null;
+
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(
+              builder: (_) => PaymentInstructionScreen(
+                orderId: serverOrderId,
+                invoiceNumber: serverInvoiceNumber,
+                totalAmount: serverTotalAmount,
+                shippingFee: serverShippingFee,
+                paymentChannel: paymentChannel,
+                channelName: channelName,
+                paymentReference: paymentRef,
+                deliveryAddress: serverDeliveryAddress,
+                recipientName: _recipientName,
+                items: serverItems,
+                expiredAt: expiredAt,
+              ),
             ),
-          ),
-        );
+          );
+        } else {
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(
+              builder: (_) => OrderSuccessScreen(
+                orderId: serverOrderId,
+                invoiceNumber: serverInvoiceNumber,
+                totalAmount: serverTotalAmount,
+                shippingFee: serverShippingFee,
+                paymentMethod: '$serverPaymentMethod (Terverifikasi)',
+                deliveryAddress: serverDeliveryAddress,
+                recipientName: _recipientName,
+                items: serverItems ??
+                    _items.map((i) => {
+                          'title': i.title,
+                          'quantity': i.quantity,
+                          'unit': i.unit,
+                          'price_per_unit': i.price,
+                          'subtotal': i.price * i.quantity,
+                        }).toList(),
+                createdAt: serverCreatedAt ?? DateTime.now(),
+              ),
+            ),
+          );
+        }
       }
     } catch (e) {
       if (mounted) {
@@ -985,6 +1017,21 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
     );
   }
 
+  Future<void> _openPaymentSelectionScreen() async {
+    final result = await Navigator.push<PaymentMethodOption>(
+      context,
+      MaterialPageRoute(
+        builder: (_) => PaymentMethodSelectionScreen(currentSelectedCode: _selectedPaymentCode),
+      ),
+    );
+    if (result != null && mounted) {
+      setState(() {
+        _selectedPaymentCode = result.code;
+        _selectedPaymentMethod = result.title;
+      });
+    }
+  }
+
   Widget _buildPaymentMethodCard() {
     return Container(
       margin: const EdgeInsets.only(top: 8),
@@ -1003,14 +1050,18 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                 'Metode Pembayaran',
                 style: GoogleFonts.inter(fontSize: 12, fontWeight: FontWeight.w700, color: const Color(0xFF0F172A)),
               ),
-              Text(
-                'Lihat Semua',
-                style: GoogleFonts.inter(fontSize: 11, fontWeight: FontWeight.w700, color: _tokopediaGreen),
+              InkWell(
+                onTap: _openPaymentSelectionScreen,
+                child: Text(
+                  'Lihat Semua',
+                  style: GoogleFonts.inter(fontSize: 11, fontWeight: FontWeight.w700, color: _tokopediaGreen),
+                ),
               ),
             ],
           ),
           const SizedBox(height: 10),
           _buildPaymentOption(
+            code: 'LAPAKPAY_SIMULATOR',
             title: 'LapakPay (Simulasi)',
             subtitle: 'Saldo: Rp 2.500.000 / Simulasi Terpotong Otomatis',
             badge: 'Instan & Bebas Biaya',
@@ -1020,6 +1071,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
           ),
           const SizedBox(height: 8),
           _buildPaymentOption(
+            code: 'BCA_VA',
             title: 'BCA Virtual Account',
             subtitle: 'Verifikasi otomatis instan 24/7',
             icon: LucideIcons.creditCard,
@@ -1028,16 +1080,18 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
           ),
           const SizedBox(height: 8),
           _buildPaymentOption(
-            title: 'GoPay / QRIS',
-            subtitle: 'Pindai kode QR via aplikasi perbankan',
+            code: 'QRIS',
+            title: 'QRIS (Semua Bank & E-Wallet)',
+            subtitle: 'Pindai kode QR via aplikasi perbankan / e-Wallet',
             icon: LucideIcons.qrCode,
             iconBg: const Color(0xFFF0FDFA),
             iconColor: const Color(0xFF0D9488),
           ),
           const SizedBox(height: 8),
           _buildPaymentOption(
-            title: 'COD (Bayar di Tempat)',
-            subtitle: 'Bayar tunai ke kurir saat sayur tiba',
+            code: 'TRANSFER_BANK',
+            title: 'Transfer Bank Manual',
+            subtitle: 'Kirim ke rekening resmi LapakTani',
             icon: LucideIcons.banknote,
             iconBg: const Color(0xFFF1F5F9),
             iconColor: const Color(0xFF475569),
@@ -1048,6 +1102,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
   }
 
   Widget _buildPaymentOption({
+    required String code,
     required String title,
     required String subtitle,
     String? badge,
@@ -1055,11 +1110,14 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
     required Color iconBg,
     required Color iconColor,
   }) {
-    final bool isSelected = _selectedPaymentMethod == title;
+    final bool isSelected = _selectedPaymentCode == code || _selectedPaymentMethod == title;
 
     return InkWell(
       onTap: () {
-        setState(() => _selectedPaymentMethod = title);
+        setState(() {
+          _selectedPaymentCode = code;
+          _selectedPaymentMethod = title;
+        });
       },
       borderRadius: BorderRadius.circular(10),
       child: Container(
