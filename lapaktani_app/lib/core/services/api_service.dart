@@ -299,6 +299,21 @@ class ApiService {
     }
   }
 
+  Future<Map<String, dynamic>?> getSoilTelemetry(String productId) async {
+    try {
+      final response = await _fetchGet('/soil/telemetry/$productId');
+      if (response.statusCode >= 200 && response.statusCode < 300) {
+        final decoded = jsonDecode(response.body);
+        if (decoded['success'] == true && decoded['data'] is Map) {
+          return Map<String, dynamic>.from(decoded['data']);
+        }
+      }
+      return null;
+    } catch (_) {
+      return null;
+    }
+  }
+
   Future<Map<String, dynamic>?> getOrderDetails(String orderId) async {
     try {
       final response = await _fetchGet('/orders/$orderId');
