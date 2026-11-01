@@ -979,29 +979,41 @@ const updateOrderStatus = async (req, res) => {
 
   try {
     const [existing] = await pool.query(
-      'SELECT id, order_status, payment_status, total_amount, invoice_number, payment_method FROM orders WHERE id = ? OR invoice_number = ? LIMIT 1',
-      [id, id]
+      `SELECT o.id, o.order_status, o.payment_status, o.total_amount, o.invoice_number, o.payment_method
+       FROM orders o
+       WHERE (o.id = ? OR o.invoice_number = ?)
+         AND (
+           o.user_id = ? OR o.buyer_id = ?
+           OR EXISTS (
+             SELECT 1 FROM order_items oi
+             JOIN products p ON (oi.product_id = p.id OR CAST(oi.product_id AS CHAR) = CAST(p.id AS CHAR))
+             WHERE oi.order_id = o.id AND (p.farmer_id = ? OR p.farmer_id = (SELECT user_id FROM farmer_profiles WHERE user_id = ? LIMIT 1))
+           )
+         )
+       LIMIT 1`,
+      [id, id, userId, userId, userId, userId]
     );
 
     if (existing.length === 0) {
       return res.status(404).json({
         success: false,
-        message: 'Pesanan tidak ditemukan.'
+        message: 'Pesanan tidak ditemukan atau Anda tidak memiliki hak akses.'
       });
     }
 
     const order = existing[0];
 
     await pool.query(
-      'UPDATE orders SET order_status = ?, updated_at = NOW() WHERE id = ?',
-      [requestedStatus, order.id]
+      'UPDATE orders SET order_status = ?, updated_at = NOW() WHERE (id = ? OR invoice_number = ?)',
+      [requestedStatus, order.id, order.id]
     );
 
     console.log(`[ORDER] Order ${order.id} status transitioned from ${order.order_status} to ${requestedStatus} by user: ${userId}`);
 
     return res.status(200).json({
       success: true,
-      message: `Status pesanan berhasil diperbarui menjadi ${requestedStatus}.`,
+      message: 'Status pesanan berhasil diperbarui',
+      order_status: requestedStatus,
       data: {
         id: order.id,
         invoice_number: order.invoice_number,

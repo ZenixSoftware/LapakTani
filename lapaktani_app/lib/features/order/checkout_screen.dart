@@ -240,12 +240,14 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
       final serverCreatedAtStr = backendResult['created_at']?.toString();
       final serverCreatedAt = serverCreatedAtStr != null ? DateTime.tryParse(serverCreatedAtStr) : null;
 
-      // Remove checked-out items from cart
-      for (final item in _items) {
-        try {
-          await ApiService().removeCartItem(item.id);
-        } catch (_) {}
-      }
+      // Remove checked-out items from cart (silently ignore if database auto-cleanup already deleted them)
+      try {
+        for (final item in _items) {
+          try {
+            await ApiService().removeCartItem(item.id);
+          } catch (_) {}
+        }
+      } catch (_) {}
 
       if (mounted) {
         if (serverPaymentStatus == 'PENDING' || serverPaymentStatus == 'WAITING_PAYMENT') {

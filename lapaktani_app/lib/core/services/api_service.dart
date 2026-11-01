@@ -284,8 +284,13 @@ class ApiService {
       });
       if (response.statusCode >= 200 && response.statusCode < 300) {
         final decoded = jsonDecode(response.body);
-        if (decoded['success'] == true && decoded['data'] is Map) {
-          return Map<String, dynamic>.from(decoded['data']);
+        if (decoded is Map<String, dynamic>) {
+          final result = Map<String, dynamic>.from(decoded);
+          if (decoded['data'] is Map) {
+            result.addAll(Map<String, dynamic>.from(decoded['data']));
+          }
+          result['status'] ??= newStatus;
+          return result;
         }
       }
       return null;

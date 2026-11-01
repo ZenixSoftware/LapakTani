@@ -101,6 +101,33 @@ class _OrderHistoryScreenState extends State<OrderHistoryScreen> {
     return 'Rp${buffer.toString()}';
   }
 
+  Future<void> _handleConfirmOrderCompleted(OrderModel order) async {
+    try {
+      final scaffoldMessenger = ScaffoldMessenger.of(context);
+      final res = await ApiService().updateOrderStatus(order.id, 'COMPLETED');
+      if (res != null && (res['success'] == true || res['status'] == 'COMPLETED' || res['order_status'] == 'COMPLETED')) {
+        scaffoldMessenger.showSnackBar(
+          const SnackBar(
+            content: Text('Pesanan berhasil diselesaikan.'),
+            backgroundColor: Color(0xFF2E7D32),
+          ),
+        );
+        // Refresh order history from MySQL
+        await _fetchOrdersFromBackend();
+      } else {
+        throw Exception(res?['message'] ?? 'Gagal memperbarui status');
+      }
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Gagal menyelesaikan pesanan: ${e.toString()}'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
+  }
+
   void _showOrderCompletionModal(BuildContext context, OrderModel order) {
     bool isFreshConfirmed = false;
     bool isWeightConfirmed = false;
@@ -279,22 +306,7 @@ class _OrderHistoryScreenState extends State<OrderHistoryScreen> {
                         onPressed: canConfirm
                             ? () async {
                                 Navigator.pop(ctx);
-                                await _orderService.updateOrderStatus(
-                                  order.id,
-                                  OrderStatus.completed,
-                                  checkpointTitle: 'Pesanan Selesai',
-                                  checkpointDesc: 'Pembeli mengonfirmasi kualitas dan timbangan panen prima.',
-                                );
-                                await _fetchOrdersFromBackend();
-                                if (context.mounted) {
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                    SnackBar(
-                                      content: Text('Pesanan ${order.id} telah diselesaikan.'),
-                                      backgroundColor: _tokopediaGreen,
-                                      behavior: SnackBarBehavior.floating,
-                                    ),
-                                  );
-                                }
+                                await _handleConfirmOrderCompleted(order);
                               }
                             : null,
                         style: ElevatedButton.styleFrom(
