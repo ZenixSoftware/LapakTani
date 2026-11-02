@@ -13,6 +13,7 @@ const masterRoutes = require('./src/routes/master');
 const uploadRoutes = require('./src/routes/upload');
 const cartRoutes = require('./src/routes/cart');
 const orderRoutes = require('./src/routes/orders');
+const soilRoutes = require('./src/routes/soil');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -73,6 +74,7 @@ app.use('/api/master', masterRoutes);
 app.use('/api/upload', uploadRoutes);
 app.use('/api/cart', cartRoutes);
 app.use('/api/orders', orderRoutes);
+app.use('/api/soil', soilRoutes);
 
 
 app.use((req, res) => {

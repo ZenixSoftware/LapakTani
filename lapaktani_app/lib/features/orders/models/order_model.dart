@@ -74,6 +74,20 @@ extension OrderStatusExtension on OrderStatus {
   }
 }
 
+double _parseDouble(dynamic val) {
+  if (val == null) return 0.0;
+  if (val is num) return val.toDouble();
+  return double.tryParse(val.toString()) ?? 0.0;
+}
+
+int _parseInt(dynamic val) {
+  if (val == null) return 0;
+  if (val is num) return val.toInt();
+  final d = double.tryParse(val.toString());
+  if (d != null) return d.round();
+  return int.tryParse(val.toString()) ?? 0;
+}
+
 class OrderItem {
   final String id;
   final String? productId;
@@ -96,6 +110,8 @@ class OrderItem {
   });
 
   String get effectiveProductId => productId ?? id;
+  double get pricePerUnit => price.toDouble();
+  double get subtotal => (price * qty).toDouble();
 
   Map<String, dynamic> toMap() {
     return {
@@ -111,13 +127,15 @@ class OrderItem {
   }
 
   factory OrderItem.fromMap(Map<String, dynamic> map) {
+    final parsedQty = _parseInt(map['qty'] ?? map['quantity'] ?? map['qty_kg']);
+    final parsedPrice = _parseDouble(map['price'] ?? map['price_per_unit'] ?? map['unit_price']);
     return OrderItem(
       id: map['id']?.toString() ?? '',
       productId: (map['productId'] ?? map['product_id'] ?? map['id'])?.toString(),
       title: (map['title'] ?? map['product_title'])?.toString() ?? '',
-      qty: ((map['qty'] ?? map['quantity'] ?? map['qty_kg']) as num?)?.toInt() ?? 1,
+      qty: parsedQty <= 0 ? 1 : parsedQty,
       unit: (map['unit'] ?? map['unit_name'])?.toString() ?? 'kg',
-      price: ((map['price'] ?? map['price_per_unit'] ?? map['unit_price']) as num?)?.toInt() ?? 0,
+      price: parsedPrice.round(),
       imageUrl: (map['imageUrl'] ?? map['image_url'] ?? map['product_image_url'])?.toString() ?? '',
       grade: (map['grade'] ?? map['grade_name'] ?? map['grade_id'])?.toString(),
     );
@@ -240,6 +258,12 @@ class OrderModel {
     required this.courier,
     required this.checkpoints,
   });
+
+  static double parseDouble(dynamic val) => _parseDouble(val);
+  static int parseInt(dynamic val) => _parseInt(val);
+
+  double get totalAmount => totalPrice.toDouble();
+  double get shippingFeeAmount => shippingFee.toDouble();
 
   OrderModel copyWith({
     String? id,
@@ -378,8 +402,8 @@ class OrderModel {
               ?.map((x) => OrderItem.fromMap(x as Map<String, dynamic>))
               .toList() ??
           [],
-      totalPrice: ((map['totalPrice'] ?? map['total_amount'] ?? map['total_payment']) as num?)?.toInt() ?? 0,
-      shippingFee: ((map['shippingFee'] ?? map['shipping_fee']) as num?)?.toInt() ?? 0,
+      totalPrice: _parseDouble(map['totalPrice'] ?? map['total_amount'] ?? map['total_payment']).round(),
+      shippingFee: _parseDouble(map['shippingFee'] ?? map['shipping_fee']).round(),
       trackingNumber: (map['trackingNumber'] ?? map['invoice_number'] ?? map['order_code'])?.toString() ?? '',
       estimatedDelivery: (map['estimatedDelivery'] ?? map['estimated_delivery'])?.toString() ?? 'Hari ini, Pukul 15:00 WIB',
       temperature: map['temperature']?.toString() ?? '4-8°C',

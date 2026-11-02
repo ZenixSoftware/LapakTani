@@ -6,7 +6,8 @@ import '../cart/cart_screen.dart';
 import '../orders/models/order_model.dart';
 import '../orders/services/order_service.dart';
 import '../orders/screens/order_tracking_screen.dart';
-import 'services/stock_service.dart';
+import 'services/stock_service.dart';
+import 'widgets/soil_telemetry_card.dart';
 
 class ProductDetailScreen extends StatefulWidget {
   final dynamic product;
@@ -358,6 +359,8 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                       grade: grade,
                       description: description,
                     ),
+                    _buildSectionDivider(),
+                    SoilTelemetryCard(productId: _productId),
                     _buildSectionDivider(),
                     _buildMoreFromShopSection(),
                     const SizedBox(height: 20),

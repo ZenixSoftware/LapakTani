@@ -725,11 +725,18 @@ const getMyOrders = async (req, res) => {
     }
 
     const result = orderRows.map((order) => {
-      const items = itemsByOrder.get(order.id) || [];
+      const items = (itemsByOrder.get(order.id) || []).map((item) => ({
+        ...item,
+        quantity: Number(item.quantity || 1),
+        price_per_unit: Number(item.price_per_unit || 0),
+        subtotal: Number(item.subtotal || 0)
+      }));
       return {
         ...order,
+        total_amount: Number(order.total_amount || 0),
+        shipping_fee: Number(order.shipping_fee || 0),
         items: items,
-        payment_details: generatePaymentDetails(order.payment_method, order.total_amount, order.id, order.invoice_number)
+        payment_details: generatePaymentDetails(order.payment_method, Number(order.total_amount || 0), order.id, order.invoice_number)
       };
     });
 
@@ -777,7 +784,7 @@ const getOrderById = async (req, res) => {
         o.created_at,
         COALESCE(o.updated_at, o.created_at) as updated_at,
         u.full_name as buyer_name,
-        COALESCE(u.phone_number, u.phone, '081234567890') as buyer_phone
+        COALESCE(u.phone, '') as buyer_phone
       FROM orders o
       LEFT JOIN users u ON (o.user_id = u.id OR o.buyer_id = u.id)
       WHERE (o.id = ? OR o.invoice_number = ?)
@@ -818,7 +825,14 @@ const getOrderById = async (req, res) => {
       [order.id]
     );
 
-    order.items = items;
+    order.total_amount = Number(order.total_amount || 0);
+    order.shipping_fee = Number(order.shipping_fee || 0);
+    order.items = items.map((item) => ({
+      ...item,
+      quantity: Number(item.quantity || 1),
+      price_per_unit: Number(item.price_per_unit || 0),
+      subtotal: Number(item.subtotal || 0)
+    }));
     order.payment_details = generatePaymentDetails(order.payment_method, order.total_amount, order.id, order.invoice_number);
 
     return res.status(200).json({
@@ -861,7 +875,7 @@ const getFarmerOrders = async (req, res) => {
         o.created_at,
         COALESCE(o.updated_at, o.created_at) as updated_at,
         u.full_name as buyer_name,
-        COALESCE(u.phone_number, u.phone, '081234567890') as buyer_phone
+        COALESCE(u.phone, '') as buyer_phone
       FROM orders o
       JOIN order_items oi ON o.id = oi.order_id
       JOIN products p ON (oi.product_id = p.id OR CAST(oi.product_id AS CHAR) = CAST(p.id AS CHAR))
@@ -908,11 +922,18 @@ const getFarmerOrders = async (req, res) => {
     }
 
     const result = orderRows.map((order) => {
-      const items = itemsByOrder.get(order.id) || [];
+      const items = (itemsByOrder.get(order.id) || []).map((item) => ({
+        ...item,
+        quantity: Number(item.quantity || 1),
+        price_per_unit: Number(item.price_per_unit || 0),
+        subtotal: Number(item.subtotal || 0)
+      }));
       return {
         ...order,
+        total_amount: Number(order.total_amount || 0),
+        shipping_fee: Number(order.shipping_fee || 0),
         items: items,
-        payment_details: generatePaymentDetails(order.payment_method, order.total_amount, order.id, order.invoice_number)
+        payment_details: generatePaymentDetails(order.payment_method, Number(order.total_amount || 0), order.id, order.invoice_number)
       };
     });
 
@@ -958,29 +979,41 @@ const updateOrderStatus = async (req, res) => {
 
   try {
     const [existing] = await pool.query(
-      'SELECT id, order_status, payment_status, total_amount, invoice_number, payment_method FROM orders WHERE id = ? OR invoice_number = ? LIMIT 1',
-      [id, id]
+      `SELECT o.id, o.order_status, o.payment_status, o.total_amount, o.invoice_number, o.payment_method
+       FROM orders o
+       WHERE (o.id = ? OR o.invoice_number = ?)
+         AND (
+           o.user_id = ? OR o.buyer_id = ?
+           OR EXISTS (
+             SELECT 1 FROM order_items oi
+             JOIN products p ON (oi.product_id = p.id OR CAST(oi.product_id AS CHAR) = CAST(p.id AS CHAR))
+             WHERE oi.order_id = o.id AND (p.farmer_id = ? OR p.farmer_id = (SELECT user_id FROM farmer_profiles WHERE user_id = ? LIMIT 1))
+           )
+         )
+       LIMIT 1`,
+      [id, id, userId, userId, userId, userId]
     );
 
     if (existing.length === 0) {
       return res.status(404).json({
         success: false,
-        message: 'Pesanan tidak ditemukan.'
+        message: 'Pesanan tidak ditemukan atau Anda tidak memiliki hak akses.'
       });
     }
 
     const order = existing[0];
 
     await pool.query(
-      'UPDATE orders SET order_status = ?, updated_at = NOW() WHERE id = ?',
-      [requestedStatus, order.id]
+      'UPDATE orders SET order_status = ?, updated_at = NOW() WHERE (id = ? OR invoice_number = ?)',
+      [requestedStatus, order.id, order.id]
     );
 
     console.log(`[ORDER] Order ${order.id} status transitioned from ${order.order_status} to ${requestedStatus} by user: ${userId}`);
 
     return res.status(200).json({
       success: true,
-      message: `Status pesanan berhasil diperbarui menjadi ${requestedStatus}.`,
+      message: 'Status pesanan berhasil diperbarui',
+      order_status: requestedStatus,
       data: {
         id: order.id,
         invoice_number: order.invoice_number,

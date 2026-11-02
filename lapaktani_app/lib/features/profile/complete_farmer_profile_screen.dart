@@ -121,10 +121,10 @@ class _CompleteFarmerProfileScreenState
       if (farmerProfile != null && mounted) {
         if (farmerProfile['land_area_ha'] != null) {
           _landAreaController.text =
-              (farmerProfile['land_area_ha'] as num).toString();
+              (double.tryParse(farmerProfile['land_area_ha'].toString()) ?? 0.0).toString();
         }
         if (farmerProfile['farmer_group_id'] != null) {
-          _selectedFarmerGroupId = farmerProfile['farmer_group_id'] as String;
+          _selectedFarmerGroupId = farmerProfile['farmer_group_id'].toString();
         }
       }
     }

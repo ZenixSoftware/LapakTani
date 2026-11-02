@@ -317,51 +317,62 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Row(
-                children: [
-                  Text(
-                    'No. Pesanan',
-                    style: GoogleFonts.inter(fontSize: 11.5, color: const Color(0xFF64748B)),
-                  ),
-                  const SizedBox(width: 6),
-                  Text(
-                    order.trackingNumber,
-                    style: GoogleFonts.inter(fontSize: 12, fontWeight: FontWeight.w700, color: const Color(0xFF0F172A)),
-                  ),
-                  const SizedBox(width: 4),
-                  InkWell(
-                    onTap: () => _copyToClipboard(order.trackingNumber, 'Nomor resi'),
-                    child: const Icon(LucideIcons.copy, size: 13, color: _tokopediaGreen),
-                  ),
-                ],
-              ),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 3),
-                decoration: BoxDecoration(
-                  color: const Color(0xFFD1FAE5),
-                  borderRadius: BorderRadius.circular(12),
-                ),
+              Expanded(
                 child: Row(
-                  mainAxisSize: MainAxisSize.min,
                   children: [
-                    Container(
-                      width: 6,
-                      height: 6,
-                      decoration: const BoxDecoration(
-                        color: Color(0xFF059669),
-                        shape: BoxShape.circle,
-                      ),
+                    Text(
+                      'No. Pesanan',
+                      style: GoogleFonts.inter(fontSize: 11.5, color: const Color(0xFF64748B)),
                     ),
                     const SizedBox(width: 6),
-                    Text(
-                      order.status == OrderStatus.completed ? 'Pesanan Selesai' : 'Sedang Diantar Kurir Instan',
-                      style: GoogleFonts.inter(
-                        fontSize: 10.5,
-                        fontWeight: FontWeight.w700,
-                        color: const Color(0xFF065F46),
+                    Flexible(
+                      child: Text(
+                        order.trackingNumber,
+                        overflow: TextOverflow.ellipsis,
+                        style: GoogleFonts.inter(fontSize: 12, fontWeight: FontWeight.w700, color: const Color(0xFF0F172A)),
                       ),
                     ),
+                    const SizedBox(width: 4),
+                    InkWell(
+                      onTap: () => _copyToClipboard(order.trackingNumber, 'Nomor resi'),
+                      child: const Icon(LucideIcons.copy, size: 13, color: _tokopediaGreen),
+                    ),
                   ],
+                ),
+              ),
+              const SizedBox(width: 8),
+              Flexible(
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 3),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFD1FAE5),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Container(
+                        width: 6,
+                        height: 6,
+                        decoration: const BoxDecoration(
+                          color: Color(0xFF059669),
+                          shape: BoxShape.circle,
+                        ),
+                      ),
+                      const SizedBox(width: 6),
+                      Flexible(
+                        child: Text(
+                          order.status == OrderStatus.completed ? 'Pesanan Selesai' : 'Sedang Diantar Kurir Instan',
+                          overflow: TextOverflow.ellipsis,
+                          style: GoogleFonts.inter(
+                            fontSize: 10.5,
+                            fontWeight: FontWeight.w700,
+                            color: const Color(0xFF065F46),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
               ),
             ],
@@ -381,11 +392,14 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
             children: [
               const Icon(LucideIcons.clock, size: 13, color: Color(0xFFD97706)),
               const SizedBox(width: 6),
-              Text(
-                order.status == OrderStatus.completed
-                    ? 'Pesanan berhasil diserahterimakan ke pembeli'
-                    : 'Perkiraan 15 menit lagi sampai di tujuan',
-                style: GoogleFonts.inter(fontSize: 11.5, color: const Color(0xFF64748B)),
+              Expanded(
+                child: Text(
+                  order.status == OrderStatus.completed
+                      ? 'Pesanan berhasil diserahterimakan ke pembeli'
+                      : 'Perkiraan 15 menit lagi sampai di tujuan',
+                  overflow: TextOverflow.ellipsis,
+                  style: GoogleFonts.inter(fontSize: 11.5, color: const Color(0xFF64748B)),
+                ),
               ),
             ],
           ),
@@ -393,16 +407,22 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Row(
-                children: [
-                  const Icon(LucideIcons.thermometerSnowflake, size: 12, color: Color(0xFF059669)),
-                  const SizedBox(width: 4),
-                  Text(
-                    'Rantai Pendingin Aktif 4°C',
-                    style: GoogleFonts.inter(fontSize: 11, fontWeight: FontWeight.w700, color: const Color(0xFF047857)),
-                  ),
-                ],
+              Expanded(
+                child: Row(
+                  children: [
+                    const Icon(LucideIcons.thermometerSnowflake, size: 12, color: Color(0xFF059669)),
+                    const SizedBox(width: 4),
+                    Flexible(
+                      child: Text(
+                        'Rantai Pendingin Aktif 4°C',
+                        overflow: TextOverflow.ellipsis,
+                        style: GoogleFonts.inter(fontSize: 11, fontWeight: FontWeight.w700, color: const Color(0xFF047857)),
+                      ),
+                    ),
+                  ],
+                ),
               ),
+              const SizedBox(width: 8),
               Text(
                 order.status == OrderStatus.completed ? '100% Selesai' : '75% Perjalanan',
                 style: GoogleFonts.inter(fontSize: 11, fontWeight: FontWeight.w700, color: const Color(0xFF047857)),
@@ -853,14 +873,17 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Text(
-                        title,
-                        style: GoogleFonts.inter(
-                          fontSize: 12,
-                          fontWeight: FontWeight.w700,
-                          color: isActive ? _tokopediaGreen : const Color(0xFF0F172A),
+                      Expanded(
+                        child: Text(
+                          title,
+                          style: GoogleFonts.inter(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w700,
+                            color: isActive ? _tokopediaGreen : const Color(0xFF0F172A),
+                          ),
                         ),
                       ),
+                      const SizedBox(width: 8),
                       Text(
                         time,
                         style: GoogleFonts.inter(

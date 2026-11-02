@@ -1,4 +1,3 @@
-import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:lucide_icons/lucide_icons.dart';
@@ -10,10 +9,12 @@ import 'order_tracking_screen.dart';
 
 class OrderHistoryScreen extends StatefulWidget {
   final bool isTabEmbedded;
+  final String? initialFilter;
 
   const OrderHistoryScreen({
     super.key,
     this.isTabEmbedded = false,
+    this.initialFilter,
   });
 
   @override
@@ -39,6 +40,22 @@ class _OrderHistoryScreenState extends State<OrderHistoryScreen> {
   @override
   void initState() {
     super.initState();
+    if (widget.initialFilter != null && widget.initialFilter!.isNotEmpty) {
+      final f = widget.initialFilter!;
+      if (f.toLowerCase().contains('bayar')) {
+        _selectedStatusFilter = 'Menunggu Bayar';
+      } else if (f.toLowerCase().contains('kirim')) {
+        _selectedStatusFilter = 'Sedang Dikirim';
+      } else if (f.toLowerCase().contains('selesai')) {
+        _selectedStatusFilter = 'Selesai';
+      } else if (f.toLowerCase().contains('proses') || f.toLowerCase().contains('petik')) {
+        _selectedStatusFilter = 'Diproses';
+      } else if (f.toLowerCase().contains('batal')) {
+        _selectedStatusFilter = 'Dibatalkan';
+      } else {
+        _selectedStatusFilter = f;
+      }
+    }
     _orderService.init();
     _fetchOrdersFromBackend();
   }
@@ -47,90 +64,21 @@ class _OrderHistoryScreenState extends State<OrderHistoryScreen> {
     setState(() => _isLoading = true);
     try {
       final List<Map<String, dynamic>> rawOrders = await _apiService.getMyOrders();
-      final parsed = rawOrders.map((row) {
-        List<dynamic> itemsList = [];
-        if (row['items'] is String) {
-          try {
-            itemsList = jsonDecode(row['items'] as String);
-          } catch (_) {}
-        } else if (row['items'] is List) {
-          itemsList = row['items'] as List;
-        }
-
-        final items = itemsList
-            .where((item) => item != null && item is Map && item['id'] != null)
-            .map((item) {
-          final iMap = Map<String, dynamic>.from(item as Map);
-          return OrderItem(
-            id: iMap['id']?.toString() ?? '',
-            productId: iMap['product_id']?.toString() ?? '',
-            title: iMap['title']?.toString() ?? 'Komoditas Tani',
-            qty: (iMap['quantity_kg'] as num?)?.toInt() ?? 1,
-            unit: 'kg',
-            price: (iMap['price_per_kg'] as num?)?.toInt() ??
-                (iMap['subtotal'] as num?)?.toInt() ??
-                0,
-            imageUrl: iMap['image_url']?.toString() ?? '',
-            grade: 'Grade A',
-          );
-        }).toList();
-
-        final statusStr = row['order_status']?.toString() ?? 'paid';
-        final OrderStatus status;
-        if (statusStr == 'pending_payment') {
-          status = OrderStatus.pendingPayment;
-        } else if (statusStr == 'completed') {
-          status = OrderStatus.completed;
-        } else if (statusStr == 'cancelled') {
-          status = OrderStatus.cancelled;
-        } else if (statusStr == 'shipped' || statusStr == 'in_transit') {
-          status = OrderStatus.inTransit;
-        } else if (statusStr == 'delivered') {
-          status = OrderStatus.delivered;
-        } else if (statusStr == 'ready_to_ship') {
-          status = OrderStatus.readyToShip;
-        } else {
-          status = OrderStatus.needHarvest;
-        }
-
-        return OrderModel(
-          id: row['invoice_number']?.toString() ?? 'ORD-${row['id']}',
-          buyerName: row['recipient_name']?.toString() ?? 'Pembeli',
-          buyerPhone: row['recipient_phone']?.toString() ?? '',
-          buyerAddress: row['shipping_address']?.toString() ?? '',
-          sellerName: 'Mitra Tani',
-          sellerLocation: 'Jawa Timur',
-          createdAt:
-              DateTime.tryParse(row['created_at']?.toString() ?? '') ??
-                  DateTime.now(),
-          status: status,
-          paymentMethod: row['payment_method']?.toString() ?? 'LapakPay',
-          paymentStatus: row['payment_status']?.toString() ?? 'Lunas',
-          items: items,
-          totalPrice: (row['total_amount'] as num?)?.toInt() ?? 0,
-          shippingFee: (row['shipping_cost'] as num?)?.toInt() ?? 0,
-          trackingNumber: row['invoice_number']?.toString() ?? '',
-          estimatedDelivery: '1-2 Hari',
-          temperature: '4-8°C',
-          courier: const CourierInfo(
-            name: 'Kurir LapakTani',
-            phone: '08123456789',
-            vehicle: 'Armada Berpendingin',
-            serviceName: 'LapakTani Cold-Chain',
-          ),
-          checkpoints: const [],
-        );
-      }).toList();
+      final parsed = rawOrders.map((row) => OrderModel.fromMap(row)).toList();
 
       if (mounted) {
         setState(() {
-          _serverOrders = parsed;
+          _serverOrders = parsed.isNotEmpty ? parsed : _orderService.ordersNotifier.value;
           _isLoading = false;
         });
       }
-    } catch (_) {
+    } catch (e) {
+      debugPrint('[ORDER_HISTORY] Error fetching orders: $e');
       if (mounted) {
-        setState(() => _isLoading = false);
+        setState(() {
+          _serverOrders = _orderService.ordersNotifier.value;
+          _isLoading = false;
+        });
       }
     }
   }
@@ -151,6 +99,33 @@ class _OrderHistoryScreenState extends State<OrderHistoryScreen> {
       buffer.write(s[i]);
     }
     return 'Rp${buffer.toString()}';
+  }
+
+  Future<void> _handleConfirmOrderCompleted(OrderModel order) async {
+    try {
+      final scaffoldMessenger = ScaffoldMessenger.of(context);
+      final res = await ApiService().updateOrderStatus(order.id, 'COMPLETED');
+      if (res != null && (res['success'] == true || res['status'] == 'COMPLETED' || res['order_status'] == 'COMPLETED')) {
+        scaffoldMessenger.showSnackBar(
+          const SnackBar(
+            content: Text('Pesanan berhasil diselesaikan.'),
+            backgroundColor: Color(0xFF2E7D32),
+          ),
+        );
+        // Refresh order history from MySQL
+        await _fetchOrdersFromBackend();
+      } else {
+        throw Exception(res?['message'] ?? 'Gagal memperbarui status');
+      }
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Gagal menyelesaikan pesanan: ${e.toString()}'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
   }
 
   void _showOrderCompletionModal(BuildContext context, OrderModel order) {
@@ -331,22 +306,7 @@ class _OrderHistoryScreenState extends State<OrderHistoryScreen> {
                         onPressed: canConfirm
                             ? () async {
                                 Navigator.pop(ctx);
-                                await _orderService.updateOrderStatus(
-                                  order.id,
-                                  OrderStatus.completed,
-                                  checkpointTitle: 'Pesanan Selesai',
-                                  checkpointDesc: 'Pembeli mengonfirmasi kualitas dan timbangan panen prima.',
-                                );
-                                await _fetchOrdersFromBackend();
-                                if (context.mounted) {
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                    SnackBar(
-                                      content: Text('Pesanan ${order.id} telah diselesaikan.'),
-                                      backgroundColor: _tokopediaGreen,
-                                      behavior: SnackBarBehavior.floating,
-                                    ),
-                                  );
-                                }
+                                await _handleConfirmOrderCompleted(order);
                               }
                             : null,
                         style: ElevatedButton.styleFrom(
@@ -843,23 +803,28 @@ class _OrderHistoryScreenState extends State<OrderHistoryScreen> {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             crossAxisAlignment: CrossAxisAlignment.end,
             children: [
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'Total belanja',
-                    style: GoogleFonts.inter(fontSize: 10.5, color: const Color(0xFF94A3B8)),
-                  ),
-                  Text(
-                    _formatRupiah(order.totalPrice),
-                    style: GoogleFonts.inter(fontSize: 13, fontWeight: FontWeight.w800, color: const Color(0xFF0F172A)),
-                  ),
-                  Text(
-                    'Hemat Rp12.000 • 360 Koin',
-                    style: GoogleFonts.inter(fontSize: 9.5, color: const Color(0xFF047857), fontWeight: FontWeight.w600),
-                  ),
-                ],
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Total belanja',
+                      style: GoogleFonts.inter(fontSize: 10.5, color: const Color(0xFF94A3B8)),
+                    ),
+                    Text(
+                      _formatRupiah(order.totalPrice),
+                      style: GoogleFonts.inter(fontSize: 13, fontWeight: FontWeight.w800, color: const Color(0xFF0F172A)),
+                    ),
+                    Text(
+                      'Hemat Rp12.000 • 360 Koin',
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: GoogleFonts.inter(fontSize: 9.5, color: const Color(0xFF047857), fontWeight: FontWeight.w600),
+                    ),
+                  ],
+                ),
               ),
+              const SizedBox(width: 8),
               if (isCompleted)
                 ElevatedButton(
                   onPressed: () {
@@ -881,7 +846,7 @@ class _OrderHistoryScreenState extends State<OrderHistoryScreen> {
                     foregroundColor: Colors.white,
                     elevation: 0,
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                   ),
                   child: Text(
                     'Beli lagi',
@@ -890,6 +855,7 @@ class _OrderHistoryScreenState extends State<OrderHistoryScreen> {
                 )
               else if (isInProgress)
                 Row(
+                  mainAxisSize: MainAxisSize.min,
                   children: [
                     OutlinedButton(
                       onPressed: () {
@@ -906,11 +872,11 @@ class _OrderHistoryScreenState extends State<OrderHistoryScreen> {
                         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
                       ),
                       child: Text(
-                        'Lacak Pengiriman',
+                        'Lacak',
                         style: GoogleFonts.inter(fontSize: 11, fontWeight: FontWeight.w700, color: _tokopediaGreen),
                       ),
                     ),
-                    const SizedBox(width: 8),
+                    const SizedBox(width: 6),
                     ElevatedButton(
                       onPressed: () => _showOrderCompletionModal(context, order),
                       style: ElevatedButton.styleFrom(
@@ -918,10 +884,10 @@ class _OrderHistoryScreenState extends State<OrderHistoryScreen> {
                         foregroundColor: Colors.white,
                         elevation: 0,
                         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
                       ),
                       child: Text(
-                        'Selesaikan Pesanan',
+                        'Selesai',
                         style: GoogleFonts.inter(fontSize: 11, fontWeight: FontWeight.w700),
                       ),
                     ),
