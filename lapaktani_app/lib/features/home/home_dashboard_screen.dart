@@ -3,6 +3,8 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 import '../../core/services/api_service.dart';
+import '../community/screens/education_feed_screen.dart';
+import '../community/widgets/penyuluh_official_badge.dart';
 import '../product/add_product_screen.dart';
 import '../product/my_products_screen.dart';
 import '../product/product_detail_screen.dart';
@@ -278,11 +280,11 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen> {
       'badge': null,
     },
     {
-      'id': 'beli-lokal',
-      'title': 'Beli Lokal',
-      'colors': [Color(0xFFFB7185), Color(0xFFDC2626)],
-      'icon': LucideIcons.heart,
-      'badge': null,
+      'id': 'edukasi-tani',
+      'title': 'Edukasi BPP',
+      'colors': [Color(0xFF047857), Color(0xFF065F46)],
+      'icon': LucideIcons.bookOpen,
+      'badge': 'Resmi',
     },
     {
       'id': 'lapak-pay',
@@ -411,6 +413,7 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen> {
                           _buildRecentlyViewedSection(),
                           _buildCategoryTabBar(),
                           _buildMainFeedSection(),
+                          _buildPenyuluhEducationBanner(),
                           _buildTrustGuaranteeBanner(),
                           const SizedBox(height: 16),
                         ],
@@ -734,6 +737,15 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen> {
               return Expanded(
                 child: InkWell(
                   onTap: () {
+                    if (action['id'] == 'edukasi-tani') {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => const EducationFeedScreen(),
+                        ),
+                      );
+                      return;
+                    }
                     ScaffoldMessenger.of(context).showSnackBar(
                       SnackBar(
                         content: Text('Membuka layanan ${action['title']}.'),
@@ -1838,6 +1850,129 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen> {
     );
   }
 
+  Widget _buildPenyuluhEducationBanner() {
+    return Container(
+      margin: const EdgeInsets.fromLTRB(8, 8, 8, 4),
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: const Color(0xFFBBF7D0), width: 1.2),
+        boxShadow: const [
+          BoxShadow(
+            color: Color(0x06000000),
+            blurRadius: 4,
+            offset: Offset(0, 1),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Row(
+                children: [
+                  const Icon(LucideIcons.graduationCap, size: 16, color: Color(0xFF15803D)),
+                  const SizedBox(width: 6),
+                  Text(
+                    'Pojok Edukasi Pertanian',
+                    style: GoogleFonts.inter(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w700,
+                      color: const Color(0xFF0F172A),
+                    ),
+                  ),
+                ],
+              ),
+              const PenyuluhOfficialBadge(size: PenyuluhBadgeSize.small),
+            ],
+          ),
+          const SizedBox(height: 6),
+          Text(
+            'Pelajari tips dan SOP budidaya resmi yang divalidasi oleh Balai Penyuluhan Pertanian (BPP) untuk hasil panen bermutu tinggi.',
+            style: GoogleFonts.inter(
+              fontSize: 10.5,
+              color: const Color(0xFF475569),
+              height: 1.35,
+            ),
+          ),
+          const SizedBox(height: 10),
+          Row(
+            children: [
+              Expanded(
+                child: InkWell(
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const EducationFeedScreen(initialVerifiedOnly: true),
+                      ),
+                    );
+                  },
+                  borderRadius: BorderRadius.circular(8),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(vertical: 6),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFE8F5E9),
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(color: const Color(0xFFA5D6A7)),
+                    ),
+                    alignment: Alignment.center,
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        const Icon(LucideIcons.badgeCheck, size: 13, color: Color(0xFF15803D)),
+                        const SizedBox(width: 4),
+                        Text(
+                          'Lihat Materi Terverifikasi',
+                          style: GoogleFonts.inter(
+                            fontSize: 10.5,
+                            fontWeight: FontWeight.w700,
+                            color: const Color(0xFF14532D),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(width: 8),
+              InkWell(
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => const EducationFeedScreen(),
+                    ),
+                  );
+                },
+                borderRadius: BorderRadius.circular(8),
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFF1F5F9),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  alignment: Alignment.center,
+                  child: Text(
+                    'Buka Semua',
+                    style: GoogleFonts.inter(
+                      fontSize: 10.5,
+                      fontWeight: FontWeight.w600,
+                      color: const Color(0xFF334155),
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
   Widget _buildTrustGuaranteeBanner() {
     return Container(
       margin: const EdgeInsets.fromLTRB(8, 6, 8, 0),
@@ -1933,7 +2068,12 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen> {
 
           return InkWell(
             onTap: () {
-              if (index == 2) {
+              if (index == 1) {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => const EducationFeedScreen()),
+                );
+              } else if (index == 2) {
                 Navigator.push(
                   context,
                   MaterialPageRoute(builder: (context) => const MyProductsScreen()),

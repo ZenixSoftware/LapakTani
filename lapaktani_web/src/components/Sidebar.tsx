@@ -55,6 +55,20 @@ export const Sidebar: React.FC<SidebarProps> = ({ pendingCount }) => {
               </span>
               <span>Kelompok Tani Binaan</span>
             </a>
+            <a
+              className="flex items-center justify-between px-3.5 py-2.5 rounded-xl text-gray-600 hover:bg-gray-50 hover:text-gray-900 font-semibold text-[13px] transition-all"
+              href="#edukasi"
+            >
+              <div className="flex items-center gap-3">
+                <span className="material-symbols-outlined text-[20px] text-gray-400">
+                  school
+                </span>
+                <span>Materi Edukasi BPP</span>
+              </div>
+              <span className="px-1.5 py-0.5 rounded-md bg-emerald-50 text-emerald-800 text-[10px] font-bold border border-emerald-200">
+                Penyuluh Resmi
+              </span>
+            </a>
           </nav>
         </div>
 
@@ -132,6 +146,10 @@ export const Sidebar: React.FC<SidebarProps> = ({ pendingCount }) => {
                 <span className="inline-block w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
                 <span className="text-[11px] text-gray-500 font-medium truncate">
                   BPP Lembang
+                </span>
+                <span className="inline-flex items-center gap-0.5 px-1 py-0.5 rounded bg-emerald-50 text-emerald-800 text-[9.5px] font-bold border border-emerald-200">
+                  <span className="material-symbols-outlined text-[11px] text-emerald-600">verified</span>
+                  Resmi
                 </span>
               </div>
             </div>

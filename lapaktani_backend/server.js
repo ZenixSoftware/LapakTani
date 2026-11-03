@@ -11,6 +11,7 @@ const profileRoutes = require('./src/routes/profiles');
 const penyuluhRoutes = require('./src/routes/penyuluh');
 const masterRoutes = require('./src/routes/master');
 const uploadRoutes = require('./src/routes/upload');
+const educationRoutes = require('./src/routes/education');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -69,6 +70,7 @@ app.use('/api/profiles', profileRoutes);
 app.use('/api/penyuluh', penyuluhRoutes);
 app.use('/api/master', masterRoutes);
 app.use('/api/upload', uploadRoutes);
+app.use('/api/education', educationRoutes);
 
 
 app.use((req, res) => {
