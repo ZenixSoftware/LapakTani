@@ -7,10 +7,28 @@ CREATE TABLE IF NOT EXISTS farmer_groups (
     group_name VARCHAR(150) NOT NULL,
     village_id INT DEFAULT 1,
     chairman_user_id VARCHAR(50),
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT fk_farmer_groups_chairman FOREIGN KEY (chairman_user_id) REFERENCES users(id) ON DELETE SET NULL
 );
 
-ALTER TABLE farmer_groups ADD COLUMN IF NOT EXISTS chairman_user_id VARCHAR(50);
+-- Add chairman_user_id safely referencing users(id) if missing in existing table
+SET @dbname = DATABASE();
+SET @tablename = 'farmer_groups';
+SET @columnname = 'chairman_user_id';
+SET @preparedStatement = (SELECT IF(
+  (
+    SELECT COUNT(*) FROM INFORMATION_SCHEMA.COLUMNS
+    WHERE
+      (table_name = @tablename)
+      AND (table_schema = @dbname)
+      AND (column_name = @columnname)
+  ) > 0,
+  'SELECT 1',
+  'ALTER TABLE farmer_groups ADD COLUMN chairman_user_id VARCHAR(50) NULL, ADD CONSTRAINT fk_farmer_groups_chairman FOREIGN KEY (chairman_user_id) REFERENCES users(id) ON DELETE SET NULL'
+));
+PREPARE alterIfNotExists FROM @preparedStatement;
+EXECUTE alterIfNotExists;
+DEALLOCATE PREPARE alterIfNotExists;
 
 -- 2. Ensure farmer_profiles table exists
 CREATE TABLE IF NOT EXISTS farmer_profiles (

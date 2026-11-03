@@ -284,20 +284,6 @@ class PoktanService {
         added += kg;
 
         // Add to local tasks
-        final member = _cachedMembers.firstWhere(
-          (m) => m.farmerId == a['farmer_id'],
-          orElse: () => const PoktanMemberModel(
-            farmerId: 'unknown',
-            fullName: 'Petani Anggota',
-            email: '',
-            phone: '',
-            nikNumber: '',
-            landAreaHa: 1.0,
-            soilType: '',
-            isChairman: false,
-          ),
-        );
-
         _cachedTasks.insert(
           0,
           ProductionTaskModel(

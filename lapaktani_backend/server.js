@@ -14,6 +14,7 @@ const uploadRoutes = require('./src/routes/upload');
 const cartRoutes = require('./src/routes/cart');
 const orderRoutes = require('./src/routes/orders');
 const soilRoutes = require('./src/routes/soil');
+const paymentRoutes = require('./src/routes/payments');
 const poktanRoutes = require('./src/routes/poktan');
 
 const app = express();
@@ -76,6 +77,7 @@ app.use('/api/upload', uploadRoutes);
 app.use('/api/cart', cartRoutes);
 app.use('/api/orders', orderRoutes);
 app.use('/api/soil', soilRoutes);
+app.use('/api/payments', paymentRoutes);
 app.use('/api/poktan', poktanRoutes);
 
 

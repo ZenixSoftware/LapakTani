@@ -224,7 +224,7 @@ class _PoktanDashboardScreenState extends State<PoktanDashboardScreen>
               ),
               Row(
                 children: [
-                  const Icon(LucideIcons.handshake, size: 16, color: Color(0xFFD1FAE5)),
+                  const Icon(LucideIcons.briefcase, size: 16, color: Color(0xFFD1FAE5)),
                   const SizedBox(width: 6),
                   Text(
                     '${_b2bOrders.length} Kontrak B2B',
@@ -279,7 +279,7 @@ class _PoktanDashboardScreenState extends State<PoktanDashboardScreen>
     return ListView.separated(
       padding: const EdgeInsets.fromLTRB(16, 8, 16, 80),
       itemCount: _b2bOrders.length,
-      separatorBuilder: (_, __) => const SizedBox(height: 12),
+      separatorBuilder: (_, _) => const SizedBox(height: 12),
       itemBuilder: (context, index) {
         final order = _b2bOrders[index];
         final double progress = order.totalQuotaKg > 0
@@ -444,7 +444,7 @@ class _PoktanDashboardScreenState extends State<PoktanDashboardScreen>
     return ListView.separated(
       padding: const EdgeInsets.fromLTRB(16, 8, 16, 80),
       itemCount: _members.length,
-      separatorBuilder: (_, __) => const SizedBox(height: 10),
+      separatorBuilder: (_, _) => const SizedBox(height: 10),
       itemBuilder: (context, index) {
         final member = _members[index];
         final double sharePercent = _totalLandAreaHa > 0
