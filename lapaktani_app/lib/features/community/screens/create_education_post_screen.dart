@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:lucide_icons/lucide_icons.dart';
+import '../../../core/services/api_service.dart';
+import '../../auth/auth_repository.dart';
 import '../community_repository.dart';
 import '../models/education_article.dart';
 import '../widgets/penyuluh_official_badge.dart';
@@ -37,11 +39,13 @@ class _CreateEducationPostScreenState extends State<CreateEducationPostScreen> {
     TextEditingController(text: 'Aplikasi benih unggul bersertifikasi dan nutrisi dasar.'),
   ];
 
-  final bool _isVerifiedPenyuluh = true;
-  final String _penyuluhName = 'Ir. Ahmad Hidayat';
-  final String _penyuluhRole = 'Koordinator BPP Lembang';
-  final String _penyuluhBpp = 'BPP Lembang';
-  final String _penyuluhNip = '198205142008011003';
+  // Dynamic profile state loaded from session/auth
+  bool _isLoadingProfile = true;
+  bool _isVerifiedPenyuluh = false;
+  String _authorName = 'Penyuluh Pertanian';
+  String _authorRole = 'Penyuluh Pertanian';
+  String _authorBpp = 'BPP Lembang';
+  String? _authorNip;
 
   bool _agreementChecked = true;
   bool _isSubmitting = false;
@@ -74,6 +78,42 @@ class _CreateEducationPostScreenState extends State<CreateEducationPostScreen> {
     super.initState();
     _commodityController.text = 'Jagung Manis';
     _imageUrlController.text = _sampleCovers[0]['url']!;
+    _loadUserProfile();
+  }
+
+  Future<void> _loadUserProfile() async {
+    try {
+      final userMap = await ApiService().getUser();
+      final currentUser = AuthRepository().currentUser;
+
+      final roleStr = userMap?['role']?.toString() ?? currentUser?.role ?? '';
+      final roleId = userMap?['role_id'];
+      final fullName = userMap?['full_name']?.toString() ??
+          userMap?['name']?.toString() ??
+          currentUser?.fullName ??
+          'Ir. Ahmad Hidayat';
+      final verificationStatus = userMap?['verification_status']?.toString();
+      final isOfficial = roleStr.toLowerCase() == 'penyuluh' ||
+          roleId == 2 ||
+          verificationStatus == 'verified' ||
+          userMap?['is_verified'] == true ||
+          userMap?['is_verified'] == 1;
+
+      if (mounted) {
+        setState(() {
+          _authorName = fullName;
+          _isVerifiedPenyuluh = isOfficial;
+          _authorRole = isOfficial ? 'Penyuluh Pertanian Lapangan' : 'Petani Komunitas';
+          _authorBpp = userMap?['bpp_unit']?.toString() ?? 'BPP Lembang';
+          _authorNip = userMap?['nip']?.toString() ?? '198205142008011003';
+          _isLoadingProfile = false;
+        });
+      }
+    } catch (_) {
+      if (mounted) {
+        setState(() => _isLoadingProfile = false);
+      }
+    }
   }
 
   @override
@@ -105,18 +145,6 @@ class _CreateEducationPostScreenState extends State<CreateEducationPostScreen> {
   }
 
   Future<void> _handleSubmit() async {
-    if (!_isVerifiedPenyuluh) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text(
-            'Hanya akun dengan status Penyuluh Resmi yang dapat menerbitkan materi berbadge.',
-          ),
-          backgroundColor: Color(0xFFDC2626),
-        ),
-      );
-      return;
-    }
-
     if (!_agreementChecked) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
@@ -150,30 +178,30 @@ class _CreateEducationPostScreenState extends State<CreateEducationPostScreen> {
 
     try {
       final newArticle = EducationArticle(
-        id: 'edu-${DateTime.now().millisecondsSinceEpoch}',
+        id: '', // Will be assigned by backend UUID
         title: _titleController.text.trim(),
         category: _selectedCategory,
         commodity: _commodityController.text.trim(),
         summary: _summaryController.text.trim(),
         content: _contentController.text.trim(),
         steps: steps,
-        authorName: _penyuluhName,
-        authorRole: _penyuluhRole,
+        authorName: _authorName,
+        authorRole: _authorRole,
         authorAvatar: null,
-        bppOffice: _penyuluhBpp,
+        bppOffice: _authorBpp,
         isOfficialPenyuluh: _isVerifiedPenyuluh,
-        nip: _penyuluhNip,
+        nip: _authorNip,
         imageUrl: _imageUrlController.text.trim().isNotEmpty
             ? _imageUrlController.text.trim()
             : _sampleCovers[0]['url']!,
         publishedAt: DateTime.now(),
-        readDurationMinutes: int.tryParse(_readDurationController.text.trim()) ?? 4,
+        readDurationMinutes: int.tryParse(_readDurationController.text.trim()) ?? 5,
         likesCount: 0,
         commentsCount: 0,
         tags: [
           _commodityController.text.trim(),
           _selectedCategory,
-          'Penyuluh Resmi',
+          if (_isVerifiedPenyuluh) 'Penyuluh Resmi',
         ],
       );
 
@@ -184,7 +212,7 @@ class _CreateEducationPostScreenState extends State<CreateEducationPostScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
-            'Materi budidaya "${newArticle.title}" berhasil dipublikasikan dengan Badge Resmi.',
+            'Materi budidaya "${newArticle.title}" berhasil dipublikasikan ke server.',
           ),
           backgroundColor: const Color(0xFF03AC0E),
           duration: const Duration(seconds: 3),
@@ -228,30 +256,36 @@ class _CreateEducationPostScreenState extends State<CreateEducationPostScreen> {
           onPressed: () => Navigator.of(context).pop(),
         ),
       ),
-      body: Form(
-        key: _formKey,
-        child: ListView(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-          children: [
-            _buildPenyuluhIdentityCard(),
-            const SizedBox(height: 16),
-            _buildPostFormSection(),
-            const SizedBox(height: 16),
-            _buildStepsSection(),
-            const SizedBox(height: 16),
-            _buildCoverImageSection(),
-            const SizedBox(height: 16),
-            _buildComplianceCheckbox(),
-            const SizedBox(height: 24),
-            _buildSubmitButton(),
-            const SizedBox(height: 24),
-          ],
-        ),
-      ),
+      body: _isLoadingProfile
+          ? const Center(child: CircularProgressIndicator(color: Color(0xFF03AC0E)))
+          : Form(
+              key: _formKey,
+              child: ListView(
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+                children: [
+                  _buildPenyuluhIdentityCard(),
+                  const SizedBox(height: 16),
+                  _buildPostFormSection(),
+                  const SizedBox(height: 16),
+                  _buildStepsSection(),
+                  const SizedBox(height: 16),
+                  _buildCoverImageSection(),
+                  const SizedBox(height: 16),
+                  _buildComplianceCheckbox(),
+                  const SizedBox(height: 24),
+                  _buildSubmitButton(),
+                  const SizedBox(height: 24),
+                ],
+              ),
+            ),
     );
   }
 
   Widget _buildPenyuluhIdentityCard() {
+    final initials = _authorName.trim().isNotEmpty
+        ? _authorName.trim().split(' ').map((p) => p.isNotEmpty ? p[0] : '').take(2).join().toUpperCase()
+        : 'PT';
+
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -276,12 +310,12 @@ class _CreateEducationPostScreenState extends State<CreateEducationPostScreen> {
                 width: 44,
                 height: 44,
                 decoration: BoxDecoration(
-                  color: const Color(0xFF14532D),
+                  color: _isVerifiedPenyuluh ? const Color(0xFF14532D) : const Color(0xFF2563EB),
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Center(
                   child: Text(
-                    'AH',
+                    initials,
                     style: GoogleFonts.inter(
                       fontSize: 16,
                       fontWeight: FontWeight.w800,
@@ -299,7 +333,7 @@ class _CreateEducationPostScreenState extends State<CreateEducationPostScreen> {
                       children: [
                         Flexible(
                           child: Text(
-                            _penyuluhName,
+                            _authorName,
                             style: GoogleFonts.inter(
                               fontSize: 14.5,
                               fontWeight: FontWeight.w700,
@@ -308,16 +342,20 @@ class _CreateEducationPostScreenState extends State<CreateEducationPostScreen> {
                             overflow: TextOverflow.ellipsis,
                           ),
                         ),
-                        const SizedBox(width: 6),
-                        const PenyuluhOfficialBadge(
-                          size: PenyuluhBadgeSize.small,
-                          showTooltip: false,
-                        ),
+                        if (_isVerifiedPenyuluh) ...[
+                          const SizedBox(width: 6),
+                          const PenyuluhOfficialBadge(
+                            size: PenyuluhBadgeSize.small,
+                            showTooltip: false,
+                          ),
+                        ],
                       ],
                     ),
                     const SizedBox(height: 3),
                     Text(
-                      '$_penyuluhRole • NIP $_penyuluhNip',
+                      _authorNip != null && _authorNip!.isNotEmpty
+                          ? '$_authorRole • NIP $_authorNip'
+                          : _authorRole,
                       style: GoogleFonts.inter(
                         fontSize: 11,
                         color: const Color(0xFF64748B),
@@ -325,7 +363,7 @@ class _CreateEducationPostScreenState extends State<CreateEducationPostScreen> {
                     ),
                     const SizedBox(height: 2),
                     Text(
-                      'Wilayah Binaan: Lembang, Parongpong, Cisarua',
+                      'Wilayah Binaan: $_authorBpp',
                       style: GoogleFonts.inter(
                         fontSize: 10.5,
                         fontWeight: FontWeight.w500,
@@ -355,7 +393,9 @@ class _CreateEducationPostScreenState extends State<CreateEducationPostScreen> {
                 const SizedBox(width: 8),
                 Expanded(
                   child: Text(
-                    'Setiap artikel yang Anda terbitkan otomatis diberi lencana verifikasi resmi BPP.',
+                    _isVerifiedPenyuluh
+                        ? 'Setiap artikel yang Anda terbitkan otomatis diberi lencana verifikasi resmi BPP.'
+                        : 'Artikel Anda akan dipublikasikan ke kanal komunitas petani terverifikasi.',
                     style: GoogleFonts.inter(
                       fontSize: 11,
                       color: const Color(0xFF166534),
@@ -835,4 +875,3 @@ class _CreateEducationPostScreenState extends State<CreateEducationPostScreen> {
     );
   }
 }
-
