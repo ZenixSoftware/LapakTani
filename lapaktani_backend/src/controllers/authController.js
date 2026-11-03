@@ -35,10 +35,28 @@ const register = async (req, res) => {
     const assignedRole = roleId === 1 ? 'petani' : 'pembeli';
     const userName = full_name ? full_name.trim() : email.split('@')[0];
 
-    await pool.query(
-      'INSERT INTO users (id, email, password_hash, role_id, full_name, role) VALUES (?, ?, ?, ?, ?, ?)',
-      [userId, email.trim().toLowerCase(), passwordHash, roleId, userName, assignedRole]
-    );
+    const connection = await pool.getConnection();
+    try {
+      await connection.beginTransaction();
+
+      await connection.query(
+        'INSERT INTO users (id, email, password_hash, role_id, full_name, role) VALUES (?, ?, ?, ?, ?, ?)',
+        [userId, email.trim().toLowerCase(), passwordHash, roleId, userName, assignedRole]
+      );
+
+      const profileId = uuidv4();
+      await connection.query(
+        'INSERT INTO user_profiles (id, user_id, full_name) VALUES (?, ?, ?)',
+        [profileId, userId, userName]
+      );
+
+      await connection.commit();
+    } catch (dbErr) {
+      await connection.rollback();
+      throw dbErr;
+    } finally {
+      connection.release();
+    }
 
     const token = jwt.sign(
       { id: userId, email: email.trim().toLowerCase(), role_id: roleId, role: assignedRole },
@@ -59,10 +77,10 @@ const register = async (req, res) => {
       }
     });
   } catch (error) {
+    console.error('[AUTH] Error during registration:', error.message);
     return res.status(500).json({
       success: false,
-      message: 'Terjadi kesalahan server saat registrasi.',
-      error: error.message
+      message: 'Terjadi kesalahan server saat registrasi.'
     });
   }
 };
@@ -122,10 +140,10 @@ const login = async (req, res) => {
       }
     });
   } catch (error) {
+    console.error('[AUTH] Error during login:', error.message);
     return res.status(500).json({
       success: false,
-      message: 'Terjadi kesalahan server saat login.',
-      error: error.message
+      message: 'Terjadi kesalahan server saat login.'
     });
   }
 };

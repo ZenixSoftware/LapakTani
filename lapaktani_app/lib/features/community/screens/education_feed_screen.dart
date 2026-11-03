@@ -308,7 +308,7 @@ class _EducationFeedScreenState extends State<EducationFeedScreen> {
             child: ListView.separated(
               scrollDirection: Axis.horizontal,
               itemCount: _categories.length,
-              separatorBuilder: (_, __) => const SizedBox(width: 6),
+              separatorBuilder: (_, _) => const SizedBox(width: 6),
               itemBuilder: (context, index) {
                 final cat = _categories[index];
                 final isSelected = _selectedCategory == cat;
@@ -454,7 +454,7 @@ class _EducationFeedScreenState extends State<EducationFeedScreen> {
     return ListView.separated(
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
       itemCount: _articles.length,
-      separatorBuilder: (_, __) => const SizedBox(height: 12),
+      separatorBuilder: (_, _) => const SizedBox(height: 12),
       itemBuilder: (context, index) {
         final article = _articles[index];
         return _buildArticleCard(article);
@@ -574,7 +574,7 @@ class _EducationFeedScreenState extends State<EducationFeedScreen> {
                           height: 140,
                           width: double.infinity,
                           fit: BoxFit.cover,
-                          errorBuilder: (_, __, ___) => Container(
+                          errorBuilder: (context, error, stackTrace) => Container(
                             height: 110,
                             color: const Color(0xFFF1F5F9),
                             child: const Center(

@@ -1,6 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:lucide_icons/lucide_icons.dart';
+import '../../core/services/api_service.dart';
+import '../cart/cart_screen.dart';
+import '../orders/models/order_model.dart';
+import '../orders/services/order_service.dart';
+import '../orders/screens/order_tracking_screen.dart';
+import 'services/stock_service.dart';
+import 'widgets/soil_telemetry_card.dart';
 
 class ProductDetailScreen extends StatefulWidget {
   final dynamic product;
@@ -20,11 +27,28 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
   bool _isDescriptionExpanded = false;
   int _cartItemCount = 4;
 
+  @override
+  void initState() {
+    super.initState();
+    StockService().init();
+  }
+
   Map<String, dynamic> get _data {
     if (widget.product is Map) {
       return Map<String, dynamic>.from(widget.product as Map);
     }
     return <String, dynamic>{};
+  }
+
+  String get _productId {
+    final raw = _data['id']?.toString().trim();
+    return (raw != null && raw.isNotEmpty && !raw.startsWith('demo-')) ? raw : '';
+  }
+
+  int get _currentStock {
+    final raw = _data['stock_kg'] ?? _data['stock'] ?? 50;
+    final fallback = (raw is num) ? raw.toInt() : int.tryParse(raw.toString()) ?? 50;
+    return StockService().getStock(_productId, fallback: fallback);
   }
 
   String _formatRupiah(dynamic price) {
@@ -47,13 +71,43 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
   }
 
   void _handleAddToCart() {
+    if (_productId.isEmpty || _productId.startsWith('mock-')) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            'Komoditas tidak valid atau belum terdaftar di sistem.',
+            style: GoogleFonts.inter(fontSize: 12),
+          ),
+          backgroundColor: const Color(0xFFEF4444),
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+      return;
+    }
+    if (_currentStock <= 0) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            'Maaf, stok komoditas ini telah habis.',
+            style: GoogleFonts.inter(fontSize: 12),
+          ),
+          backgroundColor: const Color(0xFFEF4444),
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+      return;
+    }
     setState(() {
       _cartItemCount++;
+    });
+    ApiService().addToCart(productId: _productId, quantity: 1).catchError((err) {
+      debugPrint('[CART] Gagal menambahkan ke keranjang: $err');
+      return false;
     });
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(
-          '${_data['title'] ?? 'Produk'} berhasil ditambahkan ke keranjang.',
+          'Ditambahkan ke keranjang',
           style: GoogleFonts.inter(fontSize: 12),
         ),
         backgroundColor: const Color(0xFF03AC0E),
@@ -64,6 +118,20 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
   }
 
   void _handleBuyNow() {
+    if (_currentStock <= 0) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            'Maaf, komoditas ini sedang habis stok dan tidak dapat dipesan.',
+            style: GoogleFonts.inter(fontSize: 12),
+          ),
+          backgroundColor: const Color(0xFFEF4444),
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+      return;
+    }
+
     showModalBottomSheet(
       context: context,
       shape: const RoundedRectangleBorder(
@@ -140,15 +208,55 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                   width: double.infinity,
                   height: 46,
                   child: ElevatedButton(
-                    onPressed: () {
+                    onPressed: () async {
                       Navigator.pop(ctx);
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content: Text('Pesanan berhasil dibuat.'),
-                          backgroundColor: Color(0xFF03AC0E),
-                          behavior: SnackBarBehavior.floating,
-                        ),
+                      final title = _data['title']?.toString() ?? 'Produk Tani Segar';
+                      final priceNum = _data['price_per_kg'] ?? _data['price'] ?? 15000;
+                      final price = priceNum is num ? priceNum.toInt() : 15000;
+                      final image = _data['image_url']?.toString() ?? '';
+                      final grade = _data['grade']?.toString() ?? 'Grade A';
+
+                      final newOrder = await OrderService().createNewOrder(
+                        buyerName: 'Ibu Ratna Dewi',
+                        buyerAddress: 'Jl. Maribaya No. 42, Lembang, Kab. Bandung Barat',
+                        buyerPhone: '0813-2940-1182',
+                        items: [
+                          OrderItem(
+                            id: 'item-${DateTime.now().millisecondsSinceEpoch}',
+                            productId: _productId,
+                            title: title,
+                            qty: 1,
+                            unit: 'kg',
+                            price: price,
+                            imageUrl: image,
+                            grade: grade,
+                          ),
+                        ],
+                        totalPrice: price,
+                        shippingFee: 8000,
+                        paymentMethod: 'LapakPay (Saldo Terpotong)',
                       );
+
+                      if (!mounted) return;
+                      ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text('Pesanan ${newOrder.id} berhasil dibuat.'),
+                            backgroundColor: const Color(0xFF03AC0E),
+                            behavior: SnackBarBehavior.floating,
+                            action: SnackBarAction(
+                              label: 'Lacak Logistik',
+                              textColor: Colors.white,
+                              onPressed: () {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (_) => OrderTrackingScreen(orderId: newOrder.id),
+                                  ),
+                                );
+                              },
+                            ),
+                          ),
+                        );
                     },
                     style: ElevatedButton.styleFrom(
                       backgroundColor: const Color(0xFF03AC0E),
@@ -181,8 +289,12 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
         child: const Icon(LucideIcons.image, size: 28, color: Color(0xFF94A3B8)),
       );
     }
+    final resolvedUrl = url.startsWith('http')
+        ? url
+        : '${ApiService.baseUrl.replaceAll('/api', '')}/${url.startsWith('/') ? url.substring(1) : url}';
+
     return Image.network(
-      url,
+      resolvedUrl,
       fit: BoxFit.cover,
       errorBuilder: (context, error, stackTrace) => Container(
         color: const Color(0xFFE2E8F0),
@@ -199,8 +311,12 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
     final num numericPrice = num.tryParse(rawPrice.toString()) ?? 12000;
     final strikethroughPriceStr = _formatRupiah((numericPrice * 1.25).round());
     final unit = _data['unit_name']?.toString() ?? _data['unit']?.toString() ?? '/kg';
-    final location = _data['village_name']?.toString() ?? _data['location']?.toString() ?? 'Batu, Malang';
-    final grade = _data['grade']?.toString() ?? 'Grade A';
+    final location = _data['village_name']?.toString() ?? _data['location']?.toString() ?? 'Lembang, Bandung Barat';
+    final poktan = _data['poktan_name']?.toString() ??
+        _data['farm_name']?.toString() ??
+        _data['merchant_name']?.toString() ??
+        'Poktan Manik Sari';
+    final grade = _data['grade_label']?.toString() ?? _data['grade']?.toString() ?? 'Grade A (Super)';
     final category = _data['category']?.toString() ?? 'Sayuran Segar Organik';
     final imageUrl = _data['image_url']?.toString() ?? _data['imageUrl']?.toString() ?? '';
     final defaultDesc =
@@ -228,6 +344,8 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                       strikethroughPriceStr: strikethroughPriceStr,
                       unit: unit,
                       title: title,
+                      grade: grade,
+                      poktan: poktan,
                     ),
                     _buildSectionDivider(),
                     _buildReviewsSection(),
@@ -237,9 +355,12 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                     _buildSpecsAndDescriptionSection(
                       category: category,
                       location: location,
+                      poktan: poktan,
                       grade: grade,
                       description: description,
                     ),
+                    _buildSectionDivider(),
+                    SoilTelemetryCard(productId: _productId),
                     _buildSectionDivider(),
                     _buildMoreFromShopSection(),
                     const SizedBox(height: 20),
@@ -333,11 +454,10 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                 icon: LucideIcons.shoppingCart,
                 badgeText: '$_cartItemCount',
                 onTap: () {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text('Keranjang belanja: $_cartItemCount barang.'),
-                      duration: const Duration(seconds: 1),
-                      behavior: SnackBarBehavior.floating,
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => const CartScreen(),
                     ),
                   );
                 },
@@ -573,6 +693,8 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
     required String strikethroughPriceStr,
     required String unit,
     required String title,
+    required String grade,
+    required String poktan,
   }) {
     return Padding(
       padding: const EdgeInsets.fromLTRB(14, 12, 14, 10),
@@ -659,7 +781,9 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Row(
+                    Wrap(
+                      spacing: 6,
+                      runSpacing: 4,
                       children: [
                         Container(
                           padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
@@ -681,6 +805,100 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                                 ),
                               ),
                             ],
+                          ),
+                        ),
+                        ValueListenableBuilder<Map<String, int>>(
+                          valueListenable: StockService().stockNotifier,
+                          builder: (context, stockMap, _) {
+                            final liveStock = stockMap[_productId] ?? _currentStock;
+                            final bool isOut = liveStock <= 0;
+                            final bool isLow = liveStock > 0 && liveStock <= 10;
+                            return Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
+                              decoration: BoxDecoration(
+                                color: isOut
+                                    ? const Color(0xFFFEE2E2)
+                                    : isLow
+                                        ? const Color(0xFFFEF3C7)
+                                        : const Color(0xFFDCFCE7),
+                                borderRadius: BorderRadius.circular(4),
+                                border: Border.all(
+                                  color: isOut
+                                      ? const Color(0xFFEF4444)
+                                      : isLow
+                                          ? const Color(0xFFF59E0B)
+                                          : const Color(0xFF03AC0E),
+                                  width: 0.8,
+                                ),
+                              ),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Icon(
+                                    isOut
+                                        ? LucideIcons.alertCircle
+                                        : isLow
+                                            ? LucideIcons.alertTriangle
+                                            : LucideIcons.packageCheck,
+                                    size: 11,
+                                    color: isOut
+                                        ? const Color(0xFFEF4444)
+                                        : isLow
+                                            ? const Color(0xFFB45309)
+                                            : const Color(0xFF006E04),
+                                  ),
+                                  const SizedBox(width: 4),
+                                  Text(
+                                    isOut
+                                        ? 'Stok Habis'
+                                        : isLow
+                                            ? 'Sisa $liveStock kg (Stok Menipis)'
+                                            : 'Stok: $liveStock kg',
+                                    style: GoogleFonts.inter(
+                                      fontSize: 9.5,
+                                      fontWeight: FontWeight.w700,
+                                      color: isOut
+                                          ? const Color(0xFFEF4444)
+                                          : isLow
+                                              ? const Color(0xFFB45309)
+                                              : const Color(0xFF006E04),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            );
+                          },
+                        ),
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFEFF4FF),
+                            borderRadius: BorderRadius.circular(4),
+                            border: Border.all(color: const Color(0xFFBFDBFE)),
+                          ),
+                          child: Text(
+                            'Grade: $grade',
+                            style: GoogleFonts.inter(
+                              fontSize: 9.0,
+                              fontWeight: FontWeight.w700,
+                              color: const Color(0xFF1D4ED8),
+                            ),
+                          ),
+                        ),
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFECFDF5),
+                            borderRadius: BorderRadius.circular(4),
+                            border: Border.all(color: const Color(0xFFA7F3D0)),
+                          ),
+                          child: Text(
+                            'Asal: $poktan',
+                            style: GoogleFonts.inter(
+                              fontSize: 9.0,
+                              fontWeight: FontWeight.w700,
+                              color: const Color(0xFF047857),
+                            ),
                           ),
                         ),
                       ],
@@ -1231,6 +1449,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
   Widget _buildSpecsAndDescriptionSection({
     required String category,
     required String location,
+    required String poktan,
     required String grade,
     required String description,
   }) {
@@ -1240,7 +1459,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'Spesifikasi',
+            'Spesifikasi Produk',
             style: GoogleFonts.inter(
               fontSize: 13.5,
               fontWeight: FontWeight.w700,
@@ -1248,10 +1467,10 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
             ),
           ),
           const SizedBox(height: 6),
-          _buildSpecRow('Etalase', category, isGreen: true),
+          _buildSpecRow('Grade Kualitas', grade, isGreen: true),
+          _buildSpecRow('Asal Poktan/Kebun', '$poktan ($location)'),
+          _buildSpecRow('Etalase Kategori', category),
           _buildSpecRow('Berat Satuan', '1 Kg'),
-          _buildSpecRow('Asal Daerah', location),
-          _buildSpecRow('Kualitas', grade),
           _buildSpecRow('Masa Simpan', '5 - 7 Hari (Kulkas)'),
           const SizedBox(height: 12),
           Text(
@@ -1606,70 +1825,106 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
             ),
             const SizedBox(width: 8),
             Expanded(
-              child: SizedBox(
-                height: 44,
-                child: OutlinedButton(
-                  onPressed: _handleBuyNow,
-                  style: OutlinedButton.styleFrom(
-                    side: const BorderSide(color: Color(0xFF03AC0E), width: 1.2),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                    padding: const EdgeInsets.symmetric(vertical: 4),
-                  ),
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Text(
-                        'Beli langsung',
-                        style: GoogleFonts.inter(
-                          fontSize: 12,
-                          fontWeight: FontWeight.w700,
-                          color: const Color(0xFF03AC0E),
+              child: ValueListenableBuilder<Map<String, int>>(
+                valueListenable: StockService().stockNotifier,
+                builder: (context, stockMap, _) {
+                  final liveStock = stockMap[_productId] ?? _currentStock;
+                  final bool isOut = liveStock <= 0;
+
+                  if (isOut) {
+                    return SizedBox(
+                      height: 44,
+                      child: Container(
+                        alignment: Alignment.center,
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFF1F5F9),
+                          borderRadius: BorderRadius.circular(10),
+                          border: Border.all(color: const Color(0xFFCBD5E1)),
+                        ),
+                        child: Text(
+                          'Stok Habis (Menunggu Panen)',
+                          style: GoogleFonts.inter(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w700,
+                            color: const Color(0xFF94A3B8),
+                          ),
                         ),
                       ),
-                      Text(
-                        'dengan voucher',
-                        style: GoogleFonts.inter(
-                          fontSize: 9,
-                          color: const Color(0xFF64748B),
+                    );
+                  }
+
+                  return Row(
+                    children: [
+                      Expanded(
+                        child: SizedBox(
+                          height: 44,
+                          child: OutlinedButton(
+                            onPressed: _handleBuyNow,
+                            style: OutlinedButton.styleFrom(
+                              side: const BorderSide(color: Color(0xFF03AC0E), width: 1.2),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(10),
+                              ),
+                              padding: const EdgeInsets.symmetric(vertical: 4),
+                            ),
+                            child: Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Text(
+                                  'Beli langsung',
+                                  style: GoogleFonts.inter(
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.w700,
+                                    color: const Color(0xFF03AC0E),
+                                  ),
+                                ),
+                                Text(
+                                  'dengan voucher',
+                                  style: GoogleFonts.inter(
+                                    fontSize: 9,
+                                    color: const Color(0xFF64748B),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: SizedBox(
+                          height: 44,
+                          child: ElevatedButton(
+                            onPressed: _handleAddToCart,
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: const Color(0xFF03AC0E),
+                              foregroundColor: Colors.white,
+                              elevation: 1,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(10),
+                              ),
+                              padding: const EdgeInsets.symmetric(vertical: 4),
+                            ),
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                const Icon(LucideIcons.shoppingCart, size: 16),
+                                const SizedBox(width: 4),
+                                Text(
+                                  '+ Keranjang',
+                                  style: GoogleFonts.inter(
+                                    fontSize: 12.5,
+                                    fontWeight: FontWeight.w700,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
                         ),
                       ),
                     ],
-                  ),
-                ),
-              ),
-            ),
-            const SizedBox(width: 8),
-            Expanded(
-              child: SizedBox(
-                height: 44,
-                child: ElevatedButton(
-                  onPressed: _handleAddToCart,
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFF03AC0E),
-                    foregroundColor: Colors.white,
-                    elevation: 1,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                    padding: const EdgeInsets.symmetric(vertical: 4),
-                  ),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      const Icon(LucideIcons.plus, size: 16),
-                      const SizedBox(width: 4),
-                      Text(
-                        'Keranjang',
-                        style: GoogleFonts.inter(
-                          fontSize: 12.5,
-                          fontWeight: FontWeight.w700,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
+                  );
+                },
               ),
             ),
           ],

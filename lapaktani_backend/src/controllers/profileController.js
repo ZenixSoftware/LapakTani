@@ -1,5 +1,29 @@
+const fs = require('fs');
+const path = require('path');
 const { v4: uuidv4 } = require('uuid');
 const pool = require('../config/db');
+
+/**
+ * Helper to delete uploaded files on disk during transaction rollback
+ */
+const deleteUploadedFile = (fileUrl) => {
+  if (!fileUrl || typeof fileUrl !== 'string') return;
+  try {
+    let relativePath = fileUrl.trim();
+    if (relativePath.includes('/uploads/')) {
+      relativePath = relativePath.substring(relativePath.indexOf('/uploads/'));
+    }
+    const cleanPath = relativePath.startsWith('/') ? relativePath.slice(1) : relativePath;
+    const baseUploadsDir = path.resolve(__dirname, '../../public/uploads');
+    const fullPath = path.resolve(__dirname, '../../public', cleanPath);
+    if (fullPath.startsWith(baseUploadsDir) && fs.existsSync(fullPath)) {
+      fs.unlinkSync(fullPath);
+      console.log(`[PROFILE] Rolled back orphan uploaded file: ${fullPath}`);
+    }
+  } catch (_) {
+    // Silently catch fs errors as specified
+  }
+};
 
 /**
  * Setup Farmer Profile and Legalities (US-05)
@@ -23,7 +47,10 @@ const setupFarmerProfile = async (req, res) => {
     village_id,
     village,
     farmer_group_id,
-    farmer_group
+    farmer_group,
+    ktp_image_url,
+    selfie_image_url,
+    birth_date
   } = req.body;
 
   const rawNik = nik_number || nik;
@@ -54,6 +81,14 @@ const setupFarmerProfile = async (req, res) => {
     });
   }
 
+  let formattedBirthDate = null;
+  if (birth_date) {
+    const d = new Date(birth_date);
+    if (!isNaN(d.getTime())) {
+      formattedBirthDate = d.toISOString().split('T')[0];
+    }
+  }
+
   let connection;
   try {
     connection = await pool.getConnection();
@@ -67,6 +102,8 @@ const setupFarmerProfile = async (req, res) => {
 
     if (userRows.length === 0) {
       await connection.rollback();
+      deleteUploadedFile(ktp_image_url);
+      deleteUploadedFile(selfie_image_url);
       return res.status(404).json({
         success: false,
         message: 'Pengguna tidak ditemukan dalam sistem.'
@@ -114,29 +151,43 @@ const setupFarmerProfile = async (req, res) => {
       }
     }
 
-    const profileId = uuidv4();
-
-    // Query 1: Insert or update user_profiles
+    // 1. Standard UPDATE operation since user_profiles is guaranteed to exist from registration
     await connection.query(
-      `INSERT INTO user_profiles (id, user_id, full_name, nik_number, village_id, verification_status)
-       VALUES (?, ?, COALESCE((SELECT full_name FROM users WHERE id = ?), ?), ?, ?, 'pending')
-       ON DUPLICATE KEY UPDATE
-         nik_number = VALUES(nik_number),
-         village_id = VALUES(village_id),
-         verification_status = 'pending'`,
-      [profileId, userId, userId, fallbackName, sanitizedNik, resolvedVillageId]
+      `UPDATE user_profiles 
+       SET nik_number = ?,
+           village_id = ?,
+           detail_address = ?,
+           avatar_url = ?,
+           birth_date = ?,
+           verification_status = 'pending'
+       WHERE user_id = ?`,
+      [
+        sanitizedNik,
+        resolvedVillageId,
+        req.body.home_address || req.body.address || req.body.detail_address || null,
+        selfie_image_url || null,
+        formattedBirthDate,
+        userId
+      ]
     );
 
-    // Query 2: Insert or update farmer_profiles
+    const [profileRows] = await connection.query(
+      'SELECT id FROM user_profiles WHERE user_id = ? LIMIT 1',
+      [userId]
+    );
+    const profileId = profileRows.length > 0 ? profileRows[0].id : userId;
+
+    // 2. Insert or update farmer_profiles
     await connection.query(
-      `INSERT INTO farmer_profiles (user_id, farmer_group_id)
-       VALUES (?, ?)
+      `INSERT INTO farmer_profiles (user_id, farmer_group_id, ktp_image_url)
+       VALUES (?, ?, ?)
        ON DUPLICATE KEY UPDATE
-         farmer_group_id = VALUES(farmer_group_id)`,
-      [userId, resolvedFarmerGroupId]
+         farmer_group_id = VALUES(farmer_group_id),
+         ktp_image_url = COALESCE(VALUES(ktp_image_url), ktp_image_url)`,
+      [userId, resolvedFarmerGroupId, ktp_image_url || null]
     );
 
-    // Query 3: Save farm area details
+    // 3. Save farm area details
     const farmId = uuidv4();
     await connection.query(
       `INSERT INTO farms (id, farmer_id, land_area_ha)
@@ -163,6 +214,7 @@ const setupFarmerProfile = async (req, res) => {
         profile_id: profileId,
         user_id: userId,
         nik_number: sanitizedNik,
+        birth_date: formattedBirthDate,
         land_area_ha: landAreaNumber,
         village_id: resolvedVillageId,
         farmer_group_id: resolvedFarmerGroupId,
@@ -171,13 +223,18 @@ const setupFarmerProfile = async (req, res) => {
     });
   } catch (error) {
     if (connection) {
-      await connection.rollback();
+      try {
+        await connection.rollback();
+      } catch (_) {}
     }
+    // Delete orphan uploaded files on failure
+    deleteUploadedFile(ktp_image_url);
+    deleteUploadedFile(selfie_image_url);
+
     console.error('[PROFILE] Error setting up farmer profile:', error.message);
     return res.status(500).json({
       success: false,
-      message: 'Gagal menyimpan profil petani.',
-      error: error.message
+      message: 'Gagal menyimpan profil petani.'
     });
   } finally {
     if (connection) {
@@ -186,6 +243,68 @@ const setupFarmerProfile = async (req, res) => {
   }
 };
 
+/**
+ * Get current authenticated user profile
+ * Endpoint: GET /api/profiles/me
+ */
+const getMyProfile = async (req, res) => {
+  const userId = req.user ? req.user.id : null;
+  if (!userId) {
+    return res.status(401).json({
+      success: false,
+      message: 'Akses ditolak. Pengguna belum diautentikasi.'
+    });
+  }
+
+  try {
+    const [rows] = await pool.query(
+      `SELECT 
+        u.id, 
+        u.email, 
+        u.role, 
+        u.role_id, 
+        u.is_verified,
+        COALESCE(up.full_name, u.full_name) AS full_name,
+        up.nik_number, 
+        up.village_id, 
+        up.detail_address,
+        up.avatar_url, 
+        up.birth_date, 
+        COALESCE(up.verification_status, 'pending') AS verification_status,
+        fp.ktp_image_url, 
+        fp.farmer_group_id, 
+        COALESCE(f.land_area_ha, 0) AS farm_area_hectares,
+        COALESCE(f.land_area_ha, 0) AS land_area_ha
+      FROM users u
+      LEFT JOIN user_profiles up ON u.id = up.user_id
+      LEFT JOIN farmer_profiles fp ON u.id = fp.user_id
+      LEFT JOIN farms f ON u.id = f.farmer_id
+      WHERE u.id = ? 
+      LIMIT 1`,
+      [userId]
+    );
+
+    if (rows.length === 0) {
+      return res.status(404).json({
+        success: false,
+        message: 'Pengguna tidak ditemukan.'
+      });
+    }
+
+    return res.status(200).json({
+      success: true,
+      data: rows[0]
+    });
+  } catch (error) {
+    console.error('[PROFILE] Error fetching profile:', error.message);
+    return res.status(500).json({
+      success: false,
+      message: 'Gagal mengambil data profil.'
+    });
+  }
+};
+
 module.exports = {
-  setupFarmerProfile
+  setupFarmerProfile,
+  getMyProfile
 };

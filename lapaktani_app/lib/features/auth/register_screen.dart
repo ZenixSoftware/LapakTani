@@ -2,13 +2,13 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:lucide_icons/lucide_icons.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 import '../../core/services/api_service.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/widgets/lapaktani_logo.dart';
 import '../../core/widgets/lapaktani_text_field.dart';
 import '../profile/complete_farmer_profile_screen.dart';
 import '../home/home_dashboard_screen.dart';
+import 'auth_repository.dart';
 
 class RegisterScreen extends StatefulWidget {
   const RegisterScreen({super.key});
@@ -67,10 +67,12 @@ class _RegisterScreenState extends State<RegisterScreen> {
           data['success'] == true) {
         final token = data['token'] as String?;
         if (token != null && token.isNotEmpty) {
-          final prefs = await SharedPreferences.getInstance();
-          await prefs.setString(ApiService.tokenKey, token);
+          final api = ApiService();
+          await api.saveToken(token);
           if (data['user'] != null) {
-            await prefs.setString(ApiService.userKey, jsonEncode(data['user']));
+            final userMap = data['user'] as Map<String, dynamic>;
+            await api.saveUser(userMap);
+            AuthRepository.setCurrentUser(User.fromJson(userMap));
           }
         }
 

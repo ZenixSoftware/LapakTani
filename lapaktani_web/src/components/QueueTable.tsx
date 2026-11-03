@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from 'react';
-import type { PendingFarmer } from '../services/api';
+import { type PendingFarmer, resolveImageUrl } from '../services/api';
 
 interface QueueTableProps {
   farmers: PendingFarmer[];
@@ -191,7 +191,7 @@ export const QueueTable: React.FC<QueueTableProps> = ({
                 <tr className="text-[11px] font-bold uppercase tracking-wider text-gray-400 border-b border-gray-100">
                   <th className="py-2.5 px-3">Petani &amp; Poktan</th>
                   <th className="py-2.5 px-3">Komoditas &amp; Lahan</th>
-                  <th className="py-2.5 px-3">Data Dukcapil &amp; KT</th>
+                  <th className="py-2.5 px-3">Verifikasi Dokumen</th>
                   <th className="py-2.5 px-3 text-right">Aksi</th>
                 </tr>
               </thead>
@@ -219,28 +219,34 @@ export const QueueTable: React.FC<QueueTableProps> = ({
                       {/* Column 1: Petani & Poktan */}
                       <td className="py-3.5 px-3">
                         <div className="flex items-center gap-3">
-                          {farmer.avatar_url ? (
-                            <div className="relative flex-shrink-0">
-                              <img
-                                alt={displayName}
-                                className={`w-11 h-11 rounded-xl object-cover ${
-                                  isSelected ? 'ring-2 ring-primary' : ''
-                                }`}
-                                src={farmer.avatar_url}
-                              />
-                              <span className="absolute -bottom-1 -right-1 w-4 h-4 bg-primary text-white rounded-full flex items-center justify-center text-[10px]">
-                                <span className="material-symbols-outlined text-[10px]">check</span>
-                              </span>
-                            </div>
-                          ) : (
-                            <div
-                              className={`w-11 h-11 rounded-xl ${getAvatarBg(
-                                idx
-                              )} flex items-center justify-center font-bold text-[14px] flex-shrink-0`}
-                            >
-                              {getInitials(displayName)}
-                            </div>
-                          )}
+                          {(() => {
+                            const avatarSrc = resolveImageUrl(farmer.avatar_url || farmer.selfie_image_url);
+                            return avatarSrc ? (
+                              <div className="relative flex-shrink-0">
+                                <img
+                                  alt={displayName}
+                                  className={`w-11 h-11 rounded-xl object-cover bg-gray-100 ${
+                                    isSelected ? 'ring-2 ring-primary' : ''
+                                  }`}
+                                  src={avatarSrc}
+                                  onError={(e) => {
+                                    (e.currentTarget as HTMLElement).style.display = 'none';
+                                  }}
+                                />
+                                <span className="absolute -bottom-1 -right-1 w-4 h-4 bg-primary text-white rounded-full flex items-center justify-center text-[10px]">
+                                  <span className="material-symbols-outlined text-[10px]">check</span>
+                                </span>
+                              </div>
+                            ) : (
+                              <div
+                                className={`w-11 h-11 rounded-xl ${getAvatarBg(
+                                  idx
+                                )} flex items-center justify-center font-bold text-[14px] flex-shrink-0`}
+                              >
+                                {getInitials(displayName)}
+                              </div>
+                            );
+                          })()}
 
                           <div>
                             <span className="font-bold text-gray-900 block leading-tight">
@@ -283,15 +289,15 @@ export const QueueTable: React.FC<QueueTableProps> = ({
                         </div>
                       </td>
 
-                      {/* Column 3: Data Dukcapil & KT */}
+                      {/* Column 3: Verifikasi Dokumen */}
                       <td className="py-3.5 px-3">
                         <div className="space-y-1">
                           <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-emerald-100 text-emerald-800 text-[10px] font-bold">
                             <span className="material-symbols-outlined text-[12px]">verified</span>
-                            <span>98% Dukcapil Match</span>
+                            <span>Dukcapil Match</span>
                           </span>
-                          <span className="text-[11px] text-gray-600 block font-mono">
-                            KT: KT-3204-{displayNik.slice(-4) || '9912'}
+                          <span className="text-[11px] text-gray-500 block">
+                            {farmer.ktp_image_url ? 'KTP Terlampir' : 'KTP Belum Diunggah'}
                           </span>
                         </div>
                       </td>

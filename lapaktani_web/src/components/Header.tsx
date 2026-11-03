@@ -5,6 +5,8 @@ interface HeaderProps {
   onSearchChange: (query: string) => void;
   onSync: () => void;
   isSyncing: boolean;
+  currentUser?: { full_name?: string; email?: string } | null;
+  onOpenLogin?: () => void;
 }
 
 export const Header: React.FC<HeaderProps> = ({
@@ -12,6 +14,8 @@ export const Header: React.FC<HeaderProps> = ({
   onSearchChange,
   onSync,
   isSyncing,
+  currentUser,
+  onOpenLogin,
 }) => {
   return (
     <header className="fixed top-0 left-0 right-0 h-16 bg-surface-white/95 backdrop-blur-md z-40 border-b border-gray-100 flex items-center justify-between px-4 lg:px-8">
@@ -79,18 +83,34 @@ export const Header: React.FC<HeaderProps> = ({
 
         <div className="h-6 w-px bg-gray-200 mx-1 hidden sm:block"></div>
 
-        {/* Quick profile badge on topbar */}
-        <div className="flex items-center gap-2.5 pl-1">
-          <div className="w-9 h-9 rounded-xl bg-forest-emerald text-white flex items-center justify-center font-bold text-[13px] shadow-sm">
-            AH
+        {currentUser ? (
+          <div className="flex items-center gap-2.5 pl-1">
+            <div className="w-9 h-9 rounded-xl bg-forest-emerald text-white flex items-center justify-center font-bold text-[13px] shadow-sm">
+              {currentUser.full_name
+                ? currentUser.full_name
+                    .split(' ')
+                    .map((n) => n[0])
+                    .slice(0, 2)
+                    .join('')
+                    .toUpperCase()
+                : 'AH'}
+            </div>
+            <div className="hidden xl:flex flex-col text-left">
+              <span className="text-[13px] font-bold text-gray-800 leading-tight">
+                {currentUser.full_name || 'Ir. Ahmad Hidayat'}
+              </span>
+              <span className="text-[11px] text-gray-500">Penyuluh Ahli Muda</span>
+            </div>
           </div>
-          <div className="hidden xl:flex flex-col text-left">
-            <span className="text-[13px] font-bold text-gray-800 leading-tight">
-              Ir. Ahmad Hidayat
-            </span>
-            <span className="text-[11px] text-gray-500">Penyuluh Ahli Muda</span>
-          </div>
-        </div>
+        ) : (
+          <button
+            onClick={onOpenLogin}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-emerald-700 hover:bg-emerald-800 text-white font-bold text-[12px] shadow-sm transition-colors"
+          >
+            <span className="material-symbols-outlined text-[16px]">login</span>
+            <span>Masuk</span>
+          </button>
+        )}
       </div>
     </header>
   );

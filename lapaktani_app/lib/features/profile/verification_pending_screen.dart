@@ -4,7 +4,7 @@ import 'package:lucide_icons/lucide_icons.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/widgets/custom_soft_card.dart';
 import '../../core/widgets/lapaktani_logo.dart';
-import '../home/home_screen.dart';
+import '../home/home_dashboard_screen.dart';
 
 class VerificationPendingScreen extends StatelessWidget {
   const VerificationPendingScreen({super.key});
@@ -201,7 +201,7 @@ class VerificationPendingScreen extends StatelessWidget {
                                   PageRouteBuilder(
                                     pageBuilder:
                                         (context, animation, secondaryAnimation) =>
-                                            const HomeScreen(),
+                                            const HomeDashboardScreen(),
                                     transitionsBuilder: (context, animation,
                                         secondaryAnimation, child) {
                                       return FadeTransition(

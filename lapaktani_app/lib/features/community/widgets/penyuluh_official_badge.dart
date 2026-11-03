@@ -209,7 +209,6 @@ class PenyuluhOfficialBadge extends StatelessWidget {
         borderRadius = 10;
         break;
       case PenyuluhBadgeSize.medium:
-      default:
         iconSize = 13;
         fontSize = 11;
         padding = const EdgeInsets.symmetric(horizontal: 7, vertical: 3);

@@ -17,7 +17,9 @@ const getPendingFarmers = async (req, res) => {
         up.nik_number,
         up.phone,
         up.detail_address,
+        up.birth_date,
         up.avatar_url,
+        up.avatar_url AS selfie_image_url,
         up.verification_status,
         COALESCE(fg.group_name, fp.farmer_group_id, 'Poktan Tani Makmur') AS poktan,
         COALESCE(v.name, 'Lembang') AS village,
@@ -49,8 +51,7 @@ const getPendingFarmers = async (req, res) => {
     console.error('[PENYULUH] Error fetching pending farmers:', error.message);
     return res.status(500).json({
       success: false,
-      message: 'Gagal mengambil daftar permohonan petani.',
-      error: error.message
+      message: 'Gagal mengambil daftar permohonan petani.'
     });
   }
 };
@@ -73,7 +74,9 @@ const getAllFarmers = async (req, res) => {
         up.nik_number,
         up.phone,
         up.detail_address,
+        up.birth_date,
         up.avatar_url,
+        up.avatar_url AS selfie_image_url,
         up.verification_status,
         COALESCE(fg.group_name, fp.farmer_group_id, 'Poktan Tani Makmur') AS poktan,
         COALESCE(v.name, 'Lembang') AS village,
@@ -113,8 +116,7 @@ const getAllFarmers = async (req, res) => {
     console.error('[PENYULUH] Error fetching farmers:', error.message);
     return res.status(500).json({
       success: false,
-      message: 'Gagal mengambil data petani.',
-      error: error.message
+      message: 'Gagal mengambil data petani.'
     });
   }
 };
@@ -124,6 +126,15 @@ const getAllFarmers = async (req, res) => {
  * Update verification_status to 'verified' or 'rejected'
  */
 const verifyFarmer = async (req, res) => {
+  const userRole = (req.user && req.user.role ? req.user.role : '').toLowerCase();
+  const userRoleId = req.user ? req.user.role_id : null;
+  if (userRole !== 'penyuluh' && userRoleId !== 2) {
+    return res.status(403).json({
+      success: false,
+      message: 'Akses ditolak. Hanya pengguna dengan peran penyuluh yang dapat memverifikasi petani.'
+    });
+  }
+
   const { id } = req.params;
   const { status, verification_status, notes } = req.body;
 
@@ -190,8 +201,7 @@ const verifyFarmer = async (req, res) => {
     console.error('[PENYULUH] Error updating verification status:', error.message);
     return res.status(500).json({
       success: false,
-      message: 'Gagal memperbarui status verifikasi petani.',
-      error: error.message
+      message: 'Gagal memperbarui status verifikasi petani.'
     });
   } finally {
     if (connection) {

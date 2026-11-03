@@ -12,6 +12,11 @@ const penyuluhRoutes = require('./src/routes/penyuluh');
 const masterRoutes = require('./src/routes/master');
 const uploadRoutes = require('./src/routes/upload');
 const educationRoutes = require('./src/routes/education');
+const cartRoutes = require('./src/routes/cart');
+const orderRoutes = require('./src/routes/orders');
+const soilRoutes = require('./src/routes/soil');
+const paymentRoutes = require('./src/routes/payments');
+const poktanRoutes = require('./src/routes/poktan');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -71,6 +76,11 @@ app.use('/api/penyuluh', penyuluhRoutes);
 app.use('/api/master', masterRoutes);
 app.use('/api/upload', uploadRoutes);
 app.use('/api/education', educationRoutes);
+app.use('/api/cart', cartRoutes);
+app.use('/api/orders', orderRoutes);
+app.use('/api/soil', soilRoutes);
+app.use('/api/payments', paymentRoutes);
+app.use('/api/poktan', poktanRoutes);
 
 
 app.use((req, res) => {
@@ -84,8 +94,7 @@ app.use((err, req, res, next) => {
   console.error('[SERVER] Unhandled error:', err.message);
   res.status(500).json({
     success: false,
-    message: 'Terjadi kesalahan internal server.',
-    error: err.message
+    message: 'Terjadi kesalahan internal server.'
   });
 });
 
@@ -94,6 +103,22 @@ const startServer = async () => {
     try {
       const conn = await pool.getConnection();
       console.log('[MYSQL] Connected to database');
+
+      await conn.query(`
+        CREATE TABLE IF NOT EXISTS cart_items (
+          id VARCHAR(50) PRIMARY KEY,
+          user_id VARCHAR(50) NOT NULL,
+          product_id VARCHAR(50) NOT NULL,
+          grade_id VARCHAR(50),
+          quantity INT NOT NULL DEFAULT 1,
+          created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+          updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+          INDEX idx_cart_product (product_id),
+          INDEX idx_cart_user (user_id)
+        )
+      `);
+      console.log('[MYSQL] cart_items table verified');
+
       conn.release();
     } catch (dbErr) {
       console.warn('[MYSQL] Connection warning:', dbErr.message);

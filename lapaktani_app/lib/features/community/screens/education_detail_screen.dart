@@ -165,7 +165,7 @@ class _EducationDetailScreenState extends State<EducationDetailScreen> {
                 height: 190,
                 width: double.infinity,
                 fit: BoxFit.cover,
-                errorBuilder: (_, __, ___) => Container(
+                errorBuilder: (context, error, stackTrace) => Container(
                   height: 160,
                   color: const Color(0xFFE2E8F0),
                   child: const Center(
@@ -349,7 +349,7 @@ class _EducationDetailScreenState extends State<EducationDetailScreen> {
           shrinkWrap: true,
           physics: const NeverScrollableScrollPhysics(),
           itemCount: _article.steps.length,
-          separatorBuilder: (_, __) => const SizedBox(height: 8),
+          separatorBuilder: (_, _) => const SizedBox(height: 8),
           itemBuilder: (context, index) {
             final isDone = _completedSteps.contains(index);
             return InkWell(

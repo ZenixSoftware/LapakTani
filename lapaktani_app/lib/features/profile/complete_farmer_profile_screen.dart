@@ -9,6 +9,8 @@ import '../../core/services/region_service.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/widgets/custom_soft_card.dart';
 import '../../core/widgets/lapaktani_text_field.dart';
+import '../../core/services/api_service.dart';
+import '../auth/auth_repository.dart';
 import 'profile_repository.dart';
 import 'verification_pending_screen.dart';
 
@@ -47,6 +49,8 @@ class _CompleteFarmerProfileScreenState
   final ImagePicker _imagePicker = ImagePicker();
 
   File? _selectedKtpFile;
+  File? _selectedSelfieFile;
+  DateTime? _selectedBirthDate;
 
   List<RegionItem> _provinces = [];
   RegionItem? _selectedProvince;
@@ -88,7 +92,14 @@ class _CompleteFarmerProfileScreenState
   Future<void> _loadInitialData() async {
     setState(() => _isLoadingProvinces = true);
 
-    final user = _profileRepository.currentUser;
+    var user = _profileRepository.currentUser;
+    if (user == null) {
+      final userMap = await ApiService().getUser();
+      if (userMap != null) {
+        user = User.fromJson(userMap);
+        AuthRepository.setCurrentUser(user);
+      }
+    }
     if (user != null) {
       final userProfile = await _profileRepository.getUserProfile(user.id);
       if (userProfile != null && mounted) {
@@ -98,16 +109,22 @@ class _CompleteFarmerProfileScreenState
         if (userProfile['home_address'] != null) {
           _addressController.text = userProfile['home_address'] as String;
         }
+        if (userProfile['birth_date'] != null) {
+          try {
+            _selectedBirthDate =
+                DateTime.parse(userProfile['birth_date'].toString());
+          } catch (_) {}
+        }
       }
 
       final farmerProfile = await _profileRepository.getFarmerProfile(user.id);
       if (farmerProfile != null && mounted) {
         if (farmerProfile['land_area_ha'] != null) {
           _landAreaController.text =
-              (farmerProfile['land_area_ha'] as num).toString();
+              (double.tryParse(farmerProfile['land_area_ha'].toString()) ?? 0.0).toString();
         }
         if (farmerProfile['farmer_group_id'] != null) {
-          _selectedFarmerGroupId = farmerProfile['farmer_group_id'] as String;
+          _selectedFarmerGroupId = farmerProfile['farmer_group_id'].toString();
         }
       }
     }
@@ -273,7 +290,7 @@ class _CompleteFarmerProfileScreenState
     });
   }
 
-  Future<void> _pickImage(ImageSource source) async {
+  Future<void> _pickKtpImage(ImageSource source) async {
     try {
       final XFile? pickedFile = await _imagePicker.pickImage(
         source: source,
@@ -310,18 +327,73 @@ class _CompleteFarmerProfileScreenState
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('Gagal memilih foto: ${e.toString()}'),
+          content: Text('Gagal memilih foto KTP: ${e.toString()}'),
           backgroundColor: const Color(0xFFDC2626),
         ),
       );
     }
   }
 
-  Future<void> _submitVerification() async {
+  Future<void> _pickSelfieImage(ImageSource source) async {
+    try {
+      final XFile? pickedFile = await _imagePicker.pickImage(
+        source: source,
+        preferredCameraDevice: CameraDevice.front,
+        maxWidth: 1600,
+        maxHeight: 1600,
+        imageQuality: 85,
+      );
+
+      if (pickedFile == null) return;
+
+      final CroppedFile? croppedFile = await ImageCropper().cropImage(
+        sourcePath: pickedFile.path,
+        uiSettings: [
+          AndroidUiSettings(
+            toolbarTitle: 'Atur Swafoto KTP',
+            toolbarColor: AppColors.primary,
+            toolbarWidgetColor: Colors.white,
+            initAspectRatio: CropAspectRatioPreset.square,
+            lockAspectRatio: false,
+          ),
+          IOSUiSettings(
+            title: 'Atur Swafoto KTP',
+            aspectRatioLockEnabled: false,
+          ),
+        ],
+      );
+
+      if (croppedFile != null && mounted) {
+        setState(() {
+          _selectedSelfieFile = File(croppedFile.path);
+        });
+      }
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Gagal memilih swafoto: ${e.toString()}'),
+          backgroundColor: const Color(0xFFDC2626),
+        ),
+      );
+    }
+  }
+
+  Future<void> _submitProfile() async {
     if (_selectedKtpFile == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('Wajib mengunggah foto e-KTP untuk verifikasi petani.'),
+          backgroundColor: Color(0xFFDC2626),
+        ),
+      );
+      return;
+    }
+
+    if (_selectedSelfieFile == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Wajib mengunggah swafoto dengan KTP untuk verifikasi.'),
           backgroundColor: Color(0xFFDC2626),
         ),
       );
@@ -379,10 +451,28 @@ class _CompleteFarmerProfileScreenState
       return;
     }
 
+    if (_selectedBirthDate == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Silakan pilih tanggal lahir Anda sesuai KTP.'),
+          backgroundColor: Color(0xFFDC2626),
+        ),
+      );
+      return;
+    }
+
     if (!_formKey.currentState!.validate()) return;
 
-    final user = _profileRepository.currentUser;
+    var user = _profileRepository.currentUser;
     if (user == null) {
+      final userMap = await ApiService().getUser();
+      if (userMap != null) {
+        user = User.fromJson(userMap);
+        AuthRepository.setCurrentUser(user);
+      }
+    }
+    if (user == null) {
+      if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('Sesi pengguna tidak valid. Silakan login kembali.'),
@@ -404,9 +494,45 @@ class _CompleteFarmerProfileScreenState
           ? _addressController.text.trim()
           : 'Desa ${_selectedVillage!.displayName}, Kec. ${_selectedDistrict!.displayName}, ${_selectedRegency!.displayName}, ${_selectedProvince!.displayName}';
 
+      // 1. Upload KTP Image to backend
+      String? ktpImageUrl;
+      try {
+        final ktpRes = await ApiService.uploadImage(
+          '/upload/product-image',
+          _selectedKtpFile!,
+          fieldName: 'image',
+        );
+        ktpImageUrl = ktpRes['data']?['image_url'] ??
+            ktpRes['image_url'] ??
+            ktpRes['data']?['relative_url'];
+      } catch (uploadErr) {
+        debugPrint('[KTP_UPLOAD] Warning: ${uploadErr.toString()}');
+      }
+
+      // 2. Upload Selfie Image to backend
+      String? selfieImageUrl;
+      if (_selectedSelfieFile != null) {
+        try {
+          final selfieRes = await ApiService.uploadImage(
+            '/upload/product-image',
+            _selectedSelfieFile!,
+            fieldName: 'image',
+          );
+          selfieImageUrl = selfieRes['data']?['image_url'] ??
+              selfieRes['image_url'] ??
+              selfieRes['data']?['relative_url'];
+        } catch (uploadErr) {
+          debugPrint('[SELFIE_UPLOAD] Warning: ${uploadErr.toString()}');
+        }
+      }
+
       await _profileRepository.submitFarmerProfileCompletion(
         userId: user.id,
         ktpImageFile: _selectedKtpFile!,
+        selfieImageFile: _selectedSelfieFile,
+        ktpImageUrl: ktpImageUrl,
+        selfieImageUrl: selfieImageUrl,
+        birthDate: _selectedBirthDate?.toIso8601String().split('T')[0],
         nikNumber: _nikController.text.trim(),
         homeAddress: fullAddress,
         farmerGroupId: _selectedFarmerGroupId,
@@ -1057,7 +1183,7 @@ class _CompleteFarmerProfileScreenState
                     // Section 1: KTP Upload Card
                     _buildSectionHeader(
                       number: '1',
-                      title: 'Foto e-KTP Asli',
+                      title: 'Upload Foto e-KTP',
                       isRequired: true,
                     ),
                     const SizedBox(height: 8),
@@ -1068,7 +1194,7 @@ class _CompleteFarmerProfileScreenState
                         children: [
                           if (_selectedKtpFile == null)
                             GestureDetector(
-                              onTap: () => _pickImage(ImageSource.camera),
+                              onTap: () => _pickKtpImage(ImageSource.camera),
                               child: Container(
                                 height: 180,
                                 decoration: BoxDecoration(
@@ -1184,7 +1310,7 @@ class _CompleteFarmerProfileScreenState
                               Expanded(
                                 child: OutlinedButton.icon(
                                   onPressed: () =>
-                                      _pickImage(ImageSource.camera),
+                                      _pickKtpImage(ImageSource.camera),
                                   icon:
                                       const Icon(LucideIcons.camera, size: 16),
                                   label: const Text('Kamera'),
@@ -1206,7 +1332,7 @@ class _CompleteFarmerProfileScreenState
                               Expanded(
                                 child: OutlinedButton.icon(
                                   onPressed: () =>
-                                      _pickImage(ImageSource.gallery),
+                                      _pickKtpImage(ImageSource.gallery),
                                   icon: const Icon(LucideIcons.image, size: 16),
                                   label: const Text('Galeri'),
                                   style: OutlinedButton.styleFrom(
@@ -1230,9 +1356,185 @@ class _CompleteFarmerProfileScreenState
                     ),
                     const SizedBox(height: 20),
 
-                    // Section 2: 4-Tier Cascading Domicile Selection
+                    // Section 2: Swafoto dengan KTP Card
                     _buildSectionHeader(
                       number: '2',
+                      title: 'Swafoto dengan KTP',
+                      isRequired: true,
+                    ),
+                    const SizedBox(height: 8),
+                    CustomSoftCard(
+                      padding: const EdgeInsets.all(16),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          if (_selectedSelfieFile == null)
+                            GestureDetector(
+                              onTap: () => _pickSelfieImage(ImageSource.camera),
+                              child: Container(
+                                height: 180,
+                                decoration: BoxDecoration(
+                                  color: const Color(0xFFF8FAFC),
+                                  borderRadius: BorderRadius.circular(16),
+                                ),
+                                child: CustomPaint(
+                                  painter: _DashedBorderPainter(
+                                    color: const Color(0xFFCBD5E1),
+                                    strokeWidth: 1.6,
+                                    dashLength: 8,
+                                    dashGap: 5,
+                                    borderRadius: 16,
+                                  ),
+                                  child: Center(
+                                    child: Column(
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.center,
+                                      children: [
+                                        Container(
+                                          width: 52,
+                                          height: 52,
+                                          decoration: BoxDecoration(
+                                            color: AppColors.primary
+                                                .withValues(alpha: 0.1),
+                                            shape: BoxShape.circle,
+                                          ),
+                                          child: const Icon(
+                                            LucideIcons.userCheck,
+                                            color: AppColors.primary,
+                                            size: 26,
+                                          ),
+                                        ),
+                                        const SizedBox(height: 12),
+                                        const Text(
+                                          'Ambil Swafoto dengan KTP',
+                                          style: TextStyle(
+                                            fontSize: 14,
+                                            fontWeight: FontWeight.w700,
+                                            color: Color(0xFF1E293B),
+                                          ),
+                                        ),
+                                        const SizedBox(height: 4),
+                                        const Text(
+                                          'Wajah & KTP terlihat jelas dalam satu bingkai',
+                                          style: TextStyle(
+                                            fontSize: 11,
+                                            color: Color(0xFF64748B),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            )
+                          else
+                            Column(
+                              children: [
+                                ClipRRect(
+                                  borderRadius: BorderRadius.circular(14),
+                                  child: Stack(
+                                    children: [
+                                      Image.file(
+                                        _selectedSelfieFile!,
+                                        height: 190,
+                                        width: double.infinity,
+                                        fit: BoxFit.cover,
+                                      ),
+                                      Positioned(
+                                        top: 10,
+                                        right: 10,
+                                        child: Container(
+                                          padding: const EdgeInsets.symmetric(
+                                            horizontal: 10,
+                                            vertical: 5,
+                                          ),
+                                          decoration: BoxDecoration(
+                                            color: Colors.black
+                                                .withValues(alpha: 0.65),
+                                            borderRadius:
+                                                BorderRadius.circular(20),
+                                          ),
+                                          child: const Row(
+                                            mainAxisSize: MainAxisSize.min,
+                                            children: [
+                                              Icon(
+                                                LucideIcons.checkCircle2,
+                                                color: Color(0xFF34D399),
+                                                size: 14,
+                                              ),
+                                              SizedBox(width: 4),
+                                              Text(
+                                                'Swafoto Terpilih',
+                                                style: TextStyle(
+                                                  color: Colors.white,
+                                                  fontSize: 11,
+                                                  fontWeight: FontWeight.w600,
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ],
+                            ),
+                          const SizedBox(height: 14),
+                          Row(
+                            children: [
+                              Expanded(
+                                child: OutlinedButton.icon(
+                                  onPressed: () =>
+                                      _pickSelfieImage(ImageSource.camera),
+                                  icon:
+                                      const Icon(LucideIcons.camera, size: 16),
+                                  label: const Text('Kamera'),
+                                  style: OutlinedButton.styleFrom(
+                                    foregroundColor: const Color(0xFF1E293B),
+                                    backgroundColor: const Color(0xFFF8FAFC),
+                                    side: const BorderSide(
+                                      color: Color(0xFFE2E8F0),
+                                    ),
+                                    padding:
+                                        const EdgeInsets.symmetric(vertical: 12),
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(12),
+                                    ),
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(width: 10),
+                              Expanded(
+                                child: OutlinedButton.icon(
+                                  onPressed: () =>
+                                      _pickSelfieImage(ImageSource.gallery),
+                                  icon: const Icon(LucideIcons.image, size: 16),
+                                  label: const Text('Galeri'),
+                                  style: OutlinedButton.styleFrom(
+                                    foregroundColor: const Color(0xFF1E293B),
+                                    backgroundColor: const Color(0xFFF8FAFC),
+                                    side: const BorderSide(
+                                      color: Color(0xFFE2E8F0),
+                                    ),
+                                    padding:
+                                        const EdgeInsets.symmetric(vertical: 12),
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(12),
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 20),
+
+                    // Section 3: 4-Tier Cascading Domicile Selection
+                    _buildSectionHeader(
+                      number: '3',
                       title: 'Domisili Kebun (Hierarki 4 Tingkat)',
                       isRequired: true,
                     ),
@@ -1462,9 +1764,9 @@ class _CompleteFarmerProfileScreenState
                     ),
                     const SizedBox(height: 20),
 
-                    // Section 3: Data Detail
+                    // Section 4: Data Detail
                     _buildSectionHeader(
-                      number: '3',
+                      number: '4',
                       title: 'Detail Identitas & Lahan',
                       isRequired: false,
                     ),
@@ -1491,6 +1793,103 @@ class _CompleteFarmerProfileScreenState
                               }
                               return null;
                             },
+                          ),
+                          const SizedBox(height: 14),
+
+                          // Tanggal Lahir Date Picker
+                          Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Row(
+                                children: [
+                                  const Text(
+                                    'Tanggal Lahir',
+                                    style: TextStyle(
+                                      fontSize: 13,
+                                      fontWeight: FontWeight.w600,
+                                      color: Color(0xFF1E293B),
+                                    ),
+                                  ),
+                                  const SizedBox(width: 4),
+                                  const Text(
+                                    '*',
+                                    style: TextStyle(
+                                      color: Color(0xFFDC2626),
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: 6),
+                              InkWell(
+                                onTap: () async {
+                                  final now = DateTime.now();
+                                  final initialDate = _selectedBirthDate ??
+                                      DateTime(now.year - 25, 1, 1);
+                                  final picked = await showDatePicker(
+                                    context: context,
+                                    initialDate: initialDate,
+                                    firstDate: DateTime(1920),
+                                    lastDate: DateTime(now.year - 15),
+                                    helpText: 'Pilih Tanggal Lahir Sesuai KTP',
+                                    cancelText: 'Batal',
+                                    confirmText: 'Pilih',
+                                  );
+                                  if (picked != null) {
+                                    setState(() {
+                                      _selectedBirthDate = picked;
+                                    });
+                                  }
+                                },
+                                borderRadius: BorderRadius.circular(14),
+                                child: Container(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 14,
+                                    vertical: 14,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    color: const Color(0xFFF8FAFC),
+                                    borderRadius: BorderRadius.circular(14),
+                                    border: Border.all(
+                                      color: const Color(0xFFE2E8F0),
+                                      width: 1,
+                                    ),
+                                  ),
+                                  child: Row(
+                                    children: [
+                                      const Icon(
+                                        LucideIcons.calendar,
+                                        size: 18,
+                                        color: Color(0xFF64748B),
+                                      ),
+                                      const SizedBox(width: 10),
+                                      Expanded(
+                                        child: Text(
+                                          _selectedBirthDate != null
+                                              ? '${_selectedBirthDate!.day.toString().padLeft(2, '0')}/${_selectedBirthDate!.month.toString().padLeft(2, '0')}/${_selectedBirthDate!.year}'
+                                              : 'Pilih tanggal lahir sesuai KTP',
+                                          style: TextStyle(
+                                            fontSize: 13,
+                                            fontWeight:
+                                                _selectedBirthDate != null
+                                                    ? FontWeight.w600
+                                                    : FontWeight.w400,
+                                            color: _selectedBirthDate != null
+                                                ? const Color(0xFF0F172A)
+                                                : const Color(0xFF94A3B8),
+                                          ),
+                                        ),
+                                      ),
+                                      const Icon(
+                                        LucideIcons.chevronDown,
+                                        size: 16,
+                                        color: Color(0xFF94A3B8),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                            ],
                           ),
                           const SizedBox(height: 14),
                           LapaktaniTextField(
@@ -1520,7 +1919,7 @@ class _CompleteFarmerProfileScreenState
                     SizedBox(
                       height: 52,
                       child: ElevatedButton(
-                        onPressed: _isSubmitting ? null : _submitVerification,
+                        onPressed: _isSubmitting ? null : _submitProfile,
                         style: ElevatedButton.styleFrom(
                           backgroundColor: AppColors.primary,
                           foregroundColor: Colors.white,

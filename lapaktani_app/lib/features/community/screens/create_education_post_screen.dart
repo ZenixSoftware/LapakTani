@@ -37,11 +37,11 @@ class _CreateEducationPostScreenState extends State<CreateEducationPostScreen> {
     TextEditingController(text: 'Aplikasi benih unggul bersertifikasi dan nutrisi dasar.'),
   ];
 
-  bool _isVerifiedPenyuluh = true;
-  String _penyuluhName = 'Ir. Ahmad Hidayat';
-  String _penyuluhRole = 'Koordinator BPP Lembang';
-  String _penyuluhBpp = 'BPP Lembang';
-  String _penyuluhNip = '198205142008011003';
+  final bool _isVerifiedPenyuluh = true;
+  final String _penyuluhName = 'Ir. Ahmad Hidayat';
+  final String _penyuluhRole = 'Koordinator BPP Lembang';
+  final String _penyuluhBpp = 'BPP Lembang';
+  final String _penyuluhNip = '198205142008011003';
 
   bool _agreementChecked = true;
   bool _isSubmitting = false;
@@ -582,7 +582,7 @@ class _CreateEducationPostScreenState extends State<CreateEducationPostScreen> {
             shrinkWrap: true,
             physics: const NeverScrollableScrollPhysics(),
             itemCount: _stepControllers.length,
-            separatorBuilder: (_, __) => const SizedBox(height: 10),
+            separatorBuilder: (_, _) => const SizedBox(height: 10),
             itemBuilder: (context, index) {
               return Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -663,7 +663,7 @@ class _CreateEducationPostScreenState extends State<CreateEducationPostScreen> {
             child: ListView.separated(
               scrollDirection: Axis.horizontal,
               itemCount: _sampleCovers.length,
-              separatorBuilder: (_, __) => const SizedBox(width: 8),
+              separatorBuilder: (_, _) => const SizedBox(width: 8),
               itemBuilder: (context, idx) {
                 final item = _sampleCovers[idx];
                 final isSelected = _imageUrlController.text == item['url'];

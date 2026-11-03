@@ -1,0 +1,422 @@
+import 'dart:convert';
+
+enum OrderStatus {
+  pendingPayment,
+  needHarvest,
+  readyToShip,
+  inTransit,
+  delivered,
+  completed,
+  cancelled,
+}
+
+extension OrderStatusExtension on OrderStatus {
+  String get key {
+    switch (this) {
+      case OrderStatus.pendingPayment:
+        return 'pending_payment';
+      case OrderStatus.needHarvest:
+        return 'need_harvest';
+      case OrderStatus.readyToShip:
+        return 'ready_to_ship';
+      case OrderStatus.inTransit:
+        return 'in_transit';
+      case OrderStatus.delivered:
+        return 'delivered';
+      case OrderStatus.completed:
+        return 'completed';
+      case OrderStatus.cancelled:
+        return 'cancelled';
+    }
+  }
+
+  String get label {
+    switch (this) {
+      case OrderStatus.pendingPayment:
+        return 'Menunggu Bayar';
+      case OrderStatus.needHarvest:
+        return 'Perlu Dipetik';
+      case OrderStatus.readyToShip:
+        return 'Siap Dikirim';
+      case OrderStatus.inTransit:
+        return 'Dalam Pengiriman';
+      case OrderStatus.delivered:
+        return 'Tiba di Tujuan';
+      case OrderStatus.completed:
+        return 'Selesai';
+      case OrderStatus.cancelled:
+        return 'Dibatalkan';
+    }
+  }
+
+  static OrderStatus fromKey(String key) {
+    switch (key.toLowerCase()) {
+      case 'pending_payment':
+      case 'waiting_payment':
+        return OrderStatus.pendingPayment;
+      case 'need_harvest':
+      case 'processing':
+        return OrderStatus.needHarvest;
+      case 'ready_to_ship':
+        return OrderStatus.readyToShip;
+      case 'in_transit':
+      case 'shipped':
+        return OrderStatus.inTransit;
+      case 'delivered':
+        return OrderStatus.delivered;
+      case 'completed':
+        return OrderStatus.completed;
+      case 'cancelled':
+        return OrderStatus.cancelled;
+      default:
+        return OrderStatus.needHarvest;
+    }
+  }
+}
+
+double _parseDouble(dynamic val) {
+  if (val == null) return 0.0;
+  if (val is num) return val.toDouble();
+  return double.tryParse(val.toString()) ?? 0.0;
+}
+
+int _parseInt(dynamic val) {
+  if (val == null) return 0;
+  if (val is num) return val.toInt();
+  final d = double.tryParse(val.toString());
+  if (d != null) return d.round();
+  return int.tryParse(val.toString()) ?? 0;
+}
+
+class OrderItem {
+  final String id;
+  final String? productId;
+  final String title;
+  final int qty;
+  final String unit;
+  final int price;
+  final String imageUrl;
+  final String? grade;
+
+  const OrderItem({
+    required this.id,
+    this.productId,
+    required this.title,
+    required this.qty,
+    required this.unit,
+    required this.price,
+    required this.imageUrl,
+    this.grade,
+  });
+
+  String get effectiveProductId => productId ?? id;
+  double get pricePerUnit => price.toDouble();
+  double get subtotal => (price * qty).toDouble();
+
+  Map<String, dynamic> toMap() {
+    return {
+      'id': id,
+      'productId': productId ?? id,
+      'title': title,
+      'qty': qty,
+      'unit': unit,
+      'price': price,
+      'imageUrl': imageUrl,
+      'grade': grade,
+    };
+  }
+
+  factory OrderItem.fromMap(Map<String, dynamic> map) {
+    final parsedQty = _parseInt(map['qty'] ?? map['quantity'] ?? map['qty_kg']);
+    final parsedPrice = _parseDouble(map['price'] ?? map['price_per_unit'] ?? map['unit_price']);
+    return OrderItem(
+      id: map['id']?.toString() ?? '',
+      productId: (map['productId'] ?? map['product_id'] ?? map['id'])?.toString(),
+      title: (map['title'] ?? map['product_title'])?.toString() ?? '',
+      qty: parsedQty <= 0 ? 1 : parsedQty,
+      unit: (map['unit'] ?? map['unit_name'])?.toString() ?? 'kg',
+      price: parsedPrice.round(),
+      imageUrl: (map['imageUrl'] ?? map['image_url'] ?? map['product_image_url'])?.toString() ?? '',
+      grade: (map['grade'] ?? map['grade_name'] ?? map['grade_id'])?.toString(),
+    );
+  }
+}
+
+class CourierInfo {
+  final String name;
+  final String phone;
+  final String vehicle;
+  final String serviceName;
+  final String? photoUrl;
+
+  const CourierInfo({
+    required this.name,
+    required this.phone,
+    required this.vehicle,
+    required this.serviceName,
+    this.photoUrl,
+  });
+
+  Map<String, dynamic> toMap() {
+    return {
+      'name': name,
+      'phone': phone,
+      'vehicle': vehicle,
+      'serviceName': serviceName,
+      'photoUrl': photoUrl,
+    };
+  }
+
+  factory CourierInfo.fromMap(Map<String, dynamic> map) {
+    return CourierInfo(
+      name: map['name']?.toString() ?? '',
+      phone: map['phone']?.toString() ?? '',
+      vehicle: map['vehicle']?.toString() ?? '',
+      serviceName: map['serviceName']?.toString() ?? 'Kurir LapakTani',
+      photoUrl: map['photoUrl']?.toString(),
+    );
+  }
+}
+
+class TrackingCheckpoint {
+  final String title;
+  final String description;
+  final String timestamp;
+  final String location;
+  final bool isCompleted;
+  final bool isCurrent;
+
+  const TrackingCheckpoint({
+    required this.title,
+    required this.description,
+    required this.timestamp,
+    required this.location,
+    required this.isCompleted,
+    this.isCurrent = false,
+  });
+
+  Map<String, dynamic> toMap() {
+    return {
+      'title': title,
+      'description': description,
+      'timestamp': timestamp,
+      'location': location,
+      'isCompleted': isCompleted,
+      'isCurrent': isCurrent,
+    };
+  }
+
+  factory TrackingCheckpoint.fromMap(Map<String, dynamic> map) {
+    return TrackingCheckpoint(
+      title: map['title']?.toString() ?? '',
+      description: map['description']?.toString() ?? '',
+      timestamp: map['timestamp']?.toString() ?? '',
+      location: map['location']?.toString() ?? '',
+      isCompleted: map['isCompleted'] == true,
+      isCurrent: map['isCurrent'] == true,
+    );
+  }
+}
+
+class OrderModel {
+  final String id;
+  final String buyerName;
+  final String buyerPhone;
+  final String buyerAddress;
+  final String sellerName;
+  final String sellerLocation;
+  final DateTime createdAt;
+  final OrderStatus status;
+  final String paymentMethod;
+  final String paymentStatus;
+  final List<OrderItem> items;
+  final int totalPrice;
+  final int shippingFee;
+  final String trackingNumber;
+  final String estimatedDelivery;
+  final String temperature;
+  final CourierInfo courier;
+  final List<TrackingCheckpoint> checkpoints;
+
+  const OrderModel({
+    required this.id,
+    required this.buyerName,
+    required this.buyerPhone,
+    required this.buyerAddress,
+    required this.sellerName,
+    required this.sellerLocation,
+    required this.createdAt,
+    required this.status,
+    required this.paymentMethod,
+    required this.paymentStatus,
+    required this.items,
+    required this.totalPrice,
+    required this.shippingFee,
+    required this.trackingNumber,
+    required this.estimatedDelivery,
+    required this.temperature,
+    required this.courier,
+    required this.checkpoints,
+  });
+
+  static double parseDouble(dynamic val) => _parseDouble(val);
+  static int parseInt(dynamic val) => _parseInt(val);
+
+  double get totalAmount => totalPrice.toDouble();
+  double get shippingFeeAmount => shippingFee.toDouble();
+
+  OrderModel copyWith({
+    String? id,
+    String? buyerName,
+    String? buyerPhone,
+    String? buyerAddress,
+    String? sellerName,
+    String? sellerLocation,
+    DateTime? createdAt,
+    OrderStatus? status,
+    String? paymentMethod,
+    String? paymentStatus,
+    List<OrderItem>? items,
+    int? totalPrice,
+    int? shippingFee,
+    String? trackingNumber,
+    String? estimatedDelivery,
+    String? temperature,
+    CourierInfo? courier,
+    List<TrackingCheckpoint>? checkpoints,
+  }) {
+    return OrderModel(
+      id: id ?? this.id,
+      buyerName: buyerName ?? this.buyerName,
+      buyerPhone: buyerPhone ?? this.buyerPhone,
+      buyerAddress: buyerAddress ?? this.buyerAddress,
+      sellerName: sellerName ?? this.sellerName,
+      sellerLocation: sellerLocation ?? this.sellerLocation,
+      createdAt: createdAt ?? this.createdAt,
+      status: status ?? this.status,
+      paymentMethod: paymentMethod ?? this.paymentMethod,
+      paymentStatus: paymentStatus ?? this.paymentStatus,
+      items: items ?? this.items,
+      totalPrice: totalPrice ?? this.totalPrice,
+      shippingFee: shippingFee ?? this.shippingFee,
+      trackingNumber: trackingNumber ?? this.trackingNumber,
+      estimatedDelivery: estimatedDelivery ?? this.estimatedDelivery,
+      temperature: temperature ?? this.temperature,
+      courier: courier ?? this.courier,
+      checkpoints: checkpoints ?? this.checkpoints,
+    );
+  }
+
+  Map<String, dynamic> toMap() {
+    return {
+      'id': id,
+      'buyerName': buyerName,
+      'buyerPhone': buyerPhone,
+      'buyerAddress': buyerAddress,
+      'sellerName': sellerName,
+      'sellerLocation': sellerLocation,
+      'createdAt': createdAt.toIso8601String(),
+      'status': status.key,
+      'paymentMethod': paymentMethod,
+      'paymentStatus': paymentStatus,
+      'items': items.map((x) => x.toMap()).toList(),
+      'totalPrice': totalPrice,
+      'shippingFee': shippingFee,
+      'trackingNumber': trackingNumber,
+      'estimatedDelivery': estimatedDelivery,
+      'temperature': temperature,
+      'courier': courier.toMap(),
+      'checkpoints': checkpoints.map((x) => x.toMap()).toList(),
+    };
+  }
+
+  factory OrderModel.fromMap(Map<String, dynamic> map) {
+    final statusKey = (map['status'] ?? map['order_status'])?.toString() ?? '';
+    final orderStatus = OrderStatusExtension.fromKey(statusKey);
+    final rawCheckpoints = map['checkpoints'] as List<dynamic>?;
+
+    List<TrackingCheckpoint> checkpointsList = [];
+    if (rawCheckpoints != null && rawCheckpoints.isNotEmpty) {
+      checkpointsList = rawCheckpoints
+          .map((x) => TrackingCheckpoint.fromMap(x as Map<String, dynamic>))
+          .toList();
+    } else {
+      final isHarvestDone = orderStatus == OrderStatus.readyToShip ||
+          orderStatus == OrderStatus.inTransit ||
+          orderStatus == OrderStatus.delivered ||
+          orderStatus == OrderStatus.completed;
+      final isTransitDone = orderStatus == OrderStatus.inTransit ||
+          orderStatus == OrderStatus.delivered ||
+          orderStatus == OrderStatus.completed;
+      final isDeliveredDone = orderStatus == OrderStatus.delivered ||
+          orderStatus == OrderStatus.completed;
+
+      checkpointsList = [
+        TrackingCheckpoint(
+          title: 'Pesanan Dikonfirmasi & Masuk Antrean Panen',
+          description: 'Petani telah menerima pesanan dan menyiapkan jadwal panen segar.',
+          timestamp: 'Hari ini',
+          location: (map['sellerLocation'] ?? map['seller_location'])?.toString() ?? 'Kebun Petani Mitra Lembang',
+          isCompleted: true,
+          isCurrent: orderStatus == OrderStatus.needHarvest,
+        ),
+        TrackingCheckpoint(
+          title: 'Panen Selesai & Diserahkan ke Kurir Pendingin Mitra',
+          description: 'Komoditas dipetik langsung dari ladang dan dimasukkan ke coolbox suhu 4-8°C.',
+          timestamp: isHarvestDone ? 'Hari ini' : '-',
+          location: 'Hub Logistik LapakTani',
+          isCompleted: isHarvestDone,
+          isCurrent: orderStatus == OrderStatus.readyToShip,
+        ),
+        TrackingCheckpoint(
+          title: 'Dalam Perjalanan Menuju Alamat Pembeli',
+          description: 'Armada cold-chain kurir sedang menuju ke lokasi pengantaran.',
+          timestamp: isTransitDone ? 'Hari ini' : '-',
+          location: (map['buyerAddress'] ?? map['delivery_address'] ?? map['shipping_address'])?.toString() ?? 'Alamat Tujuan',
+          isCompleted: isTransitDone,
+          isCurrent: orderStatus == OrderStatus.inTransit,
+        ),
+        TrackingCheckpoint(
+          title: 'Pesanan Tiba di Alamat Pembeli',
+          description: 'Paket telah diterima dengan garansi kesegaran 100%.',
+          timestamp: isDeliveredDone ? 'Hari ini' : '-',
+          location: (map['buyerAddress'] ?? map['delivery_address'] ?? map['shipping_address'])?.toString() ?? 'Alamat Tujuan',
+          isCompleted: isDeliveredDone,
+          isCurrent: isDeliveredDone,
+        ),
+      ];
+    }
+
+    return OrderModel(
+      id: map['id']?.toString() ?? '',
+      buyerName: (map['buyerName'] ?? map['buyer_name'])?.toString() ?? 'Pembeli',
+      buyerPhone: (map['buyerPhone'] ?? map['buyer_phone'])?.toString() ?? '081234567890',
+      buyerAddress: (map['buyerAddress'] ?? map['delivery_address'] ?? map['shipping_address'])?.toString() ?? 'Alamat Pembeli',
+      sellerName: (map['sellerName'] ?? map['seller_name'])?.toString() ?? 'Kelompok Tani Mitra',
+      sellerLocation: (map['sellerLocation'] ?? map['seller_location'])?.toString() ?? 'Lembang, Jawa Barat',
+      createdAt: DateTime.tryParse((map['createdAt'] ?? map['created_at'])?.toString() ?? '') ?? DateTime.now(),
+      status: orderStatus,
+      paymentMethod: (map['paymentMethod'] ?? map['payment_method'])?.toString() ?? 'LapakPay',
+      paymentStatus: (map['paymentStatus'] ?? map['payment_status'])?.toString() ?? 'Lunas',
+      items: (map['items'] as List<dynamic>?)
+              ?.map((x) => OrderItem.fromMap(x as Map<String, dynamic>))
+              .toList() ??
+          [],
+      totalPrice: _parseDouble(map['totalPrice'] ?? map['total_amount'] ?? map['total_payment']).round(),
+      shippingFee: _parseDouble(map['shippingFee'] ?? map['shipping_fee']).round(),
+      trackingNumber: (map['trackingNumber'] ?? map['invoice_number'] ?? map['order_code'])?.toString() ?? '',
+      estimatedDelivery: (map['estimatedDelivery'] ?? map['estimated_delivery'])?.toString() ?? 'Hari ini, Pukul 15:00 WIB',
+      temperature: map['temperature']?.toString() ?? '4-8°C',
+      courier: CourierInfo.fromMap((map['courier'] as Map<String, dynamic>?) ?? {
+        'name': 'Kang Asep Kurnia',
+        'phone': '081234567890',
+        'vehicle': 'D 4321 LT (Refrigerated Van)',
+        'serviceName': 'Kurir Pendingin Mitra',
+      }),
+      checkpoints: checkpointsList,
+    );
+  }
+
+  String toJson() => jsonEncode(toMap());
+  factory OrderModel.fromJson(String source) => OrderModel.fromMap(jsonDecode(source));
+}

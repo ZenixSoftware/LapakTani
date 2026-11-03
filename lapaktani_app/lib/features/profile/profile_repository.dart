@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'dart:io';
 import '../../core/services/api_service.dart';
 import '../auth/auth_repository.dart';
@@ -21,6 +22,9 @@ class ProfileRepository {
   Future<void> submitFarmerProfileCompletion({
     required String userId,
     required File ktpImageFile,
+    File? selfieImageFile,
+    String? ktpImageUrl,
+    String? selfieImageUrl,
     String? nikNumber,
     String? homeAddress,
     String? farmerGroupId,
@@ -29,28 +33,62 @@ class ProfileRepository {
     String? regency,
     String? district,
     String? village,
+    String? birthDate,
   }) async {
     final payload = <String, dynamic>{
       'user_id': userId,
       'nik_number': nikNumber,
+      'nik': nikNumber,
+      if (birthDate != null && birthDate.isNotEmpty)
+        'birth_date': birthDate,
       'home_address': homeAddress,
       'farmer_group_id': farmerGroupId,
+      'farmer_group': farmerGroupId,
       'land_area_ha': landAreaHa,
+      'land_area': landAreaHa,
       'province': province,
       'regency': regency,
       'district': district,
       'village': village,
+      'village_id': village,
+      if (ktpImageUrl != null && ktpImageUrl.isNotEmpty)
+        'ktp_image_url': ktpImageUrl,
+      if (selfieImageUrl != null && selfieImageUrl.isNotEmpty)
+        'selfie_image_url': selfieImageUrl,
       'verification_status': 'pending',
     };
 
-    try {
-      await ApiService.post('/farmer/profile', payload);
-    } catch (_) {
-      // Local fallback simulation if endpoint is pending extension
+    final response = await ApiService.post('/profiles/farmer', payload);
+    if (response.statusCode >= 400) {
+      String message = 'Gagal menyimpan profil petani.';
+      try {
+        final decoded = jsonDecode(response.body);
+        if (decoded is Map && decoded['message'] != null) {
+          message = decoded['message'].toString();
+        }
+      } catch (_) {}
+      throw Exception(message);
     }
   }
 
+  Future<Map<String, dynamic>?> getMyProfile() async {
+    try {
+      final response = await ApiService.get('/profiles/me');
+      if (response.statusCode == 200) {
+        final decoded = jsonDecode(response.body);
+        if (decoded is Map && decoded['data'] is Map) {
+          final profileData = Map<String, dynamic>.from(decoded['data'] as Map);
+          await _apiService.saveUser(profileData);
+          return profileData;
+        }
+      }
+    } catch (_) {}
+    return await _apiService.getUser();
+  }
+
   Future<Map<String, dynamic>?> getUserProfile(String userId) async {
+    final myProfile = await getMyProfile();
+    if (myProfile != null) return myProfile;
     return {
       'user_id': userId,
       'verification_status': 'pending',
@@ -58,6 +96,8 @@ class ProfileRepository {
   }
 
   Future<Map<String, dynamic>?> getFarmerProfile(String userId) async {
+    final myProfile = await getMyProfile();
+    if (myProfile != null) return myProfile;
     return {
       'user_id': userId,
       'land_area_ha': 1.0,

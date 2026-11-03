@@ -13,10 +13,10 @@ const getCommodities = async (req, res) => {
       data: rows
     });
   } catch (error) {
+    console.error('[MASTER] Error fetching commodities:', error.message);
     return res.status(500).json({
       success: false,
-      message: 'Gagal mengambil data komoditas.',
-      error: error.message
+      message: 'Gagal mengambil data komoditas.'
     });
   }
 };
@@ -34,10 +34,10 @@ const getProductGrades = async (req, res) => {
       data: rows
     });
   } catch (error) {
+    console.error('[MASTER] Error fetching grades:', error.message);
     return res.status(500).json({
       success: false,
-      message: 'Gagal mengambil data grade produk.',
-      error: error.message
+      message: 'Gagal mengambil data grade produk.'
     });
   }
 };
@@ -55,10 +55,10 @@ const getUnits = async (req, res) => {
       data: rows
     });
   } catch (error) {
+    console.error('[MASTER] Error fetching units:', error.message);
     return res.status(500).json({
       success: false,
-      message: 'Gagal mengambil data satuan komoditas.',
-      error: error.message
+      message: 'Gagal mengambil data satuan komoditas.'
     });
   }
 };
