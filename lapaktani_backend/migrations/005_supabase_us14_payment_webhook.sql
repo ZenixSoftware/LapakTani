@@ -23,7 +23,7 @@ CREATE OR REPLACE VIEW public.orders AS SELECT * FROM public.pemesanan;
 -- Menangani verifikasi signature, perubahan status idempotent, dan rollback stok jika expired/cancel.
 CREATE OR REPLACE FUNCTION public.fn_handle_payment_gateway_webhook(
     p_payload JSONB,
-    p_server_key VARCHAR DEFAULT 'SB-Mid-server-lapaktani-secret-key-2026'
+    p_server_key VARCHAR DEFAULT ''
 )
 RETURNS JSONB AS $$
 DECLARE

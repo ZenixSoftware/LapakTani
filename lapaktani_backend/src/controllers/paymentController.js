@@ -5,8 +5,8 @@ const pool = require('../config/db');
 // Initialize Midtrans CoreApi Client
 const coreApi = new midtransClient.CoreApi({
   isProduction: process.env.MIDTRANS_IS_PRODUCTION === 'true',
-  serverKey: process.env.MIDTRANS_SERVER_KEY || 'SB-Mid-server-V_MzF8BiwxVXbFkwosUfb8ye',
-  clientKey: process.env.MIDTRANS_CLIENT_KEY || 'Mid-client-QRBiYpfuDMWtfWdY'
+  serverKey: process.env.MIDTRANS_SERVER_KEY || '',
+  clientKey: process.env.MIDTRANS_CLIENT_KEY || ''
 });
 
 /**
@@ -154,7 +154,7 @@ const handleMidtransWebhook = async (req, res) => {
   }
 
   // Verify SHA-512 Signature
-  const serverKey = process.env.MIDTRANS_SERVER_KEY || 'SB-Mid-server-V_MzF8BiwxVXbFkwosUfb8ye';
+  const serverKey = process.env.MIDTRANS_SERVER_KEY || '';
   const expectedSignature = crypto
     .createHash('sha512')
     .update(`${orderId}${statusCode}${grossAmount}${serverKey}`)
