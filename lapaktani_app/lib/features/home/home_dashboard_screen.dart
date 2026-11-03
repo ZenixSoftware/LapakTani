@@ -4,6 +4,8 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 import '../../core/services/api_service.dart';
 import '../cart/cart_screen.dart';
+import '../community/screens/education_feed_screen.dart';
+import '../community/widgets/penyuluh_official_badge.dart';
 import '../order/order_history_screen.dart';
 import '../product/product_detail_screen.dart';
 import '../profile/profile_screen.dart';
@@ -212,11 +214,11 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen> {
       'badge': null,
     },
     {
-      'id': 'beli-lokal',
-      'title': 'Beli Lokal',
-      'colors': [Color(0xFFFB7185), Color(0xFFDC2626)],
-      'icon': LucideIcons.heart,
-      'badge': null,
+      'id': 'edukasi-tani',
+      'title': 'Edukasi BPP',
+      'colors': [Color(0xFF047857), Color(0xFF065F46)],
+      'icon': LucideIcons.bookOpen,
+      'badge': 'Resmi',
     },
     {
       'id': 'lapak-pay',
@@ -399,6 +401,7 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen> {
                     _buildRecentlyViewedSection(),
                     _buildCategoryTabBar(),
                     _buildMainFeedSection(),
+                    _buildPenyuluhEducationBanner(),
                     _buildTrustGuaranteeBanner(),
                     const SizedBox(height: 16),
                   ],
@@ -685,6 +688,15 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen> {
               return Expanded(
                 child: InkWell(
                   onTap: () {
+                    if (action['id'] == 'edukasi-tani') {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => const EducationFeedScreen(),
+                        ),
+                      );
+                      return;
+                    }
                     ScaffoldMessenger.of(context).showSnackBar(
                       SnackBar(
                         content: Text('Membuka layanan ${action['title']}.'),
@@ -1824,6 +1836,129 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen> {
     );
   }
 
+  Widget _buildPenyuluhEducationBanner() {
+    return Container(
+      margin: const EdgeInsets.fromLTRB(8, 8, 8, 4),
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: const Color(0xFFBBF7D0), width: 1.2),
+        boxShadow: const [
+          BoxShadow(
+            color: Color(0x06000000),
+            blurRadius: 4,
+            offset: Offset(0, 1),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Row(
+                children: [
+                  const Icon(LucideIcons.graduationCap, size: 16, color: Color(0xFF15803D)),
+                  const SizedBox(width: 6),
+                  Text(
+                    'Pojok Edukasi Pertanian',
+                    style: GoogleFonts.inter(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w700,
+                      color: const Color(0xFF0F172A),
+                    ),
+                  ),
+                ],
+              ),
+              const PenyuluhOfficialBadge(size: PenyuluhBadgeSize.small),
+            ],
+          ),
+          const SizedBox(height: 6),
+          Text(
+            'Pelajari tips dan SOP budidaya resmi yang divalidasi oleh Balai Penyuluhan Pertanian (BPP) untuk hasil panen bermutu tinggi.',
+            style: GoogleFonts.inter(
+              fontSize: 10.5,
+              color: const Color(0xFF475569),
+              height: 1.35,
+            ),
+          ),
+          const SizedBox(height: 10),
+          Row(
+            children: [
+              Expanded(
+                child: InkWell(
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const EducationFeedScreen(initialVerifiedOnly: true),
+                      ),
+                    );
+                  },
+                  borderRadius: BorderRadius.circular(8),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(vertical: 6),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFE8F5E9),
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(color: const Color(0xFFA5D6A7)),
+                    ),
+                    alignment: Alignment.center,
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        const Icon(LucideIcons.badgeCheck, size: 13, color: Color(0xFF15803D)),
+                        const SizedBox(width: 4),
+                        Text(
+                          'Lihat Materi Terverifikasi',
+                          style: GoogleFonts.inter(
+                            fontSize: 10.5,
+                            fontWeight: FontWeight.w700,
+                            color: const Color(0xFF14532D),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(width: 8),
+              InkWell(
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => const EducationFeedScreen(),
+                    ),
+                  );
+                },
+                borderRadius: BorderRadius.circular(8),
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFF1F5F9),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  alignment: Alignment.center,
+                  child: Text(
+                    'Buka Semua',
+                    style: GoogleFonts.inter(
+                      fontSize: 10.5,
+                      fontWeight: FontWeight.w600,
+                      color: const Color(0xFF334155),
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
   Widget _buildTrustGuaranteeBanner() {
     return Container(
       margin: const EdgeInsets.fromLTRB(8, 6, 8, 0),
@@ -1973,150 +2108,6 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen> {
   }
 
   Widget _buildFeedTab() {
-    return Scaffold(
-      backgroundColor: const Color(0xFFF8F9FF),
-      appBar: AppBar(
-        backgroundColor: Colors.white,
-        elevation: 0.5,
-        title: Text(
-          'Feed & Edukasi Petani',
-          style: GoogleFonts.plusJakartaSans(
-            fontSize: 17,
-            fontWeight: FontWeight.w700,
-            color: const Color(0xFF121C2A),
-          ),
-        ),
-      ),
-      body: ListView(
-        padding: const EdgeInsets.all(16),
-        children: [
-          Container(
-            padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(16),
-              boxShadow: const [
-                BoxShadow(
-                  color: Color(0x08000000),
-                  blurRadius: 8,
-                  offset: Offset(0, 2),
-                ),
-              ],
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  children: [
-                    Container(
-                      width: 40,
-                      height: 40,
-                      decoration: const BoxDecoration(
-                        color: Color(0xFFE8F8EC),
-                        shape: BoxShape.circle,
-                      ),
-                      child: const Icon(LucideIcons.sprout, color: Color(0xFF03AC0E), size: 20),
-                    ),
-                    const SizedBox(width: 12),
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          'Kelompok Tani Makmur Mandiri',
-                          style: GoogleFonts.plusJakartaSans(
-                            fontSize: 13,
-                            fontWeight: FontWeight.w700,
-                            color: const Color(0xFF121C2A),
-                          ),
-                        ),
-                        Text(
-                          'Lembang • 1 jam lalu',
-                          style: GoogleFonts.plusJakartaSans(
-                            fontSize: 11,
-                            color: const Color(0xFF64748B),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 12),
-                Text(
-                  'Panen raya brokoli dan wortel organik siap dikirim sore ini! Dipetik segar subuh tadi tanpa pestisida kimia sintetis.',
-                  style: GoogleFonts.plusJakartaSans(
-                    fontSize: 13,
-                    color: const Color(0xFF334155),
-                    height: 1.4,
-                  ),
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(height: 14),
-          Container(
-            padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(16),
-              boxShadow: const [
-                BoxShadow(
-                  color: Color(0x08000000),
-                  blurRadius: 8,
-                  offset: Offset(0, 2),
-                ),
-              ],
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  children: [
-                    Container(
-                      width: 40,
-                      height: 40,
-                      decoration: const BoxDecoration(
-                        color: Color(0xFFEFF6FF),
-                        shape: BoxShape.circle,
-                      ),
-                      child: const Icon(LucideIcons.lightbulb, color: Color(0xFF2563EB), size: 20),
-                    ),
-                    const SizedBox(width: 12),
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          'Tips Dapur LapakTani',
-                          style: GoogleFonts.plusJakartaSans(
-                            fontSize: 13,
-                            fontWeight: FontWeight.w700,
-                            color: const Color(0xFF121C2A),
-                          ),
-                        ),
-                        Text(
-                          'Edukasi Pangan • Kemarin',
-                          style: GoogleFonts.plusJakartaSans(
-                            fontSize: 11,
-                            color: const Color(0xFF64748B),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 12),
-                Text(
-                  'Cara menyimpan sayuran daun agar tetap renyah hingga 7 hari: bungkus dengan kertas penyerap dan simpan di wadah kedap udara.',
-                  style: GoogleFonts.plusJakartaSans(
-                    fontSize: 13,
-                    color: const Color(0xFF334155),
-                    height: 1.4,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
+    return const EducationFeedScreen();
   }
 }
