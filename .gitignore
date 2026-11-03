@@ -56,3 +56,6 @@ node_modules/
 lapaktani_backend/public/uploads/
 
 
+# Documentation / Internal Overview
+PROJECT_OVERVIEW.md
+.vscode/
