@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 import '../product/my_products_screen.dart';
+import '../poktan/screens/poktan_dashboard_screen.dart';
+import '../poktan/screens/farmer_tasks_screen.dart';
 import 'seller_dashboard_screen.dart';
 
 class PlaceholderScreen extends StatelessWidget {
@@ -95,13 +97,13 @@ class _SellerMainNavScreenState extends State<SellerMainNavScreen> {
   Widget _buildBodyForCurrentTab() {
     switch (_currentIndex) {
       case 0:
-        return const PlaceholderScreen("Beranda Etalase Toko");
+        return const PoktanDashboardScreen();
       case 1:
         return const MyProductsScreen();
       case 2:
         return const SellerDashboardScreen();
       case 3:
-        return const PlaceholderScreen("Penilaian Toko & Produk");
+        return const FarmerTasksScreen(showBackButton: false);
       case 4:
         return const PlaceholderScreen("Profil Khusus Petani");
       default:
@@ -145,20 +147,24 @@ class _SellerMainNavScreenState extends State<SellerMainNavScreen> {
                         top: -4,
                         right: -10,
                         child: Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
-                          constraints: const BoxConstraints(minWidth: 16, minHeight: 16),
+                          padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1.5),
                           decoration: BoxDecoration(
-                            color: const Color(0xFFBA1A1A),
+                            color: const Color(0xFFEF4444),
                             borderRadius: BorderRadius.circular(10),
+                            border: Border.all(color: Colors.white, width: 1.5),
                           ),
-                          child: Text(
-                            badgeText,
-                            textAlign: TextAlign.center,
-                            style: GoogleFonts.plusJakartaSans(
-                              fontSize: 9,
-                              fontWeight: FontWeight.w800,
-                              color: Colors.white,
-                              height: 1.1,
+                          constraints: const BoxConstraints(
+                            minWidth: 16,
+                            minHeight: 16,
+                          ),
+                          child: Center(
+                            child: Text(
+                              badgeText,
+                              style: GoogleFonts.plusJakartaSans(
+                                color: Colors.white,
+                                fontSize: 9.5,
+                                fontWeight: FontWeight.w800,
+                              ),
                             ),
                           ),
                         ),
@@ -171,7 +177,7 @@ class _SellerMainNavScreenState extends State<SellerMainNavScreen> {
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: GoogleFonts.plusJakartaSans(
-                    fontSize: 10,
+                    fontSize: 11,
                     fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
                     color: itemColor,
                   ),
@@ -207,8 +213,8 @@ class _SellerMainNavScreenState extends State<SellerMainNavScreen> {
             children: [
               _buildBottomNavItem(
                 index: 0,
-                icon: Icons.store,
-                label: 'Beranda',
+                icon: Icons.groups_rounded,
+                label: 'Poktan',
               ),
               _buildBottomNavItem(
                 index: 1,
@@ -223,8 +229,8 @@ class _SellerMainNavScreenState extends State<SellerMainNavScreen> {
               ),
               _buildBottomNavItem(
                 index: 3,
-                icon: Icons.star_rate,
-                label: 'Penilaian',
+                icon: Icons.task_alt,
+                label: 'Tugas Panen',
               ),
               _buildBottomNavItem(
                 index: 4,
