@@ -2,7 +2,7 @@ const crypto = require('crypto');
 const { v4: uuidv4 } = require('uuid');
 const pool = require('../config/db');
 
-const PAYMENT_GATEWAY_SERVER_KEY = process.env.PAYMENT_GATEWAY_SERVER_KEY || 'SB-Mid-server-lapaktani-secret-key-2026';
+const PAYMENT_GATEWAY_SERVER_KEY = process.env.PAYMENT_GATEWAY_SERVER_KEY || process.env.MIDTRANS_SERVER_KEY || '';
 
 /**
  * Generate unique invoice number: INV/YYYYMMDD/LPK/<unique-hex>

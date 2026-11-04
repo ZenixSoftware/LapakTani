@@ -329,6 +329,47 @@ class ApiService {
     }
   }
 
+  Future<Map<String, dynamic>?> chargeMidtrans({
+    required String orderId,
+    required double amount,
+    required String paymentType,
+    String? bank,
+  }) async {
+    try {
+      final payload = {
+        'order_id': orderId,
+        'gross_amount': amount,
+        'payment_type': paymentType,
+        'bank': ?bank,
+      };
+      final response = await _post('/payments/charge', payload);
+      if (response.statusCode >= 200 && response.statusCode < 300) {
+        final decoded = jsonDecode(response.body);
+        if (decoded['success'] == true && decoded['data'] is Map) {
+          return Map<String, dynamic>.from(decoded['data']);
+        }
+      }
+      return null;
+    } catch (_) {
+      return null;
+    }
+  }
+
+  Future<Map<String, dynamic>?> checkPaymentStatus(String orderId) async {
+    try {
+      final response = await _fetchGet('/payments/status/$orderId');
+      if (response.statusCode >= 200 && response.statusCode < 300) {
+        final decoded = jsonDecode(response.body);
+        if (decoded['success'] == true && decoded['data'] is Map) {
+          return Map<String, dynamic>.from(decoded['data']);
+        }
+      }
+      return await getOrderPaymentStatus(orderId);
+    } catch (_) {
+      return await getOrderPaymentStatus(orderId);
+    }
+  }
+
   Future<Map<String, dynamic>?> getOrderPaymentStatus(String orderId) async {
     try {
       final response = await _fetchGet('/orders/$orderId/payment');
@@ -356,6 +397,32 @@ class ApiService {
       return false;
     } catch (_) {
       return false;
+    }
+  }
+
+  // --- US-19: Pest Alert & Reporting Methods ---
+  Future<Map<String, dynamic>?> getActivePestAlert({String? poktanName}) async {
+    try {
+      final q = poktanName != null ? '?farmer_group_name=${Uri.encodeComponent(poktanName)}' : '';
+      final response = await _fetchGet('/pest-reports/active-alert$q');
+      if (response.statusCode == 200) {
+        return jsonDecode(response.body) as Map<String, dynamic>;
+      }
+      return null;
+    } catch (_) {
+      return null;
+    }
+  }
+
+  Future<Map<String, dynamic>?> createPestReport(Map<String, dynamic> payload) async {
+    try {
+      final response = await _post('/pest-reports', payload);
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        return jsonDecode(response.body) as Map<String, dynamic>;
+      }
+      return null;
+    } catch (_) {
+      return null;
     }
   }
 

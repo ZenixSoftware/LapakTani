@@ -251,11 +251,59 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
 
       if (mounted) {
         if (serverPaymentStatus == 'PENDING' || serverPaymentStatus == 'WAITING_PAYMENT') {
-          final paymentRef = (paymentDetails?['payment_reference'] ?? serverInvoiceNumber).toString();
+          String paymentRef = (paymentDetails?['payment_reference'] ?? serverInvoiceNumber).toString();
           final paymentChannel = (paymentDetails?['payment_channel'] ?? _selectedPaymentCode).toString();
           final channelName = (paymentDetails?['channel_name'] ?? _selectedPaymentMethod).toString();
           final expiredAtStr = paymentDetails?['payment_expired_at']?.toString();
-          final expiredAt = expiredAtStr != null ? DateTime.tryParse(expiredAtStr) : null;
+          DateTime? expiredAt = expiredAtStr != null ? DateTime.tryParse(expiredAtStr) : null;
+          String? qrUrl;
+          String? billCode;
+          String? deepLink;
+
+          // Wire Midtrans Core API Charge for Virtual Account and QRIS
+          if (_selectedPaymentCode != 'LAPAKPAY_SIMULATOR') {
+            try {
+              String paymentType = 'bank_transfer';
+              String? bank;
+              final codeUpper = _selectedPaymentCode.toUpperCase();
+              if (codeUpper.contains('BCA')) {
+                bank = 'bca';
+              } else if (codeUpper.contains('BNI')) {
+                bank = 'bni';
+              } else if (codeUpper.contains('BRI')) {
+                bank = 'bri';
+              } else if (codeUpper.contains('MANDIRI')) {
+                bank = 'mandiri';
+              } else if (codeUpper.contains('QRIS') || codeUpper.contains('GOPAY')) {
+                paymentType = 'qris';
+                bank = null;
+              }
+
+              final chargeResult = await ApiService().chargeMidtrans(
+                orderId: serverOrderId,
+                amount: serverTotalAmount.toDouble(),
+                paymentType: paymentType,
+                bank: bank,
+              );
+
+              if (chargeResult != null) {
+                if (chargeResult['va_number'] != null && chargeResult['va_number'].toString().isNotEmpty) {
+                  paymentRef = chargeResult['va_number'].toString();
+                }
+                billCode = chargeResult['bill_code']?.toString();
+                qrUrl = chargeResult['qr_url']?.toString();
+                deepLink = chargeResult['deep_link']?.toString();
+                final expStr = chargeResult['expiry_time']?.toString();
+                if (expStr != null) {
+                  expiredAt = DateTime.tryParse(expStr) ?? expiredAt;
+                }
+              }
+            } catch (chargeErr) {
+              debugPrint('Midtrans charge exception: $chargeErr');
+            }
+          }
+
+          if (!mounted) return;
 
           Navigator.pushReplacement(
             context,
@@ -272,6 +320,9 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                 recipientName: _recipientName,
                 items: serverItems,
                 expiredAt: expiredAt,
+                qrUrl: qrUrl,
+                billCode: billCode,
+                deepLink: deepLink,
               ),
             ),
           );

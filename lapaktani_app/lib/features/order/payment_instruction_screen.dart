@@ -20,6 +20,9 @@ class PaymentInstructionScreen extends StatefulWidget {
   final List<dynamic>? items;
   final DateTime? expiredAt;
   final List<dynamic>? customInstructions;
+  final String? qrUrl;
+  final String? billCode;
+  final String? deepLink;
 
   const PaymentInstructionScreen({
     super.key,
@@ -35,6 +38,9 @@ class PaymentInstructionScreen extends StatefulWidget {
     this.items,
     this.expiredAt,
     this.customInstructions,
+    this.qrUrl,
+    this.billCode,
+    this.deepLink,
   });
 
   @override
@@ -131,10 +137,11 @@ class _PaymentInstructionScreenState extends State<PaymentInstructionScreen> wit
     if (!silent) setState(() => _isCheckingStatus = true);
 
     try {
-      final statusData = await ApiService().getOrderPaymentStatus(widget.orderId);
+      final statusData = await ApiService().checkPaymentStatus(widget.orderId);
       if (statusData != null && mounted) {
         final paymentStatus = statusData['payment_status']?.toString().toUpperCase();
-        if (paymentStatus == 'PAID' || paymentStatus == 'SETTLEMENT') {
+        final orderStatus = statusData['order_status']?.toString().toUpperCase();
+        if (paymentStatus == 'PAID' || paymentStatus == 'SETTLEMENT' || orderStatus == 'PROCESSING' || orderStatus == 'COMPLETED') {
           _countdownTimer?.cancel();
           _pollingTimer?.cancel();
           Navigator.pushReplacement(
@@ -308,6 +315,8 @@ class _PaymentInstructionScreenState extends State<PaymentInstructionScreen> wit
                       const SizedBox(height: 14),
                       _buildInstructionTabs(),
                       const SizedBox(height: 14),
+                      _buildMidtransSandboxNoticeCard(),
+                      const SizedBox(height: 14),
                       _buildSimulatorActionCard(),
                       const SizedBox(height: 20),
                     ],
@@ -432,7 +441,15 @@ class _PaymentInstructionScreenState extends State<PaymentInstructionScreen> wit
                     ),
                     child: Column(
                       children: [
-                        const Icon(LucideIcons.qrCode, size: 140, color: _forestDark),
+                        widget.qrUrl != null && widget.qrUrl!.isNotEmpty
+                            ? Image.network(
+                                widget.qrUrl!,
+                                height: 140,
+                                width: 140,
+                                fit: BoxFit.contain,
+                                errorBuilder: (context, error, stackTrace) => const Icon(LucideIcons.qrCode, size: 140, color: _forestDark),
+                              )
+                            : const Icon(LucideIcons.qrCode, size: 140, color: _forestDark),
                         const SizedBox(height: 8),
                         Text(
                           'QRIS Standar Nasional (NMID: ID102488921)',
@@ -705,6 +722,52 @@ class _PaymentInstructionScreenState extends State<PaymentInstructionScreen> wit
           ),
         );
       },
+    );
+  }
+
+  Widget _buildMidtransSandboxNoticeCard() {
+    return Container(
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: const Color(0xFFEFF6FF),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: const Color(0xFFBFDBFE)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              const Icon(LucideIcons.info, size: 16, color: Color(0xFF1D4ED8)),
+              const SizedBox(width: 6),
+              Text(
+                'Mode Sandbox Midtrans Aktif',
+                style: GoogleFonts.inter(fontSize: 12, fontWeight: FontWeight.w700, color: const Color(0xFF1E40AF)),
+              ),
+            ],
+          ),
+          const SizedBox(height: 6),
+          Text(
+            'Uji pembayaran menggunakan simulator resmi Midtrans di simulator.sandbox.midtrans.com dengan memasukkan Nomor VA di atas.',
+            style: GoogleFonts.inter(fontSize: 11, color: const Color(0xFF1E3A8A), height: 1.35),
+          ),
+          const SizedBox(height: 8),
+          InkWell(
+            onTap: () => _copyToClipboard('https://simulator.sandbox.midtrans.com/', 'Link Simulator Midtrans'),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Icon(LucideIcons.externalLink, size: 13, color: Color(0xFF2563EB)),
+                const SizedBox(width: 4),
+                Text(
+                  'Salin link simulator.sandbox.midtrans.com',
+                  style: GoogleFonts.inter(fontSize: 11, fontWeight: FontWeight.w700, color: const Color(0xFF2563EB)),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
     );
   }
 

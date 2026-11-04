@@ -11,9 +11,14 @@ const profileRoutes = require('./src/routes/profiles');
 const penyuluhRoutes = require('./src/routes/penyuluh');
 const masterRoutes = require('./src/routes/master');
 const uploadRoutes = require('./src/routes/upload');
+const educationRoutes = require('./src/routes/education');
 const cartRoutes = require('./src/routes/cart');
 const orderRoutes = require('./src/routes/orders');
 const soilRoutes = require('./src/routes/soil');
+const paymentRoutes = require('./src/routes/payments');
+const poktanRoutes = require('./src/routes/poktan');
+const pestReportRoutes = require('./src/routes/pestReports');
+const runPestAlertMigration = require('./src/config/migrate_pest_alert');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -72,9 +77,14 @@ app.use('/api/profiles', profileRoutes);
 app.use('/api/penyuluh', penyuluhRoutes);
 app.use('/api/master', masterRoutes);
 app.use('/api/upload', uploadRoutes);
+app.use('/api/education', educationRoutes);
 app.use('/api/cart', cartRoutes);
 app.use('/api/orders', orderRoutes);
 app.use('/api/soil', soilRoutes);
+app.use('/api/payments', paymentRoutes);
+app.use('/api/poktan', poktanRoutes);
+app.use('/api/pest-reports', pestReportRoutes);
+app.use('/api/pest-alerts', pestReportRoutes);
 
 
 app.use((req, res) => {
@@ -114,6 +124,12 @@ const startServer = async () => {
       console.log('[MYSQL] cart_items table verified');
 
       conn.release();
+
+      try {
+        await runPestAlertMigration();
+      } catch (pestMigErr) {
+        console.warn('[MIGRATION] Pest alert migration notice:', pestMigErr.message);
+      }
     } catch (dbErr) {
       console.warn('[MYSQL] Connection warning:', dbErr.message);
     }
