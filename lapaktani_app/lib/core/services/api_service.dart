@@ -400,6 +400,32 @@ class ApiService {
     }
   }
 
+  // --- US-19: Pest Alert & Reporting Methods ---
+  Future<Map<String, dynamic>?> getActivePestAlert({String? poktanName}) async {
+    try {
+      final q = poktanName != null ? '?farmer_group_name=${Uri.encodeComponent(poktanName)}' : '';
+      final response = await _fetchGet('/pest-reports/active-alert$q');
+      if (response.statusCode == 200) {
+        return jsonDecode(response.body) as Map<String, dynamic>;
+      }
+      return null;
+    } catch (_) {
+      return null;
+    }
+  }
+
+  Future<Map<String, dynamic>?> createPestReport(Map<String, dynamic> payload) async {
+    try {
+      final response = await _post('/pest-reports', payload);
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        return jsonDecode(response.body) as Map<String, dynamic>;
+      }
+      return null;
+    } catch (_) {
+      return null;
+    }
+  }
+
   Future<http.Response> _fetchGet(String path) async {
     final normalizedPath = path.startsWith('/') ? path : '/$path';
     final url = Uri.parse('$baseUrl$normalizedPath');

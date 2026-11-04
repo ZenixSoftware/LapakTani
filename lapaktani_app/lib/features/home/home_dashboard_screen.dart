@@ -6,6 +6,9 @@ import '../../core/services/api_service.dart';
 import '../cart/cart_screen.dart';
 import '../community/screens/education_feed_screen.dart';
 import '../community/widgets/penyuluh_official_badge.dart';
+import '../community/widgets/pest_alert_banner.dart';
+import '../community/screens/create_pest_report_screen.dart';
+import '../community/screens/pest_alert_detail_screen.dart';
 import '../order/order_history_screen.dart';
 import '../product/product_detail_screen.dart';
 import '../profile/profile_screen.dart';
@@ -214,6 +217,13 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen> {
       'badge': null,
     },
     {
+      'id': 'lapor-hama',
+      'title': 'Lapor Hama',
+      'colors': [Color(0xFFEF4444), Color(0xFFB91C1C)],
+      'icon': LucideIcons.alertTriangle,
+      'badge': 'Alert',
+    },
+    {
       'id': 'edukasi-tani',
       'title': 'Edukasi BPP',
       'colors': [Color(0xFF047857), Color(0xFF065F46)],
@@ -397,6 +407,7 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
+                    const PestAlertBanner(),
                     _buildQuickActionServices(),
                     _buildRecentlyViewedSection(),
                     _buildCategoryTabBar(),
@@ -688,6 +699,15 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen> {
               return Expanded(
                 child: InkWell(
                   onTap: () {
+                    if (action['id'] == 'lapor-hama') {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => const CreatePestReportScreen(),
+                        ),
+                      );
+                      return;
+                    }
                     if (action['id'] == 'edukasi-tani') {
                       Navigator.push(
                         context,
