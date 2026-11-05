@@ -43,10 +43,6 @@ class ApiService {
 
       if (legacyToken != null && legacyToken.isNotEmpty) {
         await _secureStorage.write(key: tokenKey, value: legacyToken);
-        await prefs.remove(tokenKey);
-        await prefs.remove('lapaktani_token');
-        await prefs.remove('token');
-        await prefs.remove('auth_token');
         return legacyToken;
       }
     } catch (_) {}
@@ -61,10 +57,9 @@ class ApiService {
 
     try {
       final prefs = await SharedPreferences.getInstance();
-      await prefs.remove(tokenKey);
-      await prefs.remove('lapaktani_token');
-      await prefs.remove('token');
-      await prefs.remove('auth_token');
+      await prefs.setString(tokenKey, token);
+      await prefs.setString('lapaktani_token', token);
+      await prefs.setString('auth_token', token);
     } catch (_) {}
   }
 
@@ -108,8 +103,8 @@ class ApiService {
       'Accept': 'application/json',
     };
     final token = await getToken();
-    if (token != null && token.isNotEmpty) {
-      headers['Authorization'] = 'Bearer $token';
+    if (token != null && token.trim().isNotEmpty) {
+      headers['Authorization'] = 'Bearer ${token.trim()}';
     }
     if (extraHeaders != null) {
       headers.addAll(extraHeaders);
@@ -176,13 +171,23 @@ class ApiService {
     int quantity = 1,
     String? gradeId,
   }) async {
+    final token = await getToken();
+    if (token == null || token.isEmpty) {
+      throw const SocketException('UNAUTHENTICATED');
+    }
     try {
       final response = await _post('/cart', {
         'product_id': productId,
         'quantity': quantity,
         'grade_id': ?gradeId,
       });
+      if (response.statusCode == 401) {
+        throw const SocketException('UNAUTHENTICATED');
+      }
       return response.statusCode >= 200 && response.statusCode < 300;
+    } on SocketException catch (e) {
+      if (e.message == 'UNAUTHENTICATED') rethrow;
+      return false;
     } catch (_) {
       return false;
     }

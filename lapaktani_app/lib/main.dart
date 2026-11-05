@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:intl/date_symbol_data_local.dart';
 import 'core/theme/app_theme.dart';
 import 'features/auth/login_screen.dart';
 import 'features/auth/register_screen.dart';
@@ -8,8 +9,11 @@ import 'features/onboarding/splash_screen.dart';
 
 import 'features/orders/screens/buyer_orders_screen.dart';
 
-void main() {
+void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  try {
+    await initializeDateFormatting('id_ID', null);
+  } catch (_) {}
   runApp(const LapakTaniApp());
 }
 

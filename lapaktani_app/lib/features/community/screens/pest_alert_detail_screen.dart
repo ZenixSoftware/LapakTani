@@ -245,32 +245,39 @@ class _PestAlertDetailScreenState extends State<PestAlertDetailScreen> {
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                            decoration: BoxDecoration(
-                              color: badgeBg,
-                              borderRadius: BorderRadius.circular(8),
-                            ),
-                            child: Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Icon(
-                                  isCritical ? LucideIcons.alertTriangle : LucideIcons.bug,
-                                  size: 14,
-                                  color: badgeText,
-                                ),
-                                const SizedBox(width: 5),
-                                Text(
-                                  'Tingkat: ${report.severity}',
-                                  style: GoogleFonts.inter(
-                                    fontSize: 12,
-                                    fontWeight: FontWeight.w700,
+                          Flexible(
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                              decoration: BoxDecoration(
+                                color: badgeBg,
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Icon(
+                                    isCritical ? LucideIcons.alertTriangle : LucideIcons.bug,
+                                    size: 14,
                                     color: badgeText,
                                   ),
-                                ),
-                              ],
+                                  const SizedBox(width: 5),
+                                  Flexible(
+                                    child: Text(
+                                      'Tingkat: ${report.severity}',
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                      style: GoogleFonts.inter(
+                                        fontSize: 12,
+                                        fontWeight: FontWeight.w700,
+                                        color: badgeText,
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
                             ),
                           ),
+                          const SizedBox(width: 8),
                           Container(
                             padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                             decoration: BoxDecoration(
@@ -514,10 +521,15 @@ class _PestAlertDetailScreenState extends State<PestAlertDetailScreen> {
     required String value,
   }) {
     return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Icon(icon, size: 16, color: const Color(0xFF64748B)),
+        Padding(
+          padding: const EdgeInsets.only(top: 2),
+          child: Icon(icon, size: 16, color: const Color(0xFF64748B)),
+        ),
         const SizedBox(width: 10),
         Expanded(
+          flex: 4,
           child: Text(
             label,
             style: GoogleFonts.inter(
@@ -526,12 +538,19 @@ class _PestAlertDetailScreenState extends State<PestAlertDetailScreen> {
             ),
           ),
         ),
-        Text(
-          value,
-          style: GoogleFonts.inter(
-            fontSize: 13,
-            fontWeight: FontWeight.w600,
-            color: const Color(0xFF0F172A),
+        const SizedBox(width: 8),
+        Expanded(
+          flex: 5,
+          child: Text(
+            value,
+            textAlign: TextAlign.end,
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
+            style: GoogleFonts.inter(
+              fontSize: 13,
+              fontWeight: FontWeight.w600,
+              color: const Color(0xFF0F172A),
+            ),
           ),
         ),
       ],

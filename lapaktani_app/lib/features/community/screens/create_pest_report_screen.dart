@@ -222,6 +222,7 @@ class _CreatePestReportScreenState extends State<CreatePestReportScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFFF8FAFC),
+      resizeToAvoidBottomInset: true,
       appBar: AppBar(
         backgroundColor: Colors.white,
         elevation: 0,
@@ -241,22 +242,26 @@ class _CreatePestReportScreenState extends State<CreatePestReportScreen> {
       ),
       body: Form(
         key: _formKey,
-        child: ListView(
+        child: SingleChildScrollView(
+          physics: const BouncingScrollPhysics(),
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-          children: [
-            _buildEmergencyNoticeBanner(),
-            const SizedBox(height: 16),
-            _buildMainInfoCard(),
-            const SizedBox(height: 16),
-            _buildSeverityCard(),
-            const SizedBox(height: 16),
-            _buildPhotoEvidenceCard(),
-            const SizedBox(height: 16),
-            _buildRecommendationCard(),
-            const SizedBox(height: 24),
-            _buildSubmitButton(),
-            const SizedBox(height: 32),
-          ],
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              _buildEmergencyNoticeBanner(),
+              const SizedBox(height: 16),
+              _buildMainInfoCard(),
+              const SizedBox(height: 16),
+              _buildSeverityCard(),
+              const SizedBox(height: 16),
+              _buildPhotoEvidenceCard(),
+              const SizedBox(height: 16),
+              _buildRecommendationCard(),
+              const SizedBox(height: 24),
+              _buildSubmitButton(),
+              const SizedBox(height: 32),
+            ],
+          ),
         ),
       ),
     );

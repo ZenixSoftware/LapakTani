@@ -943,52 +943,65 @@ class _CartScreenState extends State<CartScreen> {
               ],
             ),
           ),
-          Row(
-            children: [
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.end,
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Text(
-                    'Total Belanja:',
-                    style: GoogleFonts.inter(fontSize: 10, color: const Color(0xFF64748B)),
-                  ),
-                  Text(
-                    _formatRupiah(_totalPrice),
-                    style: GoogleFonts.inter(
-                      fontSize: 15,
-                      fontWeight: FontWeight.w800,
-                      color: const Color(0xFF0F172A),
-                    ),
-                  ),
-                  if (_totalSavings > 0)
-                    Text(
-                      'Hemat ${_formatRupiah(_totalSavings)}',
-                      style: GoogleFonts.inter(
-                        fontSize: 9.5,
-                        fontWeight: FontWeight.w700,
-                        color: _tokopediaGreen,
+          Expanded(
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.end,
+              children: [
+                Flexible(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.end,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        'Total Belanja:',
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: GoogleFonts.inter(fontSize: 10, color: const Color(0xFF64748B)),
                       ),
-                    ),
-                ],
-              ),
-              const SizedBox(width: 12),
-              ElevatedButton(
-                onPressed: _selectedItemCount > 0 ? _proceedToCheckout : null,
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: _tokopediaGreen,
-                  disabledBackgroundColor: const Color(0xFFCBD5E1),
-                  foregroundColor: Colors.white,
-                  elevation: 1,
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 11),
+                      Text(
+                        _formatRupiah(_totalPrice),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: GoogleFonts.inter(
+                          fontSize: 15,
+                          fontWeight: FontWeight.w800,
+                          color: const Color(0xFF0F172A),
+                        ),
+                      ),
+                      if (_totalSavings > 0)
+                        Text(
+                          'Hemat ${_formatRupiah(_totalSavings)}',
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: GoogleFonts.inter(
+                            fontSize: 9.5,
+                            fontWeight: FontWeight.w700,
+                            color: _tokopediaGreen,
+                          ),
+                        ),
+                    ],
+                  ),
                 ),
-                child: Text(
-                  'Beli ($_selectedItemCount)',
-                  style: GoogleFonts.inter(fontSize: 13, fontWeight: FontWeight.w700),
+                const SizedBox(width: 10),
+                ElevatedButton(
+                  onPressed: _selectedItemCount > 0 ? _proceedToCheckout : null,
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: _tokopediaGreen,
+                    disabledBackgroundColor: const Color(0xFFCBD5E1),
+                    foregroundColor: Colors.white,
+                    elevation: 1,
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 11),
+                  ),
+                  child: Text(
+                    'Beli ($_selectedItemCount)',
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: GoogleFonts.inter(fontSize: 13, fontWeight: FontWeight.w700),
+                  ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         ],
       ),

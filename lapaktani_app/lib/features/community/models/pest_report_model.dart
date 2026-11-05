@@ -163,7 +163,15 @@ class PestReportModel {
   }
 
   String get formattedDate {
-    return DateFormat('dd MMM yyyy, HH:mm', 'id_ID').format(createdAt);
+    try {
+      return DateFormat('dd MMM yyyy, HH:mm', 'id_ID').format(createdAt);
+    } catch (_) {
+      try {
+        return DateFormat('dd MMM yyyy, HH:mm').format(createdAt);
+      } catch (_) {
+        return DateFormat('yyyy-MM-dd HH:mm').format(createdAt);
+      }
+    }
   }
 
   String get timeAgo {

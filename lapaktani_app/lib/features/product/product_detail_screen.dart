@@ -70,7 +70,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
     return 'Rp${buffer.toString()}';
   }
 
-  void _handleAddToCart() {
+  Future<void> _handleAddToCart() async {
     if (_productId.isEmpty || _productId.startsWith('mock-')) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
@@ -97,24 +97,81 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
       );
       return;
     }
-    setState(() {
-      _cartItemCount++;
-    });
-    ApiService().addToCart(productId: _productId, quantity: 1).catchError((err) {
-      debugPrint('[CART] Gagal menambahkan ke keranjang: $err');
-      return false;
-    });
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(
-          'Ditambahkan ke keranjang',
-          style: GoogleFonts.inter(fontSize: 12),
+
+    final token = await ApiService().getToken();
+    if (token == null || token.isEmpty) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            'Silakan login terlebih dahulu untuk menambahkan barang ke keranjang.',
+            style: GoogleFonts.inter(fontSize: 12),
+          ),
+          backgroundColor: const Color(0xFFEF4444),
+          behavior: SnackBarBehavior.floating,
+          action: SnackBarAction(
+            label: 'LOGIN',
+            textColor: Colors.white,
+            onPressed: () {
+              Navigator.of(context).pushNamed('/login');
+            },
+          ),
         ),
-        backgroundColor: const Color(0xFF03AC0E),
-        behavior: SnackBarBehavior.floating,
-        duration: const Duration(seconds: 2),
-      ),
-    );
+      );
+      return;
+    }
+
+    try {
+      final success = await ApiService().addToCart(productId: _productId, quantity: 1);
+      if (success) {
+        setState(() {
+          _cartItemCount++;
+        });
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              'Ditambahkan ke keranjang',
+              style: GoogleFonts.inter(fontSize: 12),
+            ),
+            backgroundColor: const Color(0xFF03AC0E),
+            behavior: SnackBarBehavior.floating,
+            duration: const Duration(seconds: 2),
+          ),
+        );
+      } else {
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              'Gagal menambahkan komoditas ke keranjang.',
+              style: GoogleFonts.inter(fontSize: 12),
+            ),
+            backgroundColor: const Color(0xFFEF4444),
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      }
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            'Silakan login terlebih dahulu untuk menambahkan barang ke keranjang.',
+            style: GoogleFonts.inter(fontSize: 12),
+          ),
+          backgroundColor: const Color(0xFFEF4444),
+          behavior: SnackBarBehavior.floating,
+          action: SnackBarAction(
+            label: 'LOGIN',
+            textColor: Colors.white,
+            onPressed: () {
+              Navigator.of(context).pushNamed('/login');
+            },
+          ),
+        ),
+      );
+    }
   }
 
   void _handleBuyNow() {
