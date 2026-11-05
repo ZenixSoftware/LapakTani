@@ -136,15 +136,12 @@ const chargeMidtrans = async (req, res) => {
  * Endpoint: POST /api/payments/midtrans-callback
  */
 const handleMidtransWebhook = async (req, res) => {
-  const payload = req.body || {};
-  console.log('[MIDTRANS-WEBHOOK] Received callback payload:', JSON.stringify(payload));
+  const { order_id, status_code, gross_amount, signature_key } = req.body || {};
+  console.log('[MIDTRANS-WEBHOOK] Received callback payload:', JSON.stringify(req.body));
 
-  const orderId = payload.order_id;
-  const statusCode = String(payload.status_code || '200');
-  const grossAmount = payload.gross_amount;
-  const signatureKey = payload.signature_key;
-  const transactionStatus = String(payload.transaction_status || '').toLowerCase();
-  const fraudStatus = String(payload.fraud_status || '').toLowerCase();
+  const orderId = order_id;
+  const transactionStatus = String(req.body?.transaction_status || '').toLowerCase();
+  const fraudStatus = String(req.body?.fraud_status || '').toLowerCase();
 
   if (!orderId) {
     return res.status(400).json({
@@ -154,18 +151,15 @@ const handleMidtransWebhook = async (req, res) => {
   }
 
   // Verify SHA-512 Signature
-  const serverKey = process.env.MIDTRANS_SERVER_KEY || '';
-  const expectedSignature = crypto
+  const serverKey = (process.env.MIDTRANS_SERVER_KEY || '').trim();
+  const mySignature = crypto
     .createHash('sha512')
-    .update(`${orderId}${statusCode}${grossAmount}${serverKey}`)
+    .update(`${order_id}${status_code}${gross_amount}${serverKey}`)
     .digest('hex');
 
-  if (signatureKey && signatureKey.toLowerCase() !== expectedSignature.toLowerCase()) {
-    console.warn(`[MIDTRANS-WEBHOOK] Signature mismatch for order ${orderId}. Expected ${expectedSignature}, got ${signatureKey}`);
-    return res.status(403).json({
-      success: false,
-      message: 'Signature key tidak valid.'
-    });
+  if (mySignature.toLowerCase() !== (signature_key || '').toLowerCase()) {
+    console.error(`[MIDTRANS-WEBHOOK] Signature mismatch for ${order_id}. Expected: ${mySignature}, Got: ${signature_key}`);
+    return res.status(403).json({ success: false, message: 'Invalid signature' });
   }
 
   let connection;
@@ -204,14 +198,14 @@ const handleMidtransWebhook = async (req, res) => {
     if (transactionStatus === 'capture') {
       if (fraudStatus === 'accept') {
         newPaymentStatus = 'PAID';
-        newOrderStatus = 'PROCESSING';
+        newOrderStatus = 'PAID';
       } else if (fraudStatus === 'challenge') {
         newPaymentStatus = 'CHALLENGE';
         newOrderStatus = 'WAITING_PAYMENT';
       }
     } else if (transactionStatus === 'settlement') {
       newPaymentStatus = 'PAID';
-      newOrderStatus = 'PROCESSING';
+      newOrderStatus = 'PAID';
     } else if (transactionStatus === 'pending') {
       newPaymentStatus = 'PENDING';
       newOrderStatus = 'WAITING_PAYMENT';
