@@ -251,9 +251,9 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
 
       if (mounted) {
         if (serverPaymentStatus == 'PENDING' || serverPaymentStatus == 'WAITING_PAYMENT') {
-          String paymentRef = (paymentDetails?['payment_reference'] ?? serverInvoiceNumber).toString();
-          final paymentChannel = (paymentDetails?['payment_channel'] ?? _selectedPaymentCode).toString();
-          final channelName = (paymentDetails?['channel_name'] ?? _selectedPaymentMethod).toString();
+          String paymentRef = '';
+          String paymentChannel = (paymentDetails?['payment_channel'] ?? _selectedPaymentCode).toString();
+          String channelName = (paymentDetails?['channel_name'] ?? _selectedPaymentMethod).toString();
           final expiredAtStr = paymentDetails?['payment_expired_at']?.toString();
           DateTime? expiredAt = expiredAtStr != null ? DateTime.tryParse(expiredAtStr) : null;
           String? qrUrl;
@@ -262,45 +262,89 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
 
           // Wire Midtrans Core API Charge for Virtual Account and QRIS
           if (_selectedPaymentCode != 'LAPAKPAY_SIMULATOR') {
-            try {
-              String paymentType = 'bank_transfer';
-              String? bank;
-              final codeUpper = _selectedPaymentCode.toUpperCase();
-              if (codeUpper.contains('BCA')) {
-                bank = 'bca';
-              } else if (codeUpper.contains('BNI')) {
-                bank = 'bni';
-              } else if (codeUpper.contains('BRI')) {
-                bank = 'bri';
-              } else if (codeUpper.contains('MANDIRI')) {
-                bank = 'mandiri';
-              } else if (codeUpper.contains('QRIS') || codeUpper.contains('GOPAY')) {
-                paymentType = 'qris';
-                bank = null;
-              }
-
-              final chargeResult = await ApiService().chargeMidtrans(
-                orderId: serverOrderId,
-                amount: serverTotalAmount.toDouble(),
-                paymentType: paymentType,
-                bank: bank,
-              );
-
-              if (chargeResult != null) {
-                if (chargeResult['va_number'] != null && chargeResult['va_number'].toString().isNotEmpty) {
-                  paymentRef = chargeResult['va_number'].toString();
-                }
-                billCode = chargeResult['bill_code']?.toString();
-                qrUrl = chargeResult['qr_url']?.toString();
-                deepLink = chargeResult['deep_link']?.toString();
-                final expStr = chargeResult['expiry_time']?.toString();
-                if (expStr != null) {
-                  expiredAt = DateTime.tryParse(expStr) ?? expiredAt;
-                }
-              }
-            } catch (chargeErr) {
-              debugPrint('Midtrans charge exception: $chargeErr');
+            String paymentType = 'bank_transfer';
+            String? bank;
+            final codeUpper = _selectedPaymentCode.toUpperCase();
+            if (codeUpper.contains('BCA')) {
+              bank = 'bca';
+            } else if (codeUpper.contains('BNI')) {
+              bank = 'bni';
+            } else if (codeUpper.contains('BRI')) {
+              bank = 'bri';
+            } else if (codeUpper.contains('MANDIRI')) {
+              bank = 'mandiri';
+            } else if (codeUpper.contains('QRIS') || codeUpper.contains('GOPAY')) {
+              paymentType = 'qris';
+              bank = null;
             }
+
+            final chargeResult = await ApiService().chargeMidtrans(
+              orderId: serverOrderId,
+              amount: serverTotalAmount.toDouble(),
+              paymentType: paymentType,
+              bank: bank,
+            );
+
+            if (chargeResult == null) {
+              setState(() => _isSubmitting = false);
+              if (!mounted) return;
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  content: Text('Gagal memproses pembayaran via Midtrans. Silakan coba kembali.'),
+                  backgroundColor: Color(0xFFDC2626),
+                  behavior: SnackBarBehavior.floating,
+                ),
+              );
+              return;
+            }
+
+            final realVa = chargeResult['va_number']?.toString();
+            final realQr = chargeResult['qr_url']?.toString();
+
+            // Verify response['va_number'] (or qr_url for QRIS) exists
+            if (paymentType == 'bank_transfer') {
+              if (realVa == null || realVa.isEmpty) {
+                setState(() => _isSubmitting = false);
+                if (!mounted) return;
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text('Nomor Virtual Account tidak berhasil diterbitkan oleh Midtrans.'),
+                    backgroundColor: Color(0xFFDC2626),
+                    behavior: SnackBarBehavior.floating,
+                  ),
+                );
+                return;
+              }
+              paymentRef = realVa;
+            } else if (paymentType == 'qris') {
+              if ((realQr == null || realQr.isEmpty) && (realVa == null || realVa.isEmpty)) {
+                setState(() => _isSubmitting = false);
+                if (!mounted) return;
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text('QR Code QRIS tidak berhasil diterbitkan oleh Midtrans.'),
+                    backgroundColor: Color(0xFFDC2626),
+                    behavior: SnackBarBehavior.floating,
+                  ),
+                );
+                return;
+              }
+              paymentRef = (realVa != null && realVa.isNotEmpty) ? realVa : (realQr ?? serverInvoiceNumber);
+              qrUrl = realQr;
+            } else {
+              paymentRef = realVa ?? realQr ?? serverInvoiceNumber;
+            }
+
+            billCode = chargeResult['bill_code']?.toString();
+            deepLink = chargeResult['deep_link']?.toString();
+            final expStr = chargeResult['expiry_time']?.toString();
+            if (expStr != null) {
+              expiredAt = DateTime.tryParse(expStr) ?? expiredAt;
+            }
+            paymentChannel = (chargeResult['payment_type'] ?? _selectedPaymentCode).toString();
+            channelName = _selectedPaymentMethod;
+          } else {
+            paymentRef = (paymentDetails?['payment_reference'] ?? serverInvoiceNumber).toString();
           }
 
           if (!mounted) return;

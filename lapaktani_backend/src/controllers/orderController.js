@@ -19,54 +19,47 @@ const generateInvoiceNumber = () => {
 /**
  * Generate payment details (VA, QRIS, Expiry, and step-by-step instructions)
  */
-const generatePaymentDetails = (channel, totalAmount, orderId, invoiceNumber) => {
+const generatePaymentDetails = (channel, totalAmount, orderId, invoiceNumber, existingRef = null) => {
   const cleanChannel = (channel || 'LAPAKPAY_SIMULATOR').toUpperCase();
   const now = new Date();
   const isQris = cleanChannel.includes('QRIS') || cleanChannel.includes('GOPAY') || cleanChannel.includes('OVO');
   const expiryDurationMs = isQris ? 15 * 60 * 1000 : 24 * 60 * 60 * 1000;
   const expiredAt = new Date(now.getTime() + expiryDurationMs);
 
-  let paymentRef = '';
+  let paymentRef = existingRef || null;
   let channelName = '';
   let instructions = [];
 
-  const numericSeed = (orderId || '').replace(/\D/g, '').slice(-8).padEnd(8, '7');
-
   if (cleanChannel.includes('BCA')) {
     channelName = 'BCA Virtual Account';
-    paymentRef = `80777${numericSeed}`;
     instructions = [
       { step: 1, title: 'Buka BCA mobile', desc: 'Pilih menu m-Transfer > BCA Virtual Account.' },
-      { step: 2, title: 'Masukkan Nomor VA', desc: `Masukkan nomor ${paymentRef} dan pilih Send.` },
+      { step: 2, title: 'Masukkan Nomor VA', desc: `Masukkan nomor ${paymentRef || 'Virtual Account resmi'} dan pilih Send.` },
       { step: 3, title: 'Konfirmasi Pembayaran', desc: `Periksa nominal Rp ${Number(totalAmount).toLocaleString('id-ID')} dan nama merchant LapakTani, lalu masukkan PIN m-BCA.` }
     ];
   } else if (cleanChannel.includes('MANDIRI')) {
     channelName = 'Mandiri Virtual Account';
-    paymentRef = `89508${numericSeed}`;
     instructions = [
       { step: 1, title: 'Buka Livin\' by Mandiri', desc: 'Pilih menu Bayar > Multipayment / Virtual Account.' },
-      { step: 2, title: 'Masukkan Kode Perusahaan', desc: `Pilih penyedia jasa LapakTani (Kode: 89508) atau ketik ${paymentRef}.` },
+      { step: 2, title: 'Masukkan Kode Perusahaan', desc: `Pilih penyedia jasa LapakTani atau ketik ${paymentRef || 'nomor VA resmi'}.` },
       { step: 3, title: 'Konfirmasi & Bayar', desc: `Pastikan nominal tepat Rp ${Number(totalAmount).toLocaleString('id-ID')} lalu masukkan PIN Livin.` }
     ];
   } else if (cleanChannel.includes('BNI')) {
     channelName = 'BNI Virtual Account';
-    paymentRef = `98812${numericSeed}`;
     instructions = [
       { step: 1, title: 'Buka BNI Mobile Banking', desc: 'Pilih menu Transfer > Virtual Account Billing.' },
-      { step: 2, title: 'Input Nomor Tagihan', desc: `Masukkan ${paymentRef} pada tab Input Baru.` },
+      { step: 2, title: 'Input Nomor Tagihan', desc: `Masukkan ${paymentRef || 'nomor VA resmi'} pada tab Input Baru.` },
       { step: 3, title: 'Konfirmasi Transaksi', desc: `Periksa rincian tagihan dan selesaikan dengan Password Transaksi.` }
     ];
   } else if (cleanChannel.includes('BRI')) {
     channelName = 'BRI Virtual Account (BRIVA)';
-    paymentRef = `10245${numericSeed}`;
     instructions = [
       { step: 1, title: 'Buka BRImo', desc: 'Pilih menu Pembayaran > BRIVA.' },
-      { step: 2, title: 'Masukkan Nomor BRIVA', desc: `Ketikkan nomor ${paymentRef} lalu klik Lanjut.` },
+      { step: 2, title: 'Masukkan Nomor BRIVA', desc: `Ketikkan nomor ${paymentRef || 'nomor BRIVA resmi'} lalu klik Lanjut.` },
       { step: 3, title: 'Selesaikan Pembayaran', desc: `Verifikasi pesanan LapakTani Rp ${Number(totalAmount).toLocaleString('id-ID')} dan masukkan PIN BRImo.` }
     ];
   } else if (cleanChannel.includes('QRIS')) {
     channelName = 'QRIS (Semua Bank & E-Wallet)';
-    paymentRef = `00020101021226540014ID.CO.LAPAKTANI.WWW0118936009180000000000520454115303360540${Number(totalAmount)}5802ID5913LAPAKTANI6007BANDUNG62070703A016304`;
     instructions = [
       { step: 1, title: 'Buka Aplikasi Pembayaran', desc: 'Buka GoPay, OVO, Dana, ShopeePay, BCA Mobile, atau m-Banking pilihan Anda.' },
       { step: 2, title: 'Pindai Kode QRIS', desc: 'Pilih menu Scan / QRIS lalu arahkan kamera ke kode QR yang tampil di layar.' },
@@ -74,7 +67,7 @@ const generatePaymentDetails = (channel, totalAmount, orderId, invoiceNumber) =>
     ];
   } else if (cleanChannel.includes('TRANSFER')) {
     channelName = 'Transfer Bank Manual';
-    paymentRef = '7720192831';
+    paymentRef = existingRef || '7720192831';
     instructions = [
       { step: 1, title: 'Transfer ke Rekening Resmi', desc: 'Transfer ke Bank BCA 7720192831 a.n. PT Lapak Tani Nusantara.' },
       { step: 2, title: 'Nominal Pas', desc: `Pastikan mentransfer tepat Rp ${Number(totalAmount).toLocaleString('id-ID')} hingga 3 digit terakhir.` },
@@ -82,7 +75,7 @@ const generatePaymentDetails = (channel, totalAmount, orderId, invoiceNumber) =>
     ];
   } else {
     channelName = 'LapakPay Simulator';
-    paymentRef = 'SIMULATOR-INSTANT';
+    paymentRef = existingRef || 'SIMULATOR-INSTANT';
     instructions = [
       { step: 1, title: 'Pembayaran Instan', desc: 'Saldo terpotong langsung secara otomatis.' }
     ];
@@ -241,7 +234,15 @@ const checkoutOrder = async (req, res) => {
 
     // 5. Payment method handling (LapakPay Simulator vs Payment Gateway Channels)
     const isSimulator = String(payment_method || 'LAPAKPAY_SIMULATOR').toUpperCase() === 'LAPAKPAY_SIMULATOR';
-    const paymentDetails = generatePaymentDetails(payment_method, totalAmount, orderId, invoiceNumber);
+    const paymentDetails = isSimulator
+      ? generatePaymentDetails(payment_method, totalAmount, orderId, invoiceNumber)
+      : {
+          payment_channel: payment_method || 'MIDTRANS',
+          channel_name: payment_method,
+          payment_reference: null,
+          payment_expired_at: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(),
+          instructions: []
+        };
 
     let initialPaymentStatus = isSimulator ? 'PAID' : 'PENDING';
     let initialOrderStatus = isSimulator ? 'PROCESSING' : 'WAITING_PAYMENT';
@@ -298,9 +299,9 @@ const checkoutOrder = async (req, res) => {
           cleanAddress,
           cleanAddress,
           numericShippingFee,
-          paymentDetails.payment_channel,
-          paymentDetails.payment_reference,
-          new Date(paymentDetails.payment_expired_at)
+          isSimulator ? 'LapakPay Simulator' : (payment_method || null),
+          isSimulator ? invoiceNumber : null,
+          isSimulator ? null : new Date(Date.now() + 24 * 60 * 60 * 1000)
         ]
       );
     } catch (_) {
@@ -616,6 +617,9 @@ const getPaymentStatus = async (req, res) => {
         o.payment_status,
         o.order_status,
         o.delivery_address,
+        o.payment_channel,
+        o.payment_reference,
+        o.payment_expired_at,
         o.created_at,
         o.updated_at
       FROM orders o
@@ -632,7 +636,7 @@ const getPaymentStatus = async (req, res) => {
     }
 
     const order = orderRows[0];
-    const paymentDetails = generatePaymentDetails(order.payment_method, order.total_amount, order.id, order.invoice_number);
+    const paymentDetails = generatePaymentDetails(order.payment_method, order.total_amount, order.id, order.invoice_number, order.payment_reference);
 
     return res.status(200).json({
       success: true,
@@ -680,6 +684,9 @@ const getMyOrders = async (req, res) => {
         COALESCE(o.payment_status, 'PAID') as payment_status,
         o.order_status,
         COALESCE(o.delivery_address, o.shipping_address) as delivery_address,
+        o.payment_channel,
+        o.payment_reference,
+        o.payment_expired_at,
         o.created_at,
         COALESCE(o.updated_at, o.created_at) as updated_at
       FROM orders o
@@ -736,7 +743,7 @@ const getMyOrders = async (req, res) => {
         total_amount: Number(order.total_amount || 0),
         shipping_fee: Number(order.shipping_fee || 0),
         items: items,
-        payment_details: generatePaymentDetails(order.payment_method, Number(order.total_amount || 0), order.id, order.invoice_number)
+        payment_details: generatePaymentDetails(order.payment_method, Number(order.total_amount || 0), order.id, order.invoice_number, order.payment_reference)
       };
     });
 
@@ -781,6 +788,9 @@ const getOrderById = async (req, res) => {
         COALESCE(o.payment_status, 'PAID') as payment_status,
         o.order_status,
         COALESCE(o.delivery_address, o.shipping_address) as delivery_address,
+        o.payment_channel,
+        o.payment_reference,
+        o.payment_expired_at,
         o.created_at,
         COALESCE(o.updated_at, o.created_at) as updated_at,
         u.full_name as buyer_name,
@@ -833,7 +843,7 @@ const getOrderById = async (req, res) => {
       price_per_unit: Number(item.price_per_unit || 0),
       subtotal: Number(item.subtotal || 0)
     }));
-    order.payment_details = generatePaymentDetails(order.payment_method, order.total_amount, order.id, order.invoice_number);
+    order.payment_details = generatePaymentDetails(order.payment_method, order.total_amount, order.id, order.invoice_number, order.payment_reference);
 
     return res.status(200).json({
       success: true,
