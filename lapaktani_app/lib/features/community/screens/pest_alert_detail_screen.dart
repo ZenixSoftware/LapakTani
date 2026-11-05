@@ -5,6 +5,11 @@ import '../models/pest_report_model.dart';
 import '../services/pest_alert_service.dart';
 import 'create_pest_report_screen.dart';
 
+/// Pest Alert Detail Screen (US-19)
+/// Styled according to Stitch AI Design Guidelines:
+/// - Brand Primary: #2E7D32, Soft Tint: #E8F5E9 / #FFEBEE
+/// - Rounded corners: BorderRadius.circular(16)
+/// - Subtle elevation/shadows (Colors.black.withOpacity(0.04))
 class PestAlertDetailScreen extends StatefulWidget {
   final PestReportModel report;
 
@@ -30,20 +35,25 @@ class _PestAlertDetailScreenState extends State<PestAlertDetailScreen> {
   void _showResolveDialog() {
     final noteController = TextEditingController(
       text: _currentReport.handlingRecommendation ??
-          'Serangan hama telah berhasil dikendalikan bersama kelompok tani.',
+          'Serangan hama telah berhasil dikendalikan bersama kelompok tani dan PPL.',
     );
 
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
+        backgroundColor: Colors.white,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         title: Row(
           children: [
-            const Icon(LucideIcons.checkCircle2, color: Color(0xFF10B981), size: 22),
+            const Icon(LucideIcons.shieldCheck, color: Color(0xFF2E7D32), size: 22),
             const SizedBox(width: 8),
             Text(
               'Tandai Terkendali',
-              style: GoogleFonts.inter(fontSize: 16, fontWeight: FontWeight.w700),
+              style: GoogleFonts.inter(
+                fontSize: 16,
+                fontWeight: FontWeight.w700,
+                color: const Color(0xFF0F172A),
+              ),
             ),
           ],
         ),
@@ -52,23 +62,45 @@ class _PestAlertDetailScreenState extends State<PestAlertDetailScreen> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              'Status peringatan darurat akan ditutup dan status laporan diubah menjadi Terkendali.',
-              style: GoogleFonts.inter(fontSize: 13, color: const Color(0xFF4B5563)),
+              'Status peringatan dini darurat akan ditutup dan status laporan diubah menjadi Terkendali.',
+              style: GoogleFonts.inter(
+                fontSize: 13,
+                color: const Color(0xFF475569),
+                height: 1.4,
+              ),
             ),
-            const SizedBox(height: 12),
+            const SizedBox(height: 14),
             Text(
               'Catatan Penanganan / Evaluasi:',
-              style: GoogleFonts.inter(fontSize: 12, fontWeight: FontWeight.w600),
+              style: GoogleFonts.inter(
+                fontSize: 12,
+                fontWeight: FontWeight.w600,
+                color: const Color(0xFF1E293B),
+              ),
             ),
             const SizedBox(height: 6),
             TextField(
               controller: noteController,
               maxLines: 3,
-              style: GoogleFonts.inter(fontSize: 12),
+              style: GoogleFonts.inter(fontSize: 12, color: const Color(0xFF0F172A)),
               decoration: InputDecoration(
                 hintText: 'Tuliskan tindakan yang berhasil menekan serangan...',
-                border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
-                contentPadding: const EdgeInsets.all(10),
+                hintStyle: GoogleFonts.inter(fontSize: 12, color: const Color(0xFF94A3B8)),
+                filled: true,
+                fillColor: const Color(0xFFF8FAFC),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
+                ),
+                enabledBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
+                ),
+                focusedBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: const BorderSide(color: Color(0xFF2E7D32), width: 1.5),
+                ),
+                contentPadding: const EdgeInsets.all(12),
               ),
             ),
           ],
@@ -78,7 +110,7 @@ class _PestAlertDetailScreenState extends State<PestAlertDetailScreen> {
             onPressed: () => Navigator.pop(ctx),
             child: Text(
               'Batal',
-              style: GoogleFonts.inter(color: const Color(0xFF6B7280)),
+              style: GoogleFonts.inter(color: const Color(0xFF64748B), fontWeight: FontWeight.w600),
             ),
           ),
           ElevatedButton(
@@ -115,22 +147,27 @@ class _PestAlertDetailScreenState extends State<PestAlertDetailScreen> {
                 }
               });
 
-              if (mounted) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content: Text('Status laporan berhasil diperbarui menjadi Terkendali.'),
-                    backgroundColor: Color(0xFF10B981),
+              if (!mounted) return;
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text(
+                    success
+                        ? 'Laporan berhasil ditandai sebagai Terkendali di database.'
+                        : 'Gagal memperbarui status laporan.',
                   ),
-                );
-              }
+                  backgroundColor: success ? const Color(0xFF2E7D32) : const Color(0xFFDC2626),
+                ),
+              );
             },
             style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFF10B981),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+              backgroundColor: const Color(0xFF2E7D32),
+              foregroundColor: Colors.white,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+              elevation: 0,
             ),
             child: Text(
-              'Simpan',
-              style: GoogleFonts.inter(fontWeight: FontWeight.w600, color: Colors.white),
+              'Tandai Terkendali',
+              style: GoogleFonts.inter(fontWeight: FontWeight.w700),
             ),
           ),
         ],
@@ -141,11 +178,18 @@ class _PestAlertDetailScreenState extends State<PestAlertDetailScreen> {
   @override
   Widget build(BuildContext context) {
     final report = _currentReport;
-    final isCritical = report.isActiveEmergency;
+    final isCritical = report.severity.toLowerCase().contains('berat') ||
+        report.emergencyAlert;
+
+    final badgeBg = report.severityBackgroundColor;
+    final badgeText = report.severityColor;
 
     return Scaffold(
       backgroundColor: const Color(0xFFF8FAFC),
       appBar: AppBar(
+        backgroundColor: Colors.white,
+        elevation: 0,
+        scrolledUnderElevation: 1,
         title: Text(
           'Detail Peringatan Hama',
           style: GoogleFonts.inter(
@@ -154,414 +198,317 @@ class _PestAlertDetailScreenState extends State<PestAlertDetailScreen> {
             color: const Color(0xFF0F172A),
           ),
         ),
-        backgroundColor: Colors.white,
-        elevation: 0.5,
-        iconTheme: const IconThemeData(color: Color(0xFF0F172A)),
-        actions: [
+        leading: IconButton(
+          icon: const Icon(LucideIcons.arrowLeft, color: Color(0xFF334155), size: 20),
+          onPressed: () => Navigator.pop(context),
+        ),
+      ),
+      body: ListView(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+        children: [
+          // Header Card with Image & Severity Badge
           Container(
-            margin: const EdgeInsets.only(right: 14),
-            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
             decoration: BoxDecoration(
-              color: report.status == 'resolved'
-                  ? const Color(0xFFDCFCE7)
-                  : report.severityBackgroundColor,
-              borderRadius: BorderRadius.circular(20),
-              border: Border.all(
-                color: report.status == 'resolved'
-                    ? const Color(0xFF86EFAC)
-                    : report.severityBorderColor,
-              ),
-            ),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Icon(
-                  report.status == 'resolved'
-                      ? LucideIcons.checkCheck
-                      : LucideIcons.alertTriangle,
-                  size: 13,
-                  color: report.status == 'resolved'
-                      ? const Color(0xFF16A34A)
-                      : report.severityColor,
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(16),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.04),
+                  blurRadius: 10,
+                  offset: const Offset(0, 3),
                 ),
-                const SizedBox(width: 4),
-                Text(
-                  report.status == 'resolved'
-                      ? 'Terkendali'
-                      : 'Keparahan ${report.severity}',
-                  style: GoogleFonts.inter(
-                    fontSize: 11,
-                    fontWeight: FontWeight.w700,
-                    color: report.status == 'resolved'
-                        ? const Color(0xFF16A34A)
-                        : report.severityColor,
+              ],
+            ),
+            clipBehavior: Clip.antiAlias,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                if (report.imageUrl != null && report.imageUrl!.isNotEmpty)
+                  AspectRatio(
+                    aspectRatio: 16 / 9,
+                    child: Image.network(
+                      report.imageUrl!,
+                      fit: BoxFit.cover,
+                      errorBuilder: (_, _, _) => Container(
+                        color: const Color(0xFFF1F5F9),
+                        child: const Center(
+                          child: Icon(LucideIcons.image, size: 40, color: Color(0xFF94A3B8)),
+                        ),
+                      ),
+                    ),
+                  ),
+                Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                            decoration: BoxDecoration(
+                              color: badgeBg,
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(
+                                  isCritical ? LucideIcons.alertTriangle : LucideIcons.bug,
+                                  size: 14,
+                                  color: badgeText,
+                                ),
+                                const SizedBox(width: 5),
+                                Text(
+                                  'Tingkat: ${report.severity}',
+                                  style: GoogleFonts.inter(
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.w700,
+                                    color: badgeText,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                            decoration: BoxDecoration(
+                              color: report.status == 'resolved'
+                                  ? const Color(0xFFE8F5E9)
+                                  : const Color(0xFFFFF3E0),
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            child: Text(
+                              report.status == 'resolved' ? 'Terkendali' : 'Aktif',
+                              style: GoogleFonts.inter(
+                                fontSize: 11.5,
+                                fontWeight: FontWeight.w700,
+                                color: report.status == 'resolved'
+                                    ? const Color(0xFF2E7D32)
+                                    : const Color(0xFFEF6C00),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 12),
+                      Text(
+                        report.pestName,
+                        style: GoogleFonts.inter(
+                          fontSize: 18,
+                          fontWeight: FontWeight.w800,
+                          color: const Color(0xFF0F172A),
+                          height: 1.3,
+                        ),
+                      ),
+                      const SizedBox(height: 6),
+                      Text(
+                        'Dilaporkan pada ${report.formattedDate} (${report.timeAgo})',
+                        style: GoogleFonts.inter(
+                          fontSize: 11.5,
+                          color: const Color(0xFF64748B),
+                        ),
+                      ),
+                    ],
                   ),
                 ),
               ],
             ),
           ),
-        ],
-      ),
-      body: SingleChildScrollView(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Top Emergency Banner Bar
-            if (isCritical)
-              Container(
-                width: double.infinity,
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                color: const Color(0xFFFEF2F2),
-                child: Row(
-                  children: [
-                    Container(
-                      padding: const EdgeInsets.all(6),
-                      decoration: const BoxDecoration(
-                        color: Color(0xFFFEE2E2),
-                        shape: BoxShape.circle,
-                      ),
-                      child: const Icon(
-                        LucideIcons.alertOctagon,
-                        color: Color(0xFFEF4444),
-                        size: 18,
-                      ),
-                    ),
-                    const SizedBox(width: 10),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            'PERINGATAN DARURAT AKTIF',
-                            style: GoogleFonts.inter(
-                              fontSize: 11.5,
-                              fontWeight: FontWeight.w800,
-                              color: const Color(0xFF991B1B),
-                              letterSpacing: 0.5,
-                            ),
-                          ),
-                          Text(
-                            'Pest Alert telah didistribusikan ke seluruh petani Poktan ${report.farmerGroupName}.',
-                            style: GoogleFonts.inter(
-                              fontSize: 11,
-                              color: const Color(0xFFB91C1C),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
+          const SizedBox(height: 16),
+
+          // Key Attributes Grid
+          Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(16),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.04),
+                  blurRadius: 10,
+                  offset: const Offset(0, 3),
                 ),
-              ),
-
-            // Image Preview (if present)
-            if (report.imageUrl != null && report.imageUrl!.isNotEmpty)
-              Container(
-                height: 220,
-                width: double.infinity,
-                color: const Color(0xFFE2E8F0),
-                child: Stack(
-                  fit: StackFit.expand,
-                  children: [
-                    Image.network(
-                      report.imageUrl!,
-                      fit: BoxFit.cover,
-                      errorBuilder: (context, error, stackTrace) => Container(
-                        color: const Color(0xFFCBD5E1),
-                        child: const Center(
-                          child: Icon(
-                            LucideIcons.image,
-                            size: 48,
-                            color: Color(0xFF64748B),
-                          ),
-                        ),
-                      ),
-                    ),
-                    Positioned(
-                      bottom: 12,
-                      right: 12,
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                        decoration: BoxDecoration(
-                          color: Colors.black.withOpacity(0.6),
-                          borderRadius: BorderRadius.circular(6),
-                        ),
-                        child: Row(
-                          children: [
-                            const Icon(LucideIcons.camera, color: Colors.white, size: 12),
-                            const SizedBox(width: 4),
-                            Text(
-                              'Foto Bukti Serangan',
-                              style: GoogleFonts.inter(
-                                color: Colors.white,
-                                fontSize: 10.5,
-                                fontWeight: FontWeight.w600,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                  ],
+              ],
+            ),
+            child: Column(
+              children: [
+                _buildAttributeRow(
+                  icon: LucideIcons.sprout,
+                  label: 'Komoditas Terdampak',
+                  value: report.cropType,
                 ),
-              ),
+                const Divider(height: 20, color: Color(0xFFF1F5F9)),
+                _buildAttributeRow(
+                  icon: LucideIcons.maximize2,
+                  label: 'Luas Area Serangan',
+                  value: report.affectedArea,
+                ),
+                const Divider(height: 20, color: Color(0xFFF1F5F9)),
+                _buildAttributeRow(
+                  icon: LucideIcons.users,
+                  label: 'Kelompok Tani (Poktan)',
+                  value: report.farmerGroupName,
+                ),
+                const Divider(height: 20, color: Color(0xFFF1F5F9)),
+                _buildAttributeRow(
+                  icon: LucideIcons.mapPin,
+                  label: 'Wilayah / Desa',
+                  value: report.villageName,
+                ),
+                const Divider(height: 20, color: Color(0xFFF1F5F9)),
+                _buildAttributeRow(
+                  icon: LucideIcons.userCheck,
+                  label: 'Pelapor',
+                  value: '${report.reporterName} (${report.reporterRole})',
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 16),
 
-            Padding(
-              padding: const EdgeInsets.all(16.0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // Title: Pest & Crop
-                  Text(
-                    report.pestName,
-                    style: GoogleFonts.inter(
-                      fontSize: 19,
-                      fontWeight: FontWeight.w800,
-                      color: const Color(0xFF0F172A),
-                    ),
+          // Description Section
+          Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(16),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.04),
+                  blurRadius: 10,
+                  offset: const Offset(0, 3),
+                ),
+              ],
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Deskripsi Gejala & Kondisi Lapangan',
+                  style: GoogleFonts.inter(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w700,
+                    color: const Color(0xFF0F172A),
                   ),
-                  const SizedBox(height: 4),
-                  Row(
-                    children: [
-                      const Icon(LucideIcons.sprout, size: 14, color: Color(0xFF059669)),
-                      const SizedBox(width: 6),
-                      Text(
-                        'Tanaman Terdampak: ${report.cropType}',
-                        style: GoogleFonts.inter(
-                          fontSize: 13,
-                          fontWeight: FontWeight.w600,
-                          color: const Color(0xFF059669),
-                        ),
-                      ),
-                    ],
+                ),
+                const SizedBox(height: 10),
+                Text(
+                  report.description,
+                  style: GoogleFonts.inter(
+                    fontSize: 13,
+                    color: const Color(0xFF334155),
+                    height: 1.5,
                   ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 16),
 
-                  const SizedBox(height: 16),
-
-                  // Key Info Cards
-                  Container(
-                    padding: const EdgeInsets.all(14),
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(12),
-                      border: Border.all(color: const Color(0xFFE2E8F0)),
-                      boxShadow: const [
-                        BoxShadow(
-                          color: Color(0x08000000),
-                          blurRadius: 4,
-                          offset: Offset(0, 1),
-                        ),
-                      ],
-                    ),
-                    child: Column(
-                      children: [
-                        _buildInfoRow(
-                          icon: LucideIcons.mapPin,
-                          label: 'Wilayah Poktan',
-                          value: '${report.farmerGroupName} (${report.villageName})',
-                        ),
-                        const Divider(height: 16, color: Color(0xFFF1F5F9)),
-                        _buildInfoRow(
-                          icon: LucideIcons.maximize2,
-                          label: 'Estimasi Area Terdampak',
-                          value: report.affectedArea,
-                        ),
-                        const Divider(height: 16, color: Color(0xFFF1F5F9)),
-                        _buildInfoRow(
-                          icon: LucideIcons.user,
-                          label: 'Pelapor',
-                          value: '${report.reporterName} (${report.reporterRole})',
-                        ),
-                        const Divider(height: 16, color: Color(0xFFF1F5F9)),
-                        _buildInfoRow(
-                          icon: LucideIcons.clock,
-                          label: 'Waktu Pelaporan',
-                          value: '${report.formattedDate} (${report.timeAgo})',
-                        ),
-                      ],
-                    ),
-                  ),
-
-                  const SizedBox(height: 16),
-
-                  // Description Section
-                  Text(
-                    'Kondisi & Gejala Serangan',
-                    style: GoogleFonts.inter(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w700,
-                      color: const Color(0xFF1E293B),
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  Container(
-                    width: double.infinity,
-                    padding: const EdgeInsets.all(14),
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(12),
-                      border: Border.all(color: const Color(0xFFE2E8F0)),
-                    ),
-                    child: Text(
-                      report.description,
+          // Handling Recommendation Section (Stitch AI Agri Green Accent)
+          Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: const Color(0xFFE8F5E9),
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(color: const Color(0xFFC8E6C9)),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    const Icon(LucideIcons.shieldAlert, size: 18, color: Color(0xFF2E7D32)),
+                    const SizedBox(width: 8),
+                    Text(
+                      'Rekomendasi Penanganan PPL',
                       style: GoogleFonts.inter(
-                        fontSize: 13,
-                        color: const Color(0xFF334155),
-                        height: 1.5,
+                        fontSize: 13.5,
+                        fontWeight: FontWeight.w700,
+                        color: const Color(0xFF1B5E20),
                       ),
                     ),
+                  ],
+                ),
+                const SizedBox(height: 10),
+                Text(
+                  report.handlingRecommendation != null &&
+                          report.handlingRecommendation!.isNotEmpty
+                      ? report.handlingRecommendation!
+                      : 'Belum ada rekomendasi tertulis dari Penyuluh. Lakukan isolasi area tanaman yang bergejala dan hubungi BPP terdekat.',
+                  style: GoogleFonts.inter(
+                    fontSize: 12.5,
+                    color: const Color(0xFF166534),
+                    height: 1.45,
                   ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 24),
 
-                  const SizedBox(height: 16),
-
-                  // Handling Recommendation & SOP Section
-                  Container(
-                    width: double.infinity,
-                    padding: const EdgeInsets.all(14),
-                    decoration: BoxDecoration(
-                      color: const Color(0xFFF0FDF4),
-                      borderRadius: BorderRadius.circular(12),
-                      border: Border.all(color: const Color(0xFFBBF7D0)),
-                    ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Row(
-                          children: [
-                            const Icon(
-                              LucideIcons.shieldAlert,
-                              color: Color(0xFF16A34A),
-                              size: 18,
-                            ),
-                            const SizedBox(width: 8),
-                            Text(
-                              'Rekomendasi Penanganan Cepat (SOP)',
-                              style: GoogleFonts.inter(
-                                fontSize: 13.5,
-                                fontWeight: FontWeight.w700,
-                                color: const Color(0xFF166534),
-                              ),
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 10),
-                        Text(
-                          report.handlingRecommendation != null &&
-                                  report.handlingRecommendation!.isNotEmpty
-                              ? report.handlingRecommendation!
-                              : '1. Isolasi tanaman bergejala dengan pemangkasan daun terdampak.\n2. Lakukan penyemprotan biopestisida / agens hayati pada pagi atau sore hari.\n3. Berkoordinasi dengan petugas PPL setempat untuk verifikasi lapangan.',
-                          style: GoogleFonts.inter(
-                            fontSize: 12.5,
-                            color: const Color(0xFF14532D),
-                            height: 1.5,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-
-                  const SizedBox(height: 24),
-
-                  // Action Buttons
-                  Row(
-                    children: [
-                      Expanded(
-                        child: OutlinedButton.icon(
-                          onPressed: () {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(
-                                content: Text(
-                                  'Menghubungi Posko Penyuluh BPP (${report.villageName})...',
-                                ),
-                                backgroundColor: const Color(0xFF059669),
-                              ),
-                            );
-                          },
-                          icon: const Icon(LucideIcons.phoneCall, size: 16),
-                          label: Text(
-                            'Hubungi PPL',
-                            style: GoogleFonts.inter(
-                              fontSize: 12.5,
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
-                          style: OutlinedButton.styleFrom(
-                            foregroundColor: const Color(0xFF059669),
-                            side: const BorderSide(color: Color(0xFF059669)),
-                            padding: const EdgeInsets.symmetric(vertical: 12),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(10),
-                            ),
-                          ),
-                        ),
-                      ),
-                      const SizedBox(width: 10),
-                      if (report.status == 'active')
-                        Expanded(
-                          child: ElevatedButton.icon(
-                            onPressed: _isResolving ? null : _showResolveDialog,
-                            icon: const Icon(LucideIcons.checkCheck, size: 16),
-                            label: Text(
-                              _isResolving ? 'Menyimpan...' : 'Tandai Selesai',
-                              style: GoogleFonts.inter(
-                                fontSize: 12.5,
-                                fontWeight: FontWeight.w600,
-                                color: Colors.white,
-                              ),
-                            ),
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: const Color(0xFF10B981),
-                              padding: const EdgeInsets.symmetric(vertical: 12),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(10),
-                              ),
-                            ),
-                          ),
-                        ),
-                    ],
-                  ),
-
-                  const SizedBox(height: 10),
-
-                  // Button to report similar case in user's farm
-                  SizedBox(
-                    width: double.infinity,
-                    child: TextButton.icon(
-                      onPressed: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (ctx) => CreatePestReportScreen(
-                              initialPestName: report.pestName,
-                              initialCropType: report.cropType,
-                              initialPoktanName: report.farmerGroupName,
-                            ),
-                          ),
-                        );
-                      },
-                      icon: const Icon(LucideIcons.plusCircle, size: 16, color: Color(0xFF2563EB)),
-                      label: Text(
-                        'Laporkan Kasus Serupa di Lahanku',
-                        style: GoogleFonts.inter(
-                          fontSize: 12.5,
-                          fontWeight: FontWeight.w600,
-                          color: const Color(0xFF2563EB),
-                        ),
-                      ),
-                    ),
-                  ),
-
-                  const SizedBox(height: 20),
-                ],
+          // Action Buttons
+          if (report.status != 'resolved') ...[
+            SizedBox(
+              width: double.infinity,
+              height: 48,
+              child: ElevatedButton.icon(
+                onPressed: _isResolving ? null : _showResolveDialog,
+                icon: const Icon(LucideIcons.checkCircle2, size: 18),
+                label: Text(
+                  'Tandai Serangan Terkendali',
+                  style: GoogleFonts.inter(fontSize: 13.5, fontWeight: FontWeight.w700),
+                ),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFF2E7D32),
+                  foregroundColor: Colors.white,
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  elevation: 0,
+                ),
               ),
             ),
+            const SizedBox(height: 10),
           ],
-        ),
+          SizedBox(
+            width: double.infinity,
+            height: 48,
+            child: OutlinedButton.icon(
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => CreatePestReportScreen(
+                      initialPestName: report.pestName,
+                      initialCropType: report.cropType,
+                      initialPoktanName: report.farmerGroupName,
+                    ),
+                  ),
+                );
+              },
+              icon: const Icon(LucideIcons.plusCircle, size: 18, color: Color(0xFF2E7D32)),
+              label: Text(
+                'Laporkan Serangan Serupa',
+                style: GoogleFonts.inter(
+                  fontSize: 13.5,
+                  fontWeight: FontWeight.w700,
+                  color: const Color(0xFF2E7D32),
+                ),
+              ),
+              style: OutlinedButton.styleFrom(
+                side: const BorderSide(color: Color(0xFF2E7D32), width: 1.2),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              ),
+            ),
+          ),
+          const SizedBox(height: 24),
+        ],
       ),
     );
   }
 
-  Widget _buildInfoRow({
+  Widget _buildAttributeRow({
     required IconData icon,
     required String label,
     required String value,
@@ -569,28 +516,25 @@ class _PestAlertDetailScreenState extends State<PestAlertDetailScreen> {
     return Row(
       children: [
         Icon(icon, size: 16, color: const Color(0xFF64748B)),
-        const SizedBox(width: 8),
-        Text(
-          label,
-          style: GoogleFonts.inter(
-            fontSize: 12,
-            color: const Color(0xFF64748B),
-          ),
-        ),
-        const Spacer(),
-        Flexible(
+        const SizedBox(width: 10),
+        Expanded(
           child: Text(
-            value,
-            textAlign: TextAlign.end,
+            label,
             style: GoogleFonts.inter(
               fontSize: 12.5,
-              fontWeight: FontWeight.w600,
-              color: const Color(0xFF0F172A),
+              color: const Color(0xFF64748B),
             ),
+          ),
+        ),
+        Text(
+          value,
+          style: GoogleFonts.inter(
+            fontSize: 13,
+            fontWeight: FontWeight.w600,
+            color: const Color(0xFF0F172A),
           ),
         ),
       ],
     );
   }
 }
-

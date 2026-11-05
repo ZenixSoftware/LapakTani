@@ -6,7 +6,10 @@ import '../screens/pest_alert_detail_screen.dart';
 import '../services/pest_alert_service.dart';
 
 /// Pest Alert Banner Component (US-19)
-/// Displays an active emergency pest warning at the top of the dashboard.
+/// Styled according to Stitch AI Design Guidelines:
+/// - Brand Primary: #2E7D32, Soft Tint: #E8F5E9 / #FFEBEE
+/// - Rounded corners: BorderRadius.circular(16)
+/// - Subtle elevation/shadows without harsh borders
 class PestAlertBanner extends StatefulWidget {
   final String poktanName;
   final VoidCallback? onDismissed;
@@ -65,205 +68,175 @@ class _PestAlertBannerState extends State<PestAlertBanner> {
     }
 
     final alert = _activeAlert!;
+    final isCritical = alert.severity.toLowerCase().contains('berat') ||
+        alert.emergencyAlert;
+
+    final bgColor = isCritical ? const Color(0xFFFFEBEE) : const Color(0xFFFFF3E0);
+    final primaryAccent = isCritical ? const Color(0xFFC62828) : const Color(0xFFEF6C00);
+    final borderColor = isCritical ? const Color(0xFFFFCDD2) : const Color(0xFFFFE0B2);
 
     return Container(
-      margin: const EdgeInsets.fromLTRB(10, 4, 10, 8),
+      margin: const EdgeInsets.fromLTRB(14, 6, 14, 10),
       decoration: BoxDecoration(
-        gradient: const LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [
-            Color(0xFFFEF2F2), // Light Red-50
-            Color(0xFFFFF1F2), // Rose-50
-            Color(0xFFFFF7ED), // Orange-50
-          ],
-        ),
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(
-          color: const Color(0xFFFCA5A5), // Red-300
-          width: 1.2,
-        ),
-        boxShadow: const [
+        color: bgColor,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: borderColor, width: 1.0),
+        boxShadow: [
           BoxShadow(
-            color: Color(0x12EF4444),
-            blurRadius: 6,
-            offset: Offset(0, 2),
+            color: Colors.black.withValues(alpha: 0.04),
+            blurRadius: 10,
+            offset: const Offset(0, 3),
           ),
         ],
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Banner Header with Emergency Tag & Close Button
-          Padding(
-            padding: const EdgeInsets.fromLTRB(10, 8, 8, 4),
-            child: Row(
-              children: [
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFFEF4444),
-                    borderRadius: BorderRadius.circular(6),
-                  ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      const Icon(
-                        LucideIcons.alertTriangle,
-                        color: Colors.white,
-                        size: 11,
-                      ),
-                      const SizedBox(width: 4),
-                      Text(
-                        'DARURAT PEST ALERT',
-                        style: GoogleFonts.inter(
-                          fontSize: 9.5,
-                          fontWeight: FontWeight.w800,
-                          color: Colors.white,
-                          letterSpacing: 0.3,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                const SizedBox(width: 6),
-                Expanded(
-                  child: Text(
-                    alert.timeAgo,
-                    overflow: TextOverflow.ellipsis,
-                    style: GoogleFonts.inter(
-                      fontSize: 10,
-                      fontWeight: FontWeight.w500,
-                      color: const Color(0xFF991B1B),
-                    ),
-                  ),
-                ),
-                InkWell(
-                  onTap: _dismiss,
-                  borderRadius: BorderRadius.circular(12),
-                  child: const Padding(
-                    padding: EdgeInsets.all(4.0),
-                    child: Icon(
-                      LucideIcons.x,
-                      size: 15,
-                      color: Color(0xFF94A3B8),
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-
-          // Main Info: Pest Name & Affected Crop
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 10),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          borderRadius: BorderRadius.circular(16),
+          onTap: () async {
+            await Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (_) => PestAlertDetailScreen(report: alert),
+              ),
+            );
+            _loadActiveAlert();
+          },
+          child: Padding(
+            padding: const EdgeInsets.all(14),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  '${alert.pestName} • ${alert.cropType}',
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: GoogleFonts.inter(
-                    fontSize: 13,
-                    fontWeight: FontWeight.w800,
-                    color: const Color(0xFF991B1B),
-                  ),
-                ),
-                const SizedBox(height: 2),
                 Row(
+                  crossAxisAlignment: CrossAxisAlignment.center,
                   children: [
-                    const Icon(
-                      LucideIcons.mapPin,
-                      size: 11,
-                      color: Color(0xFFB91C1C),
-                    ),
-                    const SizedBox(width: 3),
-                    Expanded(
-                      child: Text(
-                        'Wilayah: ${alert.farmerGroupName} (${alert.villageName}) • Luas: ${alert.affectedArea}',
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: GoogleFonts.inter(
-                          fontSize: 10.5,
-                          color: const Color(0xFF7F1D1D),
-                          fontWeight: FontWeight.w500,
-                        ),
+                    Container(
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        color: primaryAccent.withValues(alpha: 0.12),
+                        shape: BoxShape.circle,
                       ),
+                      child: Icon(
+                        isCritical ? LucideIcons.alertTriangle : LucideIcons.bug,
+                        size: 18,
+                        color: primaryAccent,
+                      ),
+                    ),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            children: [
+                              Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                                decoration: BoxDecoration(
+                                  color: primaryAccent,
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                                child: Text(
+                                  isCritical ? 'PERINGATAN DINI HAMA' : 'LAPORAN HAMA AKTIF',
+                                  style: GoogleFonts.inter(
+                                    fontSize: 9.5,
+                                    fontWeight: FontWeight.w800,
+                                    color: Colors.white,
+                                    letterSpacing: 0.5,
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(width: 6),
+                              Text(
+                                alert.timeAgo,
+                                style: GoogleFonts.inter(
+                                  fontSize: 11,
+                                  color: const Color(0xFF64748B),
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 3),
+                          Text(
+                            alert.pestName,
+                            style: GoogleFonts.inter(
+                              fontSize: 14,
+                              fontWeight: FontWeight.w700,
+                              color: const Color(0xFF0F172A),
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ],
+                      ),
+                    ),
+                    IconButton(
+                      icon: const Icon(LucideIcons.x, size: 17, color: Color(0xFF94A3B8)),
+                      padding: EdgeInsets.zero,
+                      constraints: const BoxConstraints(),
+                      splashRadius: 18,
+                      onPressed: _dismiss,
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 10),
+                Text(
+                  'Serangan menyerang komoditas ${alert.cropType} seluas ${alert.affectedArea} di ${alert.farmerGroupName} (${alert.villageName}). Waspadai penyebaran di lahan sekitar.',
+                  style: GoogleFonts.inter(
+                    fontSize: 12,
+                    color: const Color(0xFF334155),
+                    height: 1.4,
+                  ),
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                ),
+                const SizedBox(height: 12),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 4),
+                      decoration: BoxDecoration(
+                        color: Colors.white.withValues(alpha: 0.8),
+                        borderRadius: BorderRadius.circular(8),
+                        border: Border.all(color: borderColor),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(LucideIcons.mapPin, size: 12, color: primaryAccent),
+                          const SizedBox(width: 4),
+                          Text(
+                            alert.villageName,
+                            style: GoogleFonts.inter(
+                              fontSize: 11,
+                              fontWeight: FontWeight.w600,
+                              color: const Color(0xFF334155),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    Row(
+                      children: [
+                        Text(
+                          'Lihat Penanganan',
+                          style: GoogleFonts.inter(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w700,
+                            color: primaryAccent,
+                          ),
+                        ),
+                        const SizedBox(width: 4),
+                        Icon(LucideIcons.arrowRight, size: 14, color: primaryAccent),
+                      ],
                     ),
                   ],
                 ),
               ],
             ),
           ),
-
-          const SizedBox(height: 8),
-
-          // Action Buttons: "Lihat Detail & Penanganan" & "Tutup"
-          Padding(
-            padding: const EdgeInsets.fromLTRB(10, 0, 10, 8),
-            child: Row(
-              children: [
-                Expanded(
-                  child: SizedBox(
-                    height: 28,
-                    child: ElevatedButton.icon(
-                      onPressed: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (ctx) => PestAlertDetailScreen(report: alert),
-                          ),
-                        ).then((_) => _loadActiveAlert());
-                      },
-                      icon: const Icon(LucideIcons.shieldAlert, size: 12),
-                      label: Text(
-                        'Lihat Detail & Penanganan',
-                        style: GoogleFonts.inter(
-                          fontSize: 10.5,
-                          fontWeight: FontWeight.w700,
-                          color: Colors.white,
-                        ),
-                      ),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFFDC2626),
-                        padding: const EdgeInsets.symmetric(horizontal: 8),
-                        elevation: 0,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(6),
-                        ),
-                      ),
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 6),
-                SizedBox(
-                  height: 28,
-                  child: OutlinedButton(
-                    onPressed: _dismiss,
-                    style: OutlinedButton.styleFrom(
-                      foregroundColor: const Color(0xFF64748B),
-                      side: const BorderSide(color: Color(0xFFCBD5E1)),
-                      padding: const EdgeInsets.symmetric(horizontal: 10),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(6),
-                      ),
-                    ),
-                    child: Text(
-                      'Tutup',
-                      style: GoogleFonts.inter(
-                        fontSize: 10.5,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
+        ),
       ),
     );
   }
 }
-

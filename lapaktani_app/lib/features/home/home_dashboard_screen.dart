@@ -8,7 +8,6 @@ import '../community/screens/education_feed_screen.dart';
 import '../community/widgets/penyuluh_official_badge.dart';
 import '../community/widgets/pest_alert_banner.dart';
 import '../community/screens/create_pest_report_screen.dart';
-import '../community/screens/pest_alert_detail_screen.dart';
 import '../order/order_history_screen.dart';
 import '../product/product_detail_screen.dart';
 import '../profile/profile_screen.dart';
