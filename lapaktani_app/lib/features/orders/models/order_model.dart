@@ -220,6 +220,7 @@ class TrackingCheckpoint {
 
 class OrderModel {
   final String id;
+  final String? buyerId;
   final String buyerName;
   final String buyerPhone;
   final String buyerAddress;
@@ -240,6 +241,7 @@ class OrderModel {
 
   const OrderModel({
     required this.id,
+    this.buyerId,
     required this.buyerName,
     required this.buyerPhone,
     required this.buyerAddress,
@@ -267,6 +269,7 @@ class OrderModel {
 
   OrderModel copyWith({
     String? id,
+    String? buyerId,
     String? buyerName,
     String? buyerPhone,
     String? buyerAddress,
@@ -287,6 +290,7 @@ class OrderModel {
   }) {
     return OrderModel(
       id: id ?? this.id,
+      buyerId: buyerId ?? this.buyerId,
       buyerName: buyerName ?? this.buyerName,
       buyerPhone: buyerPhone ?? this.buyerPhone,
       buyerAddress: buyerAddress ?? this.buyerAddress,
@@ -310,6 +314,7 @@ class OrderModel {
   Map<String, dynamic> toMap() {
     return {
       'id': id,
+      'buyerId': buyerId,
       'buyerName': buyerName,
       'buyerPhone': buyerPhone,
       'buyerAddress': buyerAddress,
@@ -389,6 +394,7 @@ class OrderModel {
 
     return OrderModel(
       id: map['id']?.toString() ?? '',
+      buyerId: (map['buyerId'] ?? map['buyer_id'] ?? map['user_id'])?.toString(),
       buyerName: (map['buyerName'] ?? map['buyer_name'])?.toString() ?? 'Pembeli',
       buyerPhone: (map['buyerPhone'] ?? map['buyer_phone'])?.toString() ?? '081234567890',
       buyerAddress: (map['buyerAddress'] ?? map['delivery_address'] ?? map['shipping_address'])?.toString() ?? 'Alamat Pembeli',

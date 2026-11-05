@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 import '../../../core/services/api_service.dart';
+import '../../auth/auth_repository.dart';
 import '../models/order_model.dart';
 import '../services/order_service.dart';
 
@@ -24,6 +25,17 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
   OrderModel? _serverOrder;
   bool _isLoading = true;
   bool _isActionLoading = false;
+
+  bool get _isBuyer {
+    final currentUser = AuthRepository().currentUser;
+    if (currentUser == null) return true;
+    if (currentUser.role == 'pembeli') return true;
+    if (_serverOrder?.buyerId != null && _serverOrder!.buyerId!.isNotEmpty) {
+      return currentUser.id == _serverOrder!.buyerId;
+    }
+    if (currentUser.role == 'petani') return false;
+    return true;
+  }
 
   @override
   void initState() {
@@ -504,34 +516,45 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
                   ],
                 ),
               ),
-              Row(
-                children: [
-                  Text(
-                    'No. Resi:',
-                    style: GoogleFonts.plusJakartaSans(
-                      fontSize: 11,
-                      color: const Color(0xFF94A3B8),
+              const SizedBox(width: 8),
+              Flexible(
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      'No. Resi:',
+                      style: GoogleFonts.plusJakartaSans(
+                        fontSize: 11,
+                        color: const Color(0xFF94A3B8),
+                      ),
                     ),
-                  ),
-                  const SizedBox(width: 4),
-                  InkWell(
-                    onTap: () => _copyToClipboard(order.trackingNumber, 'Nomor Resi'),
-                    child: Row(
-                      children: [
-                        Text(
-                          order.trackingNumber,
-                          style: GoogleFonts.plusJakartaSans(
-                            fontSize: 11,
-                            fontWeight: FontWeight.w700,
-                            color: const Color(0xFF121C2A),
-                          ),
+                    const SizedBox(width: 4),
+                    Flexible(
+                      child: InkWell(
+                        onTap: () => _copyToClipboard(order.trackingNumber, 'Nomor Resi'),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Flexible(
+                              child: Text(
+                                order.trackingNumber,
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: GoogleFonts.plusJakartaSans(
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.w700,
+                                  color: const Color(0xFF121C2A),
+                                ),
+                              ),
+                            ),
+                            const SizedBox(width: 4),
+                            const Icon(LucideIcons.copy, size: 12, color: Color(0xFF03AC0E)),
+                          ],
                         ),
-                        const SizedBox(width: 4),
-                        const Icon(LucideIcons.copy, size: 12, color: Color(0xFF03AC0E)),
-                      ],
+                      ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
             ],
           ),
@@ -1036,38 +1059,95 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
 
   Widget? _buildBottomActionBar(OrderModel order) {
     if (order.status == OrderStatus.inTransit || order.status == OrderStatus.delivered) {
-      return Container(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-        decoration: const BoxDecoration(
-          color: Colors.white,
-          border: Border(top: BorderSide(color: Color(0xFFE2E8F0))),
-        ),
-        child: SizedBox(
-          width: double.infinity,
-          height: 46,
-          child: ElevatedButton(
-            onPressed: _isActionLoading ? null : () => _handleConfirmDelivery(order),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFF03AC0E),
-              foregroundColor: Colors.white,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+      if (_isBuyer) {
+        return Container(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+          decoration: const BoxDecoration(
+            color: Colors.white,
+            border: Border(top: BorderSide(color: Color(0xFFE2E8F0))),
+          ),
+          child: SizedBox(
+            width: double.infinity,
+            height: 46,
+            child: ElevatedButton(
+              onPressed: _isActionLoading ? null : () => _handleConfirmDelivery(order),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFF03AC0E),
+                foregroundColor: Colors.white,
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+              ),
+              child: _isActionLoading
+                  ? const SizedBox(
+                      width: 20,
+                      height: 20,
+                      child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
+                    )
+                  : Text(
+                      'Konfirmasi Pesanan Diterima',
+                      style: GoogleFonts.plusJakartaSans(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
             ),
-            child: _isActionLoading
-                ? const SizedBox(
-                    width: 20,
-                    height: 20,
-                    child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
-                  )
-                : Text(
-                    'Konfirmasi Pesanan Diterima',
-                    style: GoogleFonts.plusJakartaSans(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w700,
+          ),
+        );
+      } else {
+        // Seller / Petani View: Escrow protection, cannot self-confirm delivery
+        return Container(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+          decoration: const BoxDecoration(
+            color: Colors.white,
+            border: Border(top: BorderSide(color: Color(0xFFE2E8F0))),
+          ),
+          child: Row(
+            children: [
+              Expanded(
+                child: SizedBox(
+                  height: 46,
+                  child: OutlinedButton.icon(
+                    onPressed: () => _showCourierContactModal(order.courier),
+                    icon: const Icon(LucideIcons.phone, size: 16, color: Color(0xFF03AC0E)),
+                    label: Text(
+                      'Hubungi Kurir',
+                      style: GoogleFonts.plusJakartaSans(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w700,
+                        color: const Color(0xFF03AC0E),
+                      ),
+                    ),
+                    style: OutlinedButton.styleFrom(
+                      side: const BorderSide(color: Color(0xFF03AC0E)),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                     ),
                   ),
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: SizedBox(
+                  height: 46,
+                  child: ElevatedButton(
+                    onPressed: () => Navigator.pop(context),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFF0F172A),
+                      foregroundColor: Colors.white,
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                    ),
+                    child: Text(
+                      'Kembali ke Pesanan',
+                      style: GoogleFonts.plusJakartaSans(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ],
           ),
-        ),
-      );
+        );
+      }
     }
     return null;
   }

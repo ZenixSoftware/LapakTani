@@ -989,7 +989,7 @@ const updateOrderStatus = async (req, res) => {
 
   try {
     const [existing] = await pool.query(
-      `SELECT o.id, o.order_status, o.payment_status, o.total_amount, o.invoice_number, o.payment_method
+      `SELECT o.id, o.user_id, o.buyer_id, o.order_status, o.payment_status, o.total_amount, o.invoice_number, o.payment_method
        FROM orders o
        WHERE (o.id = ? OR o.invoice_number = ?)
          AND (
@@ -1012,6 +1012,17 @@ const updateOrderStatus = async (req, res) => {
     }
 
     const order = existing[0];
+
+    // Escrow protection: only buyer can confirm order completion
+    if (requestedStatus === 'COMPLETED') {
+      const buyerId = order.buyer_id || order.user_id;
+      if (String(userId) !== String(buyerId)) {
+        return res.status(403).json({
+          success: false,
+          message: 'Hanya pembeli yang berhak mengonfirmasi penyelesaian pesanan (pesanan diterima).'
+        });
+      }
+    }
 
     await pool.query(
       'UPDATE orders SET order_status = ?, updated_at = NOW() WHERE (id = ? OR invoice_number = ?)',
