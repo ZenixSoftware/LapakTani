@@ -18,6 +18,10 @@ router.post('/b2b-orders', poktanController.createB2BOrder);
 // Pengurus/Member: List Poktan B2B orders
 router.get('/b2b-orders', poktanController.getB2BOrders);
 
+// Pengurus: Settle B2B order with partial fulfillment & escrow deficit refund
+router.post('/b2b-orders/:id/settle', poktanController.settleB2BOrder);
+router.put('/b2b-orders/:id/status', poktanController.settleB2BOrder);
+
 // Pengurus: Allocate quota to members
 router.post('/allocate-quota', poktanController.allocateQuota);
 

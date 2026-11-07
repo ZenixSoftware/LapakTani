@@ -9,10 +9,12 @@ import '../services/order_service.dart';
 
 class OrderTrackingScreen extends StatefulWidget {
   final String orderId;
+  final bool isSellerView;
 
   const OrderTrackingScreen({
     super.key,
     required this.orderId,
+    this.isSellerView = false,
   });
 
   @override
@@ -305,6 +307,73 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
             behavior: SnackBarBehavior.floating,
           ),
         );
+      }
+    }
+  }
+
+  Future<void> _handleHandoverToCourier(OrderModel order) async {
+    final bool? confirm = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: Text(
+          'Serahkan ke Kurir',
+          style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w700, fontSize: 16),
+        ),
+        content: Text(
+          'Pastikan seluruh komoditas telah selesai dipetik, dikemas rapi, dan diserahkan kepada kurir ${order.courier.serviceName}. Lanjutkan?',
+          style: GoogleFonts.plusJakartaSans(fontSize: 13, color: const Color(0xFF475569)),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: Text(
+              'Batal',
+              style: GoogleFonts.plusJakartaSans(color: const Color(0xFF94A3B8), fontWeight: FontWeight.w600),
+            ),
+          ),
+          ElevatedButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFF03AC0E),
+              foregroundColor: Colors.white,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+            ),
+            child: Text(
+              'Serahkan Sekarang',
+              style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w700),
+            ),
+          ),
+        ],
+      ),
+    );
+
+    if (confirm == true) {
+      setState(() => _isActionLoading = true);
+      try {
+        await _apiService.updateOrderStatus(order.id, 'IN_TRANSIT');
+        await _orderService.handoverToCourier(order.id);
+        await _loadOrderDetails();
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Status pesanan diperbarui menjadi Dalam Perjalanan.'),
+              backgroundColor: Color(0xFF03AC0E),
+              behavior: SnackBarBehavior.floating,
+            ),
+          );
+        }
+      } catch (e) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Gagal memperbarui status: $e'),
+              backgroundColor: const Color(0xFFDC2626),
+            ),
+          );
+        }
+      } finally {
+        if (mounted) setState(() => _isActionLoading = false);
       }
     }
   }
@@ -937,11 +1006,15 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
                                 ),
                                 if (cp.location.isNotEmpty) ...[
                                   const SizedBox(width: 6),
-                                  Text(
-                                    '• ${cp.location}',
-                                    style: GoogleFonts.plusJakartaSans(
-                                      fontSize: 10,
-                                      color: const Color(0xFF94A3B8),
+                                  Expanded(
+                                    child: Text(
+                                      '• ${cp.location}',
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                      style: GoogleFonts.plusJakartaSans(
+                                        fontSize: 10,
+                                        color: const Color(0xFF94A3B8),
+                                      ),
                                     ),
                                   ),
                                 ],
@@ -1058,8 +1131,167 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
   }
 
   Widget? _buildBottomActionBar(OrderModel order) {
-    if (order.status == OrderStatus.inTransit || order.status == OrderStatus.delivered) {
-      if (_isBuyer) {
+    // 1. ISOLATED SELLER VIEW
+    if (widget.isSellerView) {
+      if (order.status == OrderStatus.needHarvest ||
+          order.status == OrderStatus.readyToShip) {
+        return Container(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+          decoration: const BoxDecoration(
+            color: Colors.white,
+            border: Border(top: BorderSide(color: Color(0xFFE2E8F0))),
+          ),
+          child: SizedBox(
+            width: double.infinity,
+            height: 46,
+            child: ElevatedButton.icon(
+              onPressed: _isActionLoading ? null : () => _handleHandoverToCourier(order),
+              icon: const Icon(LucideIcons.truck, size: 18),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFF03AC0E),
+                foregroundColor: Colors.white,
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+              ),
+              label: _isActionLoading
+                  ? const SizedBox(
+                      width: 20,
+                      height: 20,
+                      child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
+                    )
+                  : Text(
+                      'Serahkan ke Kurir',
+                      style: GoogleFonts.plusJakartaSans(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+            ),
+          ),
+        );
+      }
+
+      if (order.status == OrderStatus.inTransit) {
+        return Container(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+          decoration: const BoxDecoration(
+            color: Colors.white,
+            border: Border(top: BorderSide(color: Color(0xFFE2E8F0))),
+          ),
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+            decoration: BoxDecoration(
+              color: const Color(0xFFEFF6FF),
+              borderRadius: BorderRadius.circular(10),
+              border: Border.all(color: const Color(0xFFBFDBFE)),
+            ),
+            child: Row(
+              children: [
+                const Icon(LucideIcons.packageCheck, size: 20, color: Color(0xFF2563EB)),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        'Barang Dalam Perjalanan Kurir',
+                        style: GoogleFonts.plusJakartaSans(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w700,
+                          color: const Color(0xFF1E40AF),
+                        ),
+                      ),
+                      Text(
+                        'Kurir logistik sedang mengantarkan pesanan panen ke pembeli.',
+                        style: GoogleFonts.plusJakartaSans(
+                          fontSize: 11,
+                          color: const Color(0xFF3B82F6),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                OutlinedButton(
+                  onPressed: () => _showCourierContactModal(order.courier),
+                  style: OutlinedButton.styleFrom(
+                    side: const BorderSide(color: Color(0xFF2563EB)),
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                    minimumSize: Size.zero,
+                  ),
+                  child: Text(
+                    'Hubungi',
+                    style: GoogleFonts.plusJakartaSans(
+                      fontSize: 11.5,
+                      fontWeight: FontWeight.w700,
+                      color: const Color(0xFF2563EB),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      }
+
+      // Default bottom bar for seller when completed or other statuses
+      return Container(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        decoration: const BoxDecoration(
+          color: Colors.white,
+          border: Border(top: BorderSide(color: Color(0xFFE2E8F0))),
+        ),
+        child: Row(
+          children: [
+            Expanded(
+              child: SizedBox(
+                height: 46,
+                child: OutlinedButton.icon(
+                  onPressed: () => _showCourierContactModal(order.courier),
+                  icon: const Icon(LucideIcons.phone, size: 16, color: Color(0xFF03AC0E)),
+                  label: Text(
+                    'Hubungi Kurir',
+                    style: GoogleFonts.plusJakartaSans(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w700,
+                      color: const Color(0xFF03AC0E),
+                    ),
+                  ),
+                  style: OutlinedButton.styleFrom(
+                    side: const BorderSide(color: Color(0xFF03AC0E)),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                  ),
+                ),
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: SizedBox(
+                height: 46,
+                child: ElevatedButton(
+                  onPressed: () => Navigator.pop(context),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFF0F172A),
+                    foregroundColor: Colors.white,
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                  ),
+                  child: Text(
+                    'Kembali ke Pesanan',
+                    style: GoogleFonts.plusJakartaSans(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
+    // 2. BUYER VIEW (ONLY render if isSellerView == false AND active user is the buyer)
+    if (!widget.isSellerView && _isBuyer) {
+      if (order.status == OrderStatus.inTransit || order.status == OrderStatus.delivered) {
         return Container(
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
           decoration: const BoxDecoration(
@@ -1092,63 +1324,9 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
             ),
           ),
         );
-      } else {
-        // Seller / Petani View: Escrow protection, cannot self-confirm delivery
-        return Container(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-          decoration: const BoxDecoration(
-            color: Colors.white,
-            border: Border(top: BorderSide(color: Color(0xFFE2E8F0))),
-          ),
-          child: Row(
-            children: [
-              Expanded(
-                child: SizedBox(
-                  height: 46,
-                  child: OutlinedButton.icon(
-                    onPressed: () => _showCourierContactModal(order.courier),
-                    icon: const Icon(LucideIcons.phone, size: 16, color: Color(0xFF03AC0E)),
-                    label: Text(
-                      'Hubungi Kurir',
-                      style: GoogleFonts.plusJakartaSans(
-                        fontSize: 13,
-                        fontWeight: FontWeight.w700,
-                        color: const Color(0xFF03AC0E),
-                      ),
-                    ),
-                    style: OutlinedButton.styleFrom(
-                      side: const BorderSide(color: Color(0xFF03AC0E)),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                    ),
-                  ),
-                ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: SizedBox(
-                  height: 46,
-                  child: ElevatedButton(
-                    onPressed: () => Navigator.pop(context),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFF0F172A),
-                      foregroundColor: Colors.white,
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                    ),
-                    child: Text(
-                      'Kembali ke Pesanan',
-                      style: GoogleFonts.plusJakartaSans(
-                        fontSize: 13,
-                        fontWeight: FontWeight.w700,
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-            ],
-          ),
-        );
       }
     }
+
     return null;
   }
 }

@@ -15,6 +15,8 @@ class User {
   final String email;
   final String? fullName;
   final String? role;
+  final int? roleId;
+  final bool isChairman;
   final bool isVerified;
 
   const User({
@@ -22,15 +24,31 @@ class User {
     required this.email,
     this.fullName,
     this.role,
+    this.roleId,
+    this.isChairman = false,
     this.isVerified = true,
   });
 
   factory User.fromJson(Map<String, dynamic> json) {
+    int? parsedRoleId;
+    final rId = json['role_id'];
+    if (rId is int) {
+      parsedRoleId = rId;
+    } else if (rId != null) {
+      parsedRoleId = int.tryParse(rId.toString());
+    }
+
+    final bool chairmanFlag = json['is_chairman'] == true ||
+        json['is_chairman'] == 1 ||
+        json['isChairman'] == true;
+
     return User(
       id: json['id']?.toString() ?? '',
       email: json['email']?.toString() ?? '',
       fullName: json['full_name']?.toString(),
       role: json['role']?.toString(),
+      roleId: parsedRoleId,
+      isChairman: chairmanFlag,
       isVerified: json['is_verified'] == true || json['is_verified'] == 1,
     );
   }
@@ -40,6 +58,8 @@ class User {
         'email': email,
         'full_name': fullName,
         'role': role,
+        'role_id': roleId,
+        'is_chairman': isChairman,
         'is_verified': isVerified,
       };
 }

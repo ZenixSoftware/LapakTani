@@ -7,7 +7,7 @@ import '../../core/services/api_service.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/widgets/lapaktani_logo.dart';
 import '../auth/login_screen.dart';
-import '../home/home_dashboard_screen.dart';
+import '../navigation/role_based_app_shell.dart';
 import 'onboarding_screen.dart';
 
 class SplashScreen extends StatefulWidget {
@@ -57,7 +57,7 @@ class _SplashScreenState extends State<SplashScreen> {
     }
     if (!mounted) return;
     final Widget targetScreen = (token != null && token.isNotEmpty)
-        ? const HomeDashboardScreen()
+        ? const RoleBasedAppShell()
         : const LoginScreen();
 
     Navigator.of(context).pushReplacement(

@@ -120,8 +120,17 @@ const login = async (req, res) => {
 
     const userRole = user.role || (user.role_id === 1 ? 'petani' : 'pembeli');
 
+    let isChairman = false;
+    if (user.role_id === 1) {
+      const [chairmanRows] = await pool.query(
+        'SELECT 1 FROM farmer_groups WHERE chairman_user_id = ? LIMIT 1',
+        [user.id]
+      );
+      isChairman = chairmanRows.length > 0;
+    }
+
     const token = jwt.sign(
-      { id: user.id, email: user.email, role_id: user.role_id, role: userRole },
+      { id: user.id, email: user.email, role_id: user.role_id, role: userRole, is_chairman: isChairman },
       process.env.JWT_SECRET || 'lapaktani_secret_2026',
       { expiresIn: process.env.JWT_EXPIRES_IN || '7d' }
     );
@@ -136,6 +145,7 @@ const login = async (req, res) => {
         email: user.email,
         role_id: user.role_id,
         role: userRole,
+        is_chairman: isChairman,
         is_verified: Boolean(user.is_verified)
       }
     });

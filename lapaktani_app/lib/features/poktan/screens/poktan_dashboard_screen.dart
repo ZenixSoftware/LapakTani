@@ -89,6 +89,118 @@ class _PoktanDashboardScreenState extends State<PoktanDashboardScreen>
     );
   }
 
+  void _showSettleDialog(B2BOrderModel order) {
+    final deliveredController = TextEditingController(text: order.totalQuotaKg.toStringAsFixed(0));
+    final priceController = TextEditingController(text: '15000');
+    final notesController = TextEditingController();
+
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: Text(
+          'Timbang Panen & Settlement B2B',
+          style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w700, fontSize: 16),
+        ),
+        content: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'Input tonase aktual panen masuk dari petani untuk ${order.commodityName} (${order.buyerName}). Target kontrak: ${order.totalQuotaKg} kg.',
+                style: GoogleFonts.plusJakartaSans(fontSize: 12, color: const Color(0xFF64748B)),
+              ),
+              const SizedBox(height: 12),
+              Text('Tonase Panen Masuk (kg)', style: GoogleFonts.plusJakartaSans(fontSize: 12, fontWeight: FontWeight.w600)),
+              const SizedBox(height: 4),
+              TextField(
+                controller: deliveredController,
+                keyboardType: TextInputType.number,
+                decoration: InputDecoration(
+                  hintText: 'Misal: 850',
+                  suffixText: 'kg',
+                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+                  contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                ),
+              ),
+              const SizedBox(height: 10),
+              Text('Harga Kesepakatan (Rp/kg)', style: GoogleFonts.plusJakartaSans(fontSize: 12, fontWeight: FontWeight.w600)),
+              const SizedBox(height: 4),
+              TextField(
+                controller: priceController,
+                keyboardType: TextInputType.number,
+                decoration: InputDecoration(
+                  hintText: '15000',
+                  prefixText: 'Rp ',
+                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+                  contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                ),
+              ),
+              const SizedBox(height: 10),
+              Text('Catatan Deviasi / Keterangan', style: GoogleFonts.plusJakartaSans(fontSize: 12, fontWeight: FontWeight.w600)),
+              const SizedBox(height: 4),
+              TextField(
+                controller: notesController,
+                maxLines: 2,
+                decoration: InputDecoration(
+                  hintText: 'Contoh: Deviasi hasil panen akibat anomali cuaca diverifikasi Poktan.',
+                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+                  contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                ),
+              ),
+            ],
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: Text('Batal', style: GoogleFonts.plusJakartaSans(color: const Color(0xFF64748B))),
+          ),
+          ElevatedButton(
+            onPressed: () async {
+              final delivered = double.tryParse(deliveredController.text) ?? 0.0;
+              final price = double.tryParse(priceController.text) ?? 15000.0;
+              if (delivered <= 0) return;
+
+              Navigator.pop(ctx);
+              final scaffoldMessenger = ScaffoldMessenger.of(context);
+              final result = await _poktanService.settleB2BOrder(
+                orderId: order.id,
+                actualDeliveredKg: delivered,
+                agreedPricePerKg: price,
+                settlementNotes: notesController.text.trim().isNotEmpty ? notesController.text.trim() : null,
+              );
+
+              if (result['success'] == true) {
+                await _loadDashboardData();
+                scaffoldMessenger.showSnackBar(
+                  SnackBar(
+                    content: Text(result['message']?.toString() ?? 'Settlement berhasil diproses.'),
+                    backgroundColor: const Color(0xFF03AC0E),
+                  ),
+                );
+              } else {
+                scaffoldMessenger.showSnackBar(
+                  SnackBar(
+                    content: Text(result['message']?.toString() ?? 'Gagal memproses settlement.'),
+                    backgroundColor: const Color(0xFFDC2626),
+                  ),
+                );
+              }
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFF03AC0E),
+              foregroundColor: Colors.white,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+            ),
+            child: Text('Proses Settlement', style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w700)),
+          ),
+        ],
+      ),
+    );
+  }
+
   Widget _buildAggregatedKpiHero() {
     return Container(
       margin: const EdgeInsets.fromLTRB(16, 12, 16, 12),
@@ -407,29 +519,54 @@ class _PoktanDashboardScreenState extends State<PoktanDashboardScreen>
                       ),
                     ],
                   ),
-                  ElevatedButton.icon(
-                    onPressed: () => _showAllocateQuotaSheet(order),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: isFullyAllocated ? const Color(0xFFF1F5F9) : AppColors.primary,
-                      foregroundColor: isFullyAllocated ? const Color(0xFF475569) : Colors.white,
-                      elevation: 0,
-                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                      minimumSize: const Size(44, 36),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(10),
+                  Row(
+                    children: [
+                      if (order.status != 'completed' && order.status != 'PARTIALLY_FULFILLED') ...[
+                        OutlinedButton.icon(
+                          onPressed: () => _showSettleDialog(order),
+                          style: OutlinedButton.styleFrom(
+                            side: const BorderSide(color: Color(0xFF03AC0E)),
+                            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                            minimumSize: const Size(40, 36),
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                          ),
+                          icon: const Icon(LucideIcons.scale, size: 14, color: Color(0xFF03AC0E)),
+                          label: Text(
+                            'Timbang Masuk',
+                            style: GoogleFonts.plusJakartaSans(
+                              fontSize: 11.5,
+                              fontWeight: FontWeight.w700,
+                              color: const Color(0xFF03AC0E),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                      ],
+                      ElevatedButton.icon(
+                        onPressed: () => _showAllocateQuotaSheet(order),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: isFullyAllocated ? const Color(0xFFF1F5F9) : AppColors.primary,
+                          foregroundColor: isFullyAllocated ? const Color(0xFF475569) : Colors.white,
+                          elevation: 0,
+                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                          minimumSize: const Size(44, 36),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                        ),
+                        icon: Icon(
+                          isFullyAllocated ? LucideIcons.checkCheck : LucideIcons.split,
+                          size: 14,
+                        ),
+                        label: Text(
+                          isFullyAllocated ? 'Atur Ulang' : 'Bagi Kuota',
+                          style: GoogleFonts.plusJakartaSans(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
                       ),
-                    ),
-                    icon: Icon(
-                      isFullyAllocated ? LucideIcons.checkCheck : LucideIcons.split,
-                      size: 14,
-                    ),
-                    label: Text(
-                      isFullyAllocated ? 'Atur Ulang' : 'Bagi Kuota',
-                      style: GoogleFonts.plusJakartaSans(
-                        fontSize: 12,
-                        fontWeight: FontWeight.w700,
-                      ),
-                    ),
+                    ],
                   ),
                 ],
               ),

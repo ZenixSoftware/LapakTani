@@ -311,7 +311,10 @@ class _SellerDashboardScreenState extends State<SellerDashboardScreen> {
                                           Navigator.push(
                                             context,
                                             MaterialPageRoute(
-                                              builder: (_) => OrderTrackingScreen(orderId: targetOrder.id),
+                                              builder: (_) => OrderTrackingScreen(
+                                                orderId: targetOrder.id,
+                                                isSellerView: true,
+                                              ),
                                             ),
                                           );
                                         } else {
@@ -1420,7 +1423,10 @@ class _SellerDashboardScreenState extends State<SellerDashboardScreen> {
           Navigator.push(
             context,
             MaterialPageRoute(
-              builder: (_) => OrderTrackingScreen(orderId: order.id),
+              builder: (_) => OrderTrackingScreen(
+                orderId: order.id,
+                isSellerView: true,
+              ),
             ),
           );
         };
@@ -1433,7 +1439,10 @@ class _SellerDashboardScreenState extends State<SellerDashboardScreen> {
           Navigator.push(
             context,
             MaterialPageRoute(
-              builder: (_) => OrderTrackingScreen(orderId: order.id),
+              builder: (_) => OrderTrackingScreen(
+                orderId: order.id,
+                isSellerView: true,
+              ),
             ),
           );
         };
@@ -1452,7 +1461,10 @@ class _SellerDashboardScreenState extends State<SellerDashboardScreen> {
           Navigator.push(
             context,
             MaterialPageRoute(
-              builder: (_) => OrderTrackingScreen(orderId: order.id),
+              builder: (_) => OrderTrackingScreen(
+                orderId: order.id,
+                isSellerView: true,
+              ),
             ),
           );
         };

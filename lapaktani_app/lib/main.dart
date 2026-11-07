@@ -3,7 +3,7 @@ import 'package:intl/date_symbol_data_local.dart';
 import 'core/theme/app_theme.dart';
 import 'features/auth/login_screen.dart';
 import 'features/auth/register_screen.dart';
-import 'features/home/home_dashboard_screen.dart';
+import 'features/navigation/role_based_app_shell.dart';
 import 'features/onboarding/onboarding_screen.dart';
 import 'features/onboarding/splash_screen.dart';
 
@@ -34,15 +34,15 @@ class _LapakTaniAppState extends State<LapakTaniApp> {
       title: 'LapakTani',
       debugShowCheckedModeBanner: false,
       theme: AppTheme.lightTheme,
-      home: const SplashScreen(),
+      home: const RoleBasedAppShell(),
       routes: {
         '/splash': (context) => const SplashScreen(),
         '/onboarding': (context) => const OnboardingScreen(),
         '/auth': (context) => const LoginScreen(),
         '/login': (context) => const LoginScreen(),
         '/register': (context) => const RegisterScreen(),
-        '/home': (context) => const HomeDashboardScreen(),
-        '/dashboard': (context) => const HomeDashboardScreen(),
+        '/home': (context) => const RoleBasedAppShell(),
+        '/dashboard': (context) => const RoleBasedAppShell(),
         '/orders': (context) => const BuyerOrdersScreen(),
       },
     );

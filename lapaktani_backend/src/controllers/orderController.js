@@ -979,7 +979,7 @@ const updateOrderStatus = async (req, res) => {
   }
 
   // Allowed transitions
-  const validStatuses = ['WAITING_PAYMENT', 'PROCESSING', 'NEED_HARVEST', 'SHIPPED', 'IN_TRANSIT', 'DELIVERED', 'COMPLETED', 'CANCELLED'];
+  const validStatuses = ['WAITING_PAYMENT', 'PROCESSING', 'NEED_HARVEST', 'SHIPPED', 'IN_TRANSIT', 'DELIVERED', 'COMPLETED', 'PARTIALLY_FULFILLED', 'CANCELLED'];
   if (!requestedStatus || !validStatuses.includes(requestedStatus)) {
     return res.status(400).json({
       success: false,

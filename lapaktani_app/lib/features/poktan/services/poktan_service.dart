@@ -397,5 +397,45 @@ class PoktanService {
       {'id': 'cmd-wortel-06', 'name': 'Wortel Brastagi'},
     ];
   }
+
+  /// Settle B2B contract order with partial fulfillment and escrow refund
+  Future<Map<String, dynamic>> settleB2BOrder({
+    required String orderId,
+    required double actualDeliveredKg,
+    double? agreedPricePerKg,
+    String? settlementNotes,
+  }) async {
+    init();
+    try {
+      final Map<String, dynamic> payload = {
+        'actual_delivered_kg': actualDeliveredKg,
+      };
+      if (agreedPricePerKg != null) payload['agreed_price_per_kg'] = agreedPricePerKg;
+      if (settlementNotes != null) payload['settlement_notes'] = settlementNotes;
+
+      final response = await ApiService.post('/poktan/b2b-orders/$orderId/settle', payload);
+
+      final Map<String, dynamic> body = jsonDecode(response.body);
+      if (response.statusCode == 200) {
+        await fetchB2BOrders();
+        return {
+          'success': true,
+          'message': body['message'] ?? 'Settlement berhasil.',
+          'data': body['data'],
+        };
+      } else {
+        return {
+          'success': false,
+          'message': body['message'] ?? 'Gagal memproses settlement.',
+        };
+      }
+    } catch (e) {
+      debugPrint('[PoktanService] settleB2BOrder error: $e');
+      return {
+        'success': false,
+        'message': 'Koneksi error saat settlement: $e',
+      };
+    }
+  }
 }
 

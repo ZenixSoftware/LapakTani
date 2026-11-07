@@ -3,11 +3,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 import '../../core/services/api_service.dart';
+import '../../core/services/user_session.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/widgets/lapaktani_logo.dart';
 import '../../core/widgets/lapaktani_text_field.dart';
 import 'register_screen.dart';
-import '../home/home_dashboard_screen.dart';
+import '../navigation/role_based_app_shell.dart';
 import 'auth_repository.dart';
 
 class LoginScreen extends StatefulWidget {
@@ -54,12 +55,14 @@ class _LoginScreenState extends State<LoginScreen> {
         if (data['user'] != null) {
           final userMap = data['user'] as Map<String, dynamic>;
           await api.saveUser(userMap);
-          AuthRepository.setCurrentUser(User.fromJson(userMap));
+          final user = User.fromJson(userMap);
+          AuthRepository.setCurrentUser(user);
+          UserSession().setUser(user);
         }
 
         if (!mounted) return;
         Navigator.of(context).pushReplacement(
-          MaterialPageRoute(builder: (_) => const HomeDashboardScreen()),
+          MaterialPageRoute(builder: (_) => const RoleBasedAppShell()),
         );
       } else {
         final message = data['message']?.toString() ??
