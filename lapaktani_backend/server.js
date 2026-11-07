@@ -17,6 +17,7 @@ const orderRoutes = require('./src/routes/orders');
 const soilRoutes = require('./src/routes/soil');
 const paymentRoutes = require('./src/routes/payments');
 const poktanRoutes = require('./src/routes/poktan');
+const b2bRoutes = require('./src/routes/b2b');
 const pestReportRoutes = require('./src/routes/pestReports');
 const runPestAlertMigration = require('./src/config/migrate_pest_alert');
 
@@ -83,6 +84,7 @@ app.use('/api/orders', orderRoutes);
 app.use('/api/soil', soilRoutes);
 app.use('/api/payments', paymentRoutes);
 app.use('/api/poktan', poktanRoutes);
+app.use('/api/b2b-contracts', b2bRoutes);
 app.use('/api/pest-reports', pestReportRoutes);
 app.use('/api/pest-alerts', pestReportRoutes);
 

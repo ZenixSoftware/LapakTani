@@ -1,13 +1,14 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:intl/intl.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 import '../../core/services/api_service.dart';
+import '../../core/services/user_session.dart';
+import '../auth/auth_repository.dart';
+import '../auth/login_screen.dart';
 import '../cart/cart_screen.dart';
 import '../community/screens/education_feed_screen.dart';
-import '../community/widgets/penyuluh_official_badge.dart';
-import '../community/widgets/pest_alert_banner.dart';
-import '../community/screens/create_pest_report_screen.dart';
 import '../order/order_history_screen.dart';
 import '../product/product_detail_screen.dart';
 import '../profile/profile_screen.dart';
@@ -21,11 +22,16 @@ class HomeDashboardScreen extends StatefulWidget {
 }
 
 class _HomeDashboardScreenState extends State<HomeDashboardScreen> {
+  final ApiService _apiService = ApiService();
   int _currentBottomNavIndex = 0;
+  int _activeCatalogSegment = 0; // 0: Retail Panen, 1: Bursa Partai (B2B)
   final Set<dynamic> _wishlistIds = {};
   int _cartItemCount = 4;
   List<dynamic> _products = [];
+  List<Map<String, dynamic>> _b2bHarvestPools = [];
   bool _isLoading = true;
+  bool _isLoadingB2BPools = false;
+  final NumberFormat _currencyFormat = NumberFormat('#,###', 'id_ID');
 
   String _searchQuery = '';
   String _selectedCategory = 'Semua';
@@ -130,6 +136,85 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen> {
   void initState() {
     super.initState();
     fetchProducts();
+    _fetchB2BHarvestPools();
+  }
+
+  Future<void> _fetchB2BHarvestPools() async {
+    if (!mounted) return;
+    setState(() => _isLoadingB2BPools = true);
+    final pools = await _apiService.getB2BHarvestPools();
+    if (!mounted) return;
+    setState(() {
+      _b2bHarvestPools = pools;
+      _isLoadingB2BPools = false;
+    });
+  }
+
+  bool _ensureAuthenticated({String actionTitle = 'melanjutkan transaksi'}) {
+    final user = AuthRepository().currentUser ?? UserSession().currentUser;
+    if (user != null) return true;
+
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: Row(
+          children: [
+            const Icon(LucideIcons.lock, color: Color(0xFF03AC0E), size: 22),
+            const SizedBox(width: 8),
+            Text(
+              'Silakan Masuk',
+              style: GoogleFonts.plusJakartaSans(
+                fontSize: 16,
+                fontWeight: FontWeight.w700,
+                color: const Color(0xFF1E293B),
+              ),
+            ),
+          ],
+        ),
+        content: Text(
+          'Silakan Masuk untuk Melanjutkan: Untuk $actionTitle, masuk atau daftarkan akun LapakTani Anda terlebih dahulu.',
+          style: GoogleFonts.plusJakartaSans(
+            fontSize: 13,
+            color: const Color(0xFF64748B),
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: Text(
+              'Nanti Saja',
+              style: GoogleFonts.plusJakartaSans(
+                color: const Color(0xFF94A3B8),
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              Navigator.pop(ctx);
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => const LoginScreen()),
+              );
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFF03AC0E),
+              foregroundColor: Colors.white,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+            ),
+            child: Text(
+              'Masuk Sekarang',
+              style: GoogleFonts.plusJakartaSans(
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+    return false;
   }
 
   @override
@@ -216,18 +301,18 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen> {
       'badge': null,
     },
     {
-      'id': 'lapor-hama',
-      'title': 'Lapor Hama',
-      'colors': [Color(0xFFEF4444), Color(0xFFB91C1C)],
-      'icon': LucideIcons.alertTriangle,
-      'badge': 'Alert',
+      'id': 'bursa-b2b',
+      'title': 'Bursa Partai',
+      'colors': [Color(0xFF0284C7), Color(0xFF0369A1)],
+      'icon': LucideIcons.packageCheck,
+      'badge': 'B2B',
     },
     {
-      'id': 'edukasi-tani',
-      'title': 'Edukasi BPP',
-      'colors': [Color(0xFF047857), Color(0xFF065F46)],
-      'icon': LucideIcons.bookOpen,
-      'badge': 'Resmi',
+      'id': 'panen-segar',
+      'title': 'Panen Segar',
+      'colors': [Color(0xFF059669), Color(0xFF047857)],
+      'icon': LucideIcons.sprout,
+      'badge': 'Segar',
     },
     {
       'id': 'lapak-pay',
@@ -309,6 +394,10 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen> {
   ];
 
   Future<void> _handleAddToCart(dynamic productData) async {
+    if (!_ensureAuthenticated(actionTitle: 'menambahkan barang ke keranjang')) {
+      return;
+    }
+
     final Map<String, dynamic> p = productData is Map
         ? Map<String, dynamic>.from(productData)
         : <String, dynamic>{'title': productData?.toString() ?? 'Produk'};
@@ -433,6 +522,10 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen> {
       case 2:
         return const OrderHistoryScreen(isTabEmbedded: true);
       case 3:
+        final currentUser = AuthRepository().currentUser ?? UserSession().currentUser;
+        if (currentUser == null) {
+          return _buildGuestProfileScreen();
+        }
         return const ProfileScreen();
       case 0:
       default:
@@ -444,28 +537,644 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen> {
     return Column(
       children: [
         _buildTopStickyHeader(),
+        _buildCatalogSegmentSwitch(),
         Expanded(
-          child: CustomScrollView(
-            slivers: [
-              SliverToBoxAdapter(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const PestAlertBanner(),
-                    _buildQuickActionServices(),
-                    _buildRecentlyViewedSection(),
-                    _buildCategoryTabBar(),
-                    _buildMainFeedSection(),
-                    _buildPenyuluhEducationBanner(),
-                    _buildTrustGuaranteeBanner(),
-                    const SizedBox(height: 16),
+          child: _activeCatalogSegment == 1
+              ? _buildBursaPartaiB2BView()
+              : CustomScrollView(
+                  slivers: [
+                    SliverToBoxAdapter(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          _buildQuickActionServices(),
+                          _buildRecentlyViewedSection(),
+                          _buildCategoryTabBar(),
+                          _buildMainFeedSection(),
+                          _buildTrustGuaranteeBanner(),
+                          const SizedBox(height: 16),
+                        ],
+                      ),
+                    ),
                   ],
+                ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildCatalogSegmentSwitch() {
+    return Container(
+      margin: const EdgeInsets.fromLTRB(10, 4, 10, 8),
+      padding: const EdgeInsets.all(3.5),
+      decoration: BoxDecoration(
+        color: const Color(0xFFE2E8F0),
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Row(
+        children: [
+          Expanded(
+            child: InkWell(
+              onTap: () => setState(() => _activeCatalogSegment = 0),
+              borderRadius: BorderRadius.circular(9),
+              child: Container(
+                padding: const EdgeInsets.symmetric(vertical: 7.5),
+                decoration: BoxDecoration(
+                  color: _activeCatalogSegment == 0 ? Colors.white : Colors.transparent,
+                  borderRadius: BorderRadius.circular(9),
+                  boxShadow: _activeCatalogSegment == 0
+                      ? const [BoxShadow(color: Color(0x12000000), blurRadius: 4, offset: Offset(0, 1))]
+                      : null,
+                ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(
+                      LucideIcons.shoppingBag,
+                      size: 15,
+                      color: _activeCatalogSegment == 0 ? const Color(0xFF03AC0E) : const Color(0xFF64748B),
+                    ),
+                    const SizedBox(width: 6),
+                    Text(
+                      'Katalog Retail',
+                      style: GoogleFonts.plusJakartaSans(
+                        fontSize: 12.5,
+                        fontWeight: _activeCatalogSegment == 0 ? FontWeight.w700 : FontWeight.w600,
+                        color: _activeCatalogSegment == 0 ? const Color(0xFF0F172A) : const Color(0xFF64748B),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+          Expanded(
+            child: InkWell(
+              onTap: () => setState(() => _activeCatalogSegment = 1),
+              borderRadius: BorderRadius.circular(9),
+              child: Container(
+                padding: const EdgeInsets.symmetric(vertical: 7.5),
+                decoration: BoxDecoration(
+                  color: _activeCatalogSegment == 1 ? Colors.white : Colors.transparent,
+                  borderRadius: BorderRadius.circular(9),
+                  boxShadow: _activeCatalogSegment == 1
+                      ? const [BoxShadow(color: Color(0x12000000), blurRadius: 4, offset: Offset(0, 1))]
+                      : null,
+                ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(
+                      LucideIcons.packageCheck,
+                      size: 15,
+                      color: _activeCatalogSegment == 1 ? const Color(0xFF006E04) : const Color(0xFF64748B),
+                    ),
+                    const SizedBox(width: 6),
+                    Text(
+                      'Bursa Partai (B2B)',
+                      style: GoogleFonts.plusJakartaSans(
+                        fontSize: 12.5,
+                        fontWeight: _activeCatalogSegment == 1 ? FontWeight.w700 : FontWeight.w600,
+                        color: _activeCatalogSegment == 1 ? const Color(0xFF0F172A) : const Color(0xFF64748B),
+                      ),
+                    ),
+                    const SizedBox(width: 6),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1.5),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFDCFCE7),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Text(
+                        'Pool',
+                        style: GoogleFonts.plusJakartaSans(
+                          fontSize: 9,
+                          fontWeight: FontWeight.w800,
+                          color: const Color(0xFF166534),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildBursaPartaiB2BView() {
+    if (_isLoadingB2BPools) {
+      return const Center(child: CircularProgressIndicator(color: Color(0xFF03AC0E)));
+    }
+
+    final pools = _b2bHarvestPools.isNotEmpty
+        ? _b2bHarvestPools
+        : [
+            {
+              'id': 'pool-01',
+              'mitra_name': 'Mitra Tani Makmur',
+              'commodity_name': 'Cabai Merah Keriting Grade A',
+              'target_harvest_date': '15 Nov 2026',
+              'total_quota_kg': 350.0,
+              'allocated_quota_kg': 300.0,
+              'remaining_quota_kg': 50.0,
+              'price_per_kg': 28000.0,
+              'status': 'open',
+              'notes': 'Hasil panen lahan konsolidasi Lembang',
+            },
+            {
+              'id': 'pool-02',
+              'mitra_name': 'Mitra Tani Pasundan',
+              'commodity_name': 'Tomat Beef Organik Segar',
+              'target_harvest_date': '20 Nov 2026',
+              'total_quota_kg': 500.0,
+              'allocated_quota_kg': 200.0,
+              'remaining_quota_kg': 300.0,
+              'price_per_kg': 12500.0,
+              'status': 'open',
+              'notes': 'Dipetik subuh dari dataran tinggi Pangalengan',
+            },
+            {
+              'id': 'pool-03',
+              'mitra_name': 'Mitra Tani Berkah Mandiri',
+              'commodity_name': 'Kentang Granola Super',
+              'target_harvest_date': '28 Nov 2026',
+              'total_quota_kg': 1000.0,
+              'allocated_quota_kg': 650.0,
+              'remaining_quota_kg': 350.0,
+              'price_per_kg': 16000.0,
+              'status': 'open',
+              'notes': 'Sortir grade restoran & katering partai besar',
+            },
+          ];
+
+    return RefreshIndicator(
+      onRefresh: _fetchB2BHarvestPools,
+      color: const Color(0xFF03AC0E),
+      child: ListView(
+        padding: const EdgeInsets.fromLTRB(12, 8, 12, 30),
+        children: [
+          Container(
+            padding: const EdgeInsets.all(14),
+            decoration: BoxDecoration(
+              gradient: const LinearGradient(
+                colors: [Color(0xFF0F766E), Color(0xFF006E04)],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+              ),
+              borderRadius: BorderRadius.circular(14),
+              boxShadow: const [
+                BoxShadow(
+                  color: Color(0x18006E04),
+                  blurRadius: 8,
+                  offset: Offset(0, 3),
+                ),
+              ],
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    const Icon(LucideIcons.packageCheck, color: Colors.white, size: 20),
+                    const SizedBox(width: 8),
+                    Text(
+                      'Bursa Kontrak Partai (B2B)',
+                      style: GoogleFonts.plusJakartaSans(
+                        fontSize: 15,
+                        fontWeight: FontWeight.w700,
+                        color: Colors.white,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 6),
+                Text(
+                  'Ambil kuota borongan hasil panen konsolidasi lahan petani langsung sebelum masa petik dengan harga grosir resmi Mitra Tani.',
+                  style: GoogleFonts.plusJakartaSans(
+                    fontSize: 11.5,
+                    color: const Color(0xFFE6FFFA),
+                    height: 1.35,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 14),
+          Text(
+            'Penawaran Pool Panen Mitra Tani Aktif',
+            style: GoogleFonts.plusJakartaSans(
+              fontSize: 14,
+              fontWeight: FontWeight.w700,
+              color: const Color(0xFF1E293B),
+            ),
+          ),
+          const SizedBox(height: 10),
+          ...pools.map((pool) {
+            final double total = double.tryParse((pool['total_quota_kg'] ?? '0').toString()) ?? 0.0;
+            final double allocated = double.tryParse((pool['allocated_quota_kg'] ?? '0').toString()) ?? 0.0;
+            final double remaining = double.tryParse((pool['remaining_quota_kg'] ?? '0').toString()) ?? 0.0;
+            final double price = double.tryParse((pool['price_per_kg'] ?? '0').toString()) ?? 0.0;
+            final double progress = total > 0 ? (allocated / total).clamp(0.0, 1.0) : 0.0;
+            final bool isOpen = (pool['status'] ?? 'open') == 'open' && remaining > 0;
+
+            return Container(
+              margin: const EdgeInsets.only(bottom: 12),
+              padding: const EdgeInsets.all(14),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(color: const Color(0xFFE2E8F0)),
+                boxShadow: const [
+                  BoxShadow(
+                    color: Color(0x06000000),
+                    blurRadius: 6,
+                    offset: Offset(0, 2),
+                  ),
+                ],
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Row(
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.all(6),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFFDCFCE7),
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            child: const Icon(LucideIcons.shieldCheck, size: 16, color: Color(0xFF166534)),
+                          ),
+                          const SizedBox(width: 8),
+                          Text(
+                            (pool['mitra_name'] ?? 'Mitra Tani Makmur').toString(),
+                            style: GoogleFonts.plusJakartaSans(
+                              fontSize: 13,
+                              fontWeight: FontWeight.w700,
+                              color: const Color(0xFF0F172A),
+                            ),
+                          ),
+                        ],
+                      ),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                        decoration: BoxDecoration(
+                          color: isOpen ? const Color(0xFFDCFCE7) : const Color(0xFFF1F5F9),
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: Text(
+                          isOpen ? 'Bursa Terbuka' : 'Selesai / Terpenuhi',
+                          style: GoogleFonts.plusJakartaSans(
+                            fontSize: 10,
+                            fontWeight: FontWeight.w700,
+                            color: isOpen ? const Color(0xFF166534) : const Color(0xFF64748B),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 10),
+                  Text(
+                    (pool['commodity_name'] ?? 'Komoditas Pertanian').toString(),
+                    style: GoogleFonts.plusJakartaSans(
+                      fontSize: 15,
+                      fontWeight: FontWeight.w800,
+                      color: const Color(0xFF1E293B),
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Row(
+                    children: [
+                      const Icon(LucideIcons.calendar, size: 13, color: Color(0xFF64748B)),
+                      const SizedBox(width: 5),
+                      Text(
+                        'Perkiraan Panen: ${(pool['target_harvest_date'] ?? '-').toString()}',
+                        style: GoogleFonts.plusJakartaSans(
+                          fontSize: 11.5,
+                          color: const Color(0xFF64748B),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 10),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        'Terserap ${_currencyFormat.format(allocated)} / ${_currencyFormat.format(total)} kg',
+                        style: GoogleFonts.plusJakartaSans(
+                          fontSize: 11.5,
+                          fontWeight: FontWeight.w600,
+                          color: const Color(0xFF334155),
+                        ),
+                      ),
+                      Text(
+                        'Sisa ${_currencyFormat.format(remaining)} kg',
+                        style: GoogleFonts.plusJakartaSans(
+                          fontSize: 11.5,
+                          fontWeight: FontWeight.w700,
+                          color: isOpen ? const Color(0xFFD97706) : const Color(0xFF16A34A),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 5),
+                  ClipRRect(
+                    borderRadius: BorderRadius.circular(6),
+                    child: LinearProgressIndicator(
+                      value: progress,
+                      minHeight: 7,
+                      backgroundColor: const Color(0xFFE2E8F0),
+                      valueColor: AlwaysStoppedAnimation<Color>(
+                        isOpen ? const Color(0xFF03AC0E) : const Color(0xFF16A34A),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Harga Borongan B2B',
+                            style: GoogleFonts.plusJakartaSans(
+                              fontSize: 10.5,
+                              color: const Color(0xFF64748B),
+                            ),
+                          ),
+                          Text(
+                            'Rp ${_currencyFormat.format(price)} / kg',
+                            style: GoogleFonts.plusJakartaSans(
+                              fontSize: 16,
+                              fontWeight: FontWeight.w800,
+                              color: const Color(0xFF006E04),
+                            ),
+                          ),
+                        ],
+                      ),
+                      ElevatedButton.icon(
+                        onPressed: isOpen ? () => _showTakeQuotaDialog(pool) : null,
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color(0xFF03AC0E),
+                          foregroundColor: Colors.white,
+                          disabledBackgroundColor: const Color(0xFFCBD5E1),
+                          disabledForegroundColor: Colors.white70,
+                          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 9),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                        ),
+                        icon: const Icon(LucideIcons.packagePlus, size: 15),
+                        label: Text(
+                          isOpen ? 'Ambil Kuota Borongan' : 'Kuota Penuh',
+                          style: GoogleFonts.plusJakartaSans(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            );
+          }),
+        ],
+      ),
+    );
+  }
+
+  void _showTakeQuotaDialog(Map<String, dynamic> pool) {
+    if (!_ensureAuthenticated(actionTitle: 'mengambil kuota borongan partai')) {
+      return;
+    }
+
+    final double remaining = double.tryParse((pool['remaining_quota_kg'] ?? '50').toString()) ?? 50.0;
+    final double price = double.tryParse((pool['price_per_kg'] ?? '25000').toString()) ?? 25000.0;
+    double selectedQty = remaining >= 50 ? 50.0 : remaining;
+    final TextEditingController qtyController = TextEditingController(text: selectedQty.toStringAsFixed(0));
+
+    showDialog(
+      context: context,
+      builder: (ctx) => StatefulBuilder(
+        builder: (context, setModalState) {
+          final double currentAmount = (double.tryParse(qtyController.text) ?? 0.0) * price;
+
+          return AlertDialog(
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+            title: Text(
+              'Ambil Kuota Borongan (B2B)',
+              style: GoogleFonts.plusJakartaSans(
+                fontSize: 16,
+                fontWeight: FontWeight.w700,
+                color: const Color(0xFF0F172A),
+              ),
+            ),
+            content: SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    (pool['commodity_name'] ?? '').toString(),
+                    style: GoogleFonts.plusJakartaSans(fontSize: 13, fontWeight: FontWeight.w700),
+                  ),
+                  Text(
+                    'Mitra: ${(pool['mitra_name'] ?? '').toString()} • Sisa Kuota: ${_currencyFormat.format(remaining)} kg',
+                    style: GoogleFonts.plusJakartaSans(fontSize: 11, color: const Color(0xFF64748B)),
+                  ),
+                  const SizedBox(height: 14),
+                  Text(
+                    'Jumlah Kuota Diambil (kg)',
+                    style: GoogleFonts.plusJakartaSans(fontSize: 12, fontWeight: FontWeight.w600),
+                  ),
+                  const SizedBox(height: 6),
+                  TextField(
+                    controller: qtyController,
+                    keyboardType: TextInputType.number,
+                    onChanged: (_) => setModalState(() {}),
+                    decoration: InputDecoration(
+                      suffixText: 'kg',
+                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+                      contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  Container(
+                    padding: const EdgeInsets.all(10),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFF8FAFC),
+                      borderRadius: BorderRadius.circular(10),
+                      border: Border.all(color: const Color(0xFFE2E8F0)),
+                    ),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(
+                          'Estimasi Total Nilai:',
+                          style: GoogleFonts.plusJakartaSans(fontSize: 12, color: const Color(0xFF64748B)),
+                        ),
+                        Text(
+                          'Rp ${_currencyFormat.format(currentAmount)}',
+                          style: GoogleFonts.plusJakartaSans(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w800,
+                            color: const Color(0xFF006E04),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(ctx),
+                child: Text('Batal', style: GoogleFonts.plusJakartaSans(color: const Color(0xFF64748B))),
+              ),
+              ElevatedButton(
+                onPressed: () async {
+                  final double qty = double.tryParse(qtyController.text) ?? 0.0;
+                  final messenger = ScaffoldMessenger.of(context);
+                  if (qty <= 0 || qty > remaining) {
+                    messenger.showSnackBar(
+                      SnackBar(
+                        content: Text('Jumlah kuota harus antara 1 sampai ${_currencyFormat.format(remaining)} kg.'),
+                        backgroundColor: const Color(0xFFEF4444),
+                        behavior: SnackBarBehavior.floating,
+                      ),
+                    );
+                    return;
+                  }
+
+                  Navigator.pop(ctx);
+                  final success = await _apiService.takeB2BQuota(
+                    poolId: (pool['id'] ?? '').toString(),
+                    quantityKg: qty,
+                  );
+
+                  if (!mounted) return;
+                  if (success) {
+                    messenger.showSnackBar(
+                      SnackBar(
+                        content: Text('Berhasil mengambil kuota ${qty.toStringAsFixed(0)} kg! Kontrak borongan dicatat.'),
+                        backgroundColor: const Color(0xFF03AC0E),
+                        behavior: SnackBarBehavior.floating,
+                      ),
+                    );
+                    _fetchB2BHarvestPools();
+                  } else {
+                    messenger.showSnackBar(
+                      const SnackBar(
+                        content: Text('Gagal mengajukan kuota borongan. Silakan coba lagi.'),
+                        backgroundColor: Color(0xFFEF4444),
+                        behavior: SnackBarBehavior.floating,
+                      ),
+                    );
+                  }
+                },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFF03AC0E),
+                  foregroundColor: Colors.white,
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                ),
+                child: Text('Konfirmasi Ambil', style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w700)),
+              ),
+            ],
+          );
+        },
+      ),
+    );
+  }
+
+  Widget _buildGuestProfileScreen() {
+    return Scaffold(
+      backgroundColor: const Color(0xFFF8F9FF),
+      appBar: AppBar(
+        backgroundColor: Colors.white,
+        elevation: 0.5,
+        title: Text(
+          'Akun Pengguna',
+          style: GoogleFonts.plusJakartaSans(
+            fontSize: 17,
+            fontWeight: FontWeight.w700,
+            color: const Color(0xFF0F172A),
+          ),
+        ),
+      ),
+      body: Center(
+        child: Padding(
+          padding: const EdgeInsets.all(24.0),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Container(
+                width: 80,
+                height: 80,
+                decoration: const BoxDecoration(
+                  color: Color(0xFFDCFCE7),
+                  shape: BoxShape.circle,
+                ),
+                child: const Icon(LucideIcons.user, size: 40, color: Color(0xFF03AC0E)),
+              ),
+              const SizedBox(height: 18),
+              Text(
+                'Mode Pengunjung Aktif',
+                style: GoogleFonts.plusJakartaSans(
+                  fontSize: 18,
+                  fontWeight: FontWeight.w800,
+                  color: const Color(0xFF0F172A),
+                ),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                'Anda sedang menjelajah sebagai Pengunjung. Masuk untuk mengelola pesanan, melihat riwayat transaksi, dan mengakses alamat pengiriman.',
+                textAlign: TextAlign.center,
+                style: GoogleFonts.plusJakartaSans(
+                  fontSize: 13,
+                  color: const Color(0xFF64748B),
+                  height: 1.4,
+                ),
+              ),
+              const SizedBox(height: 24),
+              SizedBox(
+                width: double.infinity,
+                height: 46,
+                child: ElevatedButton.icon(
+                  onPressed: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (_) => const LoginScreen()),
+                    );
+                  },
+                  icon: const Icon(Icons.login_rounded, size: 20),
+                  label: Text(
+                    'Masuk / Daftar Akun',
+                    style: GoogleFonts.plusJakartaSans(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFF03AC0E),
+                    foregroundColor: Colors.white,
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  ),
                 ),
               ),
             ],
           ),
         ),
-      ],
+      ),
     );
   }
 
@@ -495,6 +1204,51 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
+              if (AuthRepository().currentUser == null && UserSession().currentUser == null)
+                Container(
+                  margin: const EdgeInsets.only(bottom: 6),
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: Colors.white.withValues(alpha: 0.9),
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(color: const Color(0xFFD1FAE5)),
+                  ),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Row(
+                        children: [
+                          const Icon(LucideIcons.user, size: 13, color: Color(0xFF03AC0E)),
+                          const SizedBox(width: 6),
+                          Text(
+                            'Mode Pengunjung',
+                            style: GoogleFonts.plusJakartaSans(
+                              fontSize: 11,
+                              fontWeight: FontWeight.w600,
+                              color: const Color(0xFF334155),
+                            ),
+                          ),
+                        ],
+                      ),
+                      InkWell(
+                        onTap: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(builder: (_) => const LoginScreen()),
+                          );
+                        },
+                        child: Text(
+                          'Masuk / Daftar Akun →',
+                          style: GoogleFonts.plusJakartaSans(
+                            fontSize: 11,
+                            fontWeight: FontWeight.w700,
+                            color: const Color(0xFF006E04),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
               Row(
                 children: [
                   Expanded(
@@ -610,6 +1364,7 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen> {
                     icon: LucideIcons.shoppingCart,
                     badgeText: _cartItemCount > 0 ? '$_cartItemCount' : null,
                     onTap: () {
+                      if (!_ensureAuthenticated(actionTitle: 'melihat keranjang belanja')) return;
                       Navigator.push(
                         context,
                         MaterialPageRoute(
@@ -743,22 +1498,15 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen> {
               return Expanded(
                 child: InkWell(
                   onTap: () {
-                    if (action['id'] == 'lapor-hama') {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => const CreatePestReportScreen(),
-                        ),
-                      );
+                    if (action['id'] == 'bursa-b2b') {
+                      setState(() => _activeCatalogSegment = 1);
                       return;
                     }
-                    if (action['id'] == 'edukasi-tani') {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => const EducationFeedScreen(),
-                        ),
-                      );
+                    if (action['id'] == 'panen-segar') {
+                      setState(() {
+                        _activeCatalogSegment = 0;
+                        _selectedCategory = 'Semua';
+                      });
                       return;
                     }
                     ScaffoldMessenger.of(context).showSnackBar(
@@ -1894,129 +2642,6 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen> {
                 ),
               ],
             ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildPenyuluhEducationBanner() {
-    return Container(
-      margin: const EdgeInsets.fromLTRB(8, 8, 8, 4),
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: const Color(0xFFBBF7D0), width: 1.2),
-        boxShadow: const [
-          BoxShadow(
-            color: Color(0x06000000),
-            blurRadius: 4,
-            offset: Offset(0, 1),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Row(
-                children: [
-                  const Icon(LucideIcons.graduationCap, size: 16, color: Color(0xFF15803D)),
-                  const SizedBox(width: 6),
-                  Text(
-                    'Pojok Edukasi Pertanian',
-                    style: GoogleFonts.inter(
-                      fontSize: 12,
-                      fontWeight: FontWeight.w700,
-                      color: const Color(0xFF0F172A),
-                    ),
-                  ),
-                ],
-              ),
-              const PenyuluhOfficialBadge(size: PenyuluhBadgeSize.small),
-            ],
-          ),
-          const SizedBox(height: 6),
-          Text(
-            'Pelajari tips dan SOP budidaya resmi yang divalidasi oleh Balai Penyuluhan Pertanian (BPP) untuk hasil panen bermutu tinggi.',
-            style: GoogleFonts.inter(
-              fontSize: 10.5,
-              color: const Color(0xFF475569),
-              height: 1.35,
-            ),
-          ),
-          const SizedBox(height: 10),
-          Row(
-            children: [
-              Expanded(
-                child: InkWell(
-                  onTap: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => const EducationFeedScreen(initialVerifiedOnly: true),
-                      ),
-                    );
-                  },
-                  borderRadius: BorderRadius.circular(8),
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(vertical: 6),
-                    decoration: BoxDecoration(
-                      color: const Color(0xFFE8F5E9),
-                      borderRadius: BorderRadius.circular(8),
-                      border: Border.all(color: const Color(0xFFA5D6A7)),
-                    ),
-                    alignment: Alignment.center,
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        const Icon(LucideIcons.badgeCheck, size: 13, color: Color(0xFF15803D)),
-                        const SizedBox(width: 4),
-                        Text(
-                          'Lihat Materi Terverifikasi',
-                          style: GoogleFonts.inter(
-                            fontSize: 10.5,
-                            fontWeight: FontWeight.w700,
-                            color: const Color(0xFF14532D),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-              ),
-              const SizedBox(width: 8),
-              InkWell(
-                onTap: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => const EducationFeedScreen(),
-                    ),
-                  );
-                },
-                borderRadius: BorderRadius.circular(8),
-                child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFFF1F5F9),
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  alignment: Alignment.center,
-                  child: Text(
-                    'Buka Semua',
-                    style: GoogleFonts.inter(
-                      fontSize: 10.5,
-                      fontWeight: FontWeight.w600,
-                      color: const Color(0xFF334155),
-                    ),
-                  ),
-                ),
-              ),
-            ],
           ),
         ],
       ),

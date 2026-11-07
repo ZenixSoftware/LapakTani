@@ -72,19 +72,19 @@ class _PoktanMainShellState extends State<PoktanMainShell> {
                 ),
                 _buildNavItem(
                   index: 1,
-                  label: 'Kontrak B2B',
+                  label: 'B2B & Pool',
                   activeIcon: Icons.assignment,
                   inactiveIcon: Icons.assignment_outlined,
                 ),
                 _buildNavItem(
                   index: 2,
-                  label: 'Anggota Tani',
+                  label: 'Mitra Tani',
                   activeIcon: Icons.people,
                   inactiveIcon: Icons.people_outline,
                 ),
                 _buildNavItem(
                   index: 3,
-                  label: 'Profil & Akun',
+                  label: 'Profil Akun',
                   activeIcon: Icons.person,
                   inactiveIcon: Icons.person_outline,
                 ),
@@ -221,7 +221,7 @@ class _PoktanMembersTabState extends State<PoktanMembersTab> {
         elevation: 0.5,
         automaticallyImplyLeading: false,
         title: Text(
-          'Anggota Kelompok Tani',
+          'Anggota Mitra Tani / Poktan',
           style: GoogleFonts.plusJakartaSans(
             fontSize: 17,
             fontWeight: FontWeight.w700,
@@ -506,7 +506,7 @@ class PoktanProfileTab extends StatelessWidget {
         elevation: 0.5,
         automaticallyImplyLeading: false,
         title: Text(
-          'Profil Pengurus Poktan',
+          'Profil Pengurus Mitra Tani',
           style: GoogleFonts.plusJakartaSans(
             fontSize: 17,
             fontWeight: FontWeight.w700,
@@ -567,7 +567,7 @@ class PoktanProfileTab extends StatelessWidget {
                     borderRadius: BorderRadius.circular(20),
                   ),
                   child: Text(
-                    'Ketua Kelompok Tani • Terverifikasi',
+                    'Ketua Mitra Tani • Terverifikasi',
                     style: GoogleFonts.plusJakartaSans(
                       fontSize: 11,
                       fontWeight: FontWeight.w700,
@@ -577,7 +577,7 @@ class PoktanProfileTab extends StatelessWidget {
                 ),
                 const SizedBox(height: 12),
                 Text(
-                  'Poktan Tani Makmur • Desa Lembang',
+                  'Mitra Tani Makmur • Desa Lembang',
                   style: GoogleFonts.plusJakartaSans(
                     fontSize: 12.5,
                     color: const Color(0xFF64748B),
@@ -666,7 +666,7 @@ class PoktanProfileTab extends StatelessWidget {
               ),
               icon: const Icon(Icons.logout_rounded, size: 20),
               label: Text(
-                'Keluar dari Akun Poktan',
+                'Keluar dari Akun Mitra Tani',
                 style: GoogleFonts.plusJakartaSans(
                   fontSize: 14,
                   fontWeight: FontWeight.w700,
@@ -723,3 +723,4 @@ class PoktanProfileTab extends StatelessWidget {
     );
   }
 }
+

@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'dart:io';
+import 'package:flutter/foundation.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:http/http.dart' as http;
 import 'package:http_parser/http_parser.dart';
@@ -358,6 +359,86 @@ class ApiService {
     } catch (_) {
       return null;
     }
+  }
+
+  /// Fetch active open forward harvest pools (Bursa Partai B2B)
+  Future<List<Map<String, dynamic>>> getB2BHarvestPools() async {
+    try {
+      final response = await _fetchGet('/b2b-contracts/pools');
+      if (response.statusCode == 200) {
+        final Map<String, dynamic> body = jsonDecode(response.body);
+        final List<dynamic> list = (body['data'] as List<dynamic>?) ?? [];
+        return list.map((e) => Map<String, dynamic>.from(e as Map)).toList();
+      }
+    } catch (e) {
+      debugPrint('[API_SERVICE] Error fetching B2B harvest pools: $e');
+    }
+    return [];
+  }
+
+  /// Buyer takes wholesale quota from open harvest pool
+  Future<bool> takeB2BQuota({
+    required String poolId,
+    required double quantityKg,
+    String? buyerName,
+  }) async {
+    try {
+      final Map<String, dynamic> payload = {
+        'pool_id': poolId,
+        'quantity_kg': quantityKg,
+      };
+      if (buyerName != null) {
+        payload['buyer_name'] = buyerName;
+      }
+      final response = await _post('/b2b-contracts/take-quota', payload);
+      return response.statusCode == 200 || response.statusCode == 201;
+    } catch (e) {
+      debugPrint('[API_SERVICE] Error taking B2B quota: $e');
+      return false;
+    }
+  }
+
+  /// Mitra Tani creates a new forward harvest pool
+  Future<bool> createB2BHarvestPool({
+    required String commodityName,
+    required double totalQuotaKg,
+    required double pricePerKg,
+    required String targetHarvestDate,
+    String? notes,
+    String? mitraName,
+  }) async {
+    try {
+      final Map<String, dynamic> payload = {
+        'commodity_name': commodityName,
+        'total_quota_kg': totalQuotaKg,
+        'price_per_kg': pricePerKg,
+        'target_harvest_date': targetHarvestDate,
+      };
+      if (notes != null) {
+        payload['notes'] = notes;
+      }
+      if (mitraName != null) {
+        payload['mitra_name'] = mitraName;
+      }
+      final response = await _post('/b2b-contracts/pools', payload);
+      return response.statusCode == 200 || response.statusCode == 201;
+    } catch (e) {
+      debugPrint('[API_SERVICE] Error creating B2B pool: $e');
+      return false;
+    }
+  }
+
+  /// Zero-Waste Spillover: spill unsold B2B quota into retail inventory
+  Future<Map<String, dynamic>?> spilloverToRetail({required String poolId}) async {
+    try {
+      final response = await _post('/b2b-contracts/pools/$poolId/spillover-to-retail', {});
+      if (response.statusCode == 200) {
+        return jsonDecode(response.body) as Map<String, dynamic>;
+      }
+    } catch (e) {
+      debugPrint('[API_SERVICE] Error spilling over to retail: $e');
+    }
+    return null;
   }
 
   Future<Map<String, dynamic>?> checkPaymentStatus(String orderId) async {
