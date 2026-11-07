@@ -14,6 +14,7 @@ class User {
   final String id;
   final String email;
   final String? fullName;
+  final String? phone;
   final String? role;
   final int? roleId;
   final bool isChairman;
@@ -23,6 +24,7 @@ class User {
     required this.id,
     required this.email,
     this.fullName,
+    this.phone,
     this.role,
     this.roleId,
     this.isChairman = false,
@@ -46,6 +48,7 @@ class User {
       id: json['id']?.toString() ?? '',
       email: json['email']?.toString() ?? '',
       fullName: json['full_name']?.toString(),
+      phone: json['phone']?.toString() ?? json['phone_number']?.toString(),
       role: json['role']?.toString(),
       roleId: parsedRoleId,
       isChairman: chairmanFlag,
@@ -57,6 +60,7 @@ class User {
         'id': id,
         'email': email,
         'full_name': fullName,
+        'phone': phone,
         'role': role,
         'role_id': roleId,
         'is_chairman': isChairman,

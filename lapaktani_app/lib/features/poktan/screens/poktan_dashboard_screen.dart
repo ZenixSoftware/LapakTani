@@ -2,8 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 import 'package:lucide_icons/lucide_icons.dart';
+import '../../../core/services/user_session.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/widgets/custom_soft_card.dart';
+import '../../auth/auth_repository.dart';
+import '../../navigation/role_based_app_shell.dart';
 import '../models/b2b_order_model.dart';
 import '../models/poktan_member_model.dart';
 import '../services/poktan_service.dart';
@@ -502,26 +505,34 @@ class _PoktanDashboardScreenState extends State<PoktanDashboardScreen>
               ),
               const SizedBox(height: 12),
 
-              // Deadline info and Allocate button
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              // Deadline info and Action buttons
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Row(
                     children: [
                       const Icon(LucideIcons.calendar, size: 14, color: Color(0xFF94A3B8)),
                       const SizedBox(width: 6),
-                      Text(
-                        'Tenggat: ${order.deadline}',
-                        style: GoogleFonts.plusJakartaSans(
-                          fontSize: 11,
-                          color: const Color(0xFF64748B),
+                      Expanded(
+                        child: Text(
+                          'Tenggat: ${order.deadline}',
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: GoogleFonts.plusJakartaSans(
+                            fontSize: 11,
+                            color: const Color(0xFF64748B),
+                          ),
                         ),
                       ),
                     ],
                   ),
-                  Row(
+                  const SizedBox(height: 10),
+                  Wrap(
+                    spacing: 8,
+                    runSpacing: 8,
+                    alignment: WrapAlignment.end,
                     children: [
-                      if (order.status != 'completed' && order.status != 'PARTIALLY_FULFILLED') ...[
+                      if (order.status != 'completed' && order.status != 'PARTIALLY_FULFILLED')
                         OutlinedButton.icon(
                           onPressed: () => _showSettleDialog(order),
                           style: OutlinedButton.styleFrom(
@@ -533,6 +544,8 @@ class _PoktanDashboardScreenState extends State<PoktanDashboardScreen>
                           icon: const Icon(LucideIcons.scale, size: 14, color: Color(0xFF03AC0E)),
                           label: Text(
                             'Timbang Masuk',
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
                             style: GoogleFonts.plusJakartaSans(
                               fontSize: 11.5,
                               fontWeight: FontWeight.w700,
@@ -540,8 +553,6 @@ class _PoktanDashboardScreenState extends State<PoktanDashboardScreen>
                             ),
                           ),
                         ),
-                        const SizedBox(width: 8),
-                      ],
                       ElevatedButton.icon(
                         onPressed: () => _showAllocateQuotaSheet(order),
                         style: ElevatedButton.styleFrom(
@@ -560,6 +571,8 @@ class _PoktanDashboardScreenState extends State<PoktanDashboardScreen>
                         ),
                         label: Text(
                           isFullyAllocated ? 'Atur Ulang' : 'Bagi Kuota',
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
                           style: GoogleFonts.plusJakartaSans(
                             fontSize: 12,
                             fontWeight: FontWeight.w700,
@@ -690,6 +703,65 @@ class _PoktanDashboardScreenState extends State<PoktanDashboardScreen>
     );
   }
 
+  Future<void> _handleLogout() async {
+    final bool? confirm = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text(
+          'Keluar dari Akun',
+          style: GoogleFonts.plusJakartaSans(
+            fontWeight: FontWeight.w700,
+            fontSize: 16,
+          ),
+        ),
+        content: Text(
+          'Apakah Anda yakin ingin keluar dari akun Pengurus Poktan?',
+          style: GoogleFonts.plusJakartaSans(
+            fontSize: 13,
+            color: const Color(0xFF475569),
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: Text(
+              'Batal',
+              style: GoogleFonts.plusJakartaSans(
+                color: const Color(0xFF64748B),
+              ),
+            ),
+          ),
+          ElevatedButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFFDC2626),
+              foregroundColor: Colors.white,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(8),
+              ),
+            ),
+            child: Text(
+              'Keluar',
+              style: GoogleFonts.plusJakartaSans(
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+
+    if (confirm == true) {
+      await UserSession().clear();
+      await AuthRepository().signOut();
+      if (!mounted) return;
+      Navigator.of(context, rootNavigator: true).pushAndRemoveUntil(
+        MaterialPageRoute(builder: (_) => const RoleBasedAppShell()),
+        (route) => false,
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -714,7 +786,13 @@ class _PoktanDashboardScreenState extends State<PoktanDashboardScreen>
         actions: [
           IconButton(
             icon: const Icon(LucideIcons.refreshCw, color: Color(0xFF475569), size: 20),
+            tooltip: 'Segarkan',
             onPressed: _loadDashboardData,
+          ),
+          IconButton(
+            icon: const Icon(Icons.logout_rounded, color: Color(0xFFDC2626), size: 22),
+            tooltip: 'Keluar',
+            onPressed: _handleLogout,
           ),
         ],
       ),

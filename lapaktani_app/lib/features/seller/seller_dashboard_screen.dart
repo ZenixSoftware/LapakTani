@@ -2,6 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 import '../../core/services/api_service.dart';
+import '../../core/services/user_session.dart';
+import '../auth/auth_repository.dart';
+import '../navigation/role_based_app_shell.dart';
 import '../orders/models/order_model.dart';
 import '../orders/models/notification_model.dart';
 import '../orders/services/order_service.dart';
@@ -355,6 +358,65 @@ class _SellerDashboardScreenState extends State<SellerDashboardScreen> {
     );
   }
 
+  Future<void> _handleLogout() async {
+    final bool? confirm = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text(
+          'Keluar dari Akun',
+          style: GoogleFonts.plusJakartaSans(
+            fontWeight: FontWeight.w700,
+            fontSize: 16,
+          ),
+        ),
+        content: Text(
+          'Apakah Anda yakin ingin keluar dari akun Penjual / Poktan?',
+          style: GoogleFonts.plusJakartaSans(
+            fontSize: 13,
+            color: const Color(0xFF475569),
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: Text(
+              'Batal',
+              style: GoogleFonts.plusJakartaSans(
+                color: const Color(0xFF64748B),
+              ),
+            ),
+          ),
+          ElevatedButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFFDC2626),
+              foregroundColor: Colors.white,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(8),
+              ),
+            ),
+            child: Text(
+              'Keluar',
+              style: GoogleFonts.plusJakartaSans(
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+
+    if (confirm == true) {
+      await UserSession().clear();
+      await AuthRepository().signOut();
+      if (!mounted) return;
+      Navigator.of(context, rootNavigator: true).pushAndRemoveUntil(
+        MaterialPageRoute(builder: (_) => const RoleBasedAppShell()),
+        (route) => false,
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -362,10 +424,13 @@ class _SellerDashboardScreenState extends State<SellerDashboardScreen> {
       appBar: AppBar(
         backgroundColor: Colors.white.withValues(alpha: 0.95),
         elevation: 0.5,
-        leading: IconButton(
-          icon: const Icon(LucideIcons.arrowLeft, color: Color(0xFF121C2A), size: 22),
-          onPressed: () => Navigator.of(context, rootNavigator: true).pop(),
-        ),
+        automaticallyImplyLeading: false,
+        leading: Navigator.canPop(context)
+            ? IconButton(
+                icon: const Icon(LucideIcons.arrowLeft, color: Color(0xFF121C2A), size: 22),
+                onPressed: () => Navigator.of(context, rootNavigator: true).pop(),
+              )
+            : null,
         title: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           mainAxisAlignment: MainAxisAlignment.center,
@@ -465,6 +530,11 @@ class _SellerDashboardScreenState extends State<SellerDashboardScreen> {
                 ),
               );
             },
+          ),
+          IconButton(
+            icon: const Icon(Icons.logout_rounded, color: Color(0xFFDC2626), size: 21),
+            tooltip: 'Keluar',
+            onPressed: _handleLogout,
           ),
           const SizedBox(width: 4),
         ],

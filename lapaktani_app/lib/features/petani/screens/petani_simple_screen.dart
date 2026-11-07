@@ -5,9 +5,9 @@ import 'package:lucide_icons/lucide_icons.dart';
 import 'package:lapaktani_app/core/services/api_service.dart';
 import 'package:lapaktani_app/core/services/user_session.dart';
 import 'package:lapaktani_app/features/auth/auth_repository.dart';
-import 'package:lapaktani_app/features/auth/login_screen.dart';
 import 'package:lapaktani_app/features/community/screens/create_pest_report_screen.dart';
 import 'package:lapaktani_app/features/community/screens/education_feed_screen.dart';
+import 'package:lapaktani_app/features/navigation/role_based_app_shell.dart';
 import 'package:lapaktani_app/features/poktan/screens/farmer_tasks_screen.dart';
 import 'package:lapaktani_app/features/poktan/services/poktan_service.dart';
 
@@ -283,9 +283,10 @@ class _PetaniSimpleScreenState extends State<PetaniSimpleScreen> {
 
     if (confirm == true) {
       await UserSession().clear();
+      await AuthRepository().signOut();
       if (!mounted) return;
-      Navigator.of(context).pushAndRemoveUntil(
-        MaterialPageRoute(builder: (_) => const LoginScreen()),
+      Navigator.of(context, rootNavigator: true).pushAndRemoveUntil(
+        MaterialPageRoute(builder: (_) => const RoleBasedAppShell()),
         (route) => false,
       );
     }
@@ -333,7 +334,7 @@ class _PetaniSimpleScreenState extends State<PetaniSimpleScreen> {
             },
           ),
           IconButton(
-            icon: const Icon(LucideIcons.logOut, color: Colors.white),
+            icon: const Icon(Icons.logout_rounded, color: Colors.white),
             tooltip: 'Keluar',
             onPressed: _handleLogout,
           ),
@@ -520,29 +521,29 @@ class _PetaniSimpleScreenState extends State<PetaniSimpleScreen> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Row(
-                children: [
-                  Container(
-                    padding: const EdgeInsets.all(8),
-                    decoration: BoxDecoration(
-                      color: const Color(0xFFEFF6FF),
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: const Icon(LucideIcons.clipboardCheck, size: 18, color: Color(0xFF2563EB)),
-                  ),
-                  const SizedBox(width: 10),
-                  Text(
-                    'Tugas Penyerapan Kontrak Poktan',
-                    style: GoogleFonts.plusJakartaSans(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w700,
-                      color: const Color(0xFF121C2A),
-                    ),
-                  ),
-                ],
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFEFF6FF),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: const Icon(LucideIcons.clipboardCheck, size: 18, color: Color(0xFF2563EB)),
               ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Text(
+                  'Tugas Penyerapan Kontrak Poktan',
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: GoogleFonts.plusJakartaSans(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w700,
+                    color: const Color(0xFF121C2A),
+                  ),
+                ),
+              ),
+              const SizedBox(width: 8),
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                 decoration: BoxDecoration(
@@ -641,29 +642,29 @@ class _PetaniSimpleScreenState extends State<PetaniSimpleScreen> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Row(
-                children: [
-                  Container(
-                    padding: const EdgeInsets.all(8),
-                    decoration: BoxDecoration(
-                      color: const Color(0xFFFEF3C7),
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: const Icon(LucideIcons.activity, size: 18, color: Color(0xFFD97706)),
-                  ),
-                  const SizedBox(width: 10),
-                  Text(
-                    'Telemetri Kualitas Tanah IoT',
-                    style: GoogleFonts.plusJakartaSans(
-                      fontSize: 14.5,
-                      fontWeight: FontWeight.w700,
-                      color: const Color(0xFF121C2A),
-                    ),
-                  ),
-                ],
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFFEF3C7),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: const Icon(LucideIcons.activity, size: 18, color: Color(0xFFD97706)),
               ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Text(
+                  'Telemetri Kualitas Tanah IoT',
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: GoogleFonts.plusJakartaSans(
+                    fontSize: 14.5,
+                    fontWeight: FontWeight.w700,
+                    color: const Color(0xFF121C2A),
+                  ),
+                ),
+              ),
+              const SizedBox(width: 8),
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                 decoration: BoxDecoration(

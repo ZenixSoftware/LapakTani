@@ -4,7 +4,7 @@ import 'package:lapaktani_app/features/auth/auth_repository.dart';
 import 'package:lapaktani_app/features/home/home_dashboard_screen.dart';
 import 'package:lapaktani_app/features/penyuluh/screens/penyuluh_hub_screen.dart';
 import 'package:lapaktani_app/features/petani/screens/petani_simple_screen.dart';
-import 'package:lapaktani_app/features/poktan/screens/poktan_dashboard_screen.dart';
+import 'package:lapaktani_app/features/poktan/screens/poktan_main_shell.dart';
 
 class RoleBasedAppShell extends StatefulWidget {
   const RoleBasedAppShell({super.key});
@@ -46,8 +46,8 @@ class _RoleBasedAppShellState extends State<RoleBasedAppShell> {
         // 3. PETANI (role_id == 1 or role == 'petani')
         if (roleId == 1 || roleStr == 'petani') {
           if (isChairman) {
-            // POKTAN CHAIRMAN: Poktan Management Dashboard
-            return const PoktanDashboardScreen();
+            // POKTAN CHAIRMAN: Unified Poktan Management Shell (Retail + B2B + Members + Profile)
+            return const PoktanMainShell();
           } else {
             // PETANI ANGGOTA: Simplified Field Farmer Screen
             return const PetaniSimpleScreen();
