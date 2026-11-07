@@ -8,7 +8,7 @@ import '../../core/services/user_session.dart';
 import '../auth/auth_repository.dart';
 import '../auth/login_screen.dart';
 import '../cart/cart_screen.dart';
-import '../community/screens/education_feed_screen.dart';
+import '../buyer/screens/wholesale_detail_screen.dart';
 import '../order/order_history_screen.dart';
 import '../product/product_detail_screen.dart';
 import '../profile/profile_screen.dart';
@@ -24,7 +24,6 @@ class HomeDashboardScreen extends StatefulWidget {
 class _HomeDashboardScreenState extends State<HomeDashboardScreen> {
   final ApiService _apiService = ApiService();
   int _currentBottomNavIndex = 0;
-  int _activeCatalogSegment = 0; // 0: Retail Panen, 1: Bursa Partai (B2B)
   final Set<dynamic> _wishlistIds = {};
   int _cartItemCount = 4;
   List<dynamic> _products = [];
@@ -35,7 +34,34 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen> {
 
   String _searchQuery = '';
   String _selectedCategory = 'Semua';
+  String _wholesaleFilter = 'Semua';
   final TextEditingController _searchController = TextEditingController();
+
+  final List<String> _wholesaleFilterChips = [
+    'Semua',
+    'Cabai',
+    'Tomat',
+    'Bawang',
+    'Sayur Daun',
+    'Umbi',
+  ];
+
+  List<Map<String, dynamic>> get _filteredWholesalePools {
+    if (_wholesaleFilter == 'Semua') return _b2bHarvestPools;
+    final f = _wholesaleFilter.toLowerCase();
+    return _b2bHarvestPools.where((p) {
+      final commodity = (p['commodity_name'] ?? '').toString().toLowerCase();
+      final variety = (p['variety'] ?? '').toString().toLowerCase();
+      return commodity.contains(f) || variety.contains(f);
+    }).toList();
+  }
+
+  String _resolveImageUrl(String? rawUrl) {
+    if (rawUrl == null || rawUrl.isEmpty) return '';
+    if (rawUrl.startsWith('http')) return rawUrl;
+    final clean = rawUrl.startsWith('/') ? rawUrl.substring(1) : rawUrl;
+    return '${ApiService.baseUrl.replaceAll('/api', '')}/$clean';
+  }
 
   final List<String> _categories = [
     'Semua',
@@ -518,7 +544,7 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen> {
   Widget _buildBodyForCurrentTab() {
     switch (_currentBottomNavIndex) {
       case 1:
-        return _buildFeedTab();
+        return _buildWholesaleCatalogTab();
       case 2:
         return const OrderHistoryScreen(isTabEmbedded: true);
       case 3:
@@ -537,561 +563,440 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen> {
     return Column(
       children: [
         _buildTopStickyHeader(),
-        _buildCatalogSegmentSwitch(),
         Expanded(
-          child: _activeCatalogSegment == 1
-              ? _buildBursaPartaiB2BView()
-              : CustomScrollView(
-                  slivers: [
-                    SliverToBoxAdapter(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          _buildQuickActionServices(),
-                          _buildRecentlyViewedSection(),
-                          _buildCategoryTabBar(),
-                          _buildMainFeedSection(),
-                          _buildTrustGuaranteeBanner(),
-                          const SizedBox(height: 16),
-                        ],
-                      ),
-                    ),
+          child: CustomScrollView(
+            slivers: [
+              SliverToBoxAdapter(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    _buildQuickActionServices(),
+                    _buildRecentlyViewedSection(),
+                    _buildCategoryTabBar(),
+                    _buildMainFeedSection(),
+                    _buildTrustGuaranteeBanner(),
+                    const SizedBox(height: 16),
                   ],
                 ),
+              ),
+            ],
+          ),
         ),
       ],
     );
   }
 
-  Widget _buildCatalogSegmentSwitch() {
-    return Container(
-      margin: const EdgeInsets.fromLTRB(10, 4, 10, 8),
-      padding: const EdgeInsets.all(3.5),
-      decoration: BoxDecoration(
-        color: const Color(0xFFE2E8F0),
-        borderRadius: BorderRadius.circular(12),
-      ),
-      child: Row(
-        children: [
-          Expanded(
-            child: InkWell(
-              onTap: () => setState(() => _activeCatalogSegment = 0),
-              borderRadius: BorderRadius.circular(9),
-              child: Container(
-                padding: const EdgeInsets.symmetric(vertical: 7.5),
-                decoration: BoxDecoration(
-                  color: _activeCatalogSegment == 0 ? Colors.white : Colors.transparent,
-                  borderRadius: BorderRadius.circular(9),
-                  boxShadow: _activeCatalogSegment == 0
-                      ? const [BoxShadow(color: Color(0x12000000), blurRadius: 4, offset: Offset(0, 1))]
-                      : null,
-                ),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Icon(
-                      LucideIcons.shoppingBag,
-                      size: 15,
-                      color: _activeCatalogSegment == 0 ? const Color(0xFF03AC0E) : const Color(0xFF64748B),
-                    ),
-                    const SizedBox(width: 6),
-                    Text(
-                      'Katalog Retail',
-                      style: GoogleFonts.plusJakartaSans(
-                        fontSize: 12.5,
-                        fontWeight: _activeCatalogSegment == 0 ? FontWeight.w700 : FontWeight.w600,
-                        color: _activeCatalogSegment == 0 ? const Color(0xFF0F172A) : const Color(0xFF64748B),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
+
+
+  Widget _buildWholesaleCatalogTab() {
+    return Scaffold(
+      backgroundColor: const Color(0xFFF8FAFC),
+      appBar: AppBar(
+        backgroundColor: Colors.white,
+        foregroundColor: const Color(0xFF0F172A),
+        elevation: 0.5,
+        title: Text(
+          'Bursa Grosir & Partai (B2B)',
+          style: GoogleFonts.plusJakartaSans(
+            fontSize: 16.5,
+            fontWeight: FontWeight.w800,
           ),
-          Expanded(
-            child: InkWell(
-              onTap: () => setState(() => _activeCatalogSegment = 1),
-              borderRadius: BorderRadius.circular(9),
-              child: Container(
-                padding: const EdgeInsets.symmetric(vertical: 7.5),
-                decoration: BoxDecoration(
-                  color: _activeCatalogSegment == 1 ? Colors.white : Colors.transparent,
-                  borderRadius: BorderRadius.circular(9),
-                  boxShadow: _activeCatalogSegment == 1
-                      ? const [BoxShadow(color: Color(0x12000000), blurRadius: 4, offset: Offset(0, 1))]
-                      : null,
-                ),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Icon(
-                      LucideIcons.packageCheck,
-                      size: 15,
-                      color: _activeCatalogSegment == 1 ? const Color(0xFF006E04) : const Color(0xFF64748B),
-                    ),
-                    const SizedBox(width: 6),
-                    Text(
-                      'Bursa Partai (B2B)',
-                      style: GoogleFonts.plusJakartaSans(
-                        fontSize: 12.5,
-                        fontWeight: _activeCatalogSegment == 1 ? FontWeight.w700 : FontWeight.w600,
-                        color: _activeCatalogSegment == 1 ? const Color(0xFF0F172A) : const Color(0xFF64748B),
-                      ),
-                    ),
-                    const SizedBox(width: 6),
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1.5),
-                      decoration: BoxDecoration(
-                        color: const Color(0xFFDCFCE7),
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: Text(
-                        'Pool',
-                        style: GoogleFonts.plusJakartaSans(
-                          fontSize: 9,
-                          fontWeight: FontWeight.w800,
-                          color: const Color(0xFF166534),
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
+        ),
+        actions: [
+          IconButton(
+            icon: const Icon(LucideIcons.shoppingBag, size: 20),
+            onPressed: () {
+              if (!_ensureAuthenticated(actionTitle: 'melihat keranjang belanja')) return;
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => const CartScreen()),
+              );
+            },
           ),
         ],
       ),
-    );
-  }
-
-  Widget _buildBursaPartaiB2BView() {
-    if (_isLoadingB2BPools) {
-      return const Center(child: CircularProgressIndicator(color: Color(0xFF03AC0E)));
-    }
-
-    final pools = _b2bHarvestPools.isNotEmpty
-        ? _b2bHarvestPools
-        : [
-            {
-              'id': 'pool-01',
-              'mitra_name': 'Mitra Tani Makmur',
-              'commodity_name': 'Cabai Merah Keriting Grade A',
-              'target_harvest_date': '15 Nov 2026',
-              'total_quota_kg': 350.0,
-              'allocated_quota_kg': 300.0,
-              'remaining_quota_kg': 50.0,
-              'price_per_kg': 28000.0,
-              'status': 'open',
-              'notes': 'Hasil panen lahan konsolidasi Lembang',
-            },
-            {
-              'id': 'pool-02',
-              'mitra_name': 'Mitra Tani Pasundan',
-              'commodity_name': 'Tomat Beef Organik Segar',
-              'target_harvest_date': '20 Nov 2026',
-              'total_quota_kg': 500.0,
-              'allocated_quota_kg': 200.0,
-              'remaining_quota_kg': 300.0,
-              'price_per_kg': 12500.0,
-              'status': 'open',
-              'notes': 'Dipetik subuh dari dataran tinggi Pangalengan',
-            },
-            {
-              'id': 'pool-03',
-              'mitra_name': 'Mitra Tani Berkah Mandiri',
-              'commodity_name': 'Kentang Granola Super',
-              'target_harvest_date': '28 Nov 2026',
-              'total_quota_kg': 1000.0,
-              'allocated_quota_kg': 650.0,
-              'remaining_quota_kg': 350.0,
-              'price_per_kg': 16000.0,
-              'status': 'open',
-              'notes': 'Sortir grade restoran & katering partai besar',
-            },
-          ];
-
-    return RefreshIndicator(
-      onRefresh: _fetchB2BHarvestPools,
-      color: const Color(0xFF03AC0E),
-      child: ListView(
-        padding: const EdgeInsets.fromLTRB(12, 8, 12, 30),
-        children: [
-          Container(
-            padding: const EdgeInsets.all(14),
-            decoration: BoxDecoration(
-              gradient: const LinearGradient(
-                colors: [Color(0xFF0F766E), Color(0xFF006E04)],
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-              ),
-              borderRadius: BorderRadius.circular(14),
-              boxShadow: const [
-                BoxShadow(
-                  color: Color(0x18006E04),
-                  blurRadius: 8,
-                  offset: Offset(0, 3),
-                ),
-              ],
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
+      body: RefreshIndicator(
+        onRefresh: _fetchB2BHarvestPools,
+        color: const Color(0xFF006E04),
+        child: CustomScrollView(
+          slivers: [
+            SliverToBoxAdapter(
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Icon(LucideIcons.packageCheck, color: Colors.white, size: 20),
-                    const SizedBox(width: 8),
                     Text(
-                      'Bursa Kontrak Partai (B2B)',
+                      'Bursa Partai Komoditas Segar',
                       style: GoogleFonts.plusJakartaSans(
-                        fontSize: 15,
-                        fontWeight: FontWeight.w700,
-                        color: Colors.white,
+                        fontSize: 18,
+                        fontWeight: FontWeight.w800,
+                        color: const Color(0xFF0F172A),
                       ),
                     ),
+                    const SizedBox(height: 3),
+                    Text(
+                      'Konsolidasi kuota panen borongan langsung dari kebun binaan Mitra Tani bergaransi escrow.',
+                      style: GoogleFonts.plusJakartaSans(
+                        fontSize: 12.5,
+                        color: const Color(0xFF64748B),
+                        height: 1.35,
+                      ),
+                    ),
+                    const SizedBox(height: 14),
+
+                    SingleChildScrollView(
+                      scrollDirection: Axis.horizontal,
+                      child: Row(
+                        children: _wholesaleFilterChips.map((chip) {
+                          final isSelected = _wholesaleFilter == chip;
+                          return Padding(
+                            padding: const EdgeInsets.only(right: 8),
+                            child: FilterChip(
+                              label: Text(chip),
+                              selected: isSelected,
+                              onSelected: (val) {
+                                setState(() => _wholesaleFilter = chip);
+                              },
+                              selectedColor: const Color(0xFFDCFCE7),
+                              checkmarkColor: const Color(0xFF006E04),
+                              backgroundColor: Colors.white,
+                              labelStyle: GoogleFonts.plusJakartaSans(
+                                fontSize: 12,
+                                fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
+                                color: isSelected ? const Color(0xFF006E04) : const Color(0xFF475569),
+                              ),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(20),
+                                side: BorderSide(
+                                  color: isSelected ? const Color(0xFF006E04) : const Color(0xFFE2E8F0),
+                                ),
+                              ),
+                            ),
+                          );
+                        }).toList(),
+                      ),
+                    ),
+                    const SizedBox(height: 10),
                   ],
                 ),
-                const SizedBox(height: 6),
-                Text(
-                  'Ambil kuota borongan hasil panen konsolidasi lahan petani langsung sebelum masa petik dengan harga grosir resmi Mitra Tani.',
-                  style: GoogleFonts.plusJakartaSans(
-                    fontSize: 11.5,
-                    color: const Color(0xFFE6FFFA),
-                    height: 1.35,
-                  ),
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(height: 14),
-          Text(
-            'Penawaran Pool Panen Mitra Tani Aktif',
-            style: GoogleFonts.plusJakartaSans(
-              fontSize: 14,
-              fontWeight: FontWeight.w700,
-              color: const Color(0xFF1E293B),
-            ),
-          ),
-          const SizedBox(height: 10),
-          ...pools.map((pool) {
-            final double total = double.tryParse((pool['total_quota_kg'] ?? '0').toString()) ?? 0.0;
-            final double allocated = double.tryParse((pool['allocated_quota_kg'] ?? '0').toString()) ?? 0.0;
-            final double remaining = double.tryParse((pool['remaining_quota_kg'] ?? '0').toString()) ?? 0.0;
-            final double price = double.tryParse((pool['price_per_kg'] ?? '0').toString()) ?? 0.0;
-            final double progress = total > 0 ? (allocated / total).clamp(0.0, 1.0) : 0.0;
-            final bool isOpen = (pool['status'] ?? 'open') == 'open' && remaining > 0;
-
-            return Container(
-              margin: const EdgeInsets.only(bottom: 12),
-              padding: const EdgeInsets.all(14),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(16),
-                border: Border.all(color: const Color(0xFFE2E8F0)),
-                boxShadow: const [
-                  BoxShadow(
-                    color: Color(0x06000000),
-                    blurRadius: 6,
-                    offset: Offset(0, 2),
-                  ),
-                ],
               ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            ),
+
+            if (_isLoadingB2BPools)
+              const SliverFillRemaining(
+                child: Center(
+                  child: CircularProgressIndicator(color: Color(0xFF006E04)),
+                ),
+              )
+            else if (_filteredWholesalePools.isEmpty)
+              SliverFillRemaining(
+                child: Center(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      Row(
-                        children: [
-                          Container(
-                            padding: const EdgeInsets.all(6),
-                            decoration: BoxDecoration(
-                              color: const Color(0xFFDCFCE7),
-                              borderRadius: BorderRadius.circular(8),
-                            ),
-                            child: const Icon(LucideIcons.shieldCheck, size: 16, color: Color(0xFF166534)),
-                          ),
-                          const SizedBox(width: 8),
-                          Text(
-                            (pool['mitra_name'] ?? 'Mitra Tani Makmur').toString(),
-                            style: GoogleFonts.plusJakartaSans(
-                              fontSize: 13,
-                              fontWeight: FontWeight.w700,
-                              color: const Color(0xFF0F172A),
-                            ),
-                          ),
-                        ],
-                      ),
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                        decoration: BoxDecoration(
-                          color: isOpen ? const Color(0xFFDCFCE7) : const Color(0xFFF1F5F9),
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        child: Text(
-                          isOpen ? 'Bursa Terbuka' : 'Selesai / Terpenuhi',
-                          style: GoogleFonts.plusJakartaSans(
-                            fontSize: 10,
-                            fontWeight: FontWeight.w700,
-                            color: isOpen ? const Color(0xFF166534) : const Color(0xFF64748B),
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 10),
-                  Text(
-                    (pool['commodity_name'] ?? 'Komoditas Pertanian').toString(),
-                    style: GoogleFonts.plusJakartaSans(
-                      fontSize: 15,
-                      fontWeight: FontWeight.w800,
-                      color: const Color(0xFF1E293B),
-                    ),
-                  ),
-                  const SizedBox(height: 4),
-                  Row(
-                    children: [
-                      const Icon(LucideIcons.calendar, size: 13, color: Color(0xFF64748B)),
-                      const SizedBox(width: 5),
+                      const Icon(LucideIcons.packageOpen, size: 48, color: Color(0xFF94A3B8)),
+                      const SizedBox(height: 12),
                       Text(
-                        'Perkiraan Panen: ${(pool['target_harvest_date'] ?? '-').toString()}',
+                        'Tidak ada bursa partai untuk kategori ini',
                         style: GoogleFonts.plusJakartaSans(
-                          fontSize: 11.5,
-                          color: const Color(0xFF64748B),
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 10),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text(
-                        'Terserap ${_currencyFormat.format(allocated)} / ${_currencyFormat.format(total)} kg',
-                        style: GoogleFonts.plusJakartaSans(
-                          fontSize: 11.5,
+                          fontSize: 14,
                           fontWeight: FontWeight.w600,
-                          color: const Color(0xFF334155),
-                        ),
-                      ),
-                      Text(
-                        'Sisa ${_currencyFormat.format(remaining)} kg',
-                        style: GoogleFonts.plusJakartaSans(
-                          fontSize: 11.5,
-                          fontWeight: FontWeight.w700,
-                          color: isOpen ? const Color(0xFFD97706) : const Color(0xFF16A34A),
+                          color: const Color(0xFF475569),
                         ),
                       ),
                     ],
                   ),
-                  const SizedBox(height: 5),
-                  ClipRRect(
-                    borderRadius: BorderRadius.circular(6),
-                    child: LinearProgressIndicator(
-                      value: progress,
-                      minHeight: 7,
-                      backgroundColor: const Color(0xFFE2E8F0),
-                      valueColor: AlwaysStoppedAnimation<Color>(
-                        isOpen ? const Color(0xFF03AC0E) : const Color(0xFF16A34A),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 12),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            'Harga Borongan B2B',
-                            style: GoogleFonts.plusJakartaSans(
-                              fontSize: 10.5,
-                              color: const Color(0xFF64748B),
-                            ),
-                          ),
-                          Text(
-                            'Rp ${_currencyFormat.format(price)} / kg',
-                            style: GoogleFonts.plusJakartaSans(
-                              fontSize: 16,
-                              fontWeight: FontWeight.w800,
-                              color: const Color(0xFF006E04),
-                            ),
-                          ),
-                        ],
-                      ),
-                      ElevatedButton.icon(
-                        onPressed: isOpen ? () => _showTakeQuotaDialog(pool) : null,
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: const Color(0xFF03AC0E),
-                          foregroundColor: Colors.white,
-                          disabledBackgroundColor: const Color(0xFFCBD5E1),
-                          disabledForegroundColor: Colors.white70,
-                          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 9),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(10),
-                          ),
-                        ),
-                        icon: const Icon(LucideIcons.packagePlus, size: 15),
-                        label: Text(
-                          isOpen ? 'Ambil Kuota Borongan' : 'Kuota Penuh',
-                          style: GoogleFonts.plusJakartaSans(
-                            fontSize: 12,
-                            fontWeight: FontWeight.w700,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ],
-              ),
-            );
-          }),
-        ],
-      ),
-    );
-  }
-
-  void _showTakeQuotaDialog(Map<String, dynamic> pool) {
-    if (!_ensureAuthenticated(actionTitle: 'mengambil kuota borongan partai')) {
-      return;
-    }
-
-    final double remaining = double.tryParse((pool['remaining_quota_kg'] ?? '50').toString()) ?? 50.0;
-    final double price = double.tryParse((pool['price_per_kg'] ?? '25000').toString()) ?? 25000.0;
-    double selectedQty = remaining >= 50 ? 50.0 : remaining;
-    final TextEditingController qtyController = TextEditingController(text: selectedQty.toStringAsFixed(0));
-
-    showDialog(
-      context: context,
-      builder: (ctx) => StatefulBuilder(
-        builder: (context, setModalState) {
-          final double currentAmount = (double.tryParse(qtyController.text) ?? 0.0) * price;
-
-          return AlertDialog(
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-            title: Text(
-              'Ambil Kuota Borongan (B2B)',
-              style: GoogleFonts.plusJakartaSans(
-                fontSize: 16,
-                fontWeight: FontWeight.w700,
-                color: const Color(0xFF0F172A),
-              ),
-            ),
-            content: SingleChildScrollView(
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    (pool['commodity_name'] ?? '').toString(),
-                    style: GoogleFonts.plusJakartaSans(fontSize: 13, fontWeight: FontWeight.w700),
-                  ),
-                  Text(
-                    'Mitra: ${(pool['mitra_name'] ?? '').toString()} • Sisa Kuota: ${_currencyFormat.format(remaining)} kg',
-                    style: GoogleFonts.plusJakartaSans(fontSize: 11, color: const Color(0xFF64748B)),
-                  ),
-                  const SizedBox(height: 14),
-                  Text(
-                    'Jumlah Kuota Diambil (kg)',
-                    style: GoogleFonts.plusJakartaSans(fontSize: 12, fontWeight: FontWeight.w600),
-                  ),
-                  const SizedBox(height: 6),
-                  TextField(
-                    controller: qtyController,
-                    keyboardType: TextInputType.number,
-                    onChanged: (_) => setModalState(() {}),
-                    decoration: InputDecoration(
-                      suffixText: 'kg',
-                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
-                      contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-                    ),
-                  ),
-                  const SizedBox(height: 12),
-                  Container(
-                    padding: const EdgeInsets.all(10),
-                    decoration: BoxDecoration(
-                      color: const Color(0xFFF8FAFC),
-                      borderRadius: BorderRadius.circular(10),
-                      border: Border.all(color: const Color(0xFFE2E8F0)),
-                    ),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Text(
-                          'Estimasi Total Nilai:',
-                          style: GoogleFonts.plusJakartaSans(fontSize: 12, color: const Color(0xFF64748B)),
-                        ),
-                        Text(
-                          'Rp ${_currencyFormat.format(currentAmount)}',
-                          style: GoogleFonts.plusJakartaSans(
-                            fontSize: 14,
-                            fontWeight: FontWeight.w800,
-                            color: const Color(0xFF006E04),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.pop(ctx),
-                child: Text('Batal', style: GoogleFonts.plusJakartaSans(color: const Color(0xFF64748B))),
-              ),
-              ElevatedButton(
-                onPressed: () async {
-                  final double qty = double.tryParse(qtyController.text) ?? 0.0;
-                  final messenger = ScaffoldMessenger.of(context);
-                  if (qty <= 0 || qty > remaining) {
-                    messenger.showSnackBar(
-                      SnackBar(
-                        content: Text('Jumlah kuota harus antara 1 sampai ${_currencyFormat.format(remaining)} kg.'),
-                        backgroundColor: const Color(0xFFEF4444),
-                        behavior: SnackBarBehavior.floating,
-                      ),
-                    );
-                    return;
-                  }
-
-                  Navigator.pop(ctx);
-                  final success = await _apiService.takeB2BQuota(
-                    poolId: (pool['id'] ?? '').toString(),
-                    quantityKg: qty,
-                  );
-
-                  if (!mounted) return;
-                  if (success) {
-                    messenger.showSnackBar(
-                      SnackBar(
-                        content: Text('Berhasil mengambil kuota ${qty.toStringAsFixed(0)} kg! Kontrak borongan dicatat.'),
-                        backgroundColor: const Color(0xFF03AC0E),
-                        behavior: SnackBarBehavior.floating,
-                      ),
-                    );
-                    _fetchB2BHarvestPools();
-                  } else {
-                    messenger.showSnackBar(
-                      const SnackBar(
-                        content: Text('Gagal mengajukan kuota borongan. Silakan coba lagi.'),
-                        backgroundColor: Color(0xFFEF4444),
-                        behavior: SnackBarBehavior.floating,
-                      ),
-                    );
-                  }
-                },
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFF03AC0E),
-                  foregroundColor: Colors.white,
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                 ),
-                child: Text('Konfirmasi Ambil', style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w700)),
+              )
+            else
+              SliverPadding(
+                padding: const EdgeInsets.fromLTRB(16, 4, 16, 80),
+                sliver: SliverList(
+                  delegate: SliverChildBuilderDelegate(
+                    (context, index) {
+                      final pool = _filteredWholesalePools[index];
+                      final String commodity = pool['commodity_name'] ?? 'Komoditas Partai';
+                      final String variety = pool['variety'] ?? 'Varietas Unggul';
+                      final String grade = pool['grade'] ?? 'Grade A Super';
+                      final String mitraName = pool['mitra_name'] ?? 'Mitra Tani Makmur';
+                      final double totalKg = (pool['total_quota_kg'] as num?)?.toDouble() ?? 100.0;
+                      final double remainingKg = (pool['remaining_quota_kg'] as num?)?.toDouble() ?? 50.0;
+                      final double takenKg = (totalKg - remainingKg).clamp(0.0, totalKg);
+                      final double progress = totalKg > 0 ? (takenKg / totalKg).clamp(0.0, 1.0) : 0.0;
+                      final double priceKg = (pool['price_per_kg'] as num?)?.toDouble() ?? 0.0;
+                      final double minOrder = (pool['min_order_kg'] as num?)?.toDouble() ?? 50.0;
+                      final String harvestDate = pool['target_harvest_date'] ?? pool['est_harvest_date'] ?? '15 Nov 2026';
+                      final String rawImg = pool['image_url']?.toString() ?? '';
+                      final String imageUrl = _resolveImageUrl(rawImg);
+
+                      return Padding(
+                        padding: const EdgeInsets.only(bottom: 16),
+                        child: InkWell(
+                          onTap: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (_) => WholesaleDetailScreen(pool: pool),
+                              ),
+                            );
+                          },
+                          borderRadius: BorderRadius.circular(16),
+                          child: Container(
+                            decoration: BoxDecoration(
+                              color: Colors.white,
+                              borderRadius: BorderRadius.circular(16),
+                              border: Border.all(color: const Color(0xFFE2E8F0)),
+                              boxShadow: const [
+                                BoxShadow(
+                                  color: Color(0x0C000000),
+                                  blurRadius: 8,
+                                  offset: Offset(0, 3),
+                                ),
+                              ],
+                            ),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Stack(
+                                  children: [
+                                    ClipRRect(
+                                      borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
+                                      child: AspectRatio(
+                                        aspectRatio: 16 / 9,
+                                        child: imageUrl.isNotEmpty
+                                            ? Image.network(
+                                                imageUrl,
+                                                fit: BoxFit.cover,
+                                                errorBuilder: (context, error, stackTrace) => Container(
+                                                  color: const Color(0xFFDCFCE7),
+                                                  child: const Icon(LucideIcons.image, size: 36, color: Color(0xFF16A34A)),
+                                                ),
+                                              )
+                                            : Container(
+                                                color: const Color(0xFFDCFCE7),
+                                                child: const Icon(LucideIcons.image, size: 36, color: Color(0xFF16A34A)),
+                                              ),
+                                      ),
+                                    ),
+                                    Positioned.fill(
+                                      child: Container(
+                                        decoration: const BoxDecoration(
+                                          borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+                                          gradient: LinearGradient(
+                                            begin: Alignment.topCenter,
+                                            end: Alignment.bottomCenter,
+                                            colors: [Colors.transparent, Color(0x60000000)],
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                    Positioned(
+                                      top: 10,
+                                      left: 10,
+                                      child: Row(
+                                        children: [
+                                          Container(
+                                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                            decoration: BoxDecoration(
+                                              color: const Color(0xFF006E04),
+                                              borderRadius: BorderRadius.circular(6),
+                                            ),
+                                            child: Text(
+                                              grade,
+                                              style: GoogleFonts.plusJakartaSans(
+                                                fontSize: 11,
+                                                fontWeight: FontWeight.w700,
+                                                color: Colors.white,
+                                              ),
+                                            ),
+                                          ),
+                                          const SizedBox(width: 6),
+                                          Container(
+                                            padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 4),
+                                            decoration: BoxDecoration(
+                                              color: Colors.white.withValues(alpha: 0.92),
+                                              borderRadius: BorderRadius.circular(6),
+                                            ),
+                                            child: Text(
+                                              'Bebas Residu',
+                                              style: GoogleFonts.plusJakartaSans(
+                                                fontSize: 10.5,
+                                                fontWeight: FontWeight.w600,
+                                                color: const Color(0xFF166534),
+                                              ),
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                    Positioned(
+                                      top: 10,
+                                      right: 10,
+                                      child: Container(
+                                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                        decoration: BoxDecoration(
+                                          color: remainingKg <= 0.01
+                                              ? const Color(0xFFEF4444)
+                                              : const Color(0xFF0284C7),
+                                          borderRadius: BorderRadius.circular(6),
+                                        ),
+                                        child: Text(
+                                          remainingKg <= 0.01 ? 'Kuota Penuh' : 'Bursa Terbuka',
+                                          style: GoogleFonts.plusJakartaSans(
+                                            fontSize: 10.5,
+                                            fontWeight: FontWeight.w700,
+                                            color: Colors.white,
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                                Padding(
+                                  padding: const EdgeInsets.all(14),
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      Row(
+                                        children: [
+                                          const Icon(LucideIcons.store, size: 14, color: Color(0xFF006E04)),
+                                          const SizedBox(width: 5),
+                                          Expanded(
+                                            child: Text(
+                                              '$mitraName • Lembang',
+                                              style: GoogleFonts.plusJakartaSans(
+                                                fontSize: 12,
+                                                fontWeight: FontWeight.w600,
+                                                color: const Color(0xFF64748B),
+                                              ),
+                                              maxLines: 1,
+                                              overflow: TextOverflow.ellipsis,
+                                            ),
+                                          ),
+                                          const Icon(LucideIcons.badgeCheck, size: 14, color: Color(0xFF006E04)),
+                                        ],
+                                      ),
+                                      const SizedBox(height: 8),
+                                      Text(
+                                        commodity,
+                                        style: GoogleFonts.plusJakartaSans(
+                                          fontSize: 16,
+                                          fontWeight: FontWeight.w800,
+                                          color: const Color(0xFF0F172A),
+                                        ),
+                                      ),
+                                      const SizedBox(height: 2),
+                                      Text(
+                                        'Varietas: $variety',
+                                        style: GoogleFonts.plusJakartaSans(
+                                          fontSize: 12,
+                                          color: const Color(0xFF64748B),
+                                        ),
+                                      ),
+                                      const SizedBox(height: 10),
+                                      Row(
+                                        crossAxisAlignment: CrossAxisAlignment.baseline,
+                                        textBaseline: TextBaseline.alphabetic,
+                                        children: [
+                                          Text(
+                                            'Rp ${_currencyFormat.format(priceKg)} / kg',
+                                            style: GoogleFonts.plusJakartaSans(
+                                              fontSize: 16.5,
+                                              fontWeight: FontWeight.w800,
+                                              color: const Color(0xFF006E04),
+                                            ),
+                                          ),
+                                          const Spacer(),
+                                          Text(
+                                            'Min. Pesanan ${minOrder.toStringAsFixed(0)} kg',
+                                            style: GoogleFonts.plusJakartaSans(
+                                              fontSize: 11.5,
+                                              fontWeight: FontWeight.w700,
+                                              color: const Color(0xFFB45309),
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                      const SizedBox(height: 12),
+                                      Row(
+                                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                        children: [
+                                          Text(
+                                            'Terserap: ${_currencyFormat.format(takenKg)} / ${_currencyFormat.format(totalKg)} kg',
+                                            style: GoogleFonts.plusJakartaSans(
+                                              fontSize: 11.5,
+                                              fontWeight: FontWeight.w600,
+                                              color: const Color(0xFF334155),
+                                            ),
+                                          ),
+                                          Text(
+                                            'Sisa ${_currencyFormat.format(remainingKg)} kg',
+                                            style: GoogleFonts.plusJakartaSans(
+                                              fontSize: 11.5,
+                                              fontWeight: FontWeight.w700,
+                                              color: remainingKg <= 0.01 ? const Color(0xFF16A34A) : const Color(0xFFD97706),
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                      const SizedBox(height: 6),
+                                      ClipRRect(
+                                        borderRadius: BorderRadius.circular(4),
+                                        child: LinearProgressIndicator(
+                                          value: progress,
+                                          minHeight: 7,
+                                          backgroundColor: const Color(0xFFE2E8F0),
+                                          valueColor: const AlwaysStoppedAnimation<Color>(Color(0xFF006E04)),
+                                        ),
+                                      ),
+                                      const SizedBox(height: 12),
+                                      const Divider(height: 1, color: Color(0xFFF1F5F9)),
+                                      const SizedBox(height: 10),
+                                      Row(
+                                        children: [
+                                          const Icon(LucideIcons.calendar, size: 14, color: Color(0xFF006E04)),
+                                          const SizedBox(width: 5),
+                                          Text(
+                                            'Estimasi Panen: $harvestDate',
+                                            style: GoogleFonts.plusJakartaSans(
+                                              fontSize: 12,
+                                              fontWeight: FontWeight.w600,
+                                              color: const Color(0xFF64748B),
+                                            ),
+                                          ),
+                                          const Spacer(),
+                                          Row(
+                                            children: [
+                                              Text(
+                                                'Pesan Borongan',
+                                                style: GoogleFonts.plusJakartaSans(
+                                                  fontSize: 12,
+                                                  fontWeight: FontWeight.w700,
+                                                  color: const Color(0xFF006E04),
+                                                ),
+                                              ),
+                                              const SizedBox(width: 3),
+                                              const Icon(LucideIcons.chevronRight, size: 14, color: Color(0xFF006E04)),
+                                            ],
+                                          ),
+                                        ],
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      );
+                    },
+                    childCount: _filteredWholesalePools.length,
+                  ),
+                ),
               ),
-            ],
-          );
-        },
+          ],
+        ),
       ),
     );
   }
@@ -1499,12 +1404,12 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen> {
                 child: InkWell(
                   onTap: () {
                     if (action['id'] == 'bursa-b2b') {
-                      setState(() => _activeCatalogSegment = 1);
+                      setState(() => _currentBottomNavIndex = 1);
                       return;
                     }
                     if (action['id'] == 'panen-segar') {
                       setState(() {
-                        _activeCatalogSegment = 0;
+                        _currentBottomNavIndex = 0;
                         _selectedCategory = 'Semua';
                       });
                       return;
@@ -2710,10 +2615,26 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen> {
 
   Widget _buildBottomNavigationBar() {
     final navItems = [
-      {'label': 'Beranda', 'icon': LucideIcons.home},
-      {'label': 'Feed', 'icon': LucideIcons.compass},
-      {'label': 'Transaksi', 'icon': LucideIcons.receipt},
-      {'label': 'Akun', 'icon': LucideIcons.user},
+      {
+        'label': 'Beranda',
+        'icon': LucideIcons.home,
+        'activeIcon': LucideIcons.home,
+      },
+      {
+        'label': 'Grosir',
+        'icon': Icons.inventory_2_outlined,
+        'activeIcon': Icons.inventory_2,
+      },
+      {
+        'label': 'Transaksi',
+        'icon': LucideIcons.receipt,
+        'activeIcon': LucideIcons.receipt,
+      },
+      {
+        'label': 'Akun',
+        'icon': LucideIcons.user,
+        'activeIcon': LucideIcons.user,
+      },
     ];
 
     return Container(
@@ -2755,7 +2676,7 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen> {
                     clipBehavior: Clip.none,
                     children: [
                       Icon(
-                        item['icon'] as IconData,
+                        (isActive ? item['activeIcon'] : item['icon']) as IconData,
                         size: 20,
                         color: isActive
                             ? const Color(0xFF03AC0E)
@@ -2794,9 +2715,5 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen> {
         }),
       ),
     );
-  }
-
-  Widget _buildFeedTab() {
-    return const EducationFeedScreen();
   }
 }

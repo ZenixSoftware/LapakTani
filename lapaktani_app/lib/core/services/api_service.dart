@@ -404,6 +404,12 @@ class ApiService {
     required double totalQuotaKg,
     required double pricePerKg,
     required String targetHarvestDate,
+    String? variety,
+    String? grade,
+    double? minOrderKg,
+    String? packagingSop,
+    bool? autoSpillover,
+    String? imageUrl,
     String? notes,
     String? mitraName,
   }) async {
@@ -414,12 +420,15 @@ class ApiService {
         'price_per_kg': pricePerKg,
         'target_harvest_date': targetHarvestDate,
       };
-      if (notes != null) {
-        payload['notes'] = notes;
-      }
-      if (mitraName != null) {
-        payload['mitra_name'] = mitraName;
-      }
+      if (variety != null) payload['variety'] = variety;
+      if (grade != null) payload['grade'] = grade;
+      if (minOrderKg != null) payload['min_order_kg'] = minOrderKg;
+      if (packagingSop != null) payload['packaging_sop'] = packagingSop;
+      if (autoSpillover != null) payload['auto_spillover'] = autoSpillover ? 1 : 0;
+      if (imageUrl != null) payload['image_url'] = imageUrl;
+      if (notes != null) payload['notes'] = notes;
+      if (mitraName != null) payload['mitra_name'] = mitraName;
+
       final response = await _post('/b2b-contracts/pools', payload);
       return response.statusCode == 200 || response.statusCode == 201;
     } catch (e) {

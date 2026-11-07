@@ -7,6 +7,7 @@ import 'package:lapaktani_app/core/widgets/custom_soft_card.dart';
 import 'package:lapaktani_app/features/auth/auth_repository.dart';
 import 'package:lapaktani_app/features/navigation/role_based_app_shell.dart';
 import 'package:lapaktani_app/features/poktan/models/poktan_member_model.dart';
+import 'package:lapaktani_app/features/poktan/screens/mitra_store_catalog_screen.dart';
 import 'package:lapaktani_app/features/poktan/screens/poktan_dashboard_screen.dart';
 import 'package:lapaktani_app/features/poktan/services/poktan_service.dart';
 import 'package:lapaktani_app/features/seller/seller_dashboard_screen.dart';
@@ -39,8 +40,8 @@ class _PoktanMainShellState extends State<PoktanMainShell> {
         index: _currentIndex,
         children: const [
           SellerDashboardScreen(),
+          MitraStoreCatalogScreen(),
           PoktanDashboardScreen(showBackButton: false),
-          PoktanMembersTab(),
           PoktanProfileTab(),
         ],
       ),
@@ -66,21 +67,21 @@ class _PoktanMainShellState extends State<PoktanMainShell> {
               children: [
                 _buildNavItem(
                   index: 0,
-                  label: 'Pesanan Retail',
-                  activeIcon: Icons.storefront,
-                  inactiveIcon: Icons.storefront_outlined,
+                  label: 'Pesanan',
+                  activeIcon: Icons.receipt_long,
+                  inactiveIcon: Icons.receipt_long_outlined,
                 ),
                 _buildNavItem(
                   index: 1,
-                  label: 'B2B & Pool',
-                  activeIcon: Icons.assignment,
-                  inactiveIcon: Icons.assignment_outlined,
+                  label: 'Etalase Toko',
+                  activeIcon: Icons.store,
+                  inactiveIcon: Icons.store_outlined,
                 ),
                 _buildNavItem(
                   index: 2,
-                  label: 'Mitra Tani',
-                  activeIcon: Icons.people,
-                  inactiveIcon: Icons.people_outline,
+                  label: 'Lahan & Pool',
+                  activeIcon: Icons.landscape,
+                  inactiveIcon: Icons.landscape_outlined,
                 ),
                 _buildNavItem(
                   index: 3,

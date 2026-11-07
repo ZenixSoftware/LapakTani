@@ -16,6 +16,12 @@ async function ensureTables() {
         mitra_name VARCHAR(100) NOT NULL DEFAULT 'Mitra Tani Makmur',
         commodity_id VARCHAR(50) NOT NULL,
         commodity_name VARCHAR(100) NOT NULL,
+        variety VARCHAR(100) DEFAULT 'Varietas Unggul',
+        grade VARCHAR(50) DEFAULT 'Grade A Super',
+        image_url VARCHAR(255) DEFAULT 'uploads/products/cabai.jpg',
+        min_order_kg DECIMAL(12,2) DEFAULT 50.00,
+        packaging_sop VARCHAR(150) DEFAULT 'Krat Plastik & Cold Storage',
+        auto_spillover TINYINT(1) DEFAULT 1,
         target_harvest_date VARCHAR(50) NOT NULL,
         total_quota_kg DECIMAL(12,2) NOT NULL DEFAULT 0.00,
         allocated_quota_kg DECIMAL(12,2) NOT NULL DEFAULT 0.00,
@@ -28,6 +34,21 @@ async function ensureTables() {
         INDEX idx_b2b_pool_status (status)
       )
     `);
+
+    // Dynamically ensure new columns exist if table was previously created
+    const addColumnIfNotExists = async (colDef) => {
+      try {
+        await pool.query(`ALTER TABLE b2b_harvest_pools ADD COLUMN ${colDef}`);
+      } catch (e) {
+        // Field might already exist
+      }
+    };
+    await addColumnIfNotExists("variety VARCHAR(100) DEFAULT 'Varietas Unggul'");
+    await addColumnIfNotExists("grade VARCHAR(50) DEFAULT 'Grade A Super'");
+    await addColumnIfNotExists("image_url VARCHAR(255) DEFAULT 'uploads/products/cabai.jpg'");
+    await addColumnIfNotExists("min_order_kg DECIMAL(12,2) DEFAULT 50.00");
+    await addColumnIfNotExists("packaging_sop VARCHAR(150) DEFAULT 'Krat Plastik & Cold Storage'");
+    await addColumnIfNotExists("auto_spillover TINYINT(1) DEFAULT 1");
 
     await pool.query(`
       CREATE TABLE IF NOT EXISTS b2b_quota_allocations (
@@ -49,13 +70,18 @@ async function ensureTables() {
     if (rows[0].count === 0) {
       await pool.query(`
         INSERT INTO b2b_harvest_pools 
-          (id, farmer_group_id, mitra_name, commodity_id, commodity_name, target_harvest_date, total_quota_kg, allocated_quota_kg, remaining_quota_kg, price_per_kg, status, notes)
+          (id, farmer_group_id, mitra_name, commodity_id, commodity_name, variety, grade, image_url, min_order_kg, packaging_sop, auto_spillover, target_harvest_date, total_quota_kg, allocated_quota_kg, remaining_quota_kg, price_per_kg, status, notes)
         VALUES 
-          ('pool-01', 'fg-01', 'Mitra Tani Makmur', 'c-cabai-01', 'Cabai Merah Keriting Grade A', '15 Nov 2026', 350.00, 300.00, 50.00, 28000.00, 'open', 'Hasil panen lahan konsolidasi Lembang'),
-          ('pool-02', 'fg-02', 'Mitra Tani Pasundan', 'c-tomat-01', 'Tomat Beef Organik Segar', '20 Nov 2026', 500.00, 200.00, 300.00, 12500.00, 'open', 'Dipetik subuh dari dataran tinggi Pangalengan'),
-          ('pool-03', 'fg-03', 'Mitra Tani Berkah Mandiri', 'c-kentang-01', 'Kentang Granola Super', '28 Nov 2026', 1000.00, 650.00, 350.00, 16000.00, 'open', 'Sortir grade restoran & katering partai besar')
+          ('pool-01', 'fg-01', 'Mitra Tani Makmur', 'c-cabai-01', 'Cabai Merah Keriting Super', 'Kencana Tropis', 'Grade A Super', 'uploads/products/cabai.jpg', 50.00, 'Krat Plastik & Cold Chain (12°C)', 1, '15 Nov 2026', 350.00, 300.00, 50.00, 28000.00, 'open', 'Hasil panen lahan konsolidasi Lembang bergaransi fresh'),
+          ('pool-02', 'fg-02', 'Mitra Tani Pasundan', 'c-tomat-01', 'Tomat Beef Dataran Tinggi', 'Beef Lembang Super', 'Grade A Super', 'uploads/products/tomat.jpg', 40.00, 'Krat Berpori & Pendingin', 1, '20 Nov 2026', 500.00, 200.00, 300.00, 12500.00, 'open', 'Dipetik subuh dari dataran tinggi Pangalengan'),
+          ('pool-03', 'fg-03', 'Mitra Tani Berkah Mandiri', 'c-kentang-01', 'Kentang Granola Dieng', 'Granola Super Dieng', 'Grade A Super', 'uploads/products/kentang.jpg', 100.00, 'Karung Jaring Ventilasi 25kg', 1, '28 Nov 2026', 1000.00, 650.00, 350.00, 16000.00, 'open', 'Sortir grade restoran & katering partai besar')
       `);
       console.log('[B2B_POOL] Seeded default forward harvest pools');
+    } else {
+      // Update seeds with images if missing
+      await pool.query(`UPDATE b2b_harvest_pools SET image_url = 'uploads/products/cabai.jpg', grade = 'Grade A Super', min_order_kg = 50.00 WHERE id = 'pool-01' AND (image_url IS NULL OR image_url = '')`);
+      await pool.query(`UPDATE b2b_harvest_pools SET image_url = 'uploads/products/tomat.jpg', grade = 'Grade A Super', min_order_kg = 40.00 WHERE id = 'pool-02' AND (image_url IS NULL OR image_url = '')`);
+      await pool.query(`UPDATE b2b_harvest_pools SET image_url = 'uploads/products/kentang.jpg', grade = 'Grade A Super', min_order_kg = 100.00 WHERE id = 'pool-03' AND (image_url IS NULL OR image_url = '')`);
     }
 
     tablesInitialized = true;
@@ -78,6 +104,12 @@ const getHarvestPools = async (req, res) => {
         mitra_name,
         commodity_id,
         commodity_name,
+        COALESCE(variety, 'Varietas Unggul') as variety,
+        COALESCE(grade, 'Grade A Super') as grade,
+        COALESCE(image_url, 'uploads/products/cabai.jpg') as image_url,
+        CAST(COALESCE(min_order_kg, 50.00) AS DOUBLE) AS min_order_kg,
+        COALESCE(packaging_sop, 'Krat Plastik & Cold Storage') as packaging_sop,
+        COALESCE(auto_spillover, 1) as auto_spillover,
         target_harvest_date,
         CAST(total_quota_kg AS DOUBLE) AS total_quota_kg,
         CAST(allocated_quota_kg AS DOUBLE) AS allocated_quota_kg,
@@ -116,9 +148,15 @@ const createHarvestPool = async (req, res) => {
     const {
       commodity_id,
       commodity_name,
+      variety,
+      grade,
       target_harvest_date,
       total_quota_kg,
+      min_order_kg,
       price_per_kg,
+      packaging_sop,
+      auto_spillover,
+      image_url,
       notes,
       mitra_name
     } = req.body;
@@ -132,6 +170,8 @@ const createHarvestPool = async (req, res) => {
 
     const quotaNum = parseFloat(total_quota_kg);
     const priceNum = parseFloat(price_per_kg);
+    const minOrderNum = parseFloat(min_order_kg) || 50.0;
+    const isAutoSpill = auto_spillover === false || auto_spillover === 0 ? 0 : 1;
 
     if (isNaN(quotaNum) || quotaNum <= 0) {
       return res.status(400).json({
@@ -150,17 +190,27 @@ const createHarvestPool = async (req, res) => {
     const poolId = `pool-${uuidv4().substring(0, 8)}`;
     const effectiveMitraName = mitra_name || 'Mitra Tani Makmur';
     const effectiveCommodityId = commodity_id || `c-${uuidv4().substring(0, 6)}`;
+    const effectiveGrade = grade || 'Grade A Super';
+    const effectiveVariety = variety || 'Varietas Unggul';
+    const effectiveImage = image_url || 'uploads/products/cabai.jpg';
+    const effectivePackaging = packaging_sop || 'Krat Plastik & Cold Storage';
 
     await pool.query(`
       INSERT INTO b2b_harvest_pools
-        (id, farmer_group_id, mitra_name, commodity_id, commodity_name, target_harvest_date, total_quota_kg, allocated_quota_kg, remaining_quota_kg, price_per_kg, status, notes)
-      VALUES (?, ?, ?, ?, ?, ?, ?, 0.00, ?, ?, 'open', ?)
+        (id, farmer_group_id, mitra_name, commodity_id, commodity_name, variety, grade, image_url, min_order_kg, packaging_sop, auto_spillover, target_harvest_date, total_quota_kg, allocated_quota_kg, remaining_quota_kg, price_per_kg, status, notes)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0.00, ?, ?, 'open', ?)
     `, [
       poolId,
       req.user ? req.user.id : 'fg-default',
       effectiveMitraName,
       effectiveCommodityId,
       commodity_name.trim(),
+      effectiveVariety.trim(),
+      effectiveGrade.trim(),
+      effectiveImage.trim(),
+      minOrderNum,
+      effectivePackaging.trim(),
+      isAutoSpill,
       target_harvest_date.trim(),
       quotaNum,
       quotaNum,
@@ -173,6 +223,12 @@ const createHarvestPool = async (req, res) => {
       mitra_name: effectiveMitraName,
       commodity_id: effectiveCommodityId,
       commodity_name: commodity_name.trim(),
+      variety: effectiveVariety.trim(),
+      grade: effectiveGrade.trim(),
+      image_url: effectiveImage.trim(),
+      min_order_kg: minOrderNum,
+      packaging_sop: effectivePackaging.trim(),
+      auto_spillover: isAutoSpill,
       target_harvest_date: target_harvest_date.trim(),
       total_quota_kg: quotaNum,
       allocated_quota_kg: 0.0,
@@ -399,3 +455,4 @@ module.exports = {
   spilloverToRetail,
   takeQuota
 };
+
