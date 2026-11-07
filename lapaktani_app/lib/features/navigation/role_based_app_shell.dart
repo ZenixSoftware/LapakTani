@@ -1,12 +1,10 @@
 import 'package:flutter/material.dart';
-import '../../core/services/user_session.dart';
-import '../auth/auth_repository.dart';
-import '../home/home_dashboard_screen.dart';
-import '../penyuluh/screens/penyuluh_hub_screen.dart';
-import '../petani/screens/petani_simple_screen.dart';
-import '../poktan/screens/poktan_dashboard_screen.dart';
-
-typedef BuyerMainShell = HomeDashboardScreen;
+import 'package:lapaktani_app/core/services/user_session.dart';
+import 'package:lapaktani_app/features/auth/auth_repository.dart';
+import 'package:lapaktani_app/features/home/home_dashboard_screen.dart';
+import 'package:lapaktani_app/features/penyuluh/screens/penyuluh_hub_screen.dart';
+import 'package:lapaktani_app/features/petani/screens/petani_simple_screen.dart';
+import 'package:lapaktani_app/features/poktan/screens/poktan_dashboard_screen.dart';
 
 class RoleBasedAppShell extends StatefulWidget {
   const RoleBasedAppShell({super.key});
@@ -31,9 +29,9 @@ class _RoleBasedAppShellState extends State<RoleBasedAppShell> {
       builder: (context, user, _) {
         final activeUser = user ?? AuthRepository().currentUser;
 
-        // 1. GUEST / UNREGISTERED: Default to Buyer Shell
+        // 1. GUEST / UNREGISTERED: Default to HomeDashboardScreen (Buyer Shell)
         if (activeUser == null) {
-          return const BuyerMainShell();
+          return const HomeDashboardScreen();
         }
 
         final roleId = activeUser.roleId;
@@ -57,9 +55,8 @@ class _RoleBasedAppShellState extends State<RoleBasedAppShell> {
         }
 
         // 4. BUYER (role_id == 4 or role == 'pembeli') & Fallback
-        return const BuyerMainShell();
+        return const HomeDashboardScreen();
       },
     );
   }
 }
-

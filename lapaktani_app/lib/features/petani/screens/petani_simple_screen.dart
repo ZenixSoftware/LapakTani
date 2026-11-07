@@ -2,14 +2,14 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:lucide_icons/lucide_icons.dart';
-import '../../../core/services/api_service.dart';
-import '../../../core/services/user_session.dart';
-import '../../auth/auth_repository.dart';
-import '../../auth/login_screen.dart';
-import '../../community/screens/create_pest_report_screen.dart';
-import '../../community/screens/education_feed_screen.dart';
-import '../../poktan/screens/farmer_tasks_screen.dart';
-import '../../poktan/services/poktan_service.dart';
+import 'package:lapaktani_app/core/services/api_service.dart';
+import 'package:lapaktani_app/core/services/user_session.dart';
+import 'package:lapaktani_app/features/auth/auth_repository.dart';
+import 'package:lapaktani_app/features/auth/login_screen.dart';
+import 'package:lapaktani_app/features/community/screens/create_pest_report_screen.dart';
+import 'package:lapaktani_app/features/community/screens/education_feed_screen.dart';
+import 'package:lapaktani_app/features/poktan/screens/farmer_tasks_screen.dart';
+import 'package:lapaktani_app/features/poktan/services/poktan_service.dart';
 
 class PetaniSimpleScreen extends StatefulWidget {
   const PetaniSimpleScreen({super.key});

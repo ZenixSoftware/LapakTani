@@ -1,15 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:lucide_icons/lucide_icons.dart';
-import '../../../core/services/user_session.dart';
-import '../../auth/auth_repository.dart';
-import '../../auth/login_screen.dart';
-import '../../community/models/pest_report_model.dart';
-import '../../community/screens/create_education_post_screen.dart';
-import '../../community/screens/education_feed_screen.dart';
-import '../../community/screens/pest_alert_detail_screen.dart';
-import '../../community/services/pest_alert_service.dart';
-import '../../community/widgets/penyuluh_official_badge.dart';
+import 'package:lapaktani_app/core/services/user_session.dart';
+import 'package:lapaktani_app/features/auth/auth_repository.dart';
+import 'package:lapaktani_app/features/auth/login_screen.dart';
+import 'package:lapaktani_app/features/community/models/pest_report_model.dart';
+import 'package:lapaktani_app/features/community/screens/create_education_post_screen.dart';
+import 'package:lapaktani_app/features/community/screens/education_feed_screen.dart';
+import 'package:lapaktani_app/features/community/screens/pest_alert_detail_screen.dart';
+import 'package:lapaktani_app/features/community/services/pest_alert_service.dart';
+import 'package:lapaktani_app/features/community/widgets/penyuluh_official_badge.dart';
 
 class PenyuluhHubScreen extends StatefulWidget {
   const PenyuluhHubScreen({super.key});
@@ -188,7 +188,7 @@ class _PenyuluhHubScreenState extends State<PenyuluhHubScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const PenyuluhOfficialBadge(size: PenyuluhBadgeSize.medium),
+                    const PenyuluhOfficialBadge(),
                     const SizedBox(height: 4),
                     Text(
                       'NIP: 19820315 200801 1 003 • BPP Lembang',
@@ -459,4 +459,3 @@ class _PenyuluhHubScreenState extends State<PenyuluhHubScreen> {
     );
   }
 }
-
