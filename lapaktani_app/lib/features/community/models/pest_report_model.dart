@@ -52,6 +52,12 @@ class PestReportModel {
     this.affectedRadiusKm = 5,
   });
 
+  // Compatibility getters
+  bool get isEmergency => emergencyAlert;
+  String get cropCommodity => cropType;
+  String get farmerName => reporterName;
+  String? get actionTaken => handlingRecommendation ?? recommendedAction;
+
   factory PestReportModel.fromJson(Map<String, dynamic> json) {
     DateTime parsedDate;
     try {
