@@ -20,11 +20,14 @@ const poktanRoutes = require('./src/routes/poktan');
 const b2bRoutes = require('./src/routes/b2b');
 const pestReportRoutes = require('./src/routes/pestReports');
 const runPestAlertMigration = require('./src/config/migrate_pest_alert');
+const { requestLogger } = require('./src/middlewares/loggerMiddleware');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
 
 app.use(cors());
+// Global Middleware: Request Logger & Performance Monitoring (Berjalan di SEMUA router/routing)
+app.use(requestLogger);
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(express.static(path.join(__dirname, 'public')));
