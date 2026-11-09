@@ -36,6 +36,30 @@ lapaktani_backend/
 
 ---
 
+## Cara Sinkronisasi Database untuk Tim
+
+Bagi kolaborator (seperti Ilham, Naya, Rizky) yang menggunakan XAMPP / MariaDB / MySQL lokal:
+1. Buka **phpMyAdmin** (`http://localhost/phpmyadmin`) atau MySQL CLI.
+2. Buat database baru bernama `lapaktani_db` (jika belum ada).
+3. Import file:
+   ```bash
+   lapaktani_backend/database/lapaktani_complete_latest.sql
+   ```
+   Atau via terminal:
+   ```bash
+   mysql -u root -p lapaktani_db < database/lapaktani_complete_latest.sql
+   ```
+4. **Akun Pengujian Siap Pakai (Password: `password123`):**
+   - **Ketua Poktan / Mitra Tani**: `made@poktan.lapaktani.id` (Made Irawan - Ketua Poktan Tani Makmur)
+   - **Petani Anggota**: `supardi@petani.lapaktani.id` (Pak Supardi - Petani Cabai)
+   - **Penyuluh BPP**: `penyuluh@lapaktani.id` (Ahmad Penyuluh, S.P. - BPP Lembang)
+   - **Pembeli / Buyer B2B**: `pembeli@lapaktani.id` (Budi Pembeli)
+   - **Administrator**: `admin@lapaktani.id`
+
+Seluruh tabel relasional (~20+ tabel), foreign key, constraint, katalog produk, bursa partai B2B, sensor tanah, dan artikel edukasi langsung terisi lengkap.
+
+---
+
 ## Persiapan & Instalasi
 
 ### 1. Inisialisasi Database MySQL

@@ -6,13 +6,14 @@ import 'package:http/http.dart' as http;
 import 'package:http_parser/http_parser.dart';
 import 'package:mime/mime.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import '../config/app_config.dart';
 
 class ApiService {
   static final ApiService _instance = ApiService._internal();
   factory ApiService() => _instance;
   ApiService._internal();
 
-  static const String baseUrl = 'https://backslid-salvage-moocher.ngrok-free.dev/api';
+  static const String baseUrl = AppConfig.baseUrl;
   static const String tokenKey = 'jwt_token';
   static const String userKey = 'auth_user';
 
