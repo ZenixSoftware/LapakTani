@@ -87,8 +87,10 @@ app.use('/api/soil', soilRoutes);
 app.use('/api/payments', paymentRoutes);
 app.use('/api/poktan', poktanRoutes);
 app.use('/api/b2b-contracts', b2bRoutes);
+app.use('/api/contracts', b2bRoutes);
 app.use('/api/pest-reports', pestReportRoutes);
 app.use('/api/pest-alerts', pestReportRoutes);
+app.use('/api/ppl', penyuluhRoutes);
 
 
 app.use((req, res) => {

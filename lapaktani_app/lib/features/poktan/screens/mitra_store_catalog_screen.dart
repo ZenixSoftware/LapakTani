@@ -801,7 +801,7 @@ class _MitraStoreCatalogScreenState extends State<MitraStoreCatalogScreen>
                       borderRadius: BorderRadius.circular(6),
                     ),
                     child: Text(
-                      isSpilled ? 'Dialihkan ke Retail' : 'Bursa Aktif',
+                      isSpilled ? 'Surplus Dialihkan ke Retail' : 'Bursa Aktif',
                       style: GoogleFonts.plusJakartaSans(
                         fontSize: 10.5,
                         fontWeight: FontWeight.w700,

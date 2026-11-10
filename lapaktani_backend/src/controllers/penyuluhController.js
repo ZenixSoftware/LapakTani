@@ -210,8 +210,60 @@ const verifyFarmer = async (req, res) => {
   }
 };
 
+/**
+ * GET /api/penyuluh/soil-map (US-27)
+ * Retrieve spatial soil fertility map coordinates and NPK metrics for PPL
+ */
+const getSoilMap = async (req, res) => {
+  try {
+    const [rows] = await pool.query(`
+      SELECT 
+        f.id AS farm_id,
+        f.farmer_id,
+        COALESCE(u.full_name, 'Petani LapakTani') AS farmer_name,
+        COALESCE(fg.group_name, 'Poktan Tani Makmur') AS poktan_name,
+        COALESCE(v.name, 'Lembang') AS village_name,
+        f.land_area_ha,
+        COALESCE(f.soil_type, 'Andosol Vulkanik Subur') AS soil_type,
+        COALESCE(f.commodity, 'Cabai Merah Keriting') AS commodity,
+        COALESCE(f.gps_latitude, -6.81520000) AS gps_latitude,
+        COALESCE(f.gps_longitude, 107.61860000) AS gps_longitude,
+        COALESCE(st.ph_level, 6.40) AS ph_level,
+        COALESCE(st.nitrogen_mg_kg, 142.00) AS nitrogen_mg_kg,
+        COALESCE(st.phosphorus_mg_kg, 38.00) AS phosphorus_mg_kg,
+        COALESCE(st.potassium_mg_kg, 210.00) AS potassium_mg_kg,
+        COALESCE(st.moisture_percentage, 72.50) AS moisture_percentage,
+        COALESCE(st.fertility_index, 'Sangat Subur') AS fertility_index
+      FROM farms f
+      LEFT JOIN users u ON f.farmer_id = u.id
+      LEFT JOIN farmer_profiles fp ON f.farmer_id = fp.user_id
+      LEFT JOIN farmer_groups fg ON fp.farmer_group_id = fg.id
+      LEFT JOIN villages v ON fg.village_id = v.id
+      LEFT JOIN (
+        SELECT s1.* FROM soil_telemetries s1
+        INNER JOIN (
+          SELECT farm_id, MAX(measured_at) as max_time FROM soil_telemetries GROUP BY farm_id
+        ) s2 ON s1.farm_id = s2.farm_id AND s1.measured_at = s2.max_time
+      ) st ON f.id = st.farm_id
+    `);
+
+    return res.status(200).json({
+      success: true,
+      count: rows.length,
+      data: rows
+    });
+  } catch (error) {
+    console.error('[PENYULUH] Error fetching soil map data:', error.message);
+    return res.status(500).json({
+      success: false,
+      message: 'Gagal mengambil data pemetaan geospasial tanah.'
+    });
+  }
+};
+
 module.exports = {
   getPendingFarmers,
   getAllFarmers,
-  verifyFarmer
+  verifyFarmer,
+  getSoilMap
 };

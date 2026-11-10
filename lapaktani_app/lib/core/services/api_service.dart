@@ -451,6 +451,26 @@ class ApiService {
     return null;
   }
 
+  /// US-25 Alias: Spot Market / Surplus Panen Penyaluran
+  Future<Map<String, dynamic>?> spotSurplusSpillover({required String poolId}) =>
+      spilloverToRetail(poolId: poolId);
+
+  /// US-27: Get spatial soil fertility map for PPL
+  Future<List<Map<String, dynamic>>> getSpatialSoilMap() async {
+    try {
+      final response = await _fetchGet('/penyuluh/soil-map');
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        if (data['data'] is List) {
+          return List<Map<String, dynamic>>.from(data['data']);
+        }
+      }
+    } catch (e) {
+      debugPrint('[API_SERVICE] Error fetching spatial soil map: $e');
+    }
+    return [];
+  }
+
   Future<Map<String, dynamic>?> checkPaymentStatus(String orderId) async {
     try {
       final response = await _fetchGet('/payments/status/$orderId');
