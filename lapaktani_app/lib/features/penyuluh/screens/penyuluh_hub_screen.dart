@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 import 'package:lapaktani_app/core/services/user_session.dart';
+import 'package:lapaktani_app/core/theme/app_colors.dart';
 import 'package:lapaktani_app/features/auth/auth_repository.dart';
 import 'package:lapaktani_app/features/auth/login_screen.dart';
 import 'package:lapaktani_app/features/community/models/pest_report_model.dart';
@@ -145,11 +146,11 @@ class _PenyuluhHubScreenState extends State<PenyuluhHubScreen> {
       ),
       body: _isLoading
           ? const Center(
-              child: CircularProgressIndicator(color: Color(0xFF03AC0E)),
+              child: CircularProgressIndicator(color: AppColors.primary),
             )
           : RefreshIndicator(
               onRefresh: _loadPenyuluhData,
-              color: const Color(0xFF03AC0E),
+              color: AppColors.primary,
               child: SingleChildScrollView(
                 physics: const AlwaysScrollableScrollPhysics(),
                 padding: const EdgeInsets.all(16),
@@ -297,7 +298,7 @@ class _PenyuluhHubScreenState extends State<PenyuluhHubScreen> {
                   );
                 },
                 style: OutlinedButton.styleFrom(
-                  side: const BorderSide(color: Color(0xFF03AC0E)),
+                  side: const BorderSide(color: AppColors.primary),
                   padding: const EdgeInsets.symmetric(
                     horizontal: 10,
                     vertical: 6,
@@ -309,7 +310,7 @@ class _PenyuluhHubScreenState extends State<PenyuluhHubScreen> {
                   style: GoogleFonts.plusJakartaSans(
                     fontSize: 11,
                     fontWeight: FontWeight.w700,
-                    color: const Color(0xFF03AC0E),
+                    color: AppColors.primary,
                   ),
                 ),
               ),
@@ -345,7 +346,7 @@ class _PenyuluhHubScreenState extends State<PenyuluhHubScreen> {
                 ),
               ),
               style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFF03AC0E),
+                backgroundColor: AppColors.primary,
                 foregroundColor: Colors.white,
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(10),

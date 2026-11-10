@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:lucide_icons/lucide_icons.dart';
+import '../../core/theme/app_colors.dart';
 
 class PaymentMethodOption {
   final String code;
@@ -37,9 +38,9 @@ class PaymentMethodSelectionScreen extends StatefulWidget {
 }
 
 class _PaymentMethodSelectionScreenState extends State<PaymentMethodSelectionScreen> {
-  static const Color _tokopediaGreen = Color(0xFF03AC0E);
-  static const Color _forestDark = Color(0xFF0F172A);
-  static const Color _bgCanvas = Color(0xFFF8F9FA);
+  static const Color _tokopediaGreen = AppColors.primary;
+  static const Color _forestDark = AppColors.textPrimary;
+  static const Color _bgCanvas = AppColors.background;
 
   late String _selectedCode;
 

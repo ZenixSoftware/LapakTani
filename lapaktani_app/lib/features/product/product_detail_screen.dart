@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 import '../../core/services/api_service.dart';
+import '../../core/theme/app_colors.dart';
 import '../cart/cart_screen.dart';
 import '../orders/models/order_model.dart';
 import '../orders/services/order_service.dart';
@@ -134,7 +135,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
               'Ditambahkan ke keranjang',
               style: GoogleFonts.inter(fontSize: 12),
             ),
-            backgroundColor: const Color(0xFF03AC0E),
+            backgroundColor: AppColors.primary,
             behavior: SnackBarBehavior.floating,
             duration: const Duration(seconds: 2),
           ),
@@ -298,7 +299,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                       ScaffoldMessenger.of(context).showSnackBar(
                           SnackBar(
                             content: Text('Pesanan ${newOrder.id} berhasil dibuat.'),
-                            backgroundColor: const Color(0xFF03AC0E),
+                            backgroundColor: AppColors.primary,
                             behavior: SnackBarBehavior.floating,
                             action: SnackBarAction(
                               label: 'Lacak Logistik',
@@ -316,7 +317,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                         );
                     },
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFF03AC0E),
+                      backgroundColor: AppColors.primary,
                       foregroundColor: Colors.white,
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(12),
@@ -680,7 +681,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
 
   Widget _buildFreshnessStripBanner() {
     return Container(
-      color: const Color(0xFF03AC0E),
+      color: AppColors.primary,
       padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
       child: Row(
         children: [
@@ -845,7 +846,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                         Container(
                           padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                           decoration: BoxDecoration(
-                            color: const Color(0xFF03AC0E),
+                            color: AppColors.primary,
                             borderRadius: BorderRadius.circular(4),
                           ),
                           child: Row(
@@ -884,7 +885,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                                       ? const Color(0xFFEF4444)
                                       : isLow
                                           ? const Color(0xFFF59E0B)
-                                          : const Color(0xFF03AC0E),
+                                          : AppColors.primary,
                                   width: 0.8,
                                 ),
                               ),
@@ -1064,7 +1065,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
             ),
             child: Row(
               children: [
-                const Icon(LucideIcons.truck, size: 16, color: Color(0xFF03AC0E)),
+                const Icon(LucideIcons.truck, size: 16, color: AppColors.primary),
                 const SizedBox(width: 8),
                 Expanded(
                   child: RichText(
@@ -1103,7 +1104,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                   width: 16,
                   height: 16,
                   decoration: const BoxDecoration(
-                    color: Color(0xFF03AC0E),
+                    color: AppColors.primary,
                     shape: BoxShape.circle,
                   ),
                   child: const Icon(LucideIcons.check, size: 10, color: Colors.white),
@@ -1212,7 +1213,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                   style: GoogleFonts.inter(
                     fontSize: 11.5,
                     fontWeight: FontWeight.w700,
-                    color: const Color(0xFF03AC0E),
+                    color: AppColors.primary,
                   ),
                 ),
               ),
@@ -1378,7 +1379,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                 ),
                 child: const Icon(
                   LucideIcons.store,
-                  color: Color(0xFF03AC0E),
+                  color: AppColors.primary,
                   size: 22,
                 ),
               ),
@@ -1392,7 +1393,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                         Container(
                           padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1.5),
                           decoration: BoxDecoration(
-                            color: const Color(0xFF03AC0E),
+                            color: AppColors.primary,
                             borderRadius: BorderRadius.circular(3),
                           ),
                           child: Text(
@@ -1448,7 +1449,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                   );
                 },
                 style: OutlinedButton.styleFrom(
-                  side: const BorderSide(color: Color(0xFF03AC0E)),
+                  side: const BorderSide(color: AppColors.primary),
                   padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(8),
@@ -1459,7 +1460,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                   style: GoogleFonts.inter(
                     fontSize: 11,
                     fontWeight: FontWeight.w700,
-                    color: const Color(0xFF03AC0E),
+                    color: AppColors.primary,
                   ),
                 ),
               ),
@@ -1561,7 +1562,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
               style: GoogleFonts.inter(
                 fontSize: 11.5,
                 fontWeight: FontWeight.w700,
-                color: const Color(0xFF03AC0E),
+                color: AppColors.primary,
               ),
             ),
           ),
@@ -1575,7 +1576,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
             ),
             child: Row(
               children: [
-                const Icon(LucideIcons.shieldCheck, size: 16, color: Color(0xFF03AC0E)),
+                const Icon(LucideIcons.shieldCheck, size: 16, color: AppColors.primary),
                 const SizedBox(width: 8),
                 Expanded(
                   child: RichText(
@@ -1624,7 +1625,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                   style: GoogleFonts.inter(
                     fontSize: 10.5,
                     fontWeight: FontWeight.w600,
-                    color: const Color(0xFF03AC0E),
+                    color: AppColors.primary,
                   ),
                 ),
               ),
@@ -1658,7 +1659,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
             style: GoogleFonts.inter(
               fontSize: 11.5,
               fontWeight: isGreen ? FontWeight.w700 : FontWeight.w600,
-              color: isGreen ? const Color(0xFF03AC0E) : const Color(0xFF0F172A),
+              color: isGreen ? AppColors.primary : const Color(0xFF0F172A),
             ),
           ),
         ],
@@ -1719,7 +1720,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                   style: GoogleFonts.inter(
                     fontSize: 11.5,
                     fontWeight: FontWeight.w700,
-                    color: const Color(0xFF03AC0E),
+                    color: AppColors.primary,
                   ),
                 ),
               ),
@@ -1918,7 +1919,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                           child: OutlinedButton(
                             onPressed: _handleBuyNow,
                             style: OutlinedButton.styleFrom(
-                              side: const BorderSide(color: Color(0xFF03AC0E), width: 1.2),
+                              side: const BorderSide(color: AppColors.primary, width: 1.2),
                               shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(10),
                               ),
@@ -1932,7 +1933,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                                   style: GoogleFonts.inter(
                                     fontSize: 12,
                                     fontWeight: FontWeight.w700,
-                                    color: const Color(0xFF03AC0E),
+                                    color: AppColors.primary,
                                   ),
                                 ),
                                 Text(
@@ -1954,7 +1955,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                           child: ElevatedButton(
                             onPressed: _handleAddToCart,
                             style: ElevatedButton.styleFrom(
-                              backgroundColor: const Color(0xFF03AC0E),
+                              backgroundColor: AppColors.primary,
                               foregroundColor: Colors.white,
                               elevation: 1,
                               shape: RoundedRectangleBorder(

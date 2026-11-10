@@ -112,7 +112,7 @@ class _WholesaleDetailScreenState extends State<WholesaleDetailScreen> {
               );
             },
             style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFF006E04),
+              backgroundColor: AppColors.primary,
               foregroundColor: Colors.white,
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
             ),
@@ -185,7 +185,7 @@ class _WholesaleDetailScreenState extends State<WholesaleDetailScreen> {
                     style: GoogleFonts.plusJakartaSans(
                       fontSize: 14,
                       fontWeight: FontWeight.w600,
-                      color: const Color(0xFF006E04),
+                      color: AppColors.primary,
                     ),
                   ),
                   const SizedBox(height: 14),
@@ -242,7 +242,7 @@ class _WholesaleDetailScreenState extends State<WholesaleDetailScreen> {
                               }
                             : null,
                         icon: const Icon(LucideIcons.minusCircle),
-                        color: const Color(0xFF006E04),
+                        color: AppColors.primary,
                       ),
                       Expanded(
                         child: TextField(
@@ -274,7 +274,7 @@ class _WholesaleDetailScreenState extends State<WholesaleDetailScreen> {
                               }
                             : null,
                         icon: const Icon(LucideIcons.plusCircle),
-                        color: const Color(0xFF006E04),
+                        color: AppColors.primary,
                       ),
                     ],
                   ),
@@ -295,7 +295,7 @@ class _WholesaleDetailScreenState extends State<WholesaleDetailScreen> {
                         ),
                         Text(
                           'Rp ${_currencyFormat.format(totalAmount)}',
-                          style: GoogleFonts.plusJakartaSans(fontSize: 16, fontWeight: FontWeight.w800, color: const Color(0xFF006E04)),
+                          style: GoogleFonts.plusJakartaSans(fontSize: 16, fontWeight: FontWeight.w800, color: AppColors.primary),
                         ),
                       ],
                     ),
@@ -330,7 +330,7 @@ class _WholesaleDetailScreenState extends State<WholesaleDetailScreen> {
                           messenger.showSnackBar(
                             SnackBar(
                               content: Text('Berhasil mengambil kuota ${qty.toStringAsFixed(0)} kg! Kontrak borongan dicatat.'),
-                              backgroundColor: const Color(0xFF006E04),
+                              backgroundColor: AppColors.primary,
                               behavior: SnackBarBehavior.floating,
                             ),
                           );
@@ -349,7 +349,7 @@ class _WholesaleDetailScreenState extends State<WholesaleDetailScreen> {
                         }
                       },
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFF006E04),
+                        backgroundColor: AppColors.primary,
                         foregroundColor: Colors.white,
                         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                       ),
@@ -530,7 +530,7 @@ class _WholesaleDetailScreenState extends State<WholesaleDetailScreen> {
                         style: GoogleFonts.plusJakartaSans(
                           fontSize: 24,
                           fontWeight: FontWeight.w800,
-                          color: const Color(0xFF006E04),
+                          color: AppColors.primary,
                         ),
                       ),
                       Text(
@@ -625,7 +625,7 @@ class _WholesaleDetailScreenState extends State<WholesaleDetailScreen> {
                             value: progress,
                             minHeight: 10,
                             backgroundColor: const Color(0xFFE2E8F0),
-                            valueColor: const AlwaysStoppedAnimation<Color>(Color(0xFF006E04)),
+                            valueColor: const AlwaysStoppedAnimation<Color>(AppColors.primary),
                           ),
                         ),
                         const SizedBox(height: 14),
@@ -633,7 +633,7 @@ class _WholesaleDetailScreenState extends State<WholesaleDetailScreen> {
                         const SizedBox(height: 12),
                         Row(
                           children: [
-                            const Icon(LucideIcons.calendar, size: 16, color: Color(0xFF006E04)),
+                            const Icon(LucideIcons.calendar, size: 16, color: AppColors.primary),
                             const SizedBox(width: 6),
                             Text(
                               'Target Panen Serentak: $harvestDate',
@@ -664,7 +664,7 @@ class _WholesaleDetailScreenState extends State<WholesaleDetailScreen> {
                             shape: BoxShape.circle,
                           ),
                           child: const Center(
-                            child: Icon(LucideIcons.store, color: Color(0xFF006E04), size: 24),
+                            child: Icon(LucideIcons.store, color: AppColors.primary, size: 24),
                           ),
                         ),
                         const SizedBox(width: 12),
@@ -687,7 +687,7 @@ class _WholesaleDetailScreenState extends State<WholesaleDetailScreen> {
                                     ),
                                   ),
                                   const SizedBox(width: 4),
-                                  const Icon(LucideIcons.badgeCheck, size: 16, color: Color(0xFF006E04)),
+                                  const Icon(LucideIcons.badgeCheck, size: 16, color: AppColors.primary),
                                 ],
                               ),
                               const SizedBox(height: 2),
@@ -711,7 +711,7 @@ class _WholesaleDetailScreenState extends State<WholesaleDetailScreen> {
                             );
                           },
                           style: OutlinedButton.styleFrom(
-                            side: const BorderSide(color: Color(0xFF006E04)),
+                            side: const BorderSide(color: AppColors.primary),
                             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                           ),
@@ -720,7 +720,7 @@ class _WholesaleDetailScreenState extends State<WholesaleDetailScreen> {
                             style: GoogleFonts.plusJakartaSans(
                               fontSize: 11.5,
                               fontWeight: FontWeight.w700,
-                              color: const Color(0xFF006E04),
+                              color: AppColors.primary,
                             ),
                           ),
                         ),
@@ -765,7 +765,7 @@ class _WholesaleDetailScreenState extends State<WholesaleDetailScreen> {
                     child: Row(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const Icon(LucideIcons.shieldCheck, color: Color(0xFF006E04), size: 22),
+                        const Icon(LucideIcons.shieldCheck, color: AppColors.primary, size: 22),
                         const SizedBox(width: 10),
                         Expanded(
                           child: Column(
@@ -828,7 +828,7 @@ class _WholesaleDetailScreenState extends State<WholesaleDetailScreen> {
                       style: GoogleFonts.plusJakartaSans(
                         fontSize: 17,
                         fontWeight: FontWeight.w800,
-                        color: const Color(0xFF006E04),
+                        color: AppColors.primary,
                       ),
                     ),
                   ],
@@ -845,7 +845,7 @@ class _WholesaleDetailScreenState extends State<WholesaleDetailScreen> {
                   ),
                 ),
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFF006E04),
+                  backgroundColor: AppColors.primary,
                   foregroundColor: Colors.white,
                   disabledBackgroundColor: const Color(0xFFCBD5E1),
                   disabledForegroundColor: const Color(0xFF64748B),
@@ -867,7 +867,7 @@ class _WholesaleDetailScreenState extends State<WholesaleDetailScreen> {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(icon, size: 15, color: const Color(0xFF006E04)),
+          Icon(icon, size: 15, color: AppColors.primary),
           const SizedBox(width: 8),
           SizedBox(
             width: 100,

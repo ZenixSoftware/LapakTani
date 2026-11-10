@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 import '../../../core/services/api_service.dart';
+import '../../../core/theme/app_colors.dart';
 import '../../auth/auth_repository.dart';
 import '../community_repository.dart';
 import '../models/education_article.dart';
@@ -214,7 +215,7 @@ class _CreateEducationPostScreenState extends State<CreateEducationPostScreen> {
           content: Text(
             'Materi budidaya "${newArticle.title}" berhasil dipublikasikan ke server.',
           ),
-          backgroundColor: const Color(0xFF03AC0E),
+          backgroundColor: AppColors.primary,
           duration: const Duration(seconds: 3),
         ),
       );
@@ -257,7 +258,7 @@ class _CreateEducationPostScreenState extends State<CreateEducationPostScreen> {
         ),
       ),
       body: _isLoadingProfile
-          ? const Center(child: CircularProgressIndicator(color: Color(0xFF03AC0E)))
+          ? const Center(child: CircularProgressIndicator(color: AppColors.primary))
           : Form(
               key: _formKey,
               child: ListView(
@@ -367,7 +368,7 @@ class _CreateEducationPostScreenState extends State<CreateEducationPostScreen> {
                       style: GoogleFonts.inter(
                         fontSize: 10.5,
                         fontWeight: FontWeight.w500,
-                        color: const Color(0xFF03AC0E),
+                        color: AppColors.primary,
                       ),
                     ),
                   ],
@@ -467,10 +468,10 @@ class _CreateEducationPostScreenState extends State<CreateEducationPostScreen> {
                   ),
                 ),
                 selected: isSelected,
-                selectedColor: const Color(0xFF03AC0E),
+                selectedColor: AppColors.primary,
                 backgroundColor: const Color(0xFFF1F5F9),
                 side: BorderSide(
-                  color: isSelected ? const Color(0xFF03AC0E) : const Color(0xFFE2E8F0),
+                  color: isSelected ? AppColors.primary : const Color(0xFFE2E8F0),
                 ),
                 onSelected: (selected) {
                   if (selected) {
@@ -605,13 +606,13 @@ class _CreateEducationPostScreenState extends State<CreateEducationPostScreen> {
               ),
               TextButton.icon(
                 onPressed: _addStepField,
-                icon: const Icon(LucideIcons.plusCircle, size: 15, color: Color(0xFF03AC0E)),
+                icon: const Icon(LucideIcons.plusCircle, size: 15, color: AppColors.primary),
                 label: Text(
                   'Tambah',
                   style: GoogleFonts.inter(
                     fontSize: 11.5,
                     fontWeight: FontWeight.w700,
-                    color: const Color(0xFF03AC0E),
+                    color: AppColors.primary,
                   ),
                 ),
               ),
@@ -719,7 +720,7 @@ class _CreateEducationPostScreenState extends State<CreateEducationPostScreen> {
                     decoration: BoxDecoration(
                       borderRadius: BorderRadius.circular(8),
                       border: Border.all(
-                        color: isSelected ? const Color(0xFF03AC0E) : const Color(0xFFE2E8F0),
+                        color: isSelected ? AppColors.primary : const Color(0xFFE2E8F0),
                         width: isSelected ? 2 : 1,
                       ),
                       image: DecorationImage(
@@ -770,7 +771,7 @@ class _CreateEducationPostScreenState extends State<CreateEducationPostScreen> {
         children: [
           Checkbox(
             value: _agreementChecked,
-            activeColor: const Color(0xFF03AC0E),
+            activeColor: AppColors.primary,
             onChanged: (val) {
               setState(() => _agreementChecked = val ?? false);
             },
@@ -801,7 +802,7 @@ class _CreateEducationPostScreenState extends State<CreateEducationPostScreen> {
       child: ElevatedButton(
         onPressed: _isSubmitting ? null : _handleSubmit,
         style: ElevatedButton.styleFrom(
-          backgroundColor: const Color(0xFF03AC0E),
+          backgroundColor: AppColors.primary,
           foregroundColor: Colors.white,
           disabledBackgroundColor: const Color(0xFF94A3B8),
           shape: RoundedRectangleBorder(
@@ -870,7 +871,7 @@ class _CreateEducationPostScreenState extends State<CreateEducationPostScreen> {
       ),
       focusedBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(10),
-        borderSide: const BorderSide(color: Color(0xFF03AC0E), width: 1.5),
+        borderSide: const BorderSide(color: AppColors.primary, width: 1.5),
       ),
     );
   }

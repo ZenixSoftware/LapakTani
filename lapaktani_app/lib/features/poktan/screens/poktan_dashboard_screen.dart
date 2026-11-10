@@ -102,7 +102,7 @@ class _PoktanDashboardScreenState extends State<PoktanDashboardScreen>
           ElevatedButton(
             onPressed: () => Navigator.pop(ctx, true),
             style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFF006E04),
+              backgroundColor: AppColors.primary,
               foregroundColor: Colors.white,
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
             ),
@@ -119,7 +119,7 @@ class _PoktanDashboardScreenState extends State<PoktanDashboardScreen>
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(res['message'] ?? 'Sisa kuota berhasil dialihkan ke stok retail Toko Mitra Tani!'),
-            backgroundColor: const Color(0xFF03AC0E),
+            backgroundColor: AppColors.primary,
             behavior: SnackBarBehavior.floating,
           ),
         );
@@ -248,7 +248,7 @@ class _PoktanDashboardScreenState extends State<PoktanDashboardScreen>
                 scaffoldMessenger.showSnackBar(
                   SnackBar(
                     content: Text(result['message']?.toString() ?? 'Settlement berhasil diproses.'),
-                    backgroundColor: const Color(0xFF03AC0E),
+                    backgroundColor: AppColors.primary,
                   ),
                 );
               } else {
@@ -261,7 +261,7 @@ class _PoktanDashboardScreenState extends State<PoktanDashboardScreen>
               }
             },
             style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFF03AC0E),
+              backgroundColor: AppColors.primary,
               foregroundColor: Colors.white,
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
             ),
@@ -278,14 +278,14 @@ class _PoktanDashboardScreenState extends State<PoktanDashboardScreen>
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
         gradient: const LinearGradient(
-          colors: [Color(0xFF0F5132), Color(0xFF03AC0E)],
+          colors: [Color(0xFF0F5132), AppColors.primary],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
         borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
-            color: const Color(0xFF03AC0E).withValues(alpha: 0.25),
+            color: AppColors.primary.withValues(alpha: 0.25),
             blurRadius: 18,
             offset: const Offset(0, 8),
           ),
@@ -645,7 +645,7 @@ class _PoktanDashboardScreenState extends State<PoktanDashboardScreen>
                           style: GoogleFonts.plusJakartaSans(
                             fontSize: 12.5,
                             fontWeight: FontWeight.w700,
-                            color: const Color(0xFF006E04),
+                            color: AppColors.primary,
                           ),
                         ),
                       ],
@@ -893,12 +893,12 @@ class _PoktanDashboardScreenState extends State<PoktanDashboardScreen>
                               OutlinedButton.icon(
                                 onPressed: () => _showSettleDialog(order),
                                 style: OutlinedButton.styleFrom(
-                                  side: const BorderSide(color: Color(0xFF03AC0E)),
+                                  side: const BorderSide(color: AppColors.primary),
                                   padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
                                   minimumSize: const Size(40, 36),
                                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                                 ),
-                                icon: const Icon(LucideIcons.scale, size: 14, color: Color(0xFF03AC0E)),
+                                icon: const Icon(LucideIcons.scale, size: 14, color: AppColors.primary),
                                 label: Text(
                                   'Timbang Masuk',
                                   maxLines: 1,
@@ -906,7 +906,7 @@ class _PoktanDashboardScreenState extends State<PoktanDashboardScreen>
                                   style: GoogleFonts.plusJakartaSans(
                                     fontSize: 11.5,
                                     fontWeight: FontWeight.w700,
-                                    color: const Color(0xFF03AC0E),
+                                    color: AppColors.primary,
                                   ),
                                 ),
                               ),

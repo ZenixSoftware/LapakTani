@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:lucide_icons/lucide_icons.dart';
+import '../../../core/theme/app_colors.dart';
 import '../community_repository.dart';
 import '../models/education_article.dart';
 import '../widgets/penyuluh_official_badge.dart';
@@ -91,9 +92,9 @@ class _EducationFeedScreenState extends State<EducationFeedScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF8FAFC),
+      backgroundColor: AppColors.background,
       appBar: AppBar(
-        backgroundColor: Colors.white,
+        backgroundColor: AppColors.surface,
         elevation: 0,
         scrolledUnderElevation: 1,
         title: Column(
@@ -104,14 +105,14 @@ class _EducationFeedScreenState extends State<EducationFeedScreen> {
               style: GoogleFonts.inter(
                 fontSize: 16.5,
                 fontWeight: FontWeight.w800,
-                color: const Color(0xFF0F172A),
+                color: AppColors.textPrimary,
               ),
             ),
             Text(
               'Materi budidaya resmi BPP & Penyuluh',
               style: GoogleFonts.inter(
                 fontSize: 11,
-                color: const Color(0xFF64748B),
+                color: AppColors.textMuted,
               ),
             ),
           ],
@@ -139,12 +140,12 @@ class _EducationFeedScreenState extends State<EducationFeedScreen> {
                 ),
               ),
               style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFF03AC0E),
+                backgroundColor: AppColors.primary,
                 foregroundColor: Colors.white,
                 padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
                 minimumSize: const Size(0, 32),
                 shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(8),
+                  borderRadius: BorderRadius.circular(10),
                 ),
                 elevation: 0,
               ),
@@ -319,16 +320,16 @@ class _EducationFeedScreenState extends State<EducationFeedScreen> {
                   },
                   borderRadius: BorderRadius.circular(16),
                   child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
                     decoration: BoxDecoration(
                       color: isSelected
-                          ? const Color(0xFF1E293B)
-                          : const Color(0xFFF1F5F9),
+                          ? AppColors.primary
+                          : AppColors.surface,
                       borderRadius: BorderRadius.circular(16),
                       border: Border.all(
                         color: isSelected
-                            ? const Color(0xFF1E293B)
-                            : const Color(0xFFE2E8F0),
+                            ? AppColors.primary
+                            : AppColors.outline,
                       ),
                     ),
                     alignment: Alignment.center,
@@ -337,7 +338,7 @@ class _EducationFeedScreenState extends State<EducationFeedScreen> {
                       style: GoogleFonts.inter(
                         fontSize: 11,
                         fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
-                        color: isSelected ? Colors.white : const Color(0xFF475569),
+                        color: isSelected ? Colors.white : AppColors.textMuted,
                       ),
                     ),
                   ),
@@ -465,21 +466,15 @@ class _EducationFeedScreenState extends State<EducationFeedScreen> {
   Widget _buildArticleCard(EducationArticle article) {
     return Container(
       decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(14),
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(16),
         border: Border.all(
           color: article.isOfficialPenyuluh
-              ? const Color(0xFFBBF7D0)
-              : const Color(0xFFE2E8F0),
+              ? AppColors.surfaceSoftBorder
+              : AppColors.outline,
           width: article.isOfficialPenyuluh ? 1.2 : 1,
         ),
-        boxShadow: const [
-          BoxShadow(
-            color: Color(0x05000000),
-            blurRadius: 4,
-            offset: Offset(0, 1),
-          ),
-        ],
+        boxShadow: AppColors.softShadow,
       ),
       child: Material(
         color: Colors.transparent,
@@ -491,7 +486,7 @@ class _EducationFeedScreenState extends State<EducationFeedScreen> {
               ),
             );
           },
-          borderRadius: BorderRadius.circular(14),
+          borderRadius: BorderRadius.circular(16),
           child: Padding(
             padding: const EdgeInsets.all(14),
             child: Column(
@@ -505,8 +500,8 @@ class _EducationFeedScreenState extends State<EducationFeedScreen> {
                       height: 32,
                       decoration: BoxDecoration(
                         color: article.isOfficialPenyuluh
-                            ? const Color(0xFF14532D)
-                            : const Color(0xFF475569),
+                            ? AppColors.primary
+                            : AppColors.textMuted,
                         shape: BoxShape.circle,
                       ),
                       child: Center(
@@ -613,7 +608,7 @@ class _EducationFeedScreenState extends State<EducationFeedScreen> {
                               vertical: 3,
                             ),
                             decoration: BoxDecoration(
-                              color: const Color(0xFF03AC0E),
+                              color: AppColors.primary,
                               borderRadius: BorderRadius.circular(6),
                             ),
                             child: Text(

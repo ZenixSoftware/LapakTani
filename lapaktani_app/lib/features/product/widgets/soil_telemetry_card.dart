@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 import '../../../core/services/api_service.dart';
+import '../../../core/theme/app_colors.dart';
 
 class SoilTelemetryCard extends StatefulWidget {
   final String productId;
@@ -66,10 +67,10 @@ class _SoilTelemetryCardState extends State<SoilTelemetryCard> {
 
   @override
   Widget build(BuildContext context) {
-    const forestPrimary = Color(0xFF2E7D32);
-    const forestDark = Color(0xFF1B5E20);
-    const lightMintSurface = Color(0xFFE8F5E9);
-    const mintBorder = Color(0xFFC8E6C9);
+    const forestPrimary = AppColors.primary;
+    const forestDark = AppColors.primaryDark;
+    const lightMintSurface = AppColors.surfaceSoft;
+    const mintBorder = AppColors.surfaceSoftBorder;
 
     final data = _telemetryData ?? widget.initialData ?? {};
 

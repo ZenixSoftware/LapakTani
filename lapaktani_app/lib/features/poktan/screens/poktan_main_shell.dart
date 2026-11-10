@@ -255,14 +255,14 @@ class _PoktanMembersTabState extends State<PoktanMembersTab> {
                     padding: const EdgeInsets.all(16),
                     decoration: BoxDecoration(
                       gradient: const LinearGradient(
-                        colors: [Color(0xFF006E04), Color(0xFF03AC0E)],
+                        colors: [AppColors.primary, AppColors.secondary],
                         begin: Alignment.topLeft,
                         end: Alignment.bottomRight,
                       ),
                       borderRadius: BorderRadius.circular(16),
                       boxShadow: const [
                         BoxShadow(
-                          color: Color(0x20006E04),
+                          color: Color(0x20166534),
                           blurRadius: 10,
                           offset: Offset(0, 4),
                         ),

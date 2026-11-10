@@ -3,6 +3,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 import '../../core/services/api_service.dart';
 import '../../core/services/user_session.dart';
+import '../../core/theme/app_colors.dart';
 import '../auth/auth_repository.dart';
 import '../navigation/role_based_app_shell.dart';
 import '../orders/models/order_model.dart';
@@ -138,7 +139,7 @@ class _SellerDashboardScreenState extends State<SellerDashboardScreen> {
                           style: GoogleFonts.plusJakartaSans(
                             fontSize: 11,
                             fontWeight: FontWeight.w700,
-                            color: const Color(0xFF03AC0E),
+                            color: AppColors.primary,
                           ),
                         ),
                       ),
@@ -255,7 +256,7 @@ class _SellerDashboardScreenState extends State<SellerDashboardScreen> {
                                                   width: 7,
                                                   height: 7,
                                                   decoration: const BoxDecoration(
-                                                    color: Color(0xFF03AC0E),
+                                                    color: AppColors.primary,
                                                     shape: BoxShape.circle,
                                                   ),
                                                 ),
@@ -325,7 +326,7 @@ class _SellerDashboardScreenState extends State<SellerDashboardScreen> {
                                         }
                                       },
                                       style: ElevatedButton.styleFrom(
-                                        backgroundColor: const Color(0xFF03AC0E),
+                                        backgroundColor: AppColors.primary,
                                         foregroundColor: Colors.white,
                                         elevation: 0,
                                         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
@@ -632,7 +633,7 @@ class _SellerDashboardScreenState extends State<SellerDashboardScreen> {
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1),
                       decoration: BoxDecoration(
-                        color: const Color(0xFF03AC0E),
+                        color: AppColors.primary,
                         borderRadius: BorderRadius.circular(10),
                       ),
                       child: Text(
@@ -671,7 +672,7 @@ class _SellerDashboardScreenState extends State<SellerDashboardScreen> {
                 child: Switch(
                   value: _isStoreOpen,
                   activeThumbColor: Colors.white,
-                  activeTrackColor: const Color(0xFF03AC0E),
+                  activeTrackColor: AppColors.primary,
                   inactiveThumbColor: Colors.white,
                   inactiveTrackColor: const Color(0xFFCBD5E1),
                   onChanged: (val) {
@@ -744,7 +745,7 @@ class _SellerDashboardScreenState extends State<SellerDashboardScreen> {
                 child: Container(
                   padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
                   decoration: BoxDecoration(
-                    color: const Color(0xFF03AC0E),
+                    color: AppColors.primary,
                     borderRadius: BorderRadius.circular(20),
                   ),
                   child: Row(
@@ -1071,13 +1072,13 @@ class _SellerDashboardScreenState extends State<SellerDashboardScreen> {
                           messenger.showSnackBar(
                             SnackBar(
                               content: Text('Pesanan ${order.id} siap dijemput kurir logistik.'),
-                              backgroundColor: const Color(0xFF03AC0E),
+                              backgroundColor: AppColors.primary,
                               behavior: SnackBarBehavior.floating,
                             ),
                           );
                         },
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFF03AC0E),
+                    backgroundColor: AppColors.primary,
                     foregroundColor: Colors.white,
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
                   ),
@@ -1170,7 +1171,7 @@ class _SellerDashboardScreenState extends State<SellerDashboardScreen> {
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
                         Text('Nomor Resi', style: GoogleFonts.plusJakartaSans(fontSize: 11, color: const Color(0xFF64748B))),
-                        Text(order.trackingNumber, style: GoogleFonts.plusJakartaSans(fontSize: 11.5, fontWeight: FontWeight.w700, color: const Color(0xFF03AC0E))),
+                        Text(order.trackingNumber, style: GoogleFonts.plusJakartaSans(fontSize: 11.5, fontWeight: FontWeight.w700, color: AppColors.primary)),
                       ],
                     ),
                   ],
@@ -1217,14 +1218,14 @@ class _SellerDashboardScreenState extends State<SellerDashboardScreen> {
                   ScaffoldMessenger.of(context).showSnackBar(
                     SnackBar(
                       content: Text('Pesanan ${order.id} telah diserahkan ke kurir logistik.'),
-                      backgroundColor: const Color(0xFF03AC0E),
+                      backgroundColor: AppColors.primary,
                       behavior: SnackBarBehavior.floating,
                     ),
                   );
                 }
               },
               style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFF03AC0E),
+                backgroundColor: AppColors.primary,
                 foregroundColor: Colors.white,
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
               ),
@@ -1291,7 +1292,7 @@ class _SellerDashboardScreenState extends State<SellerDashboardScreen> {
                       color: Color(0xFFE8F8EC),
                       shape: BoxShape.circle,
                     ),
-                    child: const Icon(LucideIcons.phone, color: Color(0xFF03AC0E), size: 20),
+                    child: const Icon(LucideIcons.phone, color: AppColors.primary, size: 20),
                   ),
                   title: Text(order.buyerPhone, style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w700, fontSize: 13.5)),
                   subtitle: Text('Telepon Pembeli', style: GoogleFonts.plusJakartaSans(fontSize: 11, color: const Color(0xFF64748B))),
@@ -1301,7 +1302,7 @@ class _SellerDashboardScreenState extends State<SellerDashboardScreen> {
                       ScaffoldMessenger.of(context).showSnackBar(
                         SnackBar(
                           content: Text('Menghubungkan telepon ke ${order.buyerName}...'),
-                          backgroundColor: const Color(0xFF03AC0E),
+                          backgroundColor: AppColors.primary,
                         ),
                       );
                     },
@@ -1670,7 +1671,7 @@ class _SellerDashboardScreenState extends State<SellerDashboardScreen> {
                             width: 6,
                             height: 6,
                             decoration: const BoxDecoration(
-                              color: Color(0xFF03AC0E),
+                              color: AppColors.primary,
                               shape: BoxShape.circle,
                             ),
                           ),
@@ -1767,7 +1768,7 @@ class _SellerDashboardScreenState extends State<SellerDashboardScreen> {
                   ElevatedButton(
                     onPressed: onPrimaryPressed,
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFF03AC0E),
+                      backgroundColor: AppColors.primary,
                       foregroundColor: Colors.white,
                       elevation: 1,
                       shape: RoundedRectangleBorder(
