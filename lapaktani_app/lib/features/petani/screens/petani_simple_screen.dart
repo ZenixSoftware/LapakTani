@@ -4,6 +4,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 import 'package:lapaktani_app/core/services/api_service.dart';
 import 'package:lapaktani_app/core/services/user_session.dart';
+import 'package:lapaktani_app/core/theme/app_colors.dart';
 import 'package:lapaktani_app/features/auth/auth_repository.dart';
 import 'package:lapaktani_app/features/community/screens/create_pest_report_screen.dart';
 import 'package:lapaktani_app/features/community/screens/education_feed_screen.dart';
@@ -185,7 +186,7 @@ class _PetaniSimpleScreenState extends State<PetaniSimpleScreen> {
                         '${selectedDate.day}/${selectedDate.month}/${selectedDate.year}',
                         style: GoogleFonts.plusJakartaSans(fontSize: 13),
                       ),
-                      const Icon(LucideIcons.calendar, size: 18, color: Color(0xFF03AC0E)),
+                      const Icon(LucideIcons.calendar, size: 18, color: AppColors.primary),
                     ],
                   ),
                 ),
@@ -229,12 +230,12 @@ class _PetaniSimpleScreenState extends State<PetaniSimpleScreen> {
                     ScaffoldMessenger.of(context).showSnackBar(
                       SnackBar(
                         content: Text('Laporan prediksi panen ($qty kg) berhasil dikirim ke Pengurus $_poktanName.'),
-                        backgroundColor: const Color(0xFF03AC0E),
+                        backgroundColor: AppColors.primary,
                       ),
                     );
                   },
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFF03AC0E),
+                    backgroundColor: AppColors.primary,
                     foregroundColor: Colors.white,
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                   ),
@@ -301,7 +302,7 @@ class _PetaniSimpleScreenState extends State<PetaniSimpleScreen> {
       backgroundColor: const Color(0xFFF8FAFC),
       appBar: AppBar(
         elevation: 0,
-        backgroundColor: const Color(0xFF03AC0E),
+        backgroundColor: AppColors.primary,
         title: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -341,10 +342,10 @@ class _PetaniSimpleScreenState extends State<PetaniSimpleScreen> {
         ],
       ),
       body: _isLoading
-          ? const Center(child: CircularProgressIndicator(color: Color(0xFF03AC0E)))
+          ? const Center(child: CircularProgressIndicator(color: AppColors.primary))
           : RefreshIndicator(
               onRefresh: _loadFarmerData,
-              color: const Color(0xFF03AC0E),
+              color: AppColors.primary,
               child: SingleChildScrollView(
                 physics: const AlwaysScrollableScrollPhysics(),
                 padding: const EdgeInsets.all(16),
@@ -491,7 +492,7 @@ class _PetaniSimpleScreenState extends State<PetaniSimpleScreen> {
                 style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w700, fontSize: 13),
               ),
               style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFF03AC0E),
+                backgroundColor: AppColors.primary,
                 foregroundColor: Colors.white,
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
               ),

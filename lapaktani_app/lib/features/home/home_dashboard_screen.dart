@@ -5,6 +5,7 @@ import 'package:intl/intl.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 import '../../core/services/api_service.dart';
 import '../../core/services/user_session.dart';
+import '../../core/theme/app_colors.dart';
 import '../auth/auth_repository.dart';
 import '../auth/login_screen.dart';
 import '../cart/cart_screen.dart';
@@ -186,7 +187,7 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen> {
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         title: Row(
           children: [
-            const Icon(LucideIcons.lock, color: Color(0xFF03AC0E), size: 22),
+            const Icon(LucideIcons.lock, color: AppColors.primary, size: 22),
             const SizedBox(width: 8),
             Text(
               'Silakan Masuk',
@@ -225,7 +226,7 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen> {
               );
             },
             style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFF03AC0E),
+              backgroundColor: AppColors.primary,
               foregroundColor: Colors.white,
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
@@ -475,7 +476,7 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen> {
             SnackBar(
               content: Text('$title berhasil ditambahkan ke keranjang.'),
               duration: const Duration(seconds: 2),
-              backgroundColor: const Color(0xFF03AC0E),
+              backgroundColor: AppColors.primary,
               behavior: SnackBarBehavior.floating,
             ),
           );
@@ -617,7 +618,7 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen> {
       ),
       body: RefreshIndicator(
         onRefresh: _fetchB2BHarvestPools,
-        color: const Color(0xFF006E04),
+        color: AppColors.primary,
         child: CustomScrollView(
           slivers: [
             SliverToBoxAdapter(
@@ -659,17 +660,17 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen> {
                                 setState(() => _wholesaleFilter = chip);
                               },
                               selectedColor: const Color(0xFFDCFCE7),
-                              checkmarkColor: const Color(0xFF006E04),
+                              checkmarkColor: AppColors.primary,
                               backgroundColor: Colors.white,
                               labelStyle: GoogleFonts.plusJakartaSans(
                                 fontSize: 12,
                                 fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
-                                color: isSelected ? const Color(0xFF006E04) : const Color(0xFF475569),
+                                color: isSelected ? AppColors.primary : const Color(0xFF475569),
                               ),
                               shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(20),
                                 side: BorderSide(
-                                  color: isSelected ? const Color(0xFF006E04) : const Color(0xFFE2E8F0),
+                                  color: isSelected ? AppColors.primary : const Color(0xFFE2E8F0),
                                 ),
                               ),
                             ),
@@ -686,7 +687,7 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen> {
             if (_isLoadingB2BPools)
               const SliverFillRemaining(
                 child: Center(
-                  child: CircularProgressIndicator(color: Color(0xFF006E04)),
+                  child: CircularProgressIndicator(color: AppColors.primary),
                 ),
               )
             else if (_filteredWholesalePools.isEmpty)
@@ -799,7 +800,7 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen> {
                                           Container(
                                             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                                             decoration: BoxDecoration(
-                                              color: const Color(0xFF006E04),
+                                              color: AppColors.primary,
                                               borderRadius: BorderRadius.circular(6),
                                             ),
                                             child: Text(
@@ -860,7 +861,7 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen> {
                                     children: [
                                       Row(
                                         children: [
-                                          const Icon(LucideIcons.store, size: 14, color: Color(0xFF006E04)),
+                                          const Icon(LucideIcons.store, size: 14, color: AppColors.primary),
                                           const SizedBox(width: 5),
                                           Expanded(
                                             child: Text(
@@ -874,7 +875,7 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen> {
                                               overflow: TextOverflow.ellipsis,
                                             ),
                                           ),
-                                          const Icon(LucideIcons.badgeCheck, size: 14, color: Color(0xFF006E04)),
+                                          const Icon(LucideIcons.badgeCheck, size: 14, color: AppColors.primary),
                                         ],
                                       ),
                                       const SizedBox(height: 8),
@@ -904,7 +905,7 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen> {
                                             style: GoogleFonts.plusJakartaSans(
                                               fontSize: 16.5,
                                               fontWeight: FontWeight.w800,
-                                              color: const Color(0xFF006E04),
+                                              color: AppColors.primary,
                                             ),
                                           ),
                                           const Spacer(),
@@ -947,7 +948,7 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen> {
                                           value: progress,
                                           minHeight: 7,
                                           backgroundColor: const Color(0xFFE2E8F0),
-                                          valueColor: const AlwaysStoppedAnimation<Color>(Color(0xFF006E04)),
+                                          valueColor: const AlwaysStoppedAnimation<Color>(AppColors.primary),
                                         ),
                                       ),
                                       const SizedBox(height: 12),
@@ -955,7 +956,7 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen> {
                                       const SizedBox(height: 10),
                                       Row(
                                         children: [
-                                          const Icon(LucideIcons.calendar, size: 14, color: Color(0xFF006E04)),
+                                          const Icon(LucideIcons.calendar, size: 14, color: AppColors.primary),
                                           const SizedBox(width: 5),
                                           Text(
                                             'Estimasi Panen: $harvestDate',
@@ -973,11 +974,11 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen> {
                                                 style: GoogleFonts.plusJakartaSans(
                                                   fontSize: 12,
                                                   fontWeight: FontWeight.w700,
-                                                  color: const Color(0xFF006E04),
+                                                  color: AppColors.primary,
                                                 ),
                                               ),
                                               const SizedBox(width: 3),
-                                              const Icon(LucideIcons.chevronRight, size: 14, color: Color(0xFF006E04)),
+                                              const Icon(LucideIcons.chevronRight, size: 14, color: AppColors.primary),
                                             ],
                                           ),
                                         ],
@@ -1029,7 +1030,7 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen> {
                   color: Color(0xFFDCFCE7),
                   shape: BoxShape.circle,
                 ),
-                child: const Icon(LucideIcons.user, size: 40, color: Color(0xFF03AC0E)),
+                child: const Icon(LucideIcons.user, size: 40, color: AppColors.primary),
               ),
               const SizedBox(height: 18),
               Text(
@@ -1070,7 +1071,7 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen> {
                     ),
                   ),
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFF03AC0E),
+                    backgroundColor: AppColors.primary,
                     foregroundColor: Colors.white,
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                   ),
@@ -1123,7 +1124,7 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen> {
                     children: [
                       Row(
                         children: [
-                          const Icon(LucideIcons.user, size: 13, color: Color(0xFF03AC0E)),
+                          const Icon(LucideIcons.user, size: 13, color: AppColors.primary),
                           const SizedBox(width: 6),
                           Text(
                             'Mode Pengunjung',
@@ -1147,7 +1148,7 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen> {
                           style: GoogleFonts.plusJakartaSans(
                             fontSize: 11,
                             fontWeight: FontWeight.w700,
-                            color: const Color(0xFF006E04),
+                            color: AppColors.primary,
                           ),
                         ),
                       ),
@@ -1286,7 +1287,7 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen> {
                   const Icon(
                     LucideIcons.mapPin,
                     size: 12,
-                    color: Color(0xFF03AC0E),
+                    color: AppColors.primary,
                   ),
                   const SizedBox(width: 4),
                   Flexible(
@@ -1513,7 +1514,7 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen> {
                   width: 14,
                   height: 3,
                   decoration: BoxDecoration(
-                    color: const Color(0xFF03AC0E),
+                    color: AppColors.primary,
                     borderRadius: BorderRadius.circular(3),
                   ),
                 ),
@@ -1569,7 +1570,7 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen> {
                   style: GoogleFonts.inter(
                     fontSize: 11.0,
                     fontWeight: FontWeight.w700,
-                    color: const Color(0xFF03AC0E),
+                    color: AppColors.primary,
                   ),
                 ),
               ),
@@ -1726,19 +1727,19 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen> {
                 padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
                 decoration: BoxDecoration(
                   color: isSelected
-                      ? const Color(0xFF03AC0E)
+                      ? AppColors.primary
                       : Colors.white,
                   borderRadius: BorderRadius.circular(20),
                   border: Border.all(
                     color: isSelected
-                        ? const Color(0xFF03AC0E)
+                        ? AppColors.primary
                         : const Color(0xFFE2E8F0),
                     width: 1,
                   ),
                   boxShadow: isSelected
                       ? [
                           BoxShadow(
-                            color: const Color(0xFF03AC0E).withValues(alpha: 0.25),
+                            color: AppColors.primary.withValues(alpha: 0.25),
                             blurRadius: 4,
                             offset: const Offset(0, 1.5),
                           ),
@@ -1790,7 +1791,7 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen> {
               padding: EdgeInsets.symmetric(vertical: 40),
               child: Center(
                 child: CircularProgressIndicator(
-                  color: Color(0xFF03AC0E),
+                  color: AppColors.primary,
                 ),
               ),
             )
@@ -1832,7 +1833,7 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen> {
                         style: GoogleFonts.inter(
                           fontSize: 12,
                           fontWeight: FontWeight.w700,
-                          color: const Color(0xFF03AC0E),
+                          color: AppColors.primary,
                         ),
                       ),
                     ),
@@ -2027,7 +2028,7 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen> {
                 style: GoogleFonts.inter(
                   fontSize: 9.5,
                   fontWeight: FontWeight.w700,
-                  color: const Color(0xFF03AC0E),
+                  color: AppColors.primary,
                 ),
               ),
             ),
@@ -2088,7 +2089,7 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen> {
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1.5),
                 decoration: BoxDecoration(
-                  color: const Color(0xFF03AC0E),
+                  color: AppColors.primary,
                   borderRadius: BorderRadius.circular(3),
                 ),
                 child: Text(
@@ -2401,7 +2402,7 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen> {
                           style: GoogleFonts.inter(
                             fontSize: 7.0,
                             fontWeight: FontWeight.w700,
-                            color: const Color(0xFF03AC0E),
+                            color: AppColors.primary,
                           ),
                         ),
                       ),
@@ -2484,7 +2485,7 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen> {
                             width: 26,
                             height: 26,
                             decoration: BoxDecoration(
-                              color: const Color(0xFF03AC0E),
+                              color: AppColors.primary,
                               borderRadius: BorderRadius.circular(7),
                             ),
                             child: const Icon(
@@ -2574,7 +2575,7 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen> {
             width: 32,
             height: 32,
             decoration: const BoxDecoration(
-              color: Color(0xFF03AC0E),
+              color: AppColors.primary,
               shape: BoxShape.circle,
             ),
             child: const Icon(
@@ -2679,7 +2680,7 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen> {
                         (isActive ? item['activeIcon'] : item['icon']) as IconData,
                         size: 20,
                         color: isActive
-                            ? const Color(0xFF03AC0E)
+                            ? AppColors.primary
                             : const Color(0xFF94A3B8),
                       ),
                       if (isActive)
@@ -2690,7 +2691,7 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen> {
                             width: 5,
                             height: 5,
                             decoration: const BoxDecoration(
-                              color: Color(0xFF03AC0E),
+                              color: AppColors.primary,
                               shape: BoxShape.circle,
                             ),
                           ),
@@ -2704,7 +2705,7 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen> {
                       fontSize: 10.0,
                       fontWeight: isActive ? FontWeight.w700 : FontWeight.w500,
                       color: isActive
-                          ? const Color(0xFF03AC0E)
+                          ? AppColors.primary
                           : const Color(0xFF94A3B8),
                     ),
                   ),

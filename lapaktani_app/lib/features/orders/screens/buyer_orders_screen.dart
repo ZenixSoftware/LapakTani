@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:lucide_icons/lucide_icons.dart';
+import '../../../core/theme/app_colors.dart';
 import '../models/order_model.dart';
 import '../services/order_service.dart';
 import 'order_tracking_screen.dart';
@@ -141,7 +142,7 @@ class _BuyerOrdersScreenState extends State<BuyerOrdersScreen> with SingleTicker
                           style: GoogleFonts.plusJakartaSans(
                             fontSize: 11,
                             fontWeight: FontWeight.w700,
-                            color: const Color(0xFF03AC0E),
+                            color: AppColors.primary,
                           ),
                         ),
                       ),
@@ -248,7 +249,7 @@ class _BuyerOrdersScreenState extends State<BuyerOrdersScreen> with SingleTicker
                       icon: const Icon(LucideIcons.truck, size: 16),
                       label: Text('Lacak Logistik Pengiriman', style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w700)),
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFF03AC0E),
+                        backgroundColor: AppColors.primary,
                         foregroundColor: Colors.white,
                         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                       ),
@@ -297,9 +298,9 @@ class _BuyerOrdersScreenState extends State<BuyerOrdersScreen> with SingleTicker
           child: TabBar(
             controller: _tabController,
             isScrollable: true,
-            labelColor: const Color(0xFF03AC0E),
+            labelColor: AppColors.primary,
             unselectedLabelColor: const Color(0xFF64748B),
-            indicatorColor: const Color(0xFF03AC0E),
+            indicatorColor: AppColors.primary,
             indicatorWeight: 2.5,
             tabAlignment: TabAlignment.start,
             labelStyle: GoogleFonts.plusJakartaSans(
@@ -533,9 +534,9 @@ class _BuyerOrdersScreenState extends State<BuyerOrdersScreen> with SingleTicker
                       ? Image.network(
                           firstItem.imageUrl,
                           fit: BoxFit.cover,
-                          errorBuilder: (context, error, stackTrace) => const Icon(LucideIcons.sprout, size: 20, color: Color(0xFF03AC0E)),
+                          errorBuilder: (context, error, stackTrace) => const Icon(LucideIcons.sprout, size: 20, color: AppColors.primary),
                         )
-                      : const Icon(LucideIcons.sprout, size: 20, color: Color(0xFF03AC0E)),
+                      : const Icon(LucideIcons.sprout, size: 20, color: AppColors.primary),
                 ),
                 const SizedBox(width: 12),
                 Expanded(
@@ -564,7 +565,7 @@ class _BuyerOrdersScreenState extends State<BuyerOrdersScreen> with SingleTicker
                         'Kurir: ${order.courier.serviceName}',
                         style: GoogleFonts.plusJakartaSans(
                           fontSize: 10.5,
-                          color: const Color(0xFF03AC0E),
+                          color: AppColors.primary,
                           fontWeight: FontWeight.w600,
                         ),
                       ),
@@ -628,7 +629,7 @@ class _BuyerOrdersScreenState extends State<BuyerOrdersScreen> with SingleTicker
                       ),
                     ),
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFF03AC0E),
+                      backgroundColor: AppColors.primary,
                       foregroundColor: Colors.white,
                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
                       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),

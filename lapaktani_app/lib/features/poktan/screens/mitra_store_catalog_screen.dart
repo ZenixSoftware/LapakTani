@@ -124,7 +124,7 @@ class _MitraStoreCatalogScreenState extends State<MitraStoreCatalogScreen>
           ElevatedButton(
             onPressed: () => Navigator.pop(ctx, true),
             style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFF006E04),
+              backgroundColor: AppColors.primary,
               foregroundColor: Colors.white,
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
             ),
@@ -144,7 +144,7 @@ class _MitraStoreCatalogScreenState extends State<MitraStoreCatalogScreen>
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(res['message'] ?? 'Sisa kuota berhasil dialihkan ke stok retail!'),
-            backgroundColor: const Color(0xFF006E04),
+            backgroundColor: AppColors.primary,
             behavior: SnackBarBehavior.floating,
           ),
         );
@@ -200,7 +200,7 @@ class _MitraStoreCatalogScreenState extends State<MitraStoreCatalogScreen>
                   color: const Color(0xFFDCFCE7),
                   borderRadius: BorderRadius.circular(12),
                 ),
-                child: const Icon(LucideIcons.shoppingBag, color: Color(0xFF006E04)),
+                child: const Icon(LucideIcons.shoppingBag, color: AppColors.primary),
               ),
               title: Text(
                 'Tambah Produk Retail (Eceran)',
@@ -360,13 +360,13 @@ class _MitraStoreCatalogScreenState extends State<MitraStoreCatalogScreen>
                   ScaffoldMessenger.of(context).showSnackBar(
                     const SnackBar(
                       content: Text('Produk retail berhasil ditambahkan ke etalase toko!'),
-                      backgroundColor: Color(0xFF006E04),
+                      backgroundColor: AppColors.primary,
                       behavior: SnackBarBehavior.floating,
                     ),
                   );
                 },
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFF006E04),
+                  backgroundColor: AppColors.primary,
                   foregroundColor: Colors.white,
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                 ),
@@ -438,13 +438,13 @@ class _MitraStoreCatalogScreenState extends State<MitraStoreCatalogScreen>
               ScaffoldMessenger.of(context).showSnackBar(
                 const SnackBar(
                   content: Text('Katalog berhasil diperbarui!'),
-                  backgroundColor: Color(0xFF006E04),
+                  backgroundColor: AppColors.primary,
                   behavior: SnackBarBehavior.floating,
                 ),
               );
             },
             style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFF006E04),
+              backgroundColor: AppColors.primary,
               foregroundColor: Colors.white,
             ),
             child: Text('Simpan', style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w700)),
@@ -477,13 +477,13 @@ class _MitraStoreCatalogScreenState extends State<MitraStoreCatalogScreen>
                 ),
               );
             },
-            icon: const Icon(LucideIcons.externalLink, size: 14, color: Color(0xFF006E04)),
+            icon: const Icon(LucideIcons.externalLink, size: 14, color: AppColors.primary),
             label: Text(
               'Lihat Toko',
               style: GoogleFonts.plusJakartaSans(
                 fontSize: 12,
                 fontWeight: FontWeight.w700,
-                color: const Color(0xFF006E04),
+                color: AppColors.primary,
               ),
             ),
           ),
@@ -492,7 +492,7 @@ class _MitraStoreCatalogScreenState extends State<MitraStoreCatalogScreen>
       ),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: _showAddProductOptionSheet,
-        backgroundColor: const Color(0xFF006E04),
+        backgroundColor: AppColors.primary,
         foregroundColor: Colors.white,
         elevation: 3,
         icon: const Icon(LucideIcons.plus, size: 20),
@@ -520,7 +520,7 @@ class _MitraStoreCatalogScreenState extends State<MitraStoreCatalogScreen>
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: const Center(
-                    child: Icon(LucideIcons.store, color: Color(0xFF006E04), size: 26),
+                    child: Icon(LucideIcons.store, color: AppColors.primary, size: 26),
                   ),
                 ),
                 const SizedBox(width: 12),
@@ -543,7 +543,7 @@ class _MitraStoreCatalogScreenState extends State<MitraStoreCatalogScreen>
                             ),
                           ),
                           const SizedBox(width: 4),
-                          const Icon(LucideIcons.badgeCheck, size: 16, color: Color(0xFF006E04)),
+                          const Icon(LucideIcons.badgeCheck, size: 16, color: AppColors.primary),
                         ],
                       ),
                       const SizedBox(height: 2),
@@ -570,7 +570,7 @@ class _MitraStoreCatalogScreenState extends State<MitraStoreCatalogScreen>
                     ),
                     Switch(
                       value: _isStoreOpen,
-                      activeThumbColor: const Color(0xFF006E04),
+                      activeThumbColor: AppColors.primary,
                       materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
                       onChanged: (val) {
                         setState(() => _isStoreOpen = val);
@@ -594,9 +594,9 @@ class _MitraStoreCatalogScreenState extends State<MitraStoreCatalogScreen>
             color: Colors.white,
             child: TabBar(
               controller: _tabController,
-              indicatorColor: const Color(0xFF006E04),
+              indicatorColor: AppColors.primary,
               indicatorWeight: 3,
-              labelColor: const Color(0xFF006E04),
+              labelColor: AppColors.primary,
               unselectedLabelColor: const Color(0xFF64748B),
               labelStyle: GoogleFonts.plusJakartaSans(fontSize: 13.5, fontWeight: FontWeight.w700),
               unselectedLabelStyle: GoogleFonts.plusJakartaSans(fontSize: 13.5, fontWeight: FontWeight.w500),
@@ -693,7 +693,7 @@ class _MitraStoreCatalogScreenState extends State<MitraStoreCatalogScreen>
                       style: GoogleFonts.plusJakartaSans(
                         fontSize: 13,
                         fontWeight: FontWeight.w800,
-                        color: const Color(0xFF006E04),
+                        color: AppColors.primary,
                       ),
                     ),
                     const SizedBox(height: 2),
@@ -712,7 +712,7 @@ class _MitraStoreCatalogScreenState extends State<MitraStoreCatalogScreen>
                 children: [
                   Switch(
                     value: isActive,
-                    activeThumbColor: const Color(0xFF006E04),
+                    activeThumbColor: AppColors.primary,
                     materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
                     onChanged: (val) {
                       setState(() => item['isActive'] = val);
@@ -724,14 +724,14 @@ class _MitraStoreCatalogScreenState extends State<MitraStoreCatalogScreen>
                       padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
                       child: Row(
                         children: [
-                          const Icon(LucideIcons.edit2, size: 12, color: Color(0xFF006E04)),
+                          const Icon(LucideIcons.edit2, size: 12, color: AppColors.primary),
                           const SizedBox(width: 4),
                           Text(
                             'Edit',
                             style: GoogleFonts.plusJakartaSans(
                               fontSize: 11.5,
                               fontWeight: FontWeight.w700,
-                              color: const Color(0xFF006E04),
+                              color: AppColors.primary,
                             ),
                           ),
                         ],
@@ -801,7 +801,7 @@ class _MitraStoreCatalogScreenState extends State<MitraStoreCatalogScreen>
                       borderRadius: BorderRadius.circular(6),
                     ),
                     child: Text(
-                      isSpilled ? 'Dialihkan ke Retail' : 'Bursa Aktif',
+                      isSpilled ? 'Surplus Dialihkan ke Retail' : 'Bursa Aktif',
                       style: GoogleFonts.plusJakartaSans(
                         fontSize: 10.5,
                         fontWeight: FontWeight.w700,
@@ -849,7 +849,7 @@ class _MitraStoreCatalogScreenState extends State<MitraStoreCatalogScreen>
                   value: progress,
                   minHeight: 6,
                   backgroundColor: const Color(0xFFE2E8F0),
-                  valueColor: const AlwaysStoppedAnimation<Color>(Color(0xFF006E04)),
+                  valueColor: const AlwaysStoppedAnimation<Color>(AppColors.primary),
                 ),
               ),
               const SizedBox(height: 12),

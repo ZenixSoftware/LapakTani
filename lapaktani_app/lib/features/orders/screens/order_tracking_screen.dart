@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 import '../../../core/services/api_service.dart';
+import '../../../core/theme/app_colors.dart';
 import '../../auth/auth_repository.dart';
 import '../models/order_model.dart';
 import '../services/order_service.dart';
@@ -77,7 +78,7 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text('$label berhasil disalin ke clipboard'),
-        backgroundColor: const Color(0xFF03AC0E),
+        backgroundColor: AppColors.primary,
         behavior: SnackBarBehavior.floating,
         duration: const Duration(seconds: 2),
       ),
@@ -119,7 +120,7 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
                         color: Color(0xFFE8F8EC),
                         shape: BoxShape.circle,
                       ),
-                      child: const Icon(LucideIcons.user, color: Color(0xFF03AC0E), size: 24),
+                      child: const Icon(LucideIcons.user, color: AppColors.primary, size: 24),
                     ),
                     const SizedBox(width: 14),
                     Expanded(
@@ -179,7 +180,7 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
                         ],
                       ),
                       IconButton(
-                        icon: const Icon(LucideIcons.copy, size: 18, color: Color(0xFF03AC0E)),
+                        icon: const Icon(LucideIcons.copy, size: 18, color: AppColors.primary),
                         onPressed: () {
                           Navigator.pop(ctx);
                           _copyToClipboard(courier.phone, 'Nomor kurir');
@@ -193,17 +194,17 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
                   children: [
                     Expanded(
                       child: OutlinedButton.icon(
-                        icon: const Icon(LucideIcons.phone, size: 16, color: Color(0xFF03AC0E)),
+                        icon: const Icon(LucideIcons.phone, size: 16, color: AppColors.primary),
                         label: Text(
                           'Panggil',
                           style: GoogleFonts.plusJakartaSans(
                             fontSize: 13,
                             fontWeight: FontWeight.w700,
-                            color: const Color(0xFF03AC0E),
+                            color: AppColors.primary,
                           ),
                         ),
                         style: OutlinedButton.styleFrom(
-                          side: const BorderSide(color: Color(0xFF03AC0E)),
+                          side: const BorderSide(color: AppColors.primary),
                           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                           padding: const EdgeInsets.symmetric(vertical: 12),
                         ),
@@ -212,7 +213,7 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
                           ScaffoldMessenger.of(context).showSnackBar(
                             SnackBar(
                               content: Text('Menghubungkan panggilan ke ${courier.name}...'),
-                              backgroundColor: const Color(0xFF03AC0E),
+                              backgroundColor: AppColors.primary,
                             ),
                           );
                         },
@@ -230,7 +231,7 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
                           ),
                         ),
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: const Color(0xFF03AC0E),
+                          backgroundColor: AppColors.primary,
                           foregroundColor: Colors.white,
                           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                           padding: const EdgeInsets.symmetric(vertical: 12),
@@ -240,7 +241,7 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
                           ScaffoldMessenger.of(context).showSnackBar(
                             SnackBar(
                               content: Text('Membuka obrolan dengan ${courier.name}...'),
-                              backgroundColor: const Color(0xFF03AC0E),
+                              backgroundColor: AppColors.primary,
                             ),
                           );
                         },
@@ -280,7 +281,7 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
           ElevatedButton(
             onPressed: () => Navigator.pop(ctx, true),
             style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFF03AC0E),
+              backgroundColor: AppColors.primary,
               foregroundColor: Colors.white,
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
             ),
@@ -303,7 +304,7 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text('Terima kasih! Pesanan Anda telah selesai dan dana diteruskan ke petani.'),
-            backgroundColor: Color(0xFF03AC0E),
+            backgroundColor: AppColors.primary,
             behavior: SnackBarBehavior.floating,
           ),
         );
@@ -335,7 +336,7 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
           ElevatedButton(
             onPressed: () => Navigator.pop(ctx, true),
             style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFF03AC0E),
+              backgroundColor: AppColors.primary,
               foregroundColor: Colors.white,
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
             ),
@@ -358,7 +359,7 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
               content: Text('Status pesanan diperbarui menjadi Dalam Perjalanan.'),
-              backgroundColor: Color(0xFF03AC0E),
+              backgroundColor: AppColors.primary,
               behavior: SnackBarBehavior.floating,
             ),
           );
@@ -384,7 +385,7 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
       return const Scaffold(
         backgroundColor: Color(0xFFF8F9FF),
         body: Center(
-          child: CircularProgressIndicator(color: Color(0xFF03AC0E)),
+          child: CircularProgressIndicator(color: AppColors.primary),
         ),
       );
     }
@@ -456,7 +457,7 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
                   style: GoogleFonts.plusJakartaSans(
                     fontSize: 11,
                     fontWeight: FontWeight.w600,
-                    color: const Color(0xFF03AC0E),
+                    color: AppColors.primary,
                   ),
                 ),
               ],
@@ -478,7 +479,7 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
           ),
           body: RefreshIndicator(
             onRefresh: _loadOrderDetails,
-            color: const Color(0xFF03AC0E),
+            color: AppColors.primary,
             child: SingleChildScrollView(
               physics: const AlwaysScrollableScrollPhysics(),
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
@@ -617,7 +618,7 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
                               ),
                             ),
                             const SizedBox(width: 4),
-                            const Icon(LucideIcons.copy, size: 12, color: Color(0xFF03AC0E)),
+                            const Icon(LucideIcons.copy, size: 12, color: AppColors.primary),
                           ],
                         ),
                       ),
@@ -765,7 +766,7 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
             ),
           ),
           IconButton(
-            icon: const Icon(LucideIcons.phoneCall, color: Color(0xFF03AC0E), size: 20),
+            icon: const Icon(LucideIcons.phoneCall, color: AppColors.primary, size: 20),
             onPressed: () => _showCourierContactModal(order.courier),
             tooltip: 'Hubungi Kurir',
           ),
@@ -923,7 +924,7 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
                 style: GoogleFonts.plusJakartaSans(
                   fontSize: 11,
                   fontWeight: FontWeight.w600,
-                  color: const Color(0xFF03AC0E),
+                  color: AppColors.primary,
                 ),
               ),
             ],
@@ -949,9 +950,9 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
                           height: 18,
                           decoration: BoxDecoration(
                             shape: BoxShape.circle,
-                            color: isLatest ? const Color(0xFF03AC0E) : Colors.white,
+                            color: isLatest ? AppColors.primary : Colors.white,
                             border: Border.all(
-                              color: isLatest ? const Color(0xFF03AC0E) : const Color(0xFF94A3B8),
+                              color: isLatest ? AppColors.primary : const Color(0xFF94A3B8),
                               width: 2,
                             ),
                           ),
@@ -982,7 +983,7 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
                               style: GoogleFonts.plusJakartaSans(
                                 fontSize: 13,
                                 fontWeight: isLatest ? FontWeight.w700 : FontWeight.w600,
-                                color: isLatest ? const Color(0xFF03AC0E) : const Color(0xFF121C2A),
+                                color: isLatest ? AppColors.primary : const Color(0xFF121C2A),
                               ),
                             ),
                             const SizedBox(height: 2),
@@ -1084,9 +1085,9 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
                         ? Image.network(
                             item.imageUrl,
                             fit: BoxFit.cover,
-                            errorBuilder: (context, error, stackTrace) => const Icon(LucideIcons.sprout, size: 18, color: Color(0xFF03AC0E)),
+                            errorBuilder: (context, error, stackTrace) => const Icon(LucideIcons.sprout, size: 18, color: AppColors.primary),
                           )
-                        : const Icon(LucideIcons.sprout, size: 18, color: Color(0xFF03AC0E)),
+                        : const Icon(LucideIcons.sprout, size: 18, color: AppColors.primary),
                   ),
                   const SizedBox(width: 10),
                   Expanded(
@@ -1148,7 +1149,7 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
               onPressed: _isActionLoading ? null : () => _handleHandoverToCourier(order),
               icon: const Icon(LucideIcons.truck, size: 18),
               style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFF03AC0E),
+                backgroundColor: AppColors.primary,
                 foregroundColor: Colors.white,
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
               ),
@@ -1247,17 +1248,17 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
                 height: 46,
                 child: OutlinedButton.icon(
                   onPressed: () => _showCourierContactModal(order.courier),
-                  icon: const Icon(LucideIcons.phone, size: 16, color: Color(0xFF03AC0E)),
+                  icon: const Icon(LucideIcons.phone, size: 16, color: AppColors.primary),
                   label: Text(
                     'Hubungi Kurir',
                     style: GoogleFonts.plusJakartaSans(
                       fontSize: 13,
                       fontWeight: FontWeight.w700,
-                      color: const Color(0xFF03AC0E),
+                      color: AppColors.primary,
                     ),
                   ),
                   style: OutlinedButton.styleFrom(
-                    side: const BorderSide(color: Color(0xFF03AC0E)),
+                    side: const BorderSide(color: AppColors.primary),
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                   ),
                 ),
@@ -1304,7 +1305,7 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
             child: ElevatedButton(
               onPressed: _isActionLoading ? null : () => _handleConfirmDelivery(order),
               style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFF03AC0E),
+                backgroundColor: AppColors.primary,
                 foregroundColor: Colors.white,
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
               ),

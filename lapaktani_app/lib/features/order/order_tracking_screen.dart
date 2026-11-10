@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 import '../../core/services/api_service.dart';
+import '../../core/theme/app_colors.dart';
 import '../orders/models/order_model.dart';
 import '../orders/services/order_service.dart';
 
@@ -24,8 +25,8 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
   OrderModel? _serverOrder;
   bool _isLoading = true;
 
-  static const Color _tokopediaGreen = Color(0xFF03AC0E);
-  static const Color _bgCanvas = Color(0xFFF4F5F7);
+  static const Color _tokopediaGreen = AppColors.primary;
+  static const Color _bgCanvas = AppColors.background;
 
   @override
   void initState() {

@@ -19,6 +19,11 @@ const optionalToken = (req, res, next) => {
 // 1. Browsing open pools (Public / Buyer & Guest accessible)
 router.get('/pools', b2bPoolController.getHarvestPools);
 
+// US-22: B2B Contracts & Bids Aliases
+router.get('/bids', b2bPoolController.getHarvestPools);
+router.get('/', b2bPoolController.getHarvestPools);
+router.post('/', verifyToken, b2bPoolController.createHarvestPool);
+
 // 2. Mitra Tani opens new forward harvest pool
 router.post('/pools', verifyToken, b2bPoolController.createHarvestPool);
 
@@ -30,4 +35,3 @@ router.post('/take-quota', optionalToken, b2bPoolController.takeQuota);
 router.post('/pools/:id/take-quota', optionalToken, b2bPoolController.takeQuota);
 
 module.exports = router;
-

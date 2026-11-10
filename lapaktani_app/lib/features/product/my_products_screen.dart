@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 import '../../core/services/api_service.dart';
+import '../../core/theme/app_colors.dart';
 import 'add_product_screen.dart';
 import 'edit_product_screen.dart';
 import 'services/stock_service.dart';
@@ -140,7 +141,7 @@ class _MyProductsScreenState extends State<MyProductsScreen> {
                 border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
                 focusedBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(10),
-                  borderSide: const BorderSide(color: Color(0xFF03AC0E), width: 1.8),
+                  borderSide: const BorderSide(color: AppColors.primary, width: 1.8),
                 ),
               ),
             ),
@@ -175,14 +176,14 @@ class _MyProductsScreenState extends State<MyProductsScreen> {
                 ScaffoldMessenger.of(context).showSnackBar(
                   SnackBar(
                     content: Text('Stok $title berhasil disesuaikan menjadi $val kg.'),
-                    backgroundColor: const Color(0xFF03AC0E),
+                    backgroundColor: AppColors.primary,
                     behavior: SnackBarBehavior.floating,
                   ),
                 );
               }
             },
             style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFF03AC0E),
+              backgroundColor: AppColors.primary,
               foregroundColor: Colors.white,
               elevation: 0,
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
@@ -263,7 +264,7 @@ class _MyProductsScreenState extends State<MyProductsScreen> {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text('Komoditas "$title" berhasil dihapus.'),
-              backgroundColor: const Color(0xFF03AC0E),
+              backgroundColor: AppColors.primary,
               behavior: SnackBarBehavior.floating,
             ),
           );
@@ -279,7 +280,7 @@ class _MyProductsScreenState extends State<MyProductsScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('Komoditas "$title" berhasil dihapus.'),
-            backgroundColor: const Color(0xFF03AC0E),
+            backgroundColor: AppColors.primary,
             behavior: SnackBarBehavior.floating,
           ),
         );
@@ -403,10 +404,10 @@ class _MyProductsScreenState extends State<MyProductsScreen> {
       ),
       body: _isLoading
           ? const Center(
-              child: CircularProgressIndicator(color: Color(0xFF03AC0E)),
+              child: CircularProgressIndicator(color: AppColors.primary),
             )
           : RefreshIndicator(
-              color: const Color(0xFF03AC0E),
+              color: AppColors.primary,
               onRefresh: fetchFarmerProducts,
               child: SingleChildScrollView(
                 physics: const AlwaysScrollableScrollPhysics(),
@@ -492,7 +493,7 @@ class _MyProductsScreenState extends State<MyProductsScreen> {
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1),
                       decoration: BoxDecoration(
-                        color: const Color(0xFF03AC0E),
+                        color: AppColors.primary,
                         borderRadius: BorderRadius.circular(10),
                       ),
                       child: Text(

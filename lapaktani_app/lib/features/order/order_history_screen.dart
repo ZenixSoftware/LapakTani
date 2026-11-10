@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 import '../../core/services/api_service.dart';
+import '../../core/theme/app_colors.dart';
 import '../cart/cart_screen.dart';
 import '../orders/models/order_model.dart';
 import '../orders/services/order_service.dart';
@@ -26,8 +27,8 @@ class _OrderHistoryScreenState extends State<OrderHistoryScreen> {
   final ApiService _apiService = ApiService();
   final TextEditingController _searchController = TextEditingController();
 
-  static const Color _tokopediaGreen = Color(0xFF03AC0E);
-  static const Color _bgCanvas = Color(0xFFF4F6F8);
+  static const Color _tokopediaGreen = AppColors.primary;
+  static const Color _bgCanvas = AppColors.background;
 
   String _searchQuery = '';
   String _selectedStatusFilter = 'Semua status';

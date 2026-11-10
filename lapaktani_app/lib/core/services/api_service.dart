@@ -6,13 +6,14 @@ import 'package:http/http.dart' as http;
 import 'package:http_parser/http_parser.dart';
 import 'package:mime/mime.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import '../config/app_config.dart';
 
 class ApiService {
   static final ApiService _instance = ApiService._internal();
   factory ApiService() => _instance;
   ApiService._internal();
 
-  static const String baseUrl = 'http://localhost:3000/api';
+  static const String baseUrl = AppConfig.baseUrl;
   static const String tokenKey = 'jwt_token';
   static const String userKey = 'auth_user';
 
@@ -448,6 +449,26 @@ class ApiService {
       debugPrint('[API_SERVICE] Error spilling over to retail: $e');
     }
     return null;
+  }
+
+  /// US-25 Alias: Spot Market / Surplus Panen Penyaluran
+  Future<Map<String, dynamic>?> spotSurplusSpillover({required String poolId}) =>
+      spilloverToRetail(poolId: poolId);
+
+  /// US-27: Get spatial soil fertility map for PPL
+  Future<List<Map<String, dynamic>>> getSpatialSoilMap() async {
+    try {
+      final response = await _fetchGet('/penyuluh/soil-map');
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        if (data['data'] is List) {
+          return List<Map<String, dynamic>>.from(data['data']);
+        }
+      }
+    } catch (e) {
+      debugPrint('[API_SERVICE] Error fetching spatial soil map: $e');
+    }
+    return [];
   }
 
   Future<Map<String, dynamic>?> checkPaymentStatus(String orderId) async {

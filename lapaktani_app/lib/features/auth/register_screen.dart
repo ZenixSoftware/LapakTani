@@ -84,7 +84,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   ? 'Akun berhasil dibuat. Silakan lengkapi data legalitas kebun.'
                   : 'Registrasi berhasil! Selamat datang di LapakTani.',
             ),
-            backgroundColor: const Color(0xFF03AC0E),
+            backgroundColor: AppColors.primary,
             duration: const Duration(seconds: 2),
             behavior: SnackBarBehavior.floating,
           ),
@@ -524,7 +524,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                               ),
                               focusedBorder: OutlineInputBorder(
                                 borderRadius: BorderRadius.circular(14),
-                                borderSide: const BorderSide(color: Color(0xFF03AC0E), width: 1.5),
+                                borderSide: const BorderSide(color: AppColors.primary, width: 1.5),
                               ),
                             ),
                             items: const [

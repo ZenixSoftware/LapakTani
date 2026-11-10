@@ -20,7 +20,7 @@ const poktanRoutes = require('./src/routes/poktan');
 const b2bRoutes = require('./src/routes/b2b');
 const pestReportRoutes = require('./src/routes/pestReports');
 const runPestAlertMigration = require('./src/config/migrate_pest_alert');
-const { requestLogger } = require('./src/middlewares/loggerMiddleware');
+const requestLogger = require('./src/middlewares/requestLogger');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -88,8 +88,10 @@ app.use('/api/soil', soilRoutes);
 app.use('/api/payments', paymentRoutes);
 app.use('/api/poktan', poktanRoutes);
 app.use('/api/b2b-contracts', b2bRoutes);
+app.use('/api/contracts', b2bRoutes);
 app.use('/api/pest-reports', pestReportRoutes);
 app.use('/api/pest-alerts', pestReportRoutes);
+app.use('/api/ppl', penyuluhRoutes);
 
 
 app.use((req, res) => {

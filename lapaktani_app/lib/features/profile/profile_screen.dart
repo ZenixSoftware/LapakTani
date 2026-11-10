@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 import '../../core/services/api_service.dart';
+import '../../core/theme/app_colors.dart';
 import '../auth/auth_repository.dart';
 import '../order/order_history_screen.dart';
 import '../seller/seller_main_nav_screen.dart';
@@ -205,7 +206,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
             height: 32,
             margin: const EdgeInsets.only(right: 14, left: 4),
             decoration: const BoxDecoration(
-              color: Color(0xFF03AC0E),
+              color: AppColors.primary,
               shape: BoxShape.circle,
             ),
             child: const Icon(LucideIcons.user, color: Colors.white, size: 17),
@@ -215,11 +216,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
       body: _isLoading
           ? const Center(
               child: CircularProgressIndicator(
-                color: Color(0xFF03AC0E),
+                color: AppColors.primary,
               ),
             )
           : RefreshIndicator(
-              color: const Color(0xFF03AC0E),
+              color: AppColors.primary,
               onRefresh: _loadProfile,
               child: SingleChildScrollView(
                 physics: const AlwaysScrollableScrollPhysics(),
@@ -292,7 +293,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                           style: GoogleFonts.plusJakartaSans(
                             fontSize: 22,
                             fontWeight: FontWeight.w800,
-                            color: const Color(0xFF03AC0E),
+                            color: AppColors.primary,
                           ),
                         ),
                       )
@@ -305,7 +306,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   width: 20,
                   height: 20,
                   decoration: BoxDecoration(
-                    color: isVerified ? const Color(0xFF03AC0E) : const Color(0xFFD97706),
+                    color: isVerified ? AppColors.primary : const Color(0xFFD97706),
                     shape: BoxShape.circle,
                     border: Border.all(color: Colors.white, width: 1.5),
                   ),
@@ -457,7 +458,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   ),
                   child: const Icon(
                     LucideIcons.store,
-                    color: Color(0xFF03AC0E),
+                    color: AppColors.primary,
                     size: 22,
                   ),
                 ),
@@ -508,7 +509,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 ),
                 const Icon(
                   LucideIcons.chevronRight,
-                  color: Color(0xFF03AC0E),
+                  color: AppColors.primary,
                   size: 20,
                 ),
               ],
@@ -608,7 +609,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
     return Container(
       decoration: BoxDecoration(
         gradient: const LinearGradient(
-          colors: [Color(0xFF084E33), Color(0xFF03AC0E)],
+          colors: [Color(0xFF084E33), AppColors.primary],
           begin: Alignment.centerLeft,
           end: Alignment.centerRight,
         ),
@@ -768,7 +769,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
               children: [
                 Row(
                   children: [
-                    const Icon(LucideIcons.wallet, size: 15, color: Color(0xFF03AC0E)),
+                    const Icon(LucideIcons.wallet, size: 15, color: AppColors.primary),
                     const SizedBox(width: 5),
                     Text(
                       'LapakPay',
@@ -797,7 +798,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       style: GoogleFonts.plusJakartaSans(
                         fontSize: 10.5,
                         fontWeight: FontWeight.w700,
-                        color: const Color(0xFF03AC0E),
+                        color: AppColors.primary,
                       ),
                     ),
                     const SizedBox(width: 4),
@@ -886,7 +887,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
               children: [
                 Row(
                   children: [
-                    const Icon(LucideIcons.ticket, size: 15, color: Color(0xFF03AC0E)),
+                    const Icon(LucideIcons.ticket, size: 15, color: AppColors.primary),
                     const SizedBox(width: 5),
                     Text(
                       'Kupon Saya',
@@ -933,7 +934,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   style: GoogleFonts.plusJakartaSans(
                     fontSize: 10.5,
                     fontWeight: FontWeight.w700,
-                    color: const Color(0xFF03AC0E),
+                    color: AppColors.primary,
                   ),
                 ),
               ],
@@ -990,10 +991,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       style: GoogleFonts.plusJakartaSans(
                         fontSize: 12,
                         fontWeight: FontWeight.w600,
-                        color: const Color(0xFF03AC0E),
+                        color: AppColors.primary,
                       ),
                     ),
-                    const Icon(LucideIcons.chevronRight, size: 15, color: Color(0xFF03AC0E)),
+                    const Icon(LucideIcons.chevronRight, size: 15, color: AppColors.primary),
                   ],
                 ),
               ),
@@ -1077,7 +1078,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                           color: Colors.white,
                           shape: BoxShape.circle,
                         ),
-                        child: const Icon(LucideIcons.heart, size: 16, color: Color(0xFF03AC0E)),
+                        child: const Icon(LucideIcons.heart, size: 16, color: AppColors.primary),
                       ),
                       const SizedBox(width: 8),
                       Expanded(
@@ -1137,7 +1138,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                               style: GoogleFonts.plusJakartaSans(
                                 fontSize: 10,
                                 fontWeight: FontWeight.w600,
-                                color: const Color(0xFF03AC0E),
+                                color: AppColors.primary,
                               ),
                             ),
                           ],
@@ -1394,7 +1395,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                               style: GoogleFonts.plusJakartaSans(
                                 fontSize: 9,
                                 fontWeight: FontWeight.w700,
-                                color: const Color(0xFF03AC0E),
+                                color: AppColors.primary,
                               ),
                             ),
                           ),

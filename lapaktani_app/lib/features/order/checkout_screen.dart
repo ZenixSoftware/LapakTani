@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 import '../../core/services/api_service.dart';
+import '../../core/theme/app_colors.dart';
 import '../cart/cart_screen.dart';
 import 'order_success_screen.dart';
 import 'payment_method_selection_screen.dart';
@@ -22,8 +23,8 @@ class CheckoutScreen extends StatefulWidget {
 }
 
 class _CheckoutScreenState extends State<CheckoutScreen> {
-  static const Color _tokopediaGreen = Color(0xFF03AC0E);
-  static const Color _bgCanvas = Color(0xFFF4F5F7);
+  static const Color _tokopediaGreen = AppColors.primary;
+  static const Color _bgCanvas = AppColors.background;
 
   String _recipientName = 'Budi Santoso';
   String _recipientPhone = '081234567890';
