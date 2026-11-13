@@ -11,6 +11,7 @@ import 'package:lapaktani_app/features/community/screens/education_feed_screen.d
 import 'package:lapaktani_app/features/community/screens/pest_alert_detail_screen.dart';
 import 'package:lapaktani_app/features/community/services/pest_alert_service.dart';
 import 'package:lapaktani_app/features/community/widgets/penyuluh_official_badge.dart';
+import 'package:lapaktani_app/features/penyuluh/screens/soil_fertility_map_screen.dart';
 
 class PenyuluhHubScreen extends StatefulWidget {
   const PenyuluhHubScreen({super.key});
@@ -161,6 +162,10 @@ class _PenyuluhHubScreenState extends State<PenyuluhHubScreen> {
                     _buildPplOfficialCard(),
                     const SizedBox(height: 16),
 
+                    // CARD GIS: Peta Sebaran Kesuburan Tanah (US-27)
+                    _buildSoilFertilityMapCard(),
+                    const SizedBox(height: 16),
+
                     // CARD 2: Quick Action Hub (Publish Edukasi & Buka Feed)
                     _buildEducationPublishSection(),
                     const SizedBox(height: 16),
@@ -238,6 +243,109 @@ class _PenyuluhHubScreenState extends State<PenyuluhHubScreen> {
             ),
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildSoilFertilityMapCard() {
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: const Color(0xFFE2E8F0)),
+        boxShadow: const [
+          BoxShadow(
+            color: Color(0x08000000),
+            blurRadius: 8,
+            offset: Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (_) => const SoilFertilityMapScreen(),
+              ),
+            );
+          },
+          borderRadius: BorderRadius.circular(16),
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: Row(
+              children: [
+                Container(
+                  width: 48,
+                  height: 48,
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFECFDF5),
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: const Color(0xFFA7F3D0)),
+                  ),
+                  child: const Icon(
+                    LucideIcons.mapPin,
+                    color: Color(0xFF059669),
+                    size: 24,
+                  ),
+                ),
+                const SizedBox(width: 14),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          Expanded(
+                            child: Text(
+                              'Peta Sebaran Kesuburan Tanah (GIS)',
+                              style: GoogleFonts.plusJakartaSans(
+                                fontSize: 14.5,
+                                fontWeight: FontWeight.w700,
+                                color: const Color(0xFF0F172A),
+                              ),
+                            ),
+                          ),
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFFDCFCE7),
+                              borderRadius: BorderRadius.circular(4),
+                            ),
+                            child: Text(
+                              'US-27',
+                              style: GoogleFonts.plusJakartaSans(
+                                fontSize: 10,
+                                fontWeight: FontWeight.w700,
+                                color: const Color(0xFF15803D),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        'Monitoring spasial pH, NPK, kelembaban, & rekomendasi agronomi wilayah binaan.',
+                        style: GoogleFonts.plusJakartaSans(
+                          fontSize: 12,
+                          color: const Color(0xFF64748B),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(width: 8),
+                const Icon(
+                  LucideIcons.chevronRight,
+                  color: Color(0xFF94A3B8),
+                  size: 20,
+                ),
+              ],
+            ),
+          ),
+        ),
       ),
     );
   }
