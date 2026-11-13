@@ -26,9 +26,10 @@ const app = express();
 const PORT = process.env.PORT || 3000;
 
 app.use(cors());
+// Global Middleware: Request Logger & Performance Monitoring (Berjalan di SEMUA router/routing)
+app.use(requestLogger);
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
-app.use(requestLogger);
 app.use(express.static(path.join(__dirname, 'public')));
 app.use('/uploads', express.static(path.join(__dirname, 'public/uploads')));
 

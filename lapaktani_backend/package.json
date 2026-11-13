@@ -5,7 +5,8 @@
   "main": "server.js",
   "scripts": {
     "start": "node server.js",
-    "dev": "node --watch server.js"
+    "dev": "node --watch server.js",
+    "test:load": "node tests/load_test_autocannon.js"
   },
   "keywords": [],
   "author": "",
@@ -22,5 +23,8 @@
     "mysql2": "^3.24.5",
     "redis": "^6.3.0",
     "uuid": "^14.0.2"
+  },
+  "devDependencies": {
+    "autocannon": "^9.0.0"
   }
 }
