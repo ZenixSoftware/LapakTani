@@ -3,6 +3,8 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 import '../community_repository.dart';
 import '../models/education_article.dart';
+import '../widgets/create_post_sheet.dart';
+import '../widgets/discussion_comment_sheet.dart';
 import '../widgets/penyuluh_official_badge.dart';
 import 'create_education_post_screen.dart';
 import 'education_detail_screen.dart';
@@ -29,6 +31,8 @@ class _EducationFeedScreenState extends State<EducationFeedScreen> {
 
   bool _verifiedOnly = false;
   String _selectedCategory = 'Semua';
+
+  final Set<String> _likedArticleIds = {};
 
   final List<String> _categories = [
     'Semua',
@@ -88,10 +92,81 @@ class _EducationFeedScreenState extends State<EducationFeedScreen> {
     _loadArticles();
   }
 
+  void _toggleLike(EducationArticle article) {
+    final isLiked = _likedArticleIds.contains(article.id);
+    final newCount = isLiked
+        ? (article.likesCount > 0 ? article.likesCount - 1 : 0)
+        : article.likesCount + 1;
+
+    setState(() {
+      if (isLiked) {
+        _likedArticleIds.remove(article.id);
+      } else {
+        _likedArticleIds.add(article.id);
+      }
+      final idx = _articles.indexWhere((a) => a.id == article.id);
+      if (idx >= 0) {
+        _articles[idx] = _articles[idx].copyWith(likesCount: newCount);
+      }
+    });
+
+    _repository.toggleArticleLike(article.id, !isLiked);
+  }
+
+  void _openDiscussionCommentSheet(EducationArticle article) {
+    showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (ctx) => DiscussionCommentSheet(
+        article: article,
+        onCommentAdded: (newCount) {
+          setState(() {
+            final idx = _articles.indexWhere((a) => a.id == article.id);
+            if (idx >= 0) {
+              _articles[idx] = _articles[idx].copyWith(commentsCount: newCount);
+            }
+          });
+        },
+      ),
+    );
+  }
+
+  void _openCreatePostSheet() {
+    showModalBottomSheet<bool>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (ctx) => CreatePostSheet(
+        onPostPublished: () {
+          _loadArticles();
+        },
+      ),
+    ).then((result) {
+      if (result == true) {
+        _loadArticles();
+      }
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFFF8FAFC),
+      floatingActionButton: FloatingActionButton.extended(
+        onPressed: _openCreatePostSheet,
+        backgroundColor: const Color(0xFF03AC0E),
+        foregroundColor: Colors.white,
+        elevation: 3,
+        icon: const Icon(LucideIcons.messageSquarePlus, size: 18),
+        label: Text(
+          '+ Buat Diskusi',
+          style: GoogleFonts.inter(
+            fontSize: 13,
+            fontWeight: FontWeight.w700,
+          ),
+        ),
+      ),
       appBar: AppBar(
         backgroundColor: Colors.white,
         elevation: 0,
@@ -463,6 +538,7 @@ class _EducationFeedScreenState extends State<EducationFeedScreen> {
   }
 
   Widget _buildArticleCard(EducationArticle article) {
+    final bool isLiked = _likedArticleIds.contains(article.id);
     return Container(
       decoration: BoxDecoration(
         color: Colors.white,
@@ -655,11 +731,14 @@ class _EducationFeedScreenState extends State<EducationFeedScreen> {
                   ),
                 ),
                 const SizedBox(height: 10),
+                const Divider(height: 1, color: Color(0xFFF1F5F9)),
+                const SizedBox(height: 8),
 
-                // Meta footer
+                // Meta footer & interactive actions
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
+                    // Reading time & BPP
                     Row(
                       children: [
                         const Icon(LucideIcons.clock, size: 12, color: Color(0xFF94A3B8)),
@@ -672,9 +751,9 @@ class _EducationFeedScreenState extends State<EducationFeedScreen> {
                           ),
                         ),
                         if (article.bppOffice != null) ...[
-                          const SizedBox(width: 8),
-                          Text('•', style: TextStyle(color: Color(0xFFCBD5E1))),
-                          const SizedBox(width: 8),
+                          const SizedBox(width: 6),
+                          const Text('•', style: TextStyle(color: Color(0xFFCBD5E1), fontSize: 10)),
+                          const SizedBox(width: 6),
                           Text(
                             article.bppOffice!,
                             style: GoogleFonts.inter(
@@ -686,16 +765,95 @@ class _EducationFeedScreenState extends State<EducationFeedScreen> {
                         ],
                       ],
                     ),
+
+                    // Interactive Action Buttons
                     Row(
                       children: [
-                        const Icon(LucideIcons.heart, size: 12, color: Color(0xFFDC2626)),
-                        const SizedBox(width: 3),
-                        Text(
-                          '${article.likesCount}',
-                          style: GoogleFonts.inter(
-                            fontSize: 11,
-                            fontWeight: FontWeight.w600,
-                            color: const Color(0xFF64748B),
+                        // Interactive Like / Upvote Button with toggleable counter
+                        Material(
+                          color: Colors.transparent,
+                          child: InkWell(
+                            onTap: () => _toggleLike(article),
+                            borderRadius: BorderRadius.circular(16),
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                              decoration: BoxDecoration(
+                                color: isLiked ? const Color(0xFFFEE2E2) : const Color(0xFFF8FAFC),
+                                borderRadius: BorderRadius.circular(16),
+                                border: Border.all(
+                                  color: isLiked ? const Color(0xFFFCA5A5) : const Color(0xFFE2E8F0),
+                                  width: 0.8,
+                                ),
+                              ),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Icon(
+                                    isLiked ? LucideIcons.heart : LucideIcons.heart,
+                                    size: 13,
+                                    color: isLiked ? const Color(0xFFDC2626) : const Color(0xFF64748B),
+                                  ),
+                                  const SizedBox(width: 4),
+                                  Text(
+                                    '${article.likesCount}',
+                                    style: GoogleFonts.inter(
+                                      fontSize: 11,
+                                      fontWeight: isLiked ? FontWeight.w700 : FontWeight.w600,
+                                      color: isLiked ? const Color(0xFFDC2626) : const Color(0xFF475569),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+
+                        // Interactive Comment Button opening DiscussionCommentSheet
+                        Material(
+                          color: Colors.transparent,
+                          child: InkWell(
+                            onTap: () => _openDiscussionCommentSheet(article),
+                            borderRadius: BorderRadius.circular(16),
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                              decoration: BoxDecoration(
+                                color: const Color(0xFFF0FDF4),
+                                borderRadius: BorderRadius.circular(16),
+                                border: Border.all(
+                                  color: const Color(0xFFBBF7D0),
+                                  width: 0.8,
+                                ),
+                              ),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  const Icon(
+                                    LucideIcons.messageSquare,
+                                    size: 13,
+                                    color: Color(0xFF15803D),
+                                  ),
+                                  const SizedBox(width: 4),
+                                  Text(
+                                    '${article.commentsCount}',
+                                    style: GoogleFonts.inter(
+                                      fontSize: 11,
+                                      fontWeight: FontWeight.w600,
+                                      color: const Color(0xFF15803D),
+                                    ),
+                                  ),
+                                  const SizedBox(width: 3),
+                                  Text(
+                                    'Komentar',
+                                    style: GoogleFonts.inter(
+                                      fontSize: 10,
+                                      color: const Color(0xFF166534),
+                                      fontWeight: FontWeight.w500,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
                           ),
                         ),
                       ],
