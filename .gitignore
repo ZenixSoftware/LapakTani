@@ -68,3 +68,12 @@ app.*.map.json
 # Runtime Uploads & Cache
 lapaktani_backend/public/uploads/
 uploads/
+
+# Academic & Personal Documents
+*.docx
+*.doc
+*.pdf
+*31255220*
+append_evaluation*.py
+temp_*.py
+test_*.js

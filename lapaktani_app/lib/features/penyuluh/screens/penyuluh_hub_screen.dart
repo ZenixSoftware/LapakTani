@@ -66,7 +66,7 @@ class _PenyuluhHubScreenState extends State<PenyuluhHubScreen> {
           'Apakah Anda ingin keluar dari akun Penyuluh Pertanian Lapangan (PPL)?',
           style: GoogleFonts.plusJakartaSans(
             fontSize: 13,
-            color: const Color(0xFF475569),
+            color: AppColors.textSecondary,
           ),
         ),
         actions: [
@@ -75,14 +75,14 @@ class _PenyuluhHubScreenState extends State<PenyuluhHubScreen> {
             child: Text(
               'Batal',
               style: GoogleFonts.plusJakartaSans(
-                color: const Color(0xFF64748B),
+                color: AppColors.textMuted,
               ),
             ),
           ),
           ElevatedButton(
             onPressed: () => Navigator.pop(ctx, true),
             style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFFDC2626),
+              backgroundColor: AppColors.error,
               foregroundColor: Colors.white,
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(8),
@@ -113,10 +113,10 @@ class _PenyuluhHubScreenState extends State<PenyuluhHubScreen> {
     final penyuluhName = currentUser?.fullName ?? 'Ir. Ahmad Hidayat';
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF8FAFC),
+      backgroundColor: AppColors.background,
       appBar: AppBar(
         elevation: 0,
-        backgroundColor: const Color(0xFF0F172A),
+        backgroundColor: AppColors.primary,
         title: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -184,16 +184,10 @@ class _PenyuluhHubScreenState extends State<PenyuluhHubScreen> {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.surface,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: const Color(0xFFE2E8F0)),
-        boxShadow: const [
-          BoxShadow(
-            color: Color(0x08000000),
-            blurRadius: 8,
-            offset: Offset(0, 2),
-          ),
-        ],
+        border: Border.all(color: AppColors.outline),
+        boxShadow: AppColors.softShadow,
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -204,12 +198,12 @@ class _PenyuluhHubScreenState extends State<PenyuluhHubScreen> {
                 width: 44,
                 height: 44,
                 decoration: const BoxDecoration(
-                  color: Color(0xFFEFF6FF),
+                  color: AppColors.infoSoft,
                   shape: BoxShape.circle,
                 ),
                 child: const Icon(
                   LucideIcons.shieldCheck,
-                  color: Color(0xFF2563EB),
+                  color: AppColors.info,
                   size: 24,
                 ),
               ),
@@ -224,7 +218,7 @@ class _PenyuluhHubScreenState extends State<PenyuluhHubScreen> {
                       'NIP: 19820315 200801 1 003 • BPP Lembang',
                       style: GoogleFonts.plusJakartaSans(
                         fontSize: 11,
-                        color: const Color(0xFF64748B),
+                        color: AppColors.textMuted,
                       ),
                     ),
                   ],
@@ -233,13 +227,13 @@ class _PenyuluhHubScreenState extends State<PenyuluhHubScreen> {
             ],
           ),
           const SizedBox(height: 12),
-          const Divider(height: 1, color: Color(0xFFF1F5F9)),
+          const Divider(height: 1, color: AppColors.divider),
           const SizedBox(height: 10),
           Text(
             'Sebagai PPL resmi berlisensi dinas pertanian, panduan budidaya yang Anda publikasikan otomatis membawa lencana terverifikasi untuk menjamin akurasi teknis bagi petani.',
             style: GoogleFonts.plusJakartaSans(
               fontSize: 11.5,
-              color: const Color(0xFF475569),
+              color: AppColors.textSecondary,
             ),
           ),
         ],
@@ -250,16 +244,10 @@ class _PenyuluhHubScreenState extends State<PenyuluhHubScreen> {
   Widget _buildSoilFertilityMapCard() {
     return Container(
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.surface,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: const Color(0xFFE2E8F0)),
-        boxShadow: const [
-          BoxShadow(
-            color: Color(0x08000000),
-            blurRadius: 8,
-            offset: Offset(0, 2),
-          ),
-        ],
+        border: Border.all(color: AppColors.outline),
+        boxShadow: AppColors.softShadow,
       ),
       child: Material(
         color: Colors.transparent,
@@ -281,13 +269,13 @@ class _PenyuluhHubScreenState extends State<PenyuluhHubScreen> {
                   width: 48,
                   height: 48,
                   decoration: BoxDecoration(
-                    color: const Color(0xFFECFDF5),
+                    color: AppColors.surfaceSoft,
                     borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: const Color(0xFFA7F3D0)),
+                    border: Border.all(color: AppColors.surfaceSoftBorder),
                   ),
                   child: const Icon(
                     LucideIcons.mapPin,
-                    color: Color(0xFF059669),
+                    color: AppColors.primary,
                     size: 24,
                   ),
                 ),
@@ -304,14 +292,15 @@ class _PenyuluhHubScreenState extends State<PenyuluhHubScreen> {
                               style: GoogleFonts.plusJakartaSans(
                                 fontSize: 14.5,
                                 fontWeight: FontWeight.w700,
-                                color: const Color(0xFF0F172A),
+                                color: AppColors.textPrimary,
                               ),
                             ),
                           ),
+                          const SizedBox(width: 6),
                           Container(
                             padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                             decoration: BoxDecoration(
-                              color: const Color(0xFFDCFCE7),
+                              color: AppColors.surfaceMint,
                               borderRadius: BorderRadius.circular(4),
                             ),
                             child: Text(
@@ -319,7 +308,7 @@ class _PenyuluhHubScreenState extends State<PenyuluhHubScreen> {
                               style: GoogleFonts.plusJakartaSans(
                                 fontSize: 10,
                                 fontWeight: FontWeight.w700,
-                                color: const Color(0xFF15803D),
+                                color: AppColors.primary,
                               ),
                             ),
                           ),
@@ -330,7 +319,7 @@ class _PenyuluhHubScreenState extends State<PenyuluhHubScreen> {
                         'Monitoring spasial pH, NPK, kelembaban, & rekomendasi agronomi wilayah binaan.',
                         style: GoogleFonts.plusJakartaSans(
                           fontSize: 12,
-                          color: const Color(0xFF64748B),
+                          color: AppColors.textMuted,
                         ),
                       ),
                     ],
@@ -339,7 +328,7 @@ class _PenyuluhHubScreenState extends State<PenyuluhHubScreen> {
                 const SizedBox(width: 8),
                 const Icon(
                   LucideIcons.chevronRight,
-                  color: Color(0xFF94A3B8),
+                  color: AppColors.textMuted,
                   size: 20,
                 ),
               ],
@@ -354,48 +343,48 @@ class _PenyuluhHubScreenState extends State<PenyuluhHubScreen> {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.surface,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: const Color(0xFFE2E8F0)),
-        boxShadow: const [
-          BoxShadow(
-            color: Color(0x08000000),
-            blurRadius: 8,
-            offset: Offset(0, 2),
-          ),
-        ],
+        border: Border.all(color: AppColors.outline),
+        boxShadow: AppColors.softShadow,
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Row(
-                children: [
-                  Container(
-                    padding: const EdgeInsets.all(8),
-                    decoration: BoxDecoration(
-                      color: const Color(0xFFDCFCE7),
-                      borderRadius: BorderRadius.circular(8),
+              Expanded(
+                child: Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        color: AppColors.surfaceMint,
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: const Icon(
+                        LucideIcons.graduationCap,
+                        size: 18,
+                        color: AppColors.primary,
+                      ),
                     ),
-                    child: const Icon(
-                      LucideIcons.graduationCap,
-                      size: 18,
-                      color: Color(0xFF006E04),
+                    const SizedBox(width: 10),
+                    Flexible(
+                      child: Text(
+                        'Pusat Edukasi Pertanian (US-18)',
+                        overflow: TextOverflow.ellipsis,
+                        maxLines: 2,
+                        style: GoogleFonts.plusJakartaSans(
+                          fontSize: 14.5,
+                          fontWeight: FontWeight.w700,
+                          color: AppColors.textPrimary,
+                        ),
+                      ),
                     ),
-                  ),
-                  const SizedBox(width: 10),
-                  Text(
-                    'Pusat Edukasi Pertanian (US-18)',
-                    style: GoogleFonts.plusJakartaSans(
-                      fontSize: 14.5,
-                      fontWeight: FontWeight.w700,
-                      color: const Color(0xFF121C2A),
-                    ),
-                  ),
-                ],
+                  ],
+                ),
               ),
+              const SizedBox(width: 8),
               OutlinedButton(
                 onPressed: () {
                   Navigator.push(
@@ -429,7 +418,7 @@ class _PenyuluhHubScreenState extends State<PenyuluhHubScreen> {
             'Publikasikan panduan teknis pengendalian OPT, pemupukan berimbang, dan penanganan pasca-panen.',
             style: GoogleFonts.plusJakartaSans(
               fontSize: 12,
-              color: const Color(0xFF64748B),
+              color: AppColors.textMuted,
             ),
           ),
           const SizedBox(height: 14),
@@ -471,54 +460,54 @@ class _PenyuluhHubScreenState extends State<PenyuluhHubScreen> {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.surface,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: const Color(0xFFE2E8F0)),
-        boxShadow: const [
-          BoxShadow(
-            color: Color(0x08000000),
-            blurRadius: 8,
-            offset: Offset(0, 2),
-          ),
-        ],
+        border: Border.all(color: AppColors.outline),
+        boxShadow: AppColors.softShadow,
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Row(
-                children: [
-                  Container(
-                    padding: const EdgeInsets.all(8),
-                    decoration: BoxDecoration(
-                      color: const Color(0xFFFEF2F2),
-                      borderRadius: BorderRadius.circular(8),
+              Expanded(
+                child: Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        color: AppColors.errorSoft,
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: const Icon(
+                        LucideIcons.alertOctagon,
+                        size: 18,
+                        color: AppColors.error,
+                      ),
                     ),
-                    child: const Icon(
-                      LucideIcons.alertOctagon,
-                      size: 18,
-                      color: Color(0xFFDC2626),
+                    const SizedBox(width: 10),
+                    Flexible(
+                      child: Text(
+                        'Validasi Serangan Hama (US-19)',
+                        overflow: TextOverflow.ellipsis,
+                        maxLines: 2,
+                        style: GoogleFonts.plusJakartaSans(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w700,
+                          color: AppColors.textPrimary,
+                        ),
+                      ),
                     ),
-                  ),
-                  const SizedBox(width: 10),
-                  Text(
-                    'Validasi Serangan Hama (US-19)',
-                    style: GoogleFonts.plusJakartaSans(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w700,
-                      color: const Color(0xFF121C2A),
-                    ),
-                  ),
-                ],
+                  ],
+                ),
               ),
+              const SizedBox(width: 8),
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                 decoration: BoxDecoration(
                   color: _pendingVerificationCount > 0
-                      ? const Color(0xFFFEE2E2)
-                      : const Color(0xFFDCFCE7),
+                      ? AppColors.errorSoft
+                      : AppColors.surfaceMint,
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Text(
@@ -527,8 +516,8 @@ class _PenyuluhHubScreenState extends State<PenyuluhHubScreen> {
                     fontSize: 10.5,
                     fontWeight: FontWeight.w700,
                     color: _pendingVerificationCount > 0
-                        ? const Color(0xFF991B1B)
-                        : const Color(0xFF166534),
+                        ? AppColors.error
+                        : AppColors.primary,
                   ),
                 ),
               ),
@@ -539,7 +528,7 @@ class _PenyuluhHubScreenState extends State<PenyuluhHubScreen> {
             'Laporan masuk dari petani desa. Lakukan verifikasi lapangan dan tetapkan status peringatan dini desa.',
             style: GoogleFonts.plusJakartaSans(
               fontSize: 12,
-              color: const Color(0xFF64748B),
+              color: AppColors.textMuted,
             ),
           ),
           const SizedBox(height: 14),
@@ -548,14 +537,14 @@ class _PenyuluhHubScreenState extends State<PenyuluhHubScreen> {
               padding: const EdgeInsets.all(16),
               alignment: Alignment.center,
               decoration: BoxDecoration(
-                color: const Color(0xFFF8FAFC),
+                color: AppColors.background,
                 borderRadius: BorderRadius.circular(10),
               ),
               child: Text(
                 'Tidak ada laporan serangan hama aktif saat ini.',
                 style: GoogleFonts.plusJakartaSans(
                   fontSize: 12,
-                  color: const Color(0xFF94A3B8),
+                  color: AppColors.textMuted,
                 ),
               ),
             )
@@ -580,9 +569,9 @@ class _PenyuluhHubScreenState extends State<PenyuluhHubScreen> {
                   child: Container(
                     padding: const EdgeInsets.all(12),
                     decoration: BoxDecoration(
-                      color: const Color(0xFFF8FAFC),
+                      color: AppColors.background,
                       borderRadius: BorderRadius.circular(10),
-                      border: Border.all(color: const Color(0xFFE2E8F0)),
+                      border: Border.all(color: AppColors.outline),
                     ),
                     child: Row(
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -593,8 +582,8 @@ class _PenyuluhHubScreenState extends State<PenyuluhHubScreen> {
                               : LucideIcons.bug,
                           size: 18,
                           color: report.isEmergency
-                              ? const Color(0xFFDC2626)
-                              : const Color(0xFFD97706),
+                              ? AppColors.error
+                              : AppColors.warning,
                         ),
                         const SizedBox(width: 10),
                         Expanded(
@@ -606,7 +595,7 @@ class _PenyuluhHubScreenState extends State<PenyuluhHubScreen> {
                                 style: GoogleFonts.plusJakartaSans(
                                   fontSize: 13,
                                   fontWeight: FontWeight.w700,
-                                  color: const Color(0xFF0F172A),
+                                  color: AppColors.textPrimary,
                                 ),
                               ),
                               const SizedBox(height: 2),
@@ -614,7 +603,7 @@ class _PenyuluhHubScreenState extends State<PenyuluhHubScreen> {
                                 '${report.villageName} • Dilaporkan oleh ${report.farmerName}',
                                 style: GoogleFonts.plusJakartaSans(
                                   fontSize: 11,
-                                  color: const Color(0xFF64748B),
+                                  color: AppColors.textMuted,
                                 ),
                               ),
                             ],
@@ -623,7 +612,7 @@ class _PenyuluhHubScreenState extends State<PenyuluhHubScreen> {
                         const Icon(
                           LucideIcons.chevronRight,
                           size: 16,
-                          color: Color(0xFF94A3B8),
+                          color: AppColors.textMuted,
                         ),
                       ],
                     ),

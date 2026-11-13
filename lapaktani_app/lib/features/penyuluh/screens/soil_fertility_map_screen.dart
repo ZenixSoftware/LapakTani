@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 import '../../../core/services/api_service.dart';
+import '../../../core/theme/app_colors.dart';
 
 class SoilPlotModel {
   final String farmId;
@@ -122,7 +123,6 @@ class _SoilFertilityMapScreenState extends State<SoilFertilityMapScreen> {
   final ApiService _apiService = ApiService();
 
   bool _isLoading = true;
-  String? _errorMessage;
 
   String _selectedDesa = 'Semua Desa';
   String _selectedHara = 'Semua';
@@ -245,7 +245,6 @@ class _SoilFertilityMapScreenState extends State<SoilFertilityMapScreen> {
   Future<void> _loadSoilMapData() async {
     setState(() {
       _isLoading = true;
-      _errorMessage = null;
     });
 
     try {
@@ -315,10 +314,10 @@ class _SoilFertilityMapScreenState extends State<SoilFertilityMapScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF8FAFC),
+      backgroundColor: AppColors.background,
       appBar: AppBar(
         elevation: 0,
-        backgroundColor: const Color(0xFF0F172A),
+        backgroundColor: AppColors.primary,
         title: Text(
           'Peta Kesuburan Tanah Wilayah Binaan',
           style: GoogleFonts.plusJakartaSans(
@@ -338,11 +337,11 @@ class _SoilFertilityMapScreenState extends State<SoilFertilityMapScreen> {
       ),
       body: _isLoading
           ? const Center(
-              child: CircularProgressIndicator(color: Color(0xFF03AC0E)),
+              child: CircularProgressIndicator(color: AppColors.primary),
             )
           : RefreshIndicator(
               onRefresh: _loadSoilMapData,
-              color: const Color(0xFF03AC0E),
+              color: AppColors.primary,
               child: CustomScrollView(
                 physics: const AlwaysScrollableScrollPhysics(),
                 slivers: [
@@ -364,34 +363,40 @@ class _SoilFertilityMapScreenState extends State<SoilFertilityMapScreen> {
                     child: Padding(
                       padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
                       child: Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          Row(
-                            children: [
-                              const Icon(LucideIcons.mapPin, size: 16, color: Color(0xFF03AC0E)),
-                              const SizedBox(width: 6),
-                              Text(
-                                'Plot Lahan Terpantau (${_filteredPlots.length})',
-                                style: GoogleFonts.plusJakartaSans(
-                                  fontSize: 14,
-                                  fontWeight: FontWeight.w700,
-                                  color: const Color(0xFF1E293B),
+                          Expanded(
+                            child: Row(
+                              children: [
+                                const Icon(LucideIcons.mapPin, size: 16, color: AppColors.primary),
+                                const SizedBox(width: 6),
+                                Flexible(
+                                  child: Text(
+                                    'Plot Lahan Terpantau (${_filteredPlots.length})',
+                                    overflow: TextOverflow.ellipsis,
+                                    style: GoogleFonts.plusJakartaSans(
+                                      fontSize: 14,
+                                      fontWeight: FontWeight.w700,
+                                      color: AppColors.textPrimary,
+                                    ),
+                                  ),
                                 ),
-                              ),
-                            ],
+                              ],
+                            ),
                           ),
+                          const SizedBox(width: 8),
                           Container(
                             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                             decoration: BoxDecoration(
-                              color: const Color(0xFFF1F5F9),
+                              color: AppColors.surfaceSoft,
                               borderRadius: BorderRadius.circular(6),
+                              border: Border.all(color: AppColors.surfaceSoftBorder),
                             ),
                             child: Text(
                               'GIS Real-Time IoT',
                               style: GoogleFonts.plusJakartaSans(
                                 fontSize: 10.5,
                                 fontWeight: FontWeight.w600,
-                                color: const Color(0xFF475569),
+                                color: AppColors.primary,
                               ),
                             ),
                           ),
@@ -412,7 +417,7 @@ class _SoilFertilityMapScreenState extends State<SoilFertilityMapScreen> {
                               const Icon(
                                 LucideIcons.layers,
                                 size: 48,
-                                color: Color(0xFF94A3B8),
+                                color: AppColors.textMuted,
                               ),
                               const SizedBox(height: 12),
                               Text(
@@ -420,7 +425,7 @@ class _SoilFertilityMapScreenState extends State<SoilFertilityMapScreen> {
                                 style: GoogleFonts.plusJakartaSans(
                                   fontSize: 14,
                                   fontWeight: FontWeight.w700,
-                                  color: const Color(0xFF334155),
+                                  color: AppColors.textPrimary,
                                 ),
                               ),
                               const SizedBox(height: 4),
@@ -429,7 +434,7 @@ class _SoilFertilityMapScreenState extends State<SoilFertilityMapScreen> {
                                 textAlign: TextAlign.center,
                                 style: GoogleFonts.plusJakartaSans(
                                   fontSize: 12,
-                                  color: const Color(0xFF64748B),
+                                  color: AppColors.textMuted,
                                 ),
                               ),
                             ],
@@ -458,7 +463,7 @@ class _SoilFertilityMapScreenState extends State<SoilFertilityMapScreen> {
 
   Widget _buildFilterSection() {
     return Container(
-      color: Colors.white,
+      color: AppColors.surface,
       padding: const EdgeInsets.fromLTRB(16, 14, 16, 14),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -469,7 +474,7 @@ class _SoilFertilityMapScreenState extends State<SoilFertilityMapScreen> {
             style: GoogleFonts.plusJakartaSans(
               fontSize: 11.5,
               fontWeight: FontWeight.w700,
-              color: const Color(0xFF475569),
+              color: AppColors.textSecondary,
             ),
           ),
           const SizedBox(height: 8),
@@ -488,15 +493,15 @@ class _SoilFertilityMapScreenState extends State<SoilFertilityMapScreen> {
                         _selectedDesa = desa;
                       });
                     },
-                    backgroundColor: const Color(0xFFF1F5F9),
-                    selectedColor: const Color(0xFFDCFCE7),
+                    backgroundColor: AppColors.background,
+                    selectedColor: AppColors.surfaceMint,
                     labelStyle: GoogleFonts.plusJakartaSans(
                       fontSize: 12,
                       fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
-                      color: isSelected ? const Color(0xFF006E04) : const Color(0xFF334155),
+                      color: isSelected ? AppColors.primary : AppColors.textSecondary,
                     ),
                     side: BorderSide(
-                      color: isSelected ? const Color(0xFF03AC0E) : const Color(0xFFCBD5E1),
+                      color: isSelected ? AppColors.secondary : AppColors.outline,
                     ),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(20),
@@ -515,7 +520,7 @@ class _SoilFertilityMapScreenState extends State<SoilFertilityMapScreen> {
             style: GoogleFonts.plusJakartaSans(
               fontSize: 11.5,
               fontWeight: FontWeight.w700,
-              color: const Color(0xFF475569),
+              color: AppColors.textSecondary,
             ),
           ),
           const SizedBox(height: 8),
@@ -534,15 +539,15 @@ class _SoilFertilityMapScreenState extends State<SoilFertilityMapScreen> {
                         _selectedHara = hara;
                       });
                     },
-                    backgroundColor: const Color(0xFFF1F5F9),
-                    selectedColor: const Color(0xFFFEF3C7),
+                    backgroundColor: AppColors.background,
+                    selectedColor: AppColors.warningSoft,
                     labelStyle: GoogleFonts.plusJakartaSans(
                       fontSize: 12,
                       fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
-                      color: isSelected ? const Color(0xFF92400E) : const Color(0xFF334155),
+                      color: isSelected ? AppColors.warning : AppColors.textSecondary,
                     ),
                     side: BorderSide(
-                      color: isSelected ? const Color(0xFFD97706) : const Color(0xFFCBD5E1),
+                      color: isSelected ? AppColors.accent : AppColors.outline,
                     ),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(20),
@@ -563,18 +568,12 @@ class _SoilFertilityMapScreenState extends State<SoilFertilityMapScreen> {
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         gradient: const LinearGradient(
-          colors: [Color(0xFF064E3B), Color(0xFF065F46), Color(0xFF047857)],
+          colors: [AppColors.primaryDark, AppColors.primary, AppColors.secondary],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
         borderRadius: BorderRadius.circular(16),
-        boxShadow: const [
-          BoxShadow(
-            color: Color(0x1F065F46),
-            blurRadius: 10,
-            offset: Offset(0, 4),
-          ),
-        ],
+        boxShadow: AppColors.elevatedShadow,
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -584,7 +583,7 @@ class _SoilFertilityMapScreenState extends State<SoilFertilityMapScreen> {
               Container(
                 padding: const EdgeInsets.all(6),
                 decoration: BoxDecoration(
-                  color: Colors.white.withOpacity(0.15),
+                  color: Colors.white.withValues(alpha: 0.15),
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: const Icon(LucideIcons.activity, color: Colors.white, size: 18),
@@ -622,7 +621,7 @@ class _SoilFertilityMapScreenState extends State<SoilFertilityMapScreen> {
                 child: Container(
                   padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 12),
                   decoration: BoxDecoration(
-                    color: Colors.white.withOpacity(0.12),
+                    color: Colors.white.withValues(alpha: 0.12),
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: Column(
@@ -630,13 +629,16 @@ class _SoilFertilityMapScreenState extends State<SoilFertilityMapScreen> {
                     children: [
                       Row(
                         children: [
-                          const Icon(LucideIcons.maximize2, size: 14, color: Color(0xFF6EE7B7)),
+                          const Icon(LucideIcons.maximize2, size: 14, color: AppColors.surfaceSoftBorder),
                           const SizedBox(width: 5),
-                          Text(
-                            'Luas Terpantau',
-                            style: GoogleFonts.plusJakartaSans(
-                              fontSize: 11,
-                              color: const Color(0xFFD1FAE5),
+                          Flexible(
+                            child: Text(
+                              'Luas Terpantau',
+                              overflow: TextOverflow.ellipsis,
+                              style: GoogleFonts.plusJakartaSans(
+                                fontSize: 11,
+                                color: AppColors.surfaceSoft,
+                              ),
                             ),
                           ),
                         ],
@@ -667,7 +669,7 @@ class _SoilFertilityMapScreenState extends State<SoilFertilityMapScreen> {
                 child: Container(
                   padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 12),
                   decoration: BoxDecoration(
-                    color: Colors.white.withOpacity(0.12),
+                    color: Colors.white.withValues(alpha: 0.12),
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: Column(
@@ -675,13 +677,16 @@ class _SoilFertilityMapScreenState extends State<SoilFertilityMapScreen> {
                     children: [
                       Row(
                         children: [
-                          const Icon(LucideIcons.checkCircle, size: 14, color: Color(0xFF6EE7B7)),
+                          const Icon(LucideIcons.checkCircle, size: 14, color: AppColors.surfaceSoftBorder),
                           const SizedBox(width: 5),
-                          Text(
-                            'Produktif Subur',
-                            style: GoogleFonts.plusJakartaSans(
-                              fontSize: 11,
-                              color: const Color(0xFFD1FAE5),
+                          Flexible(
+                            child: Text(
+                              'Produktif Subur',
+                              overflow: TextOverflow.ellipsis,
+                              style: GoogleFonts.plusJakartaSans(
+                                fontSize: 11,
+                                color: AppColors.surfaceSoft,
+                              ),
                             ),
                           ),
                         ],
@@ -717,16 +722,10 @@ class _SoilFertilityMapScreenState extends State<SoilFertilityMapScreen> {
     return Container(
       margin: const EdgeInsets.only(bottom: 14),
       decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: const Color(0xFFE2E8F0)),
-        boxShadow: const [
-          BoxShadow(
-            color: Color(0x06000000),
-            blurRadius: 8,
-            offset: Offset(0, 2),
-          ),
-        ],
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: AppColors.outline),
+        boxShadow: AppColors.softShadow,
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -735,9 +734,9 @@ class _SoilFertilityMapScreenState extends State<SoilFertilityMapScreen> {
           Container(
             padding: const EdgeInsets.all(12),
             decoration: const BoxDecoration(
-              color: Color(0xFFFAFAFA),
-              borderRadius: BorderRadius.vertical(top: Radius.circular(14)),
-              border: Border(bottom: BorderSide(color: Color(0xFFF1F5F9))),
+              color: AppColors.surfaceSoft,
+              borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+              border: Border(bottom: BorderSide(color: AppColors.divider)),
             ),
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -746,80 +745,94 @@ class _SoilFertilityMapScreenState extends State<SoilFertilityMapScreen> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Row(
-                        children: [
-                          Text(
-                            plot.poktanName,
-                            style: GoogleFonts.plusJakartaSans(
-                              fontSize: 13.5,
-                              fontWeight: FontWeight.w700,
-                              color: const Color(0xFF0F172A),
-                            ),
-                          ),
-                        ],
+                      Text(
+                        plot.poktanName,
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                        style: GoogleFonts.plusJakartaSans(
+                          fontSize: 13.5,
+                          fontWeight: FontWeight.w700,
+                          color: AppColors.textPrimary,
+                        ),
                       ),
                       const SizedBox(height: 2),
                       Text(
                         'Petani: ${plot.farmerName} • ${plot.villageName}',
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
                         style: GoogleFonts.plusJakartaSans(
                           fontSize: 11.5,
-                          color: const Color(0xFF64748B),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                _buildPhIndicatorPill(plot.phLevel),
-              ],
-            ),
-          ),
-
-          // Commodity & Geo Coordinates
-          Padding(
-            padding: const EdgeInsets.fromLTRB(14, 10, 14, 6),
-            child: Row(
-              children: [
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFFF0FDF4),
-                    borderRadius: BorderRadius.circular(6),
-                    border: Border.all(color: const Color(0xFFBBF7D0)),
-                  ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      const Icon(LucideIcons.sprout, size: 12, color: Color(0xFF16A34A)),
-                      const SizedBox(width: 4),
-                      Text(
-                        plot.commodity,
-                        style: GoogleFonts.plusJakartaSans(
-                          fontSize: 11,
-                          fontWeight: FontWeight.w600,
-                          color: const Color(0xFF15803D),
+                          color: AppColors.textMuted,
                         ),
                       ),
                     ],
                   ),
                 ),
                 const SizedBox(width: 8),
-                Text(
-                  '• ${plot.landAreaHa.toStringAsFixed(2)} Ha',
-                  style: GoogleFonts.plusJakartaSans(
-                    fontSize: 11.5,
-                    fontWeight: FontWeight.w600,
-                    color: const Color(0xFF475569),
-                  ),
+                _buildPhIndicatorPill(plot.phLevel),
+              ],
+            ),
+          ),
+
+          // Commodity & Geo Coordinates (Wrap prevents overflow on 360dp screens)
+          Padding(
+            padding: const EdgeInsets.fromLTRB(14, 10, 14, 6),
+            child: Wrap(
+              spacing: 8,
+              runSpacing: 6,
+              alignment: WrapAlignment.spaceBetween,
+              crossAxisAlignment: WrapCrossAlignment.center,
+              children: [
+                Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                      decoration: BoxDecoration(
+                        color: AppColors.surfaceSoft,
+                        borderRadius: BorderRadius.circular(6),
+                        border: Border.all(color: AppColors.surfaceSoftBorder),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          const Icon(LucideIcons.sprout, size: 12, color: AppColors.secondary),
+                          const SizedBox(width: 4),
+                          Text(
+                            plot.commodity,
+                            style: GoogleFonts.plusJakartaSans(
+                              fontSize: 11,
+                              fontWeight: FontWeight.w600,
+                              color: AppColors.primary,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Text(
+                      '• ${plot.landAreaHa.toStringAsFixed(2)} Ha',
+                      style: GoogleFonts.plusJakartaSans(
+                        fontSize: 11.5,
+                        fontWeight: FontWeight.w600,
+                        color: AppColors.textSecondary,
+                      ),
+                    ),
+                  ],
                 ),
-                const Spacer(),
-                const Icon(LucideIcons.crosshair, size: 12, color: Color(0xFF64748B)),
-                const SizedBox(width: 4),
-                Text(
-                  '${plot.gpsLatitude.toStringAsFixed(4)}, ${plot.gpsLongitude.toStringAsFixed(4)}',
-                  style: GoogleFonts.jetBrainsMono(
-                    fontSize: 10.5,
-                    color: const Color(0xFF64748B),
-                  ),
+                Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Icon(LucideIcons.crosshair, size: 12, color: AppColors.textMuted),
+                    const SizedBox(width: 4),
+                    Text(
+                      '${plot.gpsLatitude.toStringAsFixed(4)}, ${plot.gpsLongitude.toStringAsFixed(4)}',
+                      style: GoogleFonts.jetBrainsMono(
+                        fontSize: 10.5,
+                        color: AppColors.textMuted,
+                      ),
+                    ),
+                  ],
                 ),
               ],
             ),
@@ -831,9 +844,9 @@ class _SoilFertilityMapScreenState extends State<SoilFertilityMapScreen> {
             child: Container(
               padding: const EdgeInsets.all(10),
               decoration: BoxDecoration(
-                color: const Color(0xFFF8FAFC),
+                color: AppColors.background,
                 borderRadius: BorderRadius.circular(10),
-                border: Border.all(color: const Color(0xFFE2E8F0)),
+                border: Border.all(color: AppColors.outline),
               ),
               child: Row(
                 children: [
@@ -872,9 +885,9 @@ class _SoilFertilityMapScreenState extends State<SoilFertilityMapScreen> {
               width: double.infinity,
               padding: const EdgeInsets.all(10),
               decoration: BoxDecoration(
-                color: const Color(0xFFFEF3C7).withOpacity(0.4),
+                color: AppColors.warningSoft.withValues(alpha: 0.6),
                 borderRadius: BorderRadius.circular(8),
-                border: Border.all(color: const Color(0xFFFDE68A)),
+                border: Border.all(color: AppColors.accent.withValues(alpha: 0.4)),
               ),
               child: Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -882,7 +895,7 @@ class _SoilFertilityMapScreenState extends State<SoilFertilityMapScreen> {
                   const Icon(
                     LucideIcons.lightbulb,
                     size: 15,
-                    color: Color(0xFFD97706),
+                    color: AppColors.warning,
                   ),
                   const SizedBox(width: 8),
                   Expanded(
@@ -894,7 +907,7 @@ class _SoilFertilityMapScreenState extends State<SoilFertilityMapScreen> {
                           style: GoogleFonts.plusJakartaSans(
                             fontSize: 10.5,
                             fontWeight: FontWeight.w700,
-                            color: const Color(0xFF92400E),
+                            color: AppColors.warning,
                           ),
                         ),
                         const SizedBox(height: 2),
@@ -903,7 +916,7 @@ class _SoilFertilityMapScreenState extends State<SoilFertilityMapScreen> {
                           style: GoogleFonts.plusJakartaSans(
                             fontSize: 11.5,
                             fontWeight: FontWeight.w600,
-                            color: const Color(0xFF78350F),
+                            color: AppColors.textPrimary,
                           ),
                         ),
                       ],
@@ -926,21 +939,21 @@ class _SoilFertilityMapScreenState extends State<SoilFertilityMapScreen> {
 
     if (ph >= 6.0 && ph <= 7.0) {
       // Hijau: Optimal
-      bgColor = const Color(0xFFDCFCE7);
-      textColor = const Color(0xFF166534);
-      borderColor = const Color(0xFF86EFAC);
+      bgColor = AppColors.surfaceMint;
+      textColor = AppColors.primary;
+      borderColor = AppColors.surfaceSoftBorder;
       label = 'pH ${ph.toStringAsFixed(1)} • Optimal';
     } else if (ph >= 5.0 && ph < 6.0) {
       // Kuning: Masam
-      bgColor = const Color(0xFFFEF3C7);
-      textColor = const Color(0xFF92400E);
-      borderColor = const Color(0xFFFCD34D);
+      bgColor = AppColors.warningSoft;
+      textColor = AppColors.warning;
+      borderColor = AppColors.accent;
       label = 'pH ${ph.toStringAsFixed(1)} • Masam';
     } else {
       // Merah: Sangat Masam (< 5.0)
-      bgColor = const Color(0xFFFEE2E2);
-      textColor = const Color(0xFF991B1B);
-      borderColor = const Color(0xFFFCA5A5);
+      bgColor = AppColors.errorSoft;
+      textColor = AppColors.error;
+      borderColor = AppColors.errorBorder;
       label = 'pH ${ph.toStringAsFixed(1)} • Sangat Masam';
     }
 
@@ -971,21 +984,29 @@ class _SoilFertilityMapScreenState extends State<SoilFertilityMapScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          Text(
-            label,
-            style: GoogleFonts.plusJakartaSans(
-              fontSize: 9.5,
-              color: const Color(0xFF64748B),
-              fontWeight: FontWeight.w500,
+          FittedBox(
+            fit: BoxFit.scaleDown,
+            child: Text(
+              label,
+              maxLines: 1,
+              style: GoogleFonts.plusJakartaSans(
+                fontSize: 9.5,
+                color: AppColors.textMuted,
+                fontWeight: FontWeight.w500,
+              ),
             ),
           ),
           const SizedBox(height: 2),
-          Text(
-            value,
-            style: GoogleFonts.plusJakartaSans(
-              fontSize: 11.5,
-              fontWeight: FontWeight.w700,
-              color: isLow ? const Color(0xFFDC2626) : const Color(0xFF0F172A),
+          FittedBox(
+            fit: BoxFit.scaleDown,
+            child: Text(
+              value,
+              maxLines: 1,
+              style: GoogleFonts.plusJakartaSans(
+                fontSize: 11.5,
+                fontWeight: FontWeight.w700,
+                color: isLow ? AppColors.error : AppColors.textPrimary,
+              ),
             ),
           ),
         ],
@@ -997,7 +1018,7 @@ class _SoilFertilityMapScreenState extends State<SoilFertilityMapScreen> {
     return Container(
       height: 24,
       width: 1,
-      color: const Color(0xFFE2E8F0),
+      color: AppColors.outline,
     );
   }
 }
