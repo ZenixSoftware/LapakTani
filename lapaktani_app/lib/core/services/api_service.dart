@@ -103,6 +103,7 @@ class ApiService {
     final headers = <String, String>{
       'Content-Type': 'application/json',
       'Accept': 'application/json',
+      'X-API-Key': AppConfig.apiKey,
     };
     final token = await getToken();
     if (token != null && token.trim().isNotEmpty) {
@@ -656,6 +657,7 @@ class ApiService {
         request.headers['Authorization'] = 'Bearer $token';
       }
       request.headers['Accept'] = 'application/json';
+      request.headers['X-API-Key'] = AppConfig.apiKey;
 
       final mimeType = lookupMimeType(imageFile.path) ?? 'image/jpeg';
       final mimeSplit = mimeType.split('/');

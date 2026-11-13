@@ -1,4 +1,6 @@
-const API_BASE_URL = 'http://localhost:3000/api';
+const API_BASE_URL = (import.meta.env.VITE_API_BASE_URL || 'https://api-lapaktani.velosixraptor.my.id/api').replace(/\/+$/, '');
+const API_ORIGIN = API_BASE_URL.replace(/\/api$/, '');
+const API_KEY = import.meta.env.VITE_API_KEY || 'lapaktani_secure_gateway_2026_key';
 export const TOKEN_KEY = 'lapaktani_token';
 export const USER_KEY = 'lapaktani_user';
 
@@ -8,14 +10,14 @@ export const USER_KEY = 'lapaktani_user';
 export const resolveImageUrl = (url?: string | null): string | null => {
   if (!url || typeof url !== 'string' || !url.trim()) return null;
   const trimmed = url.trim();
-  if (trimmed.startsWith('http://10.0.2.2:3000')) {
-    return trimmed.replace('http://10.0.2.2:3000', 'http://localhost:3000');
-  }
-  if (trimmed.startsWith('http://') || trimmed.startsWith('https://') || trimmed.startsWith('data:')) {
+  if (trimmed.startsWith('data:')) {
     return trimmed;
   }
+  if (trimmed.startsWith('http://') || trimmed.startsWith('https://')) {
+    return trimmed.replace(/^http:\/\/(localhost|127\.0\.0\.1|10\.0\.2\.2)(:\d+)?/i, API_ORIGIN);
+  }
   const cleanPath = trimmed.startsWith('/') ? trimmed : `/${trimmed}`;
-  return `http://localhost:3000${cleanPath}`;
+  return `${API_ORIGIN}${cleanPath}`;
 };
 
 export interface PendingFarmer {
@@ -124,6 +126,8 @@ export const authFetch = async (
     headers.set('Content-Type', 'application/json');
   }
 
+  headers.set('X-API-Key', API_KEY);
+
   if (token) {
     headers.set('Authorization', `Bearer ${token}`);
   }
@@ -147,6 +151,7 @@ export const loginPenyuluh = async (
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
+      'X-API-Key': API_KEY,
     },
     body: JSON.stringify({ email, password }),
   });

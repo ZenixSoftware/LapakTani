@@ -35,7 +35,14 @@ const getProducts = async (req, res) => {
       }
     }
 
-    let query = `
+    const whereClause = sanitizedSearch.length > 0
+      ? ` WHERE (p.title LIKE ? OR c.specific_name LIKE ? OR pg.grade_label LIKE ? OR fg.group_name LIKE ? OR v.name LIKE ?)`
+      : '';
+    const params = sanitizedSearch.length > 0
+      ? Array(5).fill(`%${sanitizedSearch}%`)
+      : [];
+
+    const primaryQuery = `
       SELECT 
         p.id, 
         p.title, 
@@ -43,23 +50,23 @@ const getProducts = async (req, res) => {
         p.stock_kg, 
         p.image_url, 
         p.unit_id,
-        cu.unit_name,
-        cu.description as unit_description,
-        c.specific_name as category, 
-        pg.grade_label as grade, 
-        fg.group_name as poktan_name, 
-        v.name as village_name,
+        COALESCE(cu.unit_name, 'Kg') AS unit_name,
+        cu.description AS unit_description,
+        COALESCE(c.specific_name, 'Komoditas') AS category, 
+        COALESCE(pg.grade_label, 'Reguler') AS grade, 
+        COALESCE(fg.group_name, 'Mitra Tani') AS poktan_name, 
+        COALESCE(v.name, 'Sumenep') AS village_name,
         COALESCE(cart_stats.in_cart_count, 0) AS in_cart_count,
         COALESCE(cart_stats.in_cart_count, 0) AS in_cart_users_count,
         COALESCE(cart_stats.in_cart_qty, 0) AS in_cart_qty,
         COALESCE(cart_stats.in_cart_qty, 0) AS in_cart_total_qty
       FROM products p 
-      JOIN commodities c ON p.commodity_id = c.id 
-      JOIN product_grades pg ON p.grade_id = pg.id 
+      LEFT JOIN commodities c ON p.commodity_id = c.id 
+      LEFT JOIN product_grades pg ON p.grade_id = pg.id 
       LEFT JOIN commodity_units cu ON p.unit_id = cu.id
-      JOIN farmer_profiles fp ON p.farmer_id = fp.user_id 
-      JOIN farmer_groups fg ON fp.farmer_group_id = fg.id 
-      JOIN villages v ON fg.village_id = v.id
+      LEFT JOIN farmer_profiles fp ON p.farmer_id = fp.user_id 
+      LEFT JOIN farmer_groups fg ON fp.farmer_group_id = fg.id 
+      LEFT JOIN villages v ON fg.village_id = v.id
       LEFT JOIN (
         SELECT 
           product_id,
@@ -68,18 +75,46 @@ const getProducts = async (req, res) => {
         FROM cart_items
         GROUP BY product_id
       ) cart_stats ON p.id = cart_stats.product_id
+      ${whereClause}
+      ORDER BY p.id DESC LIMIT 50
     `;
-    const params = [];
 
-    if (sanitizedSearch.length > 0) {
-      query += ` WHERE (p.title LIKE ? OR c.specific_name LIKE ? OR pg.grade_label LIKE ? OR fg.group_name LIKE ? OR v.name LIKE ?)`;
-      const searchPattern = `%${sanitizedSearch}%`;
-      params.push(searchPattern, searchPattern, searchPattern, searchPattern, searchPattern);
+    let rows;
+    try {
+      [rows] = await pool.query(primaryQuery, params);
+    } catch (queryErr) {
+      if (queryErr.code === 'ER_BAD_FIELD_ERROR' || queryErr.code === 'ER_NO_SUCH_TABLE') {
+        console.warn('[PRODUCTS] Primary query schema mismatch, using fallback:', queryErr.code, queryErr.sqlMessage || queryErr.message);
+        const fallbackQuery = `
+          SELECT 
+            p.id, 
+            p.title, 
+            p.price_per_kg, 
+            p.stock_kg, 
+            p.image_url, 
+            'Kg' AS unit_name,
+            COALESCE(c.specific_name, 'Komoditas') AS category, 
+            COALESCE(pg.grade_label, 'Reguler') AS grade, 
+            COALESCE(fg.group_name, 'Mitra Tani') AS poktan_name, 
+            COALESCE(v.name, 'Sumenep') AS village_name,
+            0 AS in_cart_count,
+            0 AS in_cart_users_count,
+            0 AS in_cart_qty,
+            0 AS in_cart_total_qty
+          FROM products p 
+          LEFT JOIN commodities c ON p.commodity_id = c.id 
+          LEFT JOIN product_grades pg ON p.grade_id = pg.id 
+          LEFT JOIN farmer_profiles fp ON p.farmer_id = fp.user_id 
+          LEFT JOIN farmer_groups fg ON fp.farmer_group_id = fg.id 
+          LEFT JOIN villages v ON fg.village_id = v.id
+          ${whereClause}
+          ORDER BY p.id DESC LIMIT 50
+        `;
+        [rows] = await pool.query(fallbackQuery, params);
+      } else {
+        throw queryErr;
+      }
     }
-
-    query += ` ORDER BY p.id DESC LIMIT 50`;
-
-    const [rows] = await pool.query(query, params);
 
     const formattedRows = rows.map(row => ({
       ...row,
@@ -104,10 +139,11 @@ const getProducts = async (req, res) => {
       data: formattedRows
     });
   } catch (error) {
-    console.error('[PRODUCTS] Error fetching catalog:', error.message);
+    console.error('[getProducts Error]', error.code, error.message, error.sqlMessage || '');
     return res.status(500).json({
       success: false,
-      message: 'Gagal mengambil katalog produk.'
+      message: 'Gagal mengambil katalog produk.',
+      error_code: error.code || 'DB_ERROR'
     });
   }
 };
@@ -726,7 +762,7 @@ const getSoilTelemetry = async (req, res) => {
     }
 
     const telemetryData = {
-      product_id: productId,
+      product_id: targetId,
       farm_id: baseData?.farm_id || 'farm-cikahuripan',
       blok_name: 'Blok A-3',
       fertility_score: fertilityScore,

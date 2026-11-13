@@ -8,6 +8,7 @@ import 'package:http_parser/http_parser.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 import 'package:mime/mime.dart';
+import '../../core/config/app_config.dart';
 import '../../core/services/api_service.dart';
 
 class AddProductScreen extends StatefulWidget {
@@ -293,6 +294,7 @@ class _AddProductScreenState extends State<AddProductScreen> {
         request.headers['Authorization'] = 'Bearer $token';
       }
       request.headers['Accept'] = 'application/json';
+      request.headers['X-API-Key'] = AppConfig.apiKey;
 
       request.fields['title'] = _titleController.text.trim();
       request.fields['price_per_kg'] = double.parse(_priceController.text.trim()).toString();

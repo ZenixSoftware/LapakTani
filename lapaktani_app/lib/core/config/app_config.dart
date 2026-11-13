@@ -1,6 +1,11 @@
 class AppConfig {
   static const String baseUrl = String.fromEnvironment(
     'API_BASE_URL',
-    defaultValue: 'https://backslid-salvage-moocher.ngrok-free.dev/api',
+    defaultValue: 'https://api-lapaktani.velosixraptor.my.id/api',
+  );
+
+  static const String apiKey = String.fromEnvironment(
+    'API_KEY',
+    defaultValue: 'lapaktani_secure_gateway_2026_key',
   );
 }

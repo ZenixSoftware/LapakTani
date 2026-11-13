@@ -21,11 +21,17 @@ const b2bRoutes = require('./src/routes/b2b');
 const pestReportRoutes = require('./src/routes/pestReports');
 const runPestAlertMigration = require('./src/config/migrate_pest_alert');
 const requestLogger = require('./src/middlewares/requestLogger');
+const apiKeyMiddleware = require('./src/middlewares/apiKeyMiddleware');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-app.use(cors());
+app.use(cors({
+  origin: true,
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-API-Key', 'x-api-key', 'Accept', 'X-Request-Id'],
+}));
 // Global Middleware: Request Logger & Performance Monitoring (Berjalan di SEMUA router/routing)
 app.use(requestLogger);
 app.use(express.json());
@@ -74,6 +80,8 @@ app.get('/api/health', async (req, res) => {
     timestamp: new Date().toISOString()
   });
 });
+
+app.use('/api', apiKeyMiddleware);
 
 app.use('/api/auth', authRoutes);
 app.use('/api/products', productRoutes);
