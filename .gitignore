@@ -19,7 +19,8 @@ skills-lock.json
 AGENTS.md
 security_reports/
 .idea/
-.vscode/
+.vscode/*
+!.vscode/settings.json
 
 # Environment and Secrets (All Projects)
 .env

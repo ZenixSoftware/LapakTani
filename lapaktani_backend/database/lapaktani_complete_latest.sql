@@ -26,21 +26,57 @@ INSERT INTO user_roles (id, role_name) VALUES
 ON DUPLICATE KEY UPDATE role_name = VALUES(role_name);
 
 -- ------------------------------------------------------------------------------
--- 2. GEOSPATIAL & VILLAGES
+-- 2. GEOSPATIAL REGION HIERARCHY & VILLAGES
 -- ------------------------------------------------------------------------------
-CREATE TABLE IF NOT EXISTS villages (
-    id INT AUTO_INCREMENT PRIMARY KEY,
-    name VARCHAR(150) NOT NULL,
-    district_id INT NULL,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+CREATE TABLE IF NOT EXISTS provinces (
+    id INT NOT NULL PRIMARY KEY,
+    name VARCHAR(100) NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
-INSERT INTO villages (id, name) VALUES
-(1, 'Lembang'),
-(2, 'Cibodas'),
-(3, 'Cikole'),
-(4, 'Parongpong')
+INSERT INTO provinces (id, name) VALUES
+(1, 'Jawa Barat'),
+(35, 'Jawa Timur')
 ON DUPLICATE KEY UPDATE name = VALUES(name);
+
+CREATE TABLE IF NOT EXISTS regencies (
+    id INT NOT NULL PRIMARY KEY,
+    province_id INT NOT NULL,
+    name VARCHAR(100) NOT NULL,
+    INDEX idx_regencies_province (province_id),
+    FOREIGN KEY (province_id) REFERENCES provinces(id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+INSERT INTO regencies (id, province_id, name) VALUES
+(1, 1, 'Kabupaten Bandung'),
+(3529, 35, 'Kabupaten Sumenep')
+ON DUPLICATE KEY UPDATE province_id = VALUES(province_id), name = VALUES(name);
+
+CREATE TABLE IF NOT EXISTS districts (
+    id INT NOT NULL PRIMARY KEY,
+    regency_id INT NOT NULL,
+    name VARCHAR(100) NOT NULL,
+    INDEX idx_districts_regency (regency_id),
+    FOREIGN KEY (regency_id) REFERENCES regencies(id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+INSERT INTO districts (id, regency_id, name) VALUES
+(1, 1, 'Lembang')
+ON DUPLICATE KEY UPDATE regency_id = VALUES(regency_id), name = VALUES(name);
+
+CREATE TABLE IF NOT EXISTS villages (
+    id INT NOT NULL PRIMARY KEY,
+    district_id INT NOT NULL,
+    name VARCHAR(100) NOT NULL,
+    INDEX idx_villages_district (district_id),
+    FOREIGN KEY (district_id) REFERENCES districts(id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+INSERT INTO villages (id, district_id, name) VALUES
+(1, 1, 'Lembang'),
+(2, 1, 'Cibodas'),
+(3, 1, 'Cikole'),
+(4, 1, 'Parongpong')
+ON DUPLICATE KEY UPDATE district_id = VALUES(district_id), name = VALUES(name);
 
 -- ------------------------------------------------------------------------------
 -- 3. USERS & AUTHENTICATION
@@ -593,16 +629,43 @@ ON DUPLICATE KEY UPDATE amount = VALUES(amount);
 -- ------------------------------------------------------------------------------
 -- 19. SUMENEP PRECISION AGRICULTURE & LAND MONITORING (PENS-AGRI GRAFT)
 -- ------------------------------------------------------------------------------
-INSERT INTO villages (id, name) VALUES
-(101, 'Mandala (Kec. Gapura, Sumenep)'),
-(102, 'Pakondang (Kec. Rubaru, Sumenep)'),
-(103, 'Karangnangka (Kec. Rubaru, Sumenep)'),
-(104, 'Tambak Sari (Kec. Rubaru, Sumenep)'),
-(105, 'Pasongsongan (Kec. Pasongsongan, Sumenep)'),
-(106, 'Guluk-Guluk (Kec. Guluk-Guluk, Sumenep)'),
-(107, 'Talango (Kec. Talango, Sumenep)'),
-(108, 'Ambunten (Kec. Ambunten, Sumenep)')
+INSERT INTO provinces (id, name) VALUES
+(35, 'Jawa Timur')
 ON DUPLICATE KEY UPDATE name = VALUES(name);
+
+INSERT INTO regencies (id, province_id, name) VALUES
+(3529, 35, 'Kabupaten Sumenep')
+ON DUPLICATE KEY UPDATE province_id = VALUES(province_id), name = VALUES(name);
+
+INSERT INTO districts (id, regency_id, name) VALUES
+(352901, 3529, 'Kota Sumenep'),
+(352902, 3529, 'Kalianget'),
+(352903, 3529, 'Manding'),
+(352904, 3529, 'Talango'),
+(352905, 3529, 'Bluto'),
+(352906, 3529, 'Saronggi'),
+(352907, 3529, 'Lenteng'),
+(352908, 3529, 'Guluk-Guluk'),
+(352909, 3529, 'Ganding'),
+(352910, 3529, 'Pragaan'),
+(352911, 3529, 'Ambunten'),
+(352912, 3529, 'Pasongsongan'),
+(352913, 3529, 'Dasuk'),
+(352914, 3529, 'Rubaru'),
+(352915, 3529, 'Batuan'),
+(352916, 3529, 'Gapura')
+ON DUPLICATE KEY UPDATE regency_id = VALUES(regency_id), name = VALUES(name);
+
+INSERT INTO villages (id, district_id, name) VALUES
+(101, 352916, 'Mandala (Kec. Gapura, Sumenep)'),
+(102, 352914, 'Pakondang (Kec. Rubaru, Sumenep)'),
+(103, 352914, 'Karangnangka (Kec. Rubaru, Sumenep)'),
+(104, 352914, 'Tambak Sari (Kec. Rubaru, Sumenep)'),
+(105, 352912, 'Pasongsongan (Kec. Pasongsongan, Sumenep)'),
+(106, 352908, 'Guluk-Guluk (Kec. Guluk-Guluk, Sumenep)'),
+(107, 352904, 'Talango (Kec. Talango, Sumenep)'),
+(108, 352911, 'Ambunten (Kec. Ambunten, Sumenep)')
+ON DUPLICATE KEY UPDATE district_id = VALUES(district_id), name = VALUES(name);
 
 INSERT INTO farmer_groups (id, group_name, village_id, chairman_user_id, leader_name) VALUES
 ('fg-smp-01', 'Poktan Sekar Sari (Pasongsongan)', 105, NULL, 'Misyono'),

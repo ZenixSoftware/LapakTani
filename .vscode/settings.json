@@ -1,0 +1,12 @@
+{
+  "dart.analysisExcludedFolders": [
+    "temp",
+    "temp/Pens-Agri"
+  ],
+  "files.watcherExclude": {
+    "**/temp/**": true
+  },
+  "search.exclude": {
+    "**/temp": true
+  }
+}

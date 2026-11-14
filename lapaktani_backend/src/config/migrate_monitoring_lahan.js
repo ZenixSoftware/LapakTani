@@ -10,7 +10,45 @@ const runMonitoringLahanMigration = async () => {
     connection = await pool.getConnection();
     console.log('[MIGRATION] Running Sumenep monitoring_lahan migration...');
 
-    // 1. Create monitoring_lahan table
+    // 1. Ensure administrative region tables exist (matching production MySQL hierarchy)
+    await connection.query(`
+      CREATE TABLE IF NOT EXISTS provinces (
+        id INT NOT NULL PRIMARY KEY,
+        name VARCHAR(100) NOT NULL
+      ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+    `);
+
+    await connection.query(`
+      CREATE TABLE IF NOT EXISTS regencies (
+        id INT NOT NULL PRIMARY KEY,
+        province_id INT NOT NULL,
+        name VARCHAR(100) NOT NULL,
+        INDEX idx_regencies_province (province_id),
+        CONSTRAINT fk_regencies_province FOREIGN KEY (province_id) REFERENCES provinces(id)
+      ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+    `);
+
+    await connection.query(`
+      CREATE TABLE IF NOT EXISTS districts (
+        id INT NOT NULL PRIMARY KEY,
+        regency_id INT NOT NULL,
+        name VARCHAR(100) NOT NULL,
+        INDEX idx_districts_regency (regency_id),
+        CONSTRAINT fk_districts_regency FOREIGN KEY (regency_id) REFERENCES regencies(id)
+      ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+    `);
+
+    await connection.query(`
+      CREATE TABLE IF NOT EXISTS villages (
+        id INT NOT NULL PRIMARY KEY,
+        district_id INT NOT NULL,
+        name VARCHAR(100) NOT NULL,
+        INDEX idx_villages_district (district_id),
+        CONSTRAINT fk_villages_district FOREIGN KEY (district_id) REFERENCES districts(id)
+      ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+    `);
+
+    // 2. Create monitoring_lahan table
     await connection.query(`
       CREATE TABLE IF NOT EXISTS monitoring_lahan (
         id INT AUTO_INCREMENT PRIMARY KEY,
@@ -58,21 +96,54 @@ const runMonitoringLahanMigration = async () => {
       ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
     `);
 
-    // 2. Seed Sumenep villages into villages table (IDs 101..108)
+    // 3. Seed parent region hierarchy: Province -> Regency -> Sumenep Districts -> Villages
     await connection.query(`
-      INSERT INTO villages (id, name) VALUES
-      (101, 'Mandala (Kec. Gapura, Sumenep)'),
-      (102, 'Pakondang (Kec. Rubaru, Sumenep)'),
-      (103, 'Karangnangka (Kec. Rubaru, Sumenep)'),
-      (104, 'Tambak Sari (Kec. Rubaru, Sumenep)'),
-      (105, 'Pasongsongan (Kec. Pasongsongan, Sumenep)'),
-      (106, 'Guluk-Guluk (Kec. Guluk-Guluk, Sumenep)'),
-      (107, 'Talango (Kec. Talango, Sumenep)'),
-      (108, 'Ambunten (Kec. Ambunten, Sumenep)')
+      INSERT INTO provinces (id, name) VALUES
+      (35, 'Jawa Timur')
       ON DUPLICATE KEY UPDATE name = VALUES(name);
     `);
 
-    // 3. Seed authentic Sumenep Poktan groups from Pens-Agri dataset
+    await connection.query(`
+      INSERT INTO regencies (id, province_id, name) VALUES
+      (3529, 35, 'Kabupaten Sumenep')
+      ON DUPLICATE KEY UPDATE province_id = VALUES(province_id), name = VALUES(name);
+    `);
+
+    await connection.query(`
+      INSERT INTO districts (id, regency_id, name) VALUES
+      (352901, 3529, 'Kota Sumenep'),
+      (352902, 3529, 'Kalianget'),
+      (352903, 3529, 'Manding'),
+      (352904, 3529, 'Talango'),
+      (352905, 3529, 'Bluto'),
+      (352906, 3529, 'Saronggi'),
+      (352907, 3529, 'Lenteng'),
+      (352908, 3529, 'Guluk-Guluk'),
+      (352909, 3529, 'Ganding'),
+      (352910, 3529, 'Pragaan'),
+      (352911, 3529, 'Ambunten'),
+      (352912, 3529, 'Pasongsongan'),
+      (352913, 3529, 'Dasuk'),
+      (352914, 3529, 'Rubaru'),
+      (352915, 3529, 'Batuan'),
+      (352916, 3529, 'Gapura')
+      ON DUPLICATE KEY UPDATE regency_id = VALUES(regency_id), name = VALUES(name);
+    `);
+
+    await connection.query(`
+      INSERT INTO villages (id, district_id, name) VALUES
+      (101, 352916, 'Mandala (Kec. Gapura, Sumenep)'),
+      (102, 352914, 'Pakondang (Kec. Rubaru, Sumenep)'),
+      (103, 352914, 'Karangnangka (Kec. Rubaru, Sumenep)'),
+      (104, 352914, 'Tambak Sari (Kec. Rubaru, Sumenep)'),
+      (105, 352912, 'Pasongsongan (Kec. Pasongsongan, Sumenep)'),
+      (106, 352908, 'Guluk-Guluk (Kec. Guluk-Guluk, Sumenep)'),
+      (107, 352904, 'Talango (Kec. Talango, Sumenep)'),
+      (108, 352911, 'Ambunten (Kec. Ambunten, Sumenep)')
+      ON DUPLICATE KEY UPDATE district_id = VALUES(district_id), name = VALUES(name);
+    `);
+
+    // 4. Seed authentic Sumenep Poktan groups from Pens-Agri dataset
     await connection.query(`
       INSERT INTO farmer_groups (id, group_name, village_id, chairman_user_id, leader_name) VALUES
       ('fg-smp-01', 'Poktan Sekar Sari (Pasongsongan)', 105, NULL, 'Misyono'),
@@ -84,7 +155,7 @@ const runMonitoringLahanMigration = async () => {
       ON DUPLICATE KEY UPDATE group_name = VALUES(group_name), village_id = VALUES(village_id), leader_name = VALUES(leader_name);
     `);
 
-    // 4. Seed representative Sumenep monitoring_lahan telemetry plots if empty
+    // 5. Seed representative Sumenep monitoring_lahan telemetry plots if empty
     const [countRows] = await connection.query('SELECT COUNT(*) AS count FROM monitoring_lahan');
     if (countRows[0].count === 0) {
       await connection.query(`
@@ -148,7 +219,7 @@ const runMonitoringLahanMigration = async () => {
       console.log('[MIGRATION] Seeded 8 representative Sumenep monitoring_lahan plots.');
     }
 
-    console.log('[MIGRATION] Sumenep monitoring_lahan migration completed.');
+    console.log('[MIGRATION] Sumenep monitoring_lahan migration completed successfully');
   } catch (err) {
     console.error('[MIGRATION] Error running monitoring_lahan migration:', err.message);
     throw err;
@@ -156,5 +227,11 @@ const runMonitoringLahanMigration = async () => {
     if (connection) connection.release();
   }
 };
+
+if (require.main === module) {
+  runMonitoringLahanMigration()
+    .then(() => process.exit(0))
+    .catch(() => process.exit(1));
+}
 
 module.exports = runMonitoringLahanMigration;
