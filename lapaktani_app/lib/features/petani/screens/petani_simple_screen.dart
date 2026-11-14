@@ -9,6 +9,7 @@ import 'package:lapaktani_app/features/auth/auth_repository.dart';
 import 'package:lapaktani_app/features/community/screens/create_pest_report_screen.dart';
 import 'package:lapaktani_app/features/community/screens/education_feed_screen.dart';
 import 'package:lapaktani_app/features/navigation/role_based_app_shell.dart';
+import 'package:lapaktani_app/features/petani/screens/petani_land_monitoring_screen.dart';
 import 'package:lapaktani_app/features/poktan/screens/farmer_tasks_screen.dart';
 import 'package:lapaktani_app/features/poktan/services/poktan_service.dart';
 
@@ -700,6 +701,37 @@ class _PetaniSimpleScreenState extends State<PetaniSimpleScreen> {
               const SizedBox(width: 8),
               Expanded(child: _buildTelemetryPill('Kalium (K)', '${_potassium.toStringAsFixed(0)} mg/kg', 'NPK Sensor')),
             ],
+          ),
+          const SizedBox(height: 12),
+          SizedBox(
+            width: double.infinity,
+            child: OutlinedButton.icon(
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => const PetaniLandMonitoringScreen(),
+                  ),
+                );
+              },
+              icon: const Icon(LucideIcons.activity, size: 16),
+              label: Text(
+                'Input Kondisi Lahan & Sensor 8-in-1',
+                style: GoogleFonts.plusJakartaSans(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+              style: OutlinedButton.styleFrom(
+                foregroundColor: AppColors.primary,
+                side: const BorderSide(color: AppColors.surfaceSoftBorder),
+                backgroundColor: AppColors.surfaceSoft,
+                padding: const EdgeInsets.symmetric(vertical: 11),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10),
+                ),
+              ),
+            ),
           ),
         ],
       ),

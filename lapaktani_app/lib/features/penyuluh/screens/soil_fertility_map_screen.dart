@@ -3,6 +3,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 import '../../../core/services/api_service.dart';
 import '../../../core/theme/app_colors.dart';
+import 'ppl_soil_checkup_screen.dart';
 
 class SoilPlotModel {
   final String farmId;
@@ -21,6 +22,15 @@ class SoilPlotModel {
   final double potassiumMgKg;
   final double moisturePercentage;
   final String fertilityIndex;
+  final double? temperatureCelsius;
+  final int? conductivity;
+  final int? fertilityScore;
+  final String? irigasi;
+  final String? pompaAir;
+  final String? sumberAir;
+  final String? kondisiAir;
+  final String? pembajak;
+  final String? rekomendasiPpl;
 
   const SoilPlotModel({
     required this.farmId,
@@ -39,13 +49,28 @@ class SoilPlotModel {
     required this.potassiumMgKg,
     required this.moisturePercentage,
     required this.fertilityIndex,
+    this.temperatureCelsius,
+    this.conductivity,
+    this.fertilityScore,
+    this.irigasi,
+    this.pompaAir,
+    this.sumberAir,
+    this.kondisiAir,
+    this.pembajak,
+    this.rekomendasiPpl,
   });
 
   factory SoilPlotModel.fromJson(Map<String, dynamic> json) {
     double parseDouble(dynamic val, double fallback) {
       if (val == null) return fallback;
       if (val is num) return val.toDouble();
-      return double.tryParse(val.toString()) ?? fallback;
+      return double.tryParse(val.toString().replaceAll(',', '.')) ?? fallback;
+    }
+
+    int? parseOptInt(dynamic val) {
+      if (val == null) return null;
+      if (val is num) return val.toInt();
+      return int.tryParse(val.toString());
     }
 
     return SoilPlotModel(
@@ -65,6 +90,17 @@ class SoilPlotModel {
       potassiumMgKg: parseDouble(json['potassium_mg_kg'], 210.0),
       moisturePercentage: parseDouble(json['moisture_percentage'], 70.0),
       fertilityIndex: (json['fertility_index'] ?? 'Subur').toString(),
+      temperatureCelsius: json['temperature_celsius'] != null
+          ? parseDouble(json['temperature_celsius'], 29.0)
+          : null,
+      conductivity: parseOptInt(json['conductivity']),
+      fertilityScore: parseOptInt(json['fertility_score']),
+      irigasi: json['irigasi']?.toString(),
+      pompaAir: json['pompa_air']?.toString(),
+      sumberAir: json['sumber_air']?.toString(),
+      kondisiAir: json['kondisi_air']?.toString(),
+      pembajak: json['pembajak']?.toString(),
+      rekomendasiPpl: json['rekomendasi_ppl']?.toString(),
     );
   }
 
@@ -94,6 +130,9 @@ class SoilPlotModel {
 
   /// Generates agronomic recommendation based on soil parameters
   String get recommendation {
+    if (rekomendasiPpl != null && rekomendasiPpl!.trim().isNotEmpty) {
+      return rekomendasiPpl!.trim();
+    }
     if (phLevel < 5.0) {
       return 'Aplikasi Dolomit 2-3 Ton/Ha & Pengapuran Tanah Intensif';
     } else if (phLevel < 6.0) {
@@ -129,6 +168,13 @@ class _SoilFertilityMapScreenState extends State<SoilFertilityMapScreen> {
 
   final List<String> _desaOptions = [
     'Semua Desa',
+    'Mandala',
+    'Pakondang',
+    'Karangnangka',
+    'Pasongsongan',
+    'Guluk-Guluk',
+    'Talango',
+    'Ambunten',
     'Desa Lembang',
     'Desa Cikole',
   ];
@@ -233,6 +279,60 @@ class _SoilFertilityMapScreenState extends State<SoilFertilityMapScreen> {
       potassiumMgKg: 235.0,
       moisturePercentage: 78.0,
       fertilityIndex: 'Optimal Prima',
+    ),
+    const SoilPlotModel(
+      farmId: 'SMP-001',
+      farmerId: 'USR-SMP-01',
+      farmerName: 'Poktan Sumber Lestari (Gapura)',
+      poktanName: 'Poktan Sumber Lestari (Gapura)',
+      villageName: 'Mandala, Kec. Gapura',
+      landAreaHa: 0.70,
+      soilType: 'Aluvial Mediteran Sumenep',
+      commodity: 'Jagung Hibrida (Bisi 18)',
+      gpsLatitude: -6.977160,
+      gpsLongitude: 113.804530,
+      phLevel: 6.4,
+      nitrogenMgKg: 145.0,
+      phosphorusMgKg: 32.0,
+      potassiumMgKg: 185.0,
+      moisturePercentage: 64.5,
+      fertilityIndex: 'Sangat Subur',
+      temperatureCelsius: 31.0,
+      conductivity: 1420,
+      fertilityScore: 84,
+      irigasi: 'ya',
+      pompaAir: 'ya',
+      sumberAir: 'sumur bor',
+      kondisiAir: 'lancar',
+      pembajak: 'traktor',
+    ),
+    const SoilPlotModel(
+      farmId: 'SMP-002',
+      farmerId: 'USR-SMP-02',
+      farmerName: 'Poktan Anugrah (Rubaru)',
+      poktanName: 'Poktan Anugrah (Rubaru)',
+      villageName: 'Karangnangka, Kec. Rubaru',
+      landAreaHa: 0.60,
+      soilType: 'Mediteran Kering Sumenep',
+      commodity: 'Cabai Rawit (Ori 212)',
+      gpsLatitude: -6.956892,
+      gpsLongitude: 113.778940,
+      phLevel: 5.1,
+      nitrogenMgKg: 42.0,
+      phosphorusMgKg: 14.0,
+      potassiumMgKg: 72.0,
+      moisturePercentage: 11.4,
+      fertilityIndex: 'Kritis',
+      temperatureCelsius: 32.6,
+      conductivity: 290,
+      fertilityScore: 16,
+      irigasi: 'tidak',
+      pompaAir: 'ya',
+      sumberAir: 'sumur bor',
+      kondisiAir: 'sulit',
+      pembajak: 'manual',
+      rekomendasiPpl:
+          'TITIK KRITIS: Tanah asam (pH 5.1) & kekeringan (11.4%). Berikan Dolomit 1.5 Ton/Ha + mulsa jerami.',
     ),
   ];
 
@@ -444,7 +544,7 @@ class _SoilFertilityMapScreenState extends State<SoilFertilityMapScreen> {
                     )
                   else
                     SliverPadding(
-                      padding: const EdgeInsets.fromLTRB(16, 0, 16, 24),
+                      padding: const EdgeInsets.fromLTRB(16, 0, 16, 92),
                       sliver: SliverList(
                         delegate: SliverChildBuilderDelegate(
                           (context, index) {
@@ -458,6 +558,29 @@ class _SoilFertilityMapScreenState extends State<SoilFertilityMapScreen> {
                 ],
               ),
             ),
+      floatingActionButton: FloatingActionButton.extended(
+        onPressed: () async {
+          final refreshed = await Navigator.push<bool>(
+            context,
+            MaterialPageRoute(
+              builder: (_) => const PplSoilCheckupScreen(),
+            ),
+          );
+          if (refreshed == true) {
+            _loadSoilMapData();
+          }
+        },
+        backgroundColor: AppColors.primary,
+        foregroundColor: Colors.white,
+        icon: const Icon(LucideIcons.plus, size: 18),
+        label: Text(
+          'Uji Sampel 8-in-1',
+          style: GoogleFonts.plusJakartaSans(
+            fontSize: 12.5,
+            fontWeight: FontWeight.w700,
+          ),
+        ),
+      ),
     );
   }
 
@@ -878,6 +1001,31 @@ class _SoilFertilityMapScreenState extends State<SoilFertilityMapScreen> {
             ),
           ),
 
+          if (plot.temperatureCelsius != null ||
+              plot.conductivity != null ||
+              plot.sumberAir != null)
+            Padding(
+              padding: const EdgeInsets.fromLTRB(14, 0, 14, 8),
+              child: Wrap(
+                spacing: 6,
+                runSpacing: 6,
+                children: [
+                  if (plot.temperatureCelsius != null)
+                    _buildMetaPill(
+                      'Suhu ${plot.temperatureCelsius!.toStringAsFixed(1)}°C',
+                    ),
+                  if (plot.conductivity != null)
+                    _buildMetaPill('EC ${plot.conductivity} uS/cm'),
+                  if (plot.sumberAir != null)
+                    _buildMetaPill(
+                      'Air: ${plot.sumberAir} (${plot.kondisiAir ?? 'tersedia'})',
+                    ),
+                  if (plot.irigasi == 'ya') _buildMetaPill('Irigasi Aktif'),
+                  if (plot.pompaAir == 'ya') _buildMetaPill('Pompa Air'),
+                ],
+              ),
+            ),
+
           // PPL Action Recommendation Box
           Padding(
             padding: const EdgeInsets.fromLTRB(14, 2, 14, 14),
@@ -1019,6 +1167,25 @@ class _SoilFertilityMapScreenState extends State<SoilFertilityMapScreen> {
       height: 24,
       width: 1,
       color: AppColors.outline,
+    );
+  }
+
+  Widget _buildMetaPill(String label) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+      decoration: BoxDecoration(
+        color: AppColors.surfaceSoft,
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: AppColors.surfaceSoftBorder),
+      ),
+      child: Text(
+        label,
+        style: GoogleFonts.plusJakartaSans(
+          fontSize: 10.5,
+          fontWeight: FontWeight.w600,
+          color: AppColors.primary,
+        ),
+      ),
     );
   }
 }

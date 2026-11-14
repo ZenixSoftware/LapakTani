@@ -2,12 +2,16 @@ import React from 'react';
 
 interface SidebarProps {
   pendingCount: number;
+  activeTab: 'validasi' | 'lahan';
+  onTabChange: (tab: 'validasi' | 'lahan') => void;
   currentUser?: { full_name?: string; email?: string } | null;
   onLogout?: () => void;
 }
 
 export const Sidebar: React.FC<SidebarProps> = ({
   pendingCount,
+  activeTab,
+  onTabChange,
   currentUser,
   onLogout,
 }) => {
@@ -29,29 +33,64 @@ export const Sidebar: React.FC<SidebarProps> = ({
               </span>
               <span>Dashboard Ringkasan</span>
             </a>
-            <a
-              className="flex items-center justify-between px-3.5 py-2.5 rounded-xl bg-forest-emerald text-white font-bold text-[13px] shadow-md shadow-emerald-950/15"
-              href="#validasi"
+            <button
+              type="button"
+              onClick={() => onTabChange('validasi')}
+              className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl font-bold text-[13px] transition-all ${
+                activeTab === 'validasi'
+                  ? 'bg-forest-emerald text-white shadow-md shadow-emerald-950/15'
+                  : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900 font-semibold'
+              }`}
             >
               <div className="flex items-center gap-3">
-                <span className="material-symbols-outlined text-[20px]">
+                <span
+                  className={`material-symbols-outlined text-[20px] ${
+                    activeTab === 'validasi' ? 'text-white' : 'text-gray-400'
+                  }`}
+                >
                   verified_user
                 </span>
                 <span>Validasi Petani</span>
               </div>
-              <span className="px-2 py-0.5 rounded-full bg-primary text-white text-[11px] font-bold">
+              <span
+                className={`px-2 py-0.5 rounded-full text-[11px] font-bold ${
+                  activeTab === 'validasi'
+                    ? 'bg-primary text-white'
+                    : 'bg-emerald-50 text-emerald-700'
+                }`}
+              >
                 {pendingCount}
               </span>
-            </a>
-            <a
-              className="flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-gray-600 hover:bg-gray-50 hover:text-gray-900 font-semibold text-[13px] transition-all"
-              href="#lahan"
+            </button>
+            <button
+              type="button"
+              onClick={() => onTabChange('lahan')}
+              className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-[13px] transition-all ${
+                activeTab === 'lahan'
+                  ? 'bg-forest-emerald text-white font-bold shadow-md shadow-emerald-950/15'
+                  : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900 font-semibold'
+              }`}
             >
-              <span className="material-symbols-outlined text-[20px] text-gray-400">
-                potted_plant
+              <div className="flex items-center gap-3">
+                <span
+                  className={`material-symbols-outlined text-[20px] ${
+                    activeTab === 'lahan' ? 'text-white' : 'text-gray-400'
+                  }`}
+                >
+                  potted_plant
+                </span>
+                <span>Pemantauan Lahan</span>
+              </div>
+              <span
+                className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
+                  activeTab === 'lahan'
+                    ? 'bg-white/20 text-white'
+                    : 'bg-emerald-50 text-emerald-700'
+                }`}
+              >
+                Sumenep
               </span>
-              <span>Pemantauan Lahan</span>
-            </a>
+            </button>
             <a
               className="flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-gray-600 hover:bg-gray-50 hover:text-gray-900 font-semibold text-[13px] transition-all"
               href="#poktan"
@@ -129,7 +168,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
             </span>
           </div>
           <p className="text-[11px] text-gray-600 leading-snug">
-            Wilayah Kerja: <strong>Lembang &amp; Parongpong</strong>. Mengawasi 14 Kelompok Tani aktif dan 542 Ha lahan.
+            Wilayah Kerja: <strong>Lembang &amp; Kab. Sumenep</strong>. Mengawasi Poktan mitra, pemetaan presisi 8-in-1, dan komoditas strategis.
           </p>
         </div>
       </div>

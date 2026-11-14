@@ -20,6 +20,7 @@ const poktanRoutes = require('./src/routes/poktan');
 const b2bRoutes = require('./src/routes/b2b');
 const pestReportRoutes = require('./src/routes/pestReports');
 const runPestAlertMigration = require('./src/config/migrate_pest_alert');
+const runMonitoringLahanMigration = require('./src/config/migrate_monitoring_lahan');
 const requestLogger = require('./src/middlewares/requestLogger');
 const apiKeyMiddleware = require('./src/middlewares/apiKeyMiddleware');
 
@@ -144,6 +145,12 @@ const startServer = async () => {
         await runPestAlertMigration();
       } catch (pestMigErr) {
         console.warn('[MIGRATION] Pest alert migration notice:', pestMigErr.message);
+      }
+
+      try {
+        await runMonitoringLahanMigration();
+      } catch (monitoringMigErr) {
+        console.warn('[MIGRATION] Monitoring lahan migration notice:', monitoringMigErr.message);
       }
     } catch (dbErr) {
       console.warn('[MYSQL] Connection warning:', dbErr.message);

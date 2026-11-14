@@ -695,5 +695,113 @@ class ApiService {
       rethrow;
     }
   }
+
+  /// Ambil daftar titik monitoring lahan Sumenep & telemetri 8-in-1
+  Future<List<Map<String, dynamic>>> getMonitoringLahan({
+    String kategori = 'all',
+    String komoditas = '',
+  }) async {
+    final queryParams = <String>[];
+    if (kategori != 'all' && kategori.isNotEmpty) {
+      queryParams.add('kategori=${Uri.encodeQueryComponent(kategori)}');
+    }
+    if (komoditas.trim().isNotEmpty) {
+      queryParams.add('komoditas=${Uri.encodeQueryComponent(komoditas.trim())}');
+    }
+    final qs = queryParams.isEmpty ? '' : '?${queryParams.join('&')}';
+
+    final response = await _fetchGet('/soil/monitoring-lahan$qs');
+    if (response.statusCode >= 200 && response.statusCode < 300) {
+      final decoded = jsonDecode(response.body);
+      if (decoded is Map<String, dynamic> && decoded['data'] is List) {
+        return List<Map<String, dynamic>>.from(decoded['data'] as List);
+      }
+    }
+    return <Map<String, dynamic>>[];
+  }
+
+  /// Ambil statistik ringkasan & titik kritis Sumenep dari Model_Monitoring_Lahan
+  Future<Map<String, dynamic>> getMonitoringSummary() async {
+    final response = await _fetchGet('/soil/monitoring-summary');
+    if (response.statusCode >= 200 && response.statusCode < 300) {
+      final decoded = jsonDecode(response.body);
+      if (decoded is Map<String, dynamic> && decoded['data'] is Map) {
+        return Map<String, dynamic>.from(decoded['data'] as Map);
+      }
+    }
+    return <String, dynamic>{};
+  }
+
+  /// Simpan data monitoring lahan + telemetri 8-in-1 (+ opsional 3 foto lapangan)
+  Future<Map<String, dynamic>> saveMonitoringLahan(
+    Map<String, dynamic> payload, {
+    Map<String, String>? filePaths,
+  }) async {
+    final validFiles = <String, File>{};
+    if (filePaths != null) {
+      filePaths.forEach((field, path) {
+        if (path.trim().isNotEmpty) {
+          final file = File(path.trim());
+          if (file.existsSync()) {
+            validFiles[field] = file;
+          }
+        }
+      });
+    }
+
+    if (validFiles.isEmpty) {
+      final response = await _post('/soil/monitoring-lahan', payload);
+      final dynamic decoded = jsonDecode(response.body);
+      if (response.statusCode >= 200 && response.statusCode < 300) {
+        return decoded is Map<String, dynamic>
+            ? decoded
+            : {'success': true, 'data': decoded};
+      }
+      final msg = decoded is Map && decoded['message'] != null
+          ? decoded['message'].toString()
+          : 'Gagal menyimpan data monitoring lahan (${response.statusCode})';
+      throw Exception(msg);
+    }
+
+    final url = Uri.parse('$baseUrl/soil/monitoring-lahan');
+    final request = http.MultipartRequest('POST', url);
+    final token = await getToken();
+    if (token != null && token.isNotEmpty) {
+      request.headers['Authorization'] = 'Bearer $token';
+    }
+    request.headers['Accept'] = 'application/json';
+    request.headers['X-API-Key'] = AppConfig.apiKey;
+
+    payload.forEach((key, value) {
+      if (value != null) {
+        request.fields[key] = value.toString();
+      }
+    });
+
+    for (final entry in validFiles.entries) {
+      final mimeType = lookupMimeType(entry.value.path) ?? 'image/jpeg';
+      final parts = mimeType.split('/');
+      request.files.add(
+        await http.MultipartFile.fromPath(
+          entry.key,
+          entry.value.path,
+          contentType: MediaType(parts[0], parts.length > 1 ? parts[1] : 'jpeg'),
+        ),
+      );
+    }
+
+    final streamed = await request.send().timeout(const Duration(seconds: 30));
+    final response = await http.Response.fromStream(streamed);
+    final dynamic decoded = jsonDecode(response.body);
+    if (response.statusCode >= 200 && response.statusCode < 300) {
+      return decoded is Map<String, dynamic>
+          ? decoded
+          : {'success': true, 'data': decoded};
+    }
+    final msg = decoded is Map && decoded['message'] != null
+        ? decoded['message'].toString()
+        : 'Gagal menyimpan data monitoring lahan (${response.statusCode})';
+    throw Exception(msg);
+  }
 }
 

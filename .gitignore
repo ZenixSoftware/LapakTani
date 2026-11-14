@@ -76,4 +76,5 @@ uploads/
 *31255220*
 append_evaluation*.py
 temp_*.py
+_temp_*
 test_*.js

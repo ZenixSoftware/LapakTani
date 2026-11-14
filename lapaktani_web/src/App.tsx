@@ -5,6 +5,7 @@ import { HeroBanner } from './components/HeroBanner';
 import { QueueTable } from './components/QueueTable';
 import { AuditDesk } from './components/AuditDesk';
 import { LoginModal } from './components/LoginModal';
+import { SumenepLandMonitoring } from './components/SumenepLandMonitoring';
 import {
   fetchPendingFarmers,
   verifyFarmer,
@@ -16,6 +17,7 @@ import {
 } from './services/api';
 
 export function App() {
+  const [activeTab, setActiveTab] = useState<'validasi' | 'lahan'>('validasi');
   const [farmers, setFarmers] = useState<PendingFarmer[]>([]);
   const [selectedFarmerId, setSelectedFarmerId] = useState<string>('');
   const [isLoading, setIsLoading] = useState<boolean>(true);
@@ -170,6 +172,8 @@ export function App() {
         {/* SIDEBAR NAVIGATION */}
         <Sidebar
           pendingCount={farmers.length}
+          activeTab={activeTab}
+          onTabChange={setActiveTab}
           currentUser={currentUser}
           onLogout={handleLogout}
         />
@@ -177,34 +181,66 @@ export function App() {
         {/* MAIN WORKSPACE */}
         <main className="flex-1 md:pl-64 lg:pl-72 p-4 lg:p-8 overflow-x-hidden">
           <div className="max-w-[1440px] mx-auto space-y-6">
-            {/* HERO BANNER */}
-            <HeroBanner
-              totalQueue={farmers.length}
-              onSync={handleSyncSimluhtan}
-              onQuickReview={handleQuickReview}
-              isSyncing={isSyncing}
-            />
-
-            {/* MAIN DUAL-PANE WORKSPACE */}
-            <div className="grid grid-cols-1 xl:grid-cols-12 gap-6 items-start">
-              {/* LEFT QUEUE TABLE */}
-              <QueueTable
-                farmers={displayedFarmers}
-                selectedFarmerId={selectedFarmerId}
-                onSelectFarmer={(farmer) =>
-                  setSelectedFarmerId(farmer.id || farmer.user_id)
-                }
-                isLoading={isLoading}
-                onRefresh={() => loadData(false)}
-              />
-
-              {/* RIGHT AUDIT DESK */}
-              <AuditDesk
-                farmer={selectedFarmer}
-                onVerify={handleVerify}
-                isProcessing={isProcessing}
-              />
+            {/* Compact Mobile View Switcher */}
+            <div className="flex md:hidden gap-2">
+              <button
+                type="button"
+                onClick={() => setActiveTab('validasi')}
+                className={`flex-1 py-2 px-3 rounded-xl text-[12px] font-bold transition-all ${
+                  activeTab === 'validasi'
+                    ? 'bg-forest-emerald text-white shadow-sm'
+                    : 'bg-surface-white text-gray-600 border border-gray-200'
+                }`}
+              >
+                Validasi Petani ({farmers.length})
+              </button>
+              <button
+                type="button"
+                onClick={() => setActiveTab('lahan')}
+                className={`flex-1 py-2 px-3 rounded-xl text-[12px] font-bold transition-all ${
+                  activeTab === 'lahan'
+                    ? 'bg-forest-emerald text-white shadow-sm'
+                    : 'bg-surface-white text-gray-600 border border-gray-200'
+                }`}
+              >
+                Pemantauan Lahan Sumenep
+              </button>
             </div>
+
+            {activeTab === 'lahan' ? (
+              <SumenepLandMonitoring onShowToast={showToast} />
+            ) : (
+              <>
+                {/* HERO BANNER */}
+                <HeroBanner
+                  totalQueue={farmers.length}
+                  onSync={handleSyncSimluhtan}
+                  onQuickReview={handleQuickReview}
+                  isSyncing={isSyncing}
+                />
+
+                {/* MAIN DUAL-PANE WORKSPACE */}
+                <div className="grid grid-cols-1 xl:grid-cols-12 gap-6 items-start">
+                  {/* LEFT QUEUE TABLE */}
+                  <QueueTable
+                    farmers={displayedFarmers}
+                    selectedFarmerId={selectedFarmerId}
+                    onSelectFarmer={(farmer) =>
+                      setSelectedFarmerId(farmer.id || farmer.user_id)
+                    }
+                    isLoading={isLoading}
+                    onRefresh={() => loadData(false)}
+                  />
+
+                  {/* RIGHT AUDIT DESK */}
+                  <AuditDesk
+                    farmer={selectedFarmer}
+                    onVerify={handleVerify}
+                    isProcessing={isProcessing}
+                  />
+                </div>
+              </>
+            )}
           </div>
         </main>
       </div>

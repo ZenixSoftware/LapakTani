@@ -761,6 +761,11 @@ const getSoilTelemetry = async (req, res) => {
       fertilityLabel = 'Kritis';
     }
 
+    const temperatureCelsius = Number(baseData?.temperature_celsius ?? 27.8);
+    const conductivity = Number(
+      baseData?.conductivity ?? Math.round((nitrogen + phosphorus + potassium) * 3.1)
+    );
+
     const telemetryData = {
       product_id: targetId,
       farm_id: baseData?.farm_id || 'farm-cikahuripan',
@@ -781,6 +786,8 @@ const getSoilTelemetry = async (req, res) => {
       moisture_percentage: moisture,
       moisture_status: moisture >= 60 && moisture <= 75 ? 'Stabil / Cukup' : 'Perlu Irigasi',
       moisture_ideal_range: '60 – 75%',
+      temperature_celsius: temperatureCelsius,
+      conductivity,
       measured_by: baseData?.measured_by || 'Sensor NPK 8-in-1',
       validator: 'PPL Wilayah Binaan (Dinas Pertanian Kab. Bandung Barat)',
       poktan_name: baseData?.poktan_name || 'Poktan Tani Makmur',
@@ -817,6 +824,7 @@ const saveSoilTelemetry = async (req, res) => {
     potassium_mg_kg,
     moisture_percentage,
     temperature_celsius,
+    conductivity,
     fertility_index,
     measured_by
   } = req.body;
@@ -846,7 +854,9 @@ const saveSoilTelemetry = async (req, res) => {
       message: 'Data telemetri tanah lahan berhasil dicatat.',
       data: {
         id,
-        farm_id: farm_id || 'farm-01'
+        farm_id: farm_id || 'farm-01',
+        temperature_celsius: Number(temperature_celsius || 21.5),
+        conductivity: Number(conductivity || 1200)
       }
     });
   } catch (error) {

@@ -79,6 +79,8 @@ class _SoilTelemetryCardState extends State<SoilTelemetryCard> {
     final double phosphorus = _parseDouble(data['phosphorus_mg_kg'], 38.0);
     final double potassium = _parseDouble(data['potassium_mg_kg'], 210.0);
     final double moisture = _parseDouble(data['moisture_percentage'], 68.0);
+    final double temperature = _parseDouble(data['temperature_celsius'], 27.8);
+    final int conductivity = _parseInt(data['conductivity'], 1120);
     final int score = _parseInt(data['fertility_score'], 94);
     final String label = data['fertility_label']?.toString() ?? 'Sangat Subur';
     final String blok = data['blok_name']?.toString() ?? 'Blok A-3';
@@ -425,6 +427,90 @@ class _SoilTelemetryCardState extends State<SoilTelemetryCard> {
                 ),
               ],
             ),
+          ),
+          const SizedBox(height: 8),
+
+          // Metric 6 & 7: Suhu Tanah & Konduktivitas EC (Sensor 8-in-1)
+          Row(
+            children: [
+              Expanded(
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                  decoration: BoxDecoration(
+                    color: AppColors.surface,
+                    borderRadius: BorderRadius.circular(10),
+                    border: Border.all(color: AppColors.outline),
+                  ),
+                  child: Row(
+                    children: [
+                      const Icon(LucideIcons.thermometer, size: 15, color: AppColors.primary),
+                      const SizedBox(width: 6),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'Suhu Tanah',
+                              style: GoogleFonts.inter(
+                                fontSize: 10,
+                                color: AppColors.textMuted,
+                              ),
+                            ),
+                            Text(
+                              '${temperature.toStringAsFixed(1)}°C',
+                              style: GoogleFonts.inter(
+                                fontSize: 12.5,
+                                fontWeight: FontWeight.w700,
+                                color: AppColors.textPrimary,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                  decoration: BoxDecoration(
+                    color: AppColors.surface,
+                    borderRadius: BorderRadius.circular(10),
+                    border: Border.all(color: AppColors.outline),
+                  ),
+                  child: Row(
+                    children: [
+                      const Icon(LucideIcons.zap, size: 15, color: AppColors.primary),
+                      const SizedBox(width: 6),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'Konduktivitas EC',
+                              style: GoogleFonts.inter(
+                                fontSize: 10,
+                                color: AppColors.textMuted,
+                              ),
+                            ),
+                            Text(
+                              '$conductivity uS/cm',
+                              style: GoogleFonts.inter(
+                                fontSize: 12.5,
+                                fontWeight: FontWeight.w700,
+                                color: AppColors.textPrimary,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ],
           ),
           const SizedBox(height: 10),
 

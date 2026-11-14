@@ -11,6 +11,7 @@ import 'package:lapaktani_app/features/community/screens/education_feed_screen.d
 import 'package:lapaktani_app/features/community/screens/pest_alert_detail_screen.dart';
 import 'package:lapaktani_app/features/community/services/pest_alert_service.dart';
 import 'package:lapaktani_app/features/community/widgets/penyuluh_official_badge.dart';
+import 'package:lapaktani_app/features/penyuluh/screens/ppl_soil_checkup_screen.dart';
 import 'package:lapaktani_app/features/penyuluh/screens/soil_fertility_map_screen.dart';
 
 class PenyuluhHubScreen extends StatefulWidget {
@@ -164,6 +165,10 @@ class _PenyuluhHubScreenState extends State<PenyuluhHubScreen> {
 
                     // CARD GIS: Peta Sebaran Kesuburan Tanah (US-27)
                     _buildSoilFertilityMapCard(),
+                    const SizedBox(height: 12),
+
+                    // CARD PROBE 8-IN-1: Uji Sampel Tanah Presisi Sumenep
+                    _buildPrecisionSoilCheckupCard(),
                     const SizedBox(height: 16),
 
                     // CARD 2: Quick Action Hub (Publish Edukasi & Buka Feed)
@@ -317,6 +322,104 @@ class _PenyuluhHubScreenState extends State<PenyuluhHubScreen> {
                       const SizedBox(height: 4),
                       Text(
                         'Monitoring spasial pH, NPK, kelembaban, & rekomendasi agronomi wilayah binaan.',
+                        style: GoogleFonts.plusJakartaSans(
+                          fontSize: 12,
+                          color: AppColors.textMuted,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(width: 8),
+                const Icon(
+                  LucideIcons.chevronRight,
+                  color: AppColors.textMuted,
+                  size: 20,
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildPrecisionSoilCheckupCard() {
+    return Container(
+      decoration: BoxDecoration(
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: AppColors.outline),
+        boxShadow: AppColors.softShadow,
+      ),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (_) => const PplSoilCheckupScreen(),
+              ),
+            );
+          },
+          borderRadius: BorderRadius.circular(16),
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: Row(
+              children: [
+                Container(
+                  width: 48,
+                  height: 48,
+                  decoration: BoxDecoration(
+                    color: AppColors.surfaceSoft,
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: AppColors.surfaceSoftBorder),
+                  ),
+                  child: const Icon(
+                    LucideIcons.flaskConical,
+                    color: AppColors.primary,
+                    size: 24,
+                  ),
+                ),
+                const SizedBox(width: 14),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          Expanded(
+                            child: Text(
+                              'Uji Sampel Tanah Presisi 8-in-1',
+                              style: GoogleFonts.plusJakartaSans(
+                                fontSize: 14.5,
+                                fontWeight: FontWeight.w700,
+                                color: AppColors.textPrimary,
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 6),
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                            decoration: BoxDecoration(
+                              color: AppColors.surfaceMint,
+                              borderRadius: BorderRadius.circular(4),
+                            ),
+                            child: Text(
+                              'Sumenep',
+                              style: GoogleFonts.plusJakartaSans(
+                                fontSize: 10,
+                                fontWeight: FontWeight.w700,
+                                color: AppColors.primary,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        'Alur 3 tahap PPL: baseline komoditas, probe NPK/EC/pH + 3 foto, dan rekomendasi remediasi.',
                         style: GoogleFonts.plusJakartaSans(
                           fontSize: 12,
                           color: AppColors.textMuted,

@@ -216,3 +216,126 @@ export const verifyFarmer = async (
 
   return response.json();
 };
+
+export interface LandPlotRecord {
+  id: number;
+  farm_id?: string | null;
+  user_id?: string | null;
+  latitude: number | string;
+  longitude: number | string;
+  nama_desa: string;
+  kecamatan?: string | null;
+  irigasi: string;
+  listrik: string;
+  pompa_air: string;
+  sumber_air: string;
+  kondisi_air: string;
+  sumber_energi_pompa: string;
+  pembajak: string;
+  tadahan_hujan: string;
+  komoditas: string;
+  varietas?: string | null;
+  luas_lahan: string;
+  status_lahan: string;
+  kelompok_tani: string;
+  gagal_panen: string;
+  hasil_panen_lalu?: number | string | null;
+  satuan_panen?: string | null;
+  temp: number | string;
+  moisture: number | string;
+  conductivity: number | string;
+  ph: number | string;
+  nitrogen: number | string;
+  phosphorus: number | string;
+  potassium: number | string;
+  fertility: number | string;
+  foto_daun?: string | null;
+  foto_pohon?: string | null;
+  foto_tanah?: string | null;
+  tipe_penginput?: string | null;
+  rekomendasi_ppl?: string | null;
+  status_verifikasi_ppl?: 'pending' | 'verified' | 'needs_action' | string | null;
+  created_at?: string;
+}
+
+export interface MonitoringSummaryStats {
+  total_titik: number;
+  avg_ph: number | string | null;
+  avg_moisture: number | string | null;
+  avg_temp: number | string | null;
+  avg_conductivity: number | string | null;
+  avg_nitrogen: number | string | null;
+  avg_phosphorus: number | string | null;
+  avg_potassium: number | string | null;
+  avg_fertility: number | string | null;
+  total_irigasi: number | string | null;
+  total_pompa_air: number | string | null;
+  total_gagal_panen: number | string | null;
+  total_titik_kritis: number | string | null;
+}
+
+export interface CommodityDistribution {
+  komoditas: string;
+  jumlah_titik: number;
+  avg_fertility: number | string | null;
+  avg_ph: number | string | null;
+}
+
+export interface MonitoringSummaryResponse {
+  ringkasan_umum: MonitoringSummaryStats;
+  distribusi_komoditas: CommodityDistribution[];
+  sampel_titik_kritis: LandPlotRecord[];
+  recent_logs: LandPlotRecord[];
+}
+
+export const fetchMonitoringLahan = async (
+  kategori = 'all',
+  komoditas = ''
+): Promise<LandPlotRecord[]> => {
+  const params = new URLSearchParams();
+  if (kategori && kategori !== 'all') params.set('kategori', kategori);
+  if (komoditas.trim()) params.set('komoditas', komoditas.trim());
+  const qs = params.toString() ? `?${params.toString()}` : '';
+
+  let response = await authFetch(`${API_BASE_URL}/penyuluh/monitoring-lahan${qs}`);
+  if (response.status === 401 || response.status === 403) {
+    response = await authFetch(`${API_BASE_URL}/soil/monitoring-lahan${qs}`);
+  }
+  if (!response.ok) {
+    throw new Error(`Gagal memuat data monitoring lahan: status ${response.status}`);
+  }
+  const result = await response.json();
+  return (result.data || []) as LandPlotRecord[];
+};
+
+export const fetchMonitoringSummary = async (): Promise<MonitoringSummaryResponse> => {
+  let response = await authFetch(`${API_BASE_URL}/penyuluh/monitoring-summary`);
+  if (response.status === 401 || response.status === 403) {
+    response = await authFetch(`${API_BASE_URL}/soil/monitoring-summary`);
+  }
+  if (!response.ok) {
+    throw new Error(`Gagal memuat ringkasan monitoring lahan: status ${response.status}`);
+  }
+  const result = await response.json();
+  return result.data as MonitoringSummaryResponse;
+};
+
+export const submitPplPlotRecommendation = async (
+  id: number,
+  rekomendasi_ppl: string,
+  status_verifikasi_ppl: 'pending' | 'verified' | 'needs_action'
+): Promise<LandPlotRecord> => {
+  const response = await authFetch(`${API_BASE_URL}/penyuluh/monitoring-lahan/${id}/recommend`, {
+    method: 'PUT',
+    body: JSON.stringify({
+      rekomendasi_ppl,
+      status_verifikasi_ppl,
+    }),
+  });
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => ({}));
+    throw new Error(errorData.message || `Gagal menyimpan rekomendasi PPL (${response.status})`);
+  }
+  const result = await response.json();
+  return result.data as LandPlotRecord;
+};
