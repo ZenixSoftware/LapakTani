@@ -1,279 +1,421 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
+import L from 'leaflet';
+import 'leaflet.markercluster';
+import type { LandPlotRecord } from '../services/api';
 import {
-  fetchMonitoringLahan,
-  fetchMonitoringSummary,
-  resolveImageUrl,
-  submitPplPlotRecommendation,
-  type LandPlotRecord,
-  type MonitoringSummaryResponse,
-} from '../services/api';
+  escapeHtml,
+  getPlotFertilityStatus,
+  isPlotCritical,
+  matchesPlotCategory,
+} from '../utils/monitoringHelpers';
 
 interface SumenepLandMonitoringProps {
-  onShowToast?: (message: string, type?: 'success' | 'error') => void;
+  plots: LandPlotRecord[];
+  isLoading: boolean;
+  onRefresh: () => void;
+  onInspectPlot: (plot: LandPlotRecord) => void;
 }
 
-const FILTER_CHIPS: { key: string; label: string; icon: string }[] = [
-  { key: 'all', label: 'Semua Titik', icon: 'layers' },
-  { key: 'padi', label: 'Padi', icon: 'grass' },
-  { key: 'jagung', label: 'Jagung', icon: 'agriculture' },
-  { key: 'cabai', label: 'Cabai', icon: 'local_fire_department' },
-  { key: 'tembakau', label: 'Tembakau', icon: 'eco' },
-  { key: 'traktor', label: 'Traktor', icon: 'precision_manufacturing' },
-  { key: 'sapi', label: 'Sapi', icon: 'pets' },
-  { key: 'poktan', label: 'Poktan', icon: 'groups' },
-  { key: 'irigasi', label: 'Irigasi', icon: 'water' },
-  { key: 'pompa', label: 'Pompa Air', icon: 'cyclone' },
-  { key: 'air_sulit', label: 'Air Sulit', icon: 'water_damage' },
-  { key: 'kritis', label: 'Titik Kritis', icon: 'warning' },
+type TileLayerKey = 'google_roadmap' | 'google_hybrid' | 'esri_street' | 'osm_street';
+
+const FILTER_CHIPS: { key: string; label: string; icon: string; dotColor: string }[] = [
+  { key: 'all', label: 'Semua Titik', icon: 'layers', dotColor: '#166534' },
+  { key: 'padi', label: 'Padi', icon: 'grass', dotColor: '#16a34a' },
+  { key: 'jagung', label: 'Jagung', icon: 'agriculture', dotColor: '#d97706' },
+  { key: 'cabai', label: 'Cabai', icon: 'local_fire_department', dotColor: '#dc2626' },
+  { key: 'tembakau', label: 'Tembakau', icon: 'eco', dotColor: '#0d9488' },
+  { key: 'traktor', label: 'Traktor', icon: 'precision_manufacturing', dotColor: '#ea580c' },
+  { key: 'sapi', label: 'Sapi', icon: 'pets', dotColor: '#854d0e' },
+  { key: 'poktan', label: 'Poktan', icon: 'groups', dotColor: '#7c3aed' },
+  { key: 'irigasi', label: 'Irigasi', icon: 'water', dotColor: '#0284c7' },
+  { key: 'pompa', label: 'Pompa Air', icon: 'cyclone', dotColor: '#0891b2' },
+  { key: 'listrik', label: 'Listrik', icon: 'bolt', dotColor: '#f59e0b' },
+  { key: 'kritis', label: 'Titik Kritis', icon: 'warning', dotColor: '#e11d48' },
 ];
 
-const isPlotCritical = (plot: LandPlotRecord): boolean => {
-  const ph = Number(plot.ph ?? 6.5);
-  const moisture = Number(plot.moisture ?? 50);
-  const fertility = Number(plot.fertility ?? 60);
-  return ph < 5.5 || ph > 7.5 || moisture < 15 || fertility < 20;
+const PIN_SVGS: Record<string, string> = {
+  padi: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.2"><path d="M2 22 12 12"/><path d="M11.3 7.8a4 4 0 0 1 5.6-5.6 4 4 0 0 1-5.6 5.6Z"/><path d="M6.3 12.8a4 4 0 0 1 5.6-5.6 4 4 0 0 1-5.6 5.6Z"/></svg>',
+  jagung: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.2"><path d="M12 2a4 4 0 0 0-4 4v10a4 4 0 0 0 8 0V6a4 4 0 0 0-4-4Z"/><path d="M8 10h8"/></svg>',
+  cabai: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.2"><path d="M12 2c1.5 2 2 3.5 2 5 0 5-4 11-7 13-1-3 0-8 2-13 1-2.5 2-4 3-5Z"/></svg>',
+  tembakau: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.2"><path d="M11 20A7 7 0 0 1 9.8 6.1C15.5 5 17 4.48 19 2c1 2 2 4.18 2 8 0 5.5-4.78 10-10 10Z"/></svg>',
+  irigasi: '<svg width="16" height="16" viewBox="0 0 24 24" fill="#fff"><path d="M12 2.69l5.66 5.66a8 8 0 1 1-11.31 0z"/></svg>',
+  listrik: '<svg width="16" height="16" viewBox="0 0 24 24" fill="#fff"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>',
+  kritis: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.4"><path d="M12 9v4"/><path d="M12 17h.01"/><path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0Z"/></svg>',
 };
 
-export const SumenepLandMonitoring: React.FC<SumenepLandMonitoringProps> = ({ onShowToast }) => {
-  const [plots, setPlots] = useState<LandPlotRecord[]>([]);
-  const [summary, setSummary] = useState<MonitoringSummaryResponse | null>(null);
+const getEffectivePinType = (plot: LandPlotRecord, activeFilter: string): string => {
+  if (activeFilter !== 'all') return activeFilter;
+  if (isPlotCritical(plot)) return 'kritis';
+  const kom = (plot.komoditas || '').toLowerCase();
+  if (kom.includes('padi')) return 'padi';
+  if (kom.includes('jagung')) return 'jagung';
+  if (kom.includes('cabai') || kom.includes('cabe')) return 'cabai';
+  if (kom.includes('tembakau')) return 'tembakau';
+  return 'all';
+};
+
+const buildMarkerIcon = (pinType: string): L.DivIcon => {
+  if (pinType === 'all') {
+    return L.divIcon({
+      className: 'custom-div-icon',
+      html: '<div class="custom-marker-pin pin-default-green"><div class="dot-center"></div></div>',
+      iconSize: [30, 30],
+      iconAnchor: [15, 30],
+      popupAnchor: [0, -26],
+    });
+  }
+  const inner = PIN_SVGS[pinType] || '<div class="dot-center"></div>';
+  return L.divIcon({
+    className: 'custom-div-icon',
+    html: `<div class="custom-marker-pin pin-${escapeHtml(pinType)}"><div class="pin-inner-icon">${inner}</div></div>`,
+    iconSize: [34, 34],
+    iconAnchor: [17, 34],
+    popupAnchor: [0, -30],
+  });
+};
+
+const buildPopupHtml = (plot: LandPlotRecord): string => {
+  const status = getPlotFertilityStatus(plot);
+  const statusBadge =
+    status === 'kritis'
+      ? '<span style="background:#ffe4e6;color:#be123c;padding:2px 7px;border-radius:999px;font-size:10px;font-weight:800;">KRITIS</span>'
+      : status === 'optimal'
+        ? '<span style="background:#dcfce7;color:#166534;padding:2px 7px;border-radius:999px;font-size:10px;font-weight:800;">OPTIMAL</span>'
+        : '<span style="background:#fef3c7;color:#b45309;padding:2px 7px;border-radius:999px;font-size:10px;font-weight:800;">SEDANG</span>';
+
+  const gmapsUrl =
+    plot.latitude && plot.longitude
+      ? `https://www.google.com/maps?q=${encodeURIComponent(`${plot.latitude},${plot.longitude}`)}`
+      : `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`Desa ${plot.nama_desa || ''} Sumenep`)}`;
+
+  return `
+    <div style="min-width:270px;max-width:310px;font-family:'Plus Jakarta Sans',Inter,sans-serif;background:#fff;">
+      <div style="background:#0D5136;color:#fff;padding:12px 15px;">
+        <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;">
+          <span style="font-size:10px;text-transform:uppercase;color:#a7f3d0;font-weight:700;letter-spacing:0.06em;">Precision Plot #${plot.id}</span>
+          ${statusBadge}
+        </div>
+        <div style="font-size:15px;font-weight:800;margin-top:3px;">Desa ${escapeHtml(plot.nama_desa)}</div>
+        <div style="font-size:11px;color:#d1fae5;">Poktan: ${escapeHtml(plot.kelompok_tani || 'Mandiri')}</div>
+      </div>
+      <div style="padding:12px 15px;">
+        <table style="width:100%;font-size:11.5px;border-collapse:collapse;color:#131f18;">
+          <tr style="border-bottom:1px solid #f1f5f9;">
+            <td style="padding:4px 0;color:#64748b;">Komoditas / Luas</td>
+            <td style="padding:4px 0;text-align:right;font-weight:700;text-transform:capitalize;">${escapeHtml(plot.komoditas)} · ${escapeHtml(plot.luas_lahan)}</td>
+          </tr>
+          <tr style="border-bottom:1px solid #f1f5f9;">
+            <td style="padding:4px 0;color:#64748b;">pH / Kelembapan</td>
+            <td style="padding:4px 0;text-align:right;font-weight:700;font-family:monospace;">pH ${escapeHtml(plot.ph)} · ${escapeHtml(plot.moisture)}%</td>
+          </tr>
+          <tr style="border-bottom:1px solid #f1f5f9;">
+            <td style="padding:4px 0;color:#64748b;">NPK (mg/kg)</td>
+            <td style="padding:4px 0;text-align:right;font-weight:700;font-family:monospace;">N:${escapeHtml(plot.nitrogen)} P:${escapeHtml(plot.phosphorus)} K:${escapeHtml(plot.potassium)}</td>
+          </tr>
+          <tr>
+            <td style="padding:4px 0;color:#64748b;">Irigasi &amp; Pompa</td>
+            <td style="padding:4px 0;text-align:right;font-weight:700;">Irigasi ${escapeHtml(plot.irigasi)} · Pompa ${escapeHtml(plot.pompa_air)}</td>
+          </tr>
+        </table>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:11px;padding-top:10px;border-top:1px solid #e2e8f0;">
+          <button type="button" data-inspect-plot-id="${plot.id}" style="padding:7px 10px;background:#166534;color:#fff;border:none;border-radius:8px;font-size:11.5px;font-weight:700;cursor:pointer;">
+            Inspeksi 8-in-1
+          </button>
+          <a href="${gmapsUrl}" target="_blank" rel="noreferrer" style="padding:7px 10px;background:#F8FAF9;color:#0D5136;border:1px solid #E2E8F0;border-radius:8px;font-size:11.5px;font-weight:700;text-decoration:none;text-align:center;">
+            Google Maps ↗
+          </a>
+        </div>
+      </div>
+    </div>
+  `;
+};
+
+export const SumenepLandMonitoring: React.FC<SumenepLandMonitoringProps> = ({
+  plots,
+  isLoading,
+  onRefresh,
+  onInspectPlot,
+}) => {
   const [activeFilter, setActiveFilter] = useState<string>('all');
   const [searchQuery, setSearchQuery] = useState<string>('');
-  const [selectedPlotId, setSelectedPlotId] = useState<number | null>(null);
-  const [isLoading, setIsLoading] = useState<boolean>(true);
-  const [loadError, setLoadError] = useState<string | null>(null);
+  const [layerType, setLayerType] = useState<TileLayerKey>('google_roadmap');
 
-  const [recommendationText, setRecommendationText] = useState<string>('');
-  const [verificationStatus, setVerificationStatus] = useState<'verified' | 'needs_action' | 'pending'>('verified');
-  const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
-
-  const loadData = async (filterKey = activeFilter) => {
-    setIsLoading(true);
-    setLoadError(null);
-    try {
-      const [lahanRows, summaryData] = await Promise.all([
-        fetchMonitoringLahan(filterKey),
-        fetchMonitoringSummary(),
-      ]);
-      setPlots(lahanRows);
-      setSummary(summaryData);
-      if (lahanRows.length > 0) {
-        const stillExists = lahanRows.some((p) => p.id === selectedPlotId);
-        const first = stillExists
-          ? lahanRows.find((p) => p.id === selectedPlotId) || lahanRows[0]
-          : lahanRows[0];
-        setSelectedPlotId(first.id);
-        setRecommendationText(first.rekomendasi_ppl || '');
-        const st = first.status_verifikasi_ppl;
-        setVerificationStatus(
-          st === 'needs_action' || st === 'pending' || st === 'verified' ? st : 'verified'
-        );
-      } else {
-        setSelectedPlotId(null);
-      }
-    } catch (err) {
-      setLoadError(err instanceof Error ? err.message : 'Gagal memuat data monitoring Sumenep');
-    } finally {
-      setIsLoading(false);
-    }
-  };
+  const mapContainerRef = useRef<HTMLDivElement | null>(null);
+  const mapRef = useRef<L.Map | null>(null);
+  const clusterGroupRef = useRef<L.MarkerClusterGroup | null>(null);
+  const tileLayersRef = useRef<Record<TileLayerKey, L.TileLayer> | null>(null);
+  const inspectCallbackRef = useRef(onInspectPlot);
+  const plotsRef = useRef(plots);
 
   useEffect(() => {
-    void loadData(activeFilter);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [activeFilter]);
+    inspectCallbackRef.current = onInspectPlot;
+  }, [onInspectPlot]);
+
+  useEffect(() => {
+    plotsRef.current = plots;
+  }, [plots]);
 
   const filteredPlots = useMemo(() => {
     const q = searchQuery.trim().toLowerCase();
-    if (!q) return plots;
-    return plots.filter((p) =>
-      [p.nama_desa, p.kecamatan, p.komoditas, p.varietas, p.kelompok_tani, p.sumber_air]
+    return plots.filter((plot) => {
+      if (!matchesPlotCategory(plot, activeFilter)) return false;
+      if (!q) return true;
+      return [
+        plot.nama_desa,
+        plot.kecamatan,
+        plot.komoditas,
+        plot.varietas,
+        plot.kelompok_tani,
+        plot.sumber_air,
+      ]
         .filter(Boolean)
-        .some((v) => String(v).toLowerCase().includes(q))
+        .some((v) => String(v).toLowerCase().includes(q));
+    });
+  }, [plots, activeFilter, searchQuery]);
+
+  // Initialize Leaflet Map + MarkerClusterGroup once (StrictMode safe)
+  useEffect(() => {
+    const container = mapContainerRef.current;
+    if (!container) return;
+
+    const map = L.map(container, {
+      center: [-7.0105855, 113.8347767],
+      zoom: 11,
+      preferCanvas: true,
+    });
+
+    const layerGoogleRoadmap = L.tileLayer('https://{s}.google.com/vt/lyrs=m&x={x}&y={y}&z={z}', {
+      subdomains: ['mt0', 'mt1', 'mt2', 'mt3'],
+      attribution: '&copy; Google Maps',
+      maxZoom: 20,
+    });
+    const layerGoogleHybrid = L.tileLayer('https://{s}.google.com/vt/lyrs=y&x={x}&y={y}&z={z}', {
+      subdomains: ['mt0', 'mt1', 'mt2', 'mt3'],
+      attribution: '&copy; Google Satellite',
+      maxZoom: 20,
+    });
+    const layerEsriStreet = L.tileLayer(
+      'https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}',
+      {
+        attribution: '&copy; Esri',
+        maxZoom: 19,
+      }
     );
-  }, [plots, searchQuery]);
+    const layerOsmStreet = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      attribution: '&copy; OpenStreetMap',
+      maxZoom: 19,
+    });
 
-  const selectedPlot = useMemo(
-    () => filteredPlots.find((p) => p.id === selectedPlotId) || filteredPlots[0] || null,
-    [filteredPlots, selectedPlotId]
-  );
-
-  const handleSelectPlot = (plot: LandPlotRecord) => {
-    setSelectedPlotId(plot.id);
-    setRecommendationText(plot.rekomendasi_ppl || '');
-    const st = plot.status_verifikasi_ppl;
-    setVerificationStatus(
-      st === 'needs_action' || st === 'pending' || st === 'verified' ? st : 'verified'
-    );
-  };
-
-  const handleSubmitRecommendation = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!selectedPlot) return;
-    setIsSubmitting(true);
-    try {
-      const updated = await submitPplPlotRecommendation(
-        selectedPlot.id,
-        recommendationText.trim(),
-        verificationStatus
-      );
-      setPlots((prev) => prev.map((p) => (p.id === updated.id ? updated : p)));
-      onShowToast?.(
-        `Rekomendasi agronomis untuk ${updated.nama_desa} berhasil disimpan!`,
-        'success'
-      );
-    } catch (err) {
-      onShowToast?.(
-        err instanceof Error ? err.message : 'Gagal menyimpan rekomendasi PPL',
-        'error'
-      );
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
-
-  // Compute normalized plot positions inside the geospatial preview canvas
-  const mapBounds = useMemo(() => {
-    const coords = filteredPlots
-      .map((p) => ({ lat: Number(p.latitude), lon: Number(p.longitude) }))
-      .filter((c) => Number.isFinite(c.lat) && Number.isFinite(c.lon));
-    if (coords.length === 0) {
-      return { minLat: -7.1, maxLat: -6.88, minLon: 113.65, maxLon: 113.95 };
-    }
-    const lats = coords.map((c) => c.lat);
-    const lons = coords.map((c) => c.lon);
-    return {
-      minLat: Math.min(...lats) - 0.015,
-      maxLat: Math.max(...lats) + 0.015,
-      minLon: Math.min(...lons) - 0.015,
-      maxLon: Math.max(...lons) + 0.015,
+    layerGoogleRoadmap.addTo(map);
+    tileLayersRef.current = {
+      google_roadmap: layerGoogleRoadmap,
+      google_hybrid: layerGoogleHybrid,
+      esri_street: layerEsriStreet,
+      osm_street: layerOsmStreet,
     };
-  }, [filteredPlots]);
 
-  const stats = summary?.ringkasan_umum;
+    const clusterGroup = L.markerClusterGroup({
+      showCoverageOnHover: false,
+      zoomToBoundsOnClick: true,
+      spiderfyOnMaxZoom: true,
+      removeOutsideVisibleBounds: true,
+      maxClusterRadius: 45,
+      disableClusteringAtZoom: 16,
+      animate: true,
+      animateAddingMarkers: false,
+      iconCreateFunction: (cluster) => {
+        const count = cluster.getChildCount();
+        let sizeClass = 'cluster-small';
+        let iconSize: [number, number] = [34, 34];
+        if (count >= 50) {
+          sizeClass = 'cluster-large';
+          iconSize = [46, 46];
+        } else if (count >= 10) {
+          sizeClass = 'cluster-medium';
+          iconSize = [40, 40];
+        }
+        return L.divIcon({
+          html: `<div class="cluster-bubble ${sizeClass}"><span>${count}</span></div>`,
+          className: 'custom-cluster-icon',
+          iconSize,
+          iconAnchor: [iconSize[0] / 2, iconSize[1] / 2],
+        });
+      },
+    });
+
+    map.addLayer(clusterGroup);
+
+    map.on('popupopen', (e) => {
+      const popupEl = e.popup.getElement();
+      if (!popupEl) return;
+      const btn = popupEl.querySelector<HTMLButtonElement>('[data-inspect-plot-id]');
+      if (!btn) return;
+      btn.onclick = () => {
+        const id = Number(btn.getAttribute('data-inspect-plot-id'));
+        const target = plotsRef.current.find((p) => p.id === id);
+        if (target) inspectCallbackRef.current(target);
+      };
+    });
+
+    mapRef.current = map;
+    clusterGroupRef.current = clusterGroup;
+
+    const timer = window.setTimeout(() => {
+      map.invalidateSize();
+    }, 150);
+
+    return () => {
+      window.clearTimeout(timer);
+      clusterGroup.clearLayers();
+      map.remove();
+      mapRef.current = null;
+      clusterGroupRef.current = null;
+      tileLayersRef.current = null;
+    };
+  }, []);
+
+  // Switch tile layers when layerType changes
+  useEffect(() => {
+    const map = mapRef.current;
+    const layers = tileLayersRef.current;
+    if (!map || !layers) return;
+    (Object.keys(layers) as TileLayerKey[]).forEach((key) => {
+      if (map.hasLayer(layers[key])) {
+        map.removeLayer(layers[key]);
+      }
+    });
+    layers[layerType].addTo(map);
+  }, [layerType]);
+
+  // Synchronize filtered markers onto MarkerClusterGroup
+  useEffect(() => {
+    const map = mapRef.current;
+    const clusterGroup = clusterGroupRef.current;
+    if (!map || !clusterGroup) return;
+
+    clusterGroup.clearLayers();
+    const markers: L.Marker[] = [];
+    const boundsCoords: [number, number][] = [];
+
+    filteredPlots.forEach((plot) => {
+      const lat = Number(plot.latitude);
+      const lng = Number(plot.longitude);
+      if (!Number.isFinite(lat) || !Number.isFinite(lng) || (lat === 0 && lng === 0)) return;
+
+      const pinType = getEffectivePinType(plot, activeFilter);
+      const marker = L.marker([lat, lng], { icon: buildMarkerIcon(pinType) });
+      marker.bindPopup(buildPopupHtml(plot));
+      markers.push(marker);
+      boundsCoords.push([lat, lng]);
+    });
+
+    if (markers.length > 0) {
+      clusterGroup.addLayers(markers);
+      map.fitBounds(boundsCoords, { padding: [45, 45], maxZoom: 14, animate: true });
+    }
+  }, [filteredPlots, activeFilter]);
 
   return (
-    <div className="space-y-6">
-      {/* Header Banner */}
-      <section className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-[#0b3b28] via-[#114b35] to-[#134e38] text-white p-6 lg:p-7 shadow-lg shadow-emerald-950/20">
-        <div className="absolute -right-10 -top-10 w-56 h-56 rounded-full bg-emerald-400/10 blur-2xl pointer-events-none"></div>
-        <div className="relative z-10 flex flex-col lg:flex-row lg:items-center justify-between gap-4">
-          <div className="space-y-2 max-w-2xl">
-            <div className="flex flex-wrap items-center gap-2">
-              <span className="px-2.5 py-1 rounded-lg bg-primary/90 text-white font-extrabold text-[11px] uppercase tracking-wide">
-                Pertanian Presisi Sumenep
-              </span>
-              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/10 text-emerald-100 text-[12px] font-semibold border border-white/15">
-                <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
-                Probe Tanah 8-in-1 + Geofencing GPS
-              </span>
-            </div>
-            <h1 className="text-2xl lg:text-3xl font-extrabold tracking-tight text-white">
-              Peta &amp; Monitoring Lahan Kabupaten Sumenep
-            </h1>
-            <p className="text-emerald-100/85 text-[13px] lg:text-[14px] leading-relaxed">
-              Pantau parameter NPK, pH, EC, kelembapan, infrastruktur irigasi-pompa, serta berikan intervensi agronomis PPL pada titik lahan kritis.
-            </p>
+    <div className="space-y-5">
+      {/* Header & Breadcrumb Mirroring SmartAgri "Peta Lahan & Infrastruktur" */}
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div>
+          <div className="inline-flex items-center gap-2 text-[11.5px] font-bold uppercase tracking-wider text-[#166534]">
+            <span className="w-2 h-2 rounded-full bg-[#22C55E] animate-pulse" />
+            Kabupaten Sumenep &bull; Sensor 8-in-1 &amp; Precision Farming
           </div>
+          <h1 className="text-2xl font-extrabold text-gray-900 mt-0.5">
+            Peta Lahan &amp; Infrastruktur
+          </h1>
+          <p className="text-[13px] text-gray-500">
+            Filter cepat komoditas pertanian, alat pembajak lahan (traktor &amp; sapi), kelompok tani, irigasi, pompa air, listrik, dan titik kritis PPL.
+          </p>
+        </div>
+
+        <div className="flex items-center gap-2">
+          <span className="px-3.5 py-2 rounded-xl bg-white border border-[#E2E8F0] text-[12.5px] font-extrabold text-[#0D5136] shadow-sm font-mono">
+            Total: {filteredPlots.length} Titik
+          </span>
           <button
-            onClick={() => void loadData(activeFilter)}
+            type="button"
+            onClick={onRefresh}
             disabled={isLoading}
-            className="self-start lg:self-center px-4 py-2.5 rounded-xl bg-white/10 hover:bg-white/20 text-white border border-white/20 font-bold text-[13px] flex items-center gap-2 transition-all active:scale-95 disabled:opacity-50"
+            className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-[#166534] hover:bg-[#0D5136] text-white text-[12.5px] font-bold shadow-sm transition-colors disabled:opacity-50"
           >
-            <span className="material-symbols-outlined text-[18px]">refresh</span>
-            Sinkronkan Data Lahan
+            <span className={`material-symbols-outlined text-[17px] ${isLoading ? 'animate-spin' : ''}`}>
+              refresh
+            </span>
+            Sinkronkan
           </button>
-        </div>
-      </section>
-
-      {/* KPI Summary Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
-        <div className="bg-surface-white rounded-2xl border border-gray-100 p-4 shadow-sm">
-          <div className="flex items-center justify-between">
-            <span className="text-[12px] font-bold text-gray-500 uppercase tracking-wide">Total Titik Pantau</span>
-            <span className="material-symbols-outlined text-forest-emerald bg-emerald-50 p-1.5 rounded-lg text-[20px]">pin_drop</span>
-          </div>
-          <p className="text-2xl font-extrabold text-gray-900 mt-2">{stats?.total_titik ?? plots.length}</p>
-          <p className="text-[12px] text-gray-500 mt-1">
-            {summary?.distribusi_komoditas?.length || 0} jenis komoditas terdata
-          </p>
-        </div>
-
-        <div className="bg-surface-white rounded-2xl border border-gray-100 p-4 shadow-sm">
-          <div className="flex items-center justify-between">
-            <span className="text-[12px] font-bold text-gray-500 uppercase tracking-wide">Rata-rata Kesuburan &amp; pH</span>
-            <span className="material-symbols-outlined text-emerald-600 bg-emerald-50 p-1.5 rounded-lg text-[20px]">science</span>
-          </div>
-          <p className="text-2xl font-extrabold text-gray-900 mt-2">
-            {stats?.avg_fertility ?? 0} <span className="text-sm font-bold text-emerald-700">· pH {stats?.avg_ph ?? '—'}</span>
-          </p>
-          <p className="text-[12px] text-gray-500 mt-1">
-            Kelembapan rata-rata {stats?.avg_moisture ?? 0}% · {stats?.avg_temp ?? 0}°C
-          </p>
-        </div>
-
-        <div className="bg-surface-white rounded-2xl border border-gray-100 p-4 shadow-sm">
-          <div className="flex items-center justify-between">
-            <span className="text-[12px] font-bold text-gray-500 uppercase tracking-wide">Irigasi &amp; Pompa Air</span>
-            <span className="material-symbols-outlined text-blue-600 bg-blue-50 p-1.5 rounded-lg text-[20px]">water_drop</span>
-          </div>
-          <p className="text-2xl font-extrabold text-gray-900 mt-2">
-            {stats?.total_pompa_air ?? 0} Pompa
-            <span className="text-sm font-bold text-blue-700"> · {stats?.total_irigasi ?? 0} Irigasi</span>
-          </p>
-          <p className="text-[12px] text-gray-500 mt-1">Infrastruktur pengairan sumur bor &amp; irigasi teknis</p>
-        </div>
-
-        <div className="bg-surface-white rounded-2xl border border-rose-100 p-4 shadow-sm">
-          <div className="flex items-center justify-between">
-            <span className="text-[12px] font-bold text-rose-600 uppercase tracking-wide">Titik Kritis PPL</span>
-            <span className="material-symbols-outlined text-rose-600 bg-rose-50 p-1.5 rounded-lg text-[20px]">warning</span>
-          </div>
-          <p className="text-2xl font-extrabold text-rose-700 mt-2">{stats?.total_titik_kritis ?? 0} Lahan</p>
-          <p className="text-[12px] text-rose-600/80 mt-1">pH ekstrem / kadar air &lt; 15% / kesuburan &lt; 20</p>
         </div>
       </div>
 
-      {/* Category Filter Chips + Search Bar */}
-      <div className="bg-surface-white rounded-2xl border border-gray-100 p-4 shadow-sm space-y-3">
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-3">
+      {/* Filter & Map Controls Toolbar */}
+      <div className="bg-white rounded-2xl border border-[#E2E8F0] p-4 shadow-sm space-y-3.5">
+        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3">
           <div className="relative flex-1 max-w-md">
-            <span className="material-symbols-outlined text-gray-400 text-[18px] absolute left-3 top-1/2 -translate-y-1/2">search</span>
+            <span className="material-symbols-outlined text-gray-400 text-[18px] absolute left-3 top-1/2 -translate-y-1/2">
+              search
+            </span>
             <input
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Cari desa (Mandala, Pakondang, Karangnangka...), Poktan, atau komoditas..."
-              className="w-full pl-9 pr-4 py-2 text-[13px] bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-forest-emerald/30 focus:border-forest-emerald"
+              placeholder="Cari desa (Mandala, Pakondang...), Poktan, atau komoditas..."
+              className="w-full pl-9 pr-4 py-2 text-[13px] bg-[#F8FAF9] border border-[#E2E8F0] rounded-xl focus:outline-none focus:ring-2 focus:ring-[#22C55E]/30 focus:border-[#166534]"
             />
           </div>
-          {summary?.distribusi_komoditas && summary.distribusi_komoditas.length > 0 && (
-            <div className="flex flex-wrap items-center gap-1.5">
-              {summary.distribusi_komoditas.slice(0, 5).map((item) => (
-                <span
-                  key={item.komoditas}
-                  className="px-2.5 py-1 rounded-lg bg-emerald-50 border border-emerald-100 text-[11px] font-bold text-emerald-800 capitalize"
-                >
-                  {item.komoditas}: {item.jumlah_titik}
-                </span>
-              ))}
-            </div>
-          )}
+
+          {/* Basemap Tile Switcher & Reset */}
+          <div className="flex flex-wrap items-center gap-2">
+            <label htmlFor="sumenepLayerSelect" className="text-[12px] font-bold text-gray-600">
+              Peta Dasar:
+            </label>
+            <select
+              id="sumenepLayerSelect"
+              value={layerType}
+              onChange={(e) => setLayerType(e.target.value as TileLayerKey)}
+              className="px-3 py-2 rounded-xl bg-[#F8FAF9] border border-[#E2E8F0] text-[12.5px] font-bold text-gray-800 focus:outline-none focus:border-[#166534]"
+            >
+              <option value="google_roadmap">Google Maps</option>
+              <option value="google_hybrid">Satellite Hybrid</option>
+              <option value="osm_street">Street (OpenStreetMap)</option>
+              <option value="esri_street">Esri World Street</option>
+            </select>
+            <button
+              type="button"
+              onClick={() => {
+                setActiveFilter('all');
+                setSearchQuery('');
+              }}
+              className="px-3 py-2 rounded-xl bg-[#F8FAF9] hover:bg-gray-100 border border-[#E2E8F0] text-[12px] font-bold text-gray-700 flex items-center gap-1"
+              title="Reset ke Semua Titik"
+            >
+              <span className="material-symbols-outlined text-[16px]">restart_alt</span>
+              Reset
+            </button>
+          </div>
         </div>
 
-        <div className="flex flex-wrap gap-2">
+        {/* Multi-Chip Filter Bar */}
+        <div className="flex flex-wrap gap-2 pt-1 border-t border-[#E2E8F0]">
           {FILTER_CHIPS.map((chip) => {
             const active = activeFilter === chip.key;
             return (
               <button
                 key={chip.key}
+                type="button"
                 onClick={() => setActiveFilter(chip.key)}
                 className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[12px] font-bold transition-all ${
                   active
-                    ? 'bg-forest-emerald text-white shadow-sm'
-                    : 'bg-gray-50 text-gray-600 border border-gray-200 hover:bg-emerald-50 hover:text-emerald-800'
+                    ? 'bg-[#0D5136] text-white shadow-sm'
+                    : 'bg-[#F8FAF9] text-gray-700 border border-[#E2E8F0] hover:bg-emerald-50 hover:text-[#166534]'
                 }`}
               >
+                <span
+                  className="w-2 h-2 rounded-full shrink-0"
+                  style={{ backgroundColor: active ? '#22C55E' : chip.dotColor }}
+                />
                 <span className="material-symbols-outlined text-[15px]">{chip.icon}</span>
                 {chip.label}
               </button>
@@ -282,322 +424,92 @@ export const SumenepLandMonitoring: React.FC<SumenepLandMonitoringProps> = ({ on
         </div>
       </div>
 
-      {loadError && (
-        <div className="p-4 rounded-xl bg-rose-50 border border-rose-200 text-rose-700 text-[13px] font-semibold">
-          {loadError}
-        </div>
-      )}
-
-      {/* Main Split Workspace */}
-      <div className="grid grid-cols-1 xl:grid-cols-12 gap-6 items-start">
-        {/* Left/Center: Geospatial Coordinate Preview + Plot List */}
-        <div className="xl:col-span-7 space-y-4">
-          {/* Interactive Sumenep Geospatial Canvas */}
-          <div className="bg-surface-white rounded-2xl border border-gray-100 p-4 shadow-sm">
-            <div className="flex items-center justify-between mb-3">
-              <div>
-                <h2 className="text-[15px] font-extrabold text-gray-900">Sebaran Koordinat Lahan Sumenep</h2>
-                <p className="text-[12px] text-gray-500">Klik marker untuk menginspeksi profil 8-in-1 &amp; rekomendasi PPL</p>
+      {/* Clustered Leaflet Map Card */}
+      <div className="bg-white rounded-2xl border border-[#E2E8F0] p-3 shadow-sm">
+        <div className="relative lapaktani-leaflet-map">
+          <div
+            ref={mapContainerRef}
+            className="w-full h-[520px] lg:h-[600px] rounded-xl border border-[#E2E8F0] z-10 bg-[#F8FAF9]"
+          />
+          {filteredPlots.length === 0 && (
+            <div className="absolute inset-0 z-20 flex items-center justify-center pointer-events-none">
+              <div className="bg-white/95 backdrop-blur-sm border border-[#E2E8F0] rounded-2xl px-6 py-4 shadow-lg text-center">
+                <p className="text-[13.5px] font-bold text-gray-800">
+                  Tidak ada titik koordinat yang sesuai dengan filter saat ini.
+                </p>
               </div>
-              <div className="flex items-center gap-3 text-[11px] font-bold">
-                <span className="inline-flex items-center gap-1 text-emerald-700">
-                  <span className="w-2.5 h-2.5 rounded-full bg-emerald-500"></span> Optimal
-                </span>
-                <span className="inline-flex items-center gap-1 text-amber-700">
-                  <span className="w-2.5 h-2.5 rounded-full bg-amber-500"></span> Sedang
-                </span>
-                <span className="inline-flex items-center gap-1 text-rose-700">
-                  <span className="w-2.5 h-2.5 rounded-full bg-rose-500"></span> Kritis
-                </span>
-              </div>
-            </div>
-
-            <div className="relative h-64 rounded-xl bg-gradient-to-br from-emerald-950 via-[#0e3f2b] to-[#135339] overflow-hidden border border-emerald-900/40">
-              {/* Subtle topographic grid */}
-              <div
-                className="absolute inset-0 opacity-20"
-                style={{
-                  backgroundImage:
-                    'linear-gradient(to right, rgba(255,255,255,0.18) 1px, transparent 1px), linear-gradient(to bottom, rgba(255,255,255,0.18) 1px, transparent 1px)',
-                  backgroundSize: '36px 36px',
-                }}
-              />
-              <span className="absolute top-3 left-3 px-2.5 py-1 rounded-lg bg-black/30 text-emerald-100 text-[11px] font-bold backdrop-blur-sm">
-                Kab. Sumenep (-6.88°.. -7.08° LS, 113.67°.. 113.93° BT)
-              </span>
-
-              {filteredPlots.map((plot) => {
-                const lat = Number(plot.latitude);
-                const lon = Number(plot.longitude);
-                const lonSpan = Math.max(mapBounds.maxLon - mapBounds.minLon, 0.01);
-                const latSpan = Math.max(mapBounds.maxLat - mapBounds.minLat, 0.01);
-                const xPercent = Math.min(92, Math.max(8, ((lon - mapBounds.minLon) / lonSpan) * 84 + 8));
-                const yPercent = Math.min(88, Math.max(16, ((mapBounds.maxLat - lat) / latSpan) * 72 + 14));
-                const critical = isPlotCritical(plot);
-                const isSelected = selectedPlot?.id === plot.id;
-                const dotColor = critical
-                  ? 'bg-rose-500 ring-rose-300'
-                  : Number(plot.fertility) >= 60
-                    ? 'bg-emerald-400 ring-emerald-200'
-                    : 'bg-amber-400 ring-amber-200';
-
-                return (
-                  <button
-                    key={plot.id}
-                    type="button"
-                    onClick={() => handleSelectPlot(plot)}
-                    style={{ left: `${xPercent}%`, top: `${yPercent}%` }}
-                    className={`absolute -translate-x-1/2 -translate-y-1/2 group flex flex-col items-center transition-transform ${
-                      isSelected ? 'scale-115 z-20' : 'hover:scale-110 z-10'
-                    }`}
-                  >
-                    <span
-                      className={`w-4 h-4 rounded-full ${dotColor} ${
-                        isSelected ? 'ring-4 shadow-lg' : 'ring-2'
-                      }`}
-                    />
-                    <span
-                      className={`mt-1 px-2 py-0.5 rounded-md text-[10px] font-bold whitespace-nowrap shadow ${
-                        isSelected
-                          ? 'bg-white text-gray-900'
-                          : 'bg-black/55 text-white opacity-85 group-hover:opacity-100'
-                      }`}
-                    >
-                      {plot.nama_desa} ({plot.komoditas})
-                    </span>
-                  </button>
-                );
-              })}
-            </div>
-          </div>
-
-          {/* Plot List Cards */}
-          <div className="bg-surface-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
-            <div className="px-4 py-3 border-b border-gray-100 flex items-center justify-between">
-              <h3 className="text-[14px] font-extrabold text-gray-900">
-                Daftar Titik Monitoring Lahan ({filteredPlots.length})
-              </h3>
-              {isLoading && <span className="text-[12px] text-emerald-700 font-semibold">Memuat...</span>}
-            </div>
-            <div className="divide-y divide-gray-100 max-h-[420px] overflow-y-auto">
-              {filteredPlots.length === 0 ? (
-                <div className="p-8 text-center text-gray-500 text-[13px]">
-                  Tidak ada titik monitoring yang cocok dengan filter saat ini.
-                </div>
-              ) : (
-                filteredPlots.map((plot) => {
-                  const critical = isPlotCritical(plot);
-                  const active = selectedPlot?.id === plot.id;
-                  return (
-                    <button
-                      key={plot.id}
-                      type="button"
-                      onClick={() => handleSelectPlot(plot)}
-                      className={`w-full text-left p-4 transition-colors flex flex-col sm:flex-row sm:items-center justify-between gap-3 ${
-                        active ? 'bg-emerald-50/70 border-l-4 border-l-forest-emerald' : 'hover:bg-gray-50'
-                      }`}
-                    >
-                      <div className="space-y-1">
-                        <div className="flex flex-wrap items-center gap-2">
-                          <span className="text-[14px] font-extrabold text-gray-900">
-                            {plot.nama_desa}
-                            {plot.kecamatan ? `, Kec. ${plot.kecamatan}` : ''}
-                          </span>
-                          <span className="px-2 py-0.5 rounded-md bg-emerald-100 text-emerald-900 text-[11px] font-bold capitalize">
-                            {plot.komoditas}
-                          </span>
-                          {critical && (
-                            <span className="px-2 py-0.5 rounded-md bg-rose-100 text-rose-700 text-[11px] font-bold">
-                              Titik Kritis
-                            </span>
-                          )}
-                        </div>
-                        <p className="text-[12px] text-gray-500">
-                          {plot.kelompok_tani} · Luas {plot.luas_lahan} · Sumber air: {plot.sumber_air} ({plot.kondisi_air})
-                        </p>
-                      </div>
-                      <div className="flex items-center gap-3 shrink-0">
-                        <div className="text-right">
-                          <div className="text-[12px] font-extrabold text-gray-800">
-                            Kesuburan {plot.fertility}
-                          </div>
-                          <div className="text-[11px] text-gray-500">
-                            pH {plot.ph} · Air {plot.moisture}%
-                          </div>
-                        </div>
-                        <span className="material-symbols-outlined text-gray-400">chevron_right</span>
-                      </div>
-                    </button>
-                  );
-                })
-              )}
-            </div>
-          </div>
-        </div>
-
-        {/* Right: 8-in-1 Soil Telemetry Inspector & PPL Recommendation Desk */}
-        <div className="xl:col-span-5">
-          {selectedPlot ? (
-            <div className="bg-surface-white rounded-2xl border border-gray-100 shadow-sm p-5 space-y-5 sticky top-20">
-              <div className="flex items-start justify-between gap-3">
-                <div>
-                  <span className="text-[11px] font-bold uppercase tracking-wider text-forest-emerald">
-                    Inspektur Plot #{selectedPlot.id}
-                  </span>
-                  <h2 className="text-xl font-extrabold text-gray-900 mt-0.5">
-                    Desa {selectedPlot.nama_desa}
-                    {selectedPlot.kecamatan ? `, ${selectedPlot.kecamatan}` : ''}
-                  </h2>
-                  <p className="text-[12px] text-gray-500 mt-0.5">
-                    {selectedPlot.kelompok_tani} · {selectedPlot.komoditas}
-                    {selectedPlot.varietas ? ` (${selectedPlot.varietas})` : ''}
-                  </p>
-                </div>
-                <a
-                  href={`https://maps.google.com/?q=${selectedPlot.latitude},${selectedPlot.longitude}`}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="inline-flex items-center gap-1 px-3 py-1.5 rounded-xl bg-emerald-50 hover:bg-emerald-100 text-forest-emerald text-[12px] font-bold shrink-0"
-                >
-                  <span className="material-symbols-outlined text-[16px]">map</span>
-                  Google Maps
-                </a>
-              </div>
-
-              {/* 8-in-1 Telemetry Grid */}
-              <div>
-                <h3 className="text-[12px] font-extrabold text-gray-500 uppercase tracking-wider mb-2.5">
-                  Pembacaan Probe Tanah 8-in-1
-                </h3>
-                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
-                  {[
-                    { label: 'pH Tanah', value: `${selectedPlot.ph}`, warn: Number(selectedPlot.ph) < 5.5 || Number(selectedPlot.ph) > 7.5 },
-                    { label: 'Kelembapan', value: `${selectedPlot.moisture}%`, warn: Number(selectedPlot.moisture) < 15 },
-                    { label: 'Suhu Tanah', value: `${selectedPlot.temp}°C`, warn: false },
-                    { label: 'EC Tanah', value: `${selectedPlot.conductivity} uS`, warn: false },
-                    { label: 'Nitrogen (N)', value: `${selectedPlot.nitrogen} mg/kg`, warn: false },
-                    { label: 'Fosfor (P)', value: `${selectedPlot.phosphorus} mg/kg`, warn: false },
-                    { label: 'Kalium (K)', value: `${selectedPlot.potassium} mg/kg`, warn: false },
-                    { label: 'Fertilitas', value: `${selectedPlot.fertility}/100`, warn: Number(selectedPlot.fertility) < 20 },
-                  ].map((metric) => (
-                    <div
-                      key={metric.label}
-                      className={`p-2.5 rounded-xl border ${
-                        metric.warn
-                          ? 'bg-rose-50 border-rose-200 text-rose-900'
-                          : 'bg-gray-50 border-gray-200 text-gray-900'
-                      }`}
-                    >
-                      <div className="text-[10px] font-bold uppercase opacity-70">{metric.label}</div>
-                      <div className="text-[14px] font-extrabold mt-0.5">{metric.value}</div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              {/* Infrastructure & Agronomy Conditions */}
-              <div>
-                <h3 className="text-[12px] font-extrabold text-gray-500 uppercase tracking-wider mb-2">
-                  Infrastruktur &amp; Kondisi Lapangan
-                </h3>
-                <div className="flex flex-wrap gap-1.5 text-[11px] font-bold">
-                  <span className="px-2.5 py-1 rounded-lg bg-gray-100 text-gray-700">
-                    Irigasi: {selectedPlot.irigasi}
-                  </span>
-                  <span className="px-2.5 py-1 rounded-lg bg-gray-100 text-gray-700">
-                    Pompa Air: {selectedPlot.pompa_air} ({selectedPlot.sumber_energi_pompa})
-                  </span>
-                  <span className="px-2.5 py-1 rounded-lg bg-gray-100 text-gray-700">
-                    Air: {selectedPlot.sumber_air} · {selectedPlot.kondisi_air}
-                  </span>
-                  <span className="px-2.5 py-1 rounded-lg bg-gray-100 text-gray-700">
-                    Pembajak: {selectedPlot.pembajak}
-                  </span>
-                  <span className="px-2.5 py-1 rounded-lg bg-gray-100 text-gray-700">
-                    Luas: {selectedPlot.luas_lahan} ({selectedPlot.status_lahan})
-                  </span>
-                  {selectedPlot.hasil_panen_lalu && (
-                    <span className="px-2.5 py-1 rounded-lg bg-emerald-50 text-emerald-800">
-                      Panen Lalu: {selectedPlot.hasil_panen_lalu} {selectedPlot.satuan_panen || 'ton'}
-                    </span>
-                  )}
-                </div>
-              </div>
-
-              {/* Evidence Photos if attached */}
-              {(selectedPlot.foto_daun || selectedPlot.foto_pohon || selectedPlot.foto_tanah) && (
-                <div>
-                  <h3 className="text-[12px] font-extrabold text-gray-500 uppercase tracking-wider mb-2">
-                    Dokumentasi Foto Lapangan (3 Sudut)
-                  </h3>
-                  <div className="grid grid-cols-3 gap-2">
-                    {[
-                      { label: 'Daun', url: selectedPlot.foto_daun },
-                      { label: 'Pohon', url: selectedPlot.foto_pohon },
-                      { label: 'Tanah', url: selectedPlot.foto_tanah },
-                    ].map((photo) => {
-                      const resolved = resolveImageUrl(photo.url);
-                      return resolved ? (
-                        <a
-                          key={photo.label}
-                          href={resolved}
-                          target="_blank"
-                          rel="noreferrer"
-                          className="group relative rounded-xl overflow-hidden border border-gray-200 aspect-square bg-gray-100"
-                        >
-                          <img src={resolved} alt={photo.label} className="w-full h-full object-cover" />
-                          <span className="absolute bottom-1 left-1 px-1.5 py-0.5 rounded bg-black/60 text-white text-[10px] font-bold">
-                            {photo.label}
-                          </span>
-                        </a>
-                      ) : null;
-                    })}
-                  </div>
-                </div>
-              )}
-
-              {/* PPL Recommendation Form */}
-              <form onSubmit={handleSubmitRecommendation} className="space-y-3 pt-2 border-t border-gray-100">
-                <div className="flex items-center justify-between">
-                  <label className="text-[12px] font-extrabold text-gray-700 uppercase tracking-wider">
-                    Rekomendasi Agronomis PPL
-                  </label>
-                  <select
-                    value={verificationStatus}
-                    onChange={(e) =>
-                      setVerificationStatus(e.target.value as 'verified' | 'needs_action' | 'pending')
-                    }
-                    className="px-2.5 py-1 rounded-lg border border-gray-200 text-[12px] font-bold bg-gray-50"
-                  >
-                    <option value="verified">Terverifikasi PPL</option>
-                    <option value="needs_action">Perlu Tindakan</option>
-                    <option value="pending">Menunggu Review</option>
-                  </select>
-                </div>
-
-                <textarea
-                  rows={3}
-                  value={recommendationText}
-                  onChange={(e) => setRecommendationText(e.target.value)}
-                  placeholder="Tulis rekomendasi pemupukan berimbang, dosis dolomit/kompos, atau jadwal pengairan..."
-                  className="w-full px-3 py-2 text-[13px] rounded-xl border border-gray-200 bg-gray-50 focus:outline-none focus:ring-2 focus:ring-forest-emerald/30 focus:border-forest-emerald"
-                />
-
-                <button
-                  type="submit"
-                  disabled={isSubmitting}
-                  className="w-full py-2.5 px-4 rounded-xl bg-forest-emerald hover:bg-[#0e422e] text-white font-bold text-[13px] flex items-center justify-center gap-2 transition-all disabled:opacity-60"
-                >
-                  <span className="material-symbols-outlined text-[18px]">save</span>
-                  {isSubmitting ? 'Menyimpan...' : 'Simpan Rekomendasi PPL'}
-                </button>
-              </form>
-            </div>
-          ) : (
-            <div className="bg-surface-white rounded-2xl border border-gray-100 p-8 text-center text-gray-500 text-[13px]">
-              Pilih salah satu titik lahan di sebelah kiri untuk inspeksi parameter 8-in-1.
             </div>
           )}
+        </div>
+      </div>
+
+      {/* Interactive Plot Directory Strip for Fast Inspection */}
+      <div className="bg-white rounded-2xl border border-[#E2E8F0] shadow-sm overflow-hidden">
+        <div className="px-5 py-3.5 border-b border-[#E2E8F0] flex flex-wrap items-center justify-between gap-2 bg-[#F8FAF9]">
+          <div>
+            <h2 className="text-[14px] font-extrabold text-gray-900">
+              Direktori Titik Terfilter ({filteredPlots.length})
+            </h2>
+            <p className="text-[11.5px] text-gray-500">
+              Klik baris lahan untuk membuka drawer inspektor sensor 8-in-1 &amp; form rekomendasi PPL
+            </p>
+          </div>
+          <div className="flex items-center gap-3 text-[11px] font-bold">
+            <span className="inline-flex items-center gap-1 text-[#166534]">
+              <span className="w-2.5 h-2.5 rounded-full bg-[#22C55E]" /> Optimal
+            </span>
+            <span className="inline-flex items-center gap-1 text-amber-700">
+              <span className="w-2.5 h-2.5 rounded-full bg-[#F59E0B]" /> Sedang
+            </span>
+            <span className="inline-flex items-center gap-1 text-rose-700">
+              <span className="w-2.5 h-2.5 rounded-full bg-rose-500" /> Kritis
+            </span>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3 p-4">
+          {filteredPlots.map((plot) => {
+            const status = getPlotFertilityStatus(plot);
+            return (
+              <button
+                key={plot.id}
+                type="button"
+                onClick={() => onInspectPlot(plot)}
+                className="text-left p-4 rounded-xl bg-[#F8FAF9] hover:bg-emerald-50/60 border border-[#E2E8F0] hover:border-[#22C55E] transition-all space-y-2"
+              >
+                <div className="flex items-start justify-between gap-2">
+                  <div>
+                    <div className="font-extrabold text-[14px] text-gray-900">
+                      Desa {plot.nama_desa}
+                      {plot.kecamatan ? `, ${plot.kecamatan}` : ''}
+                    </div>
+                    <div className="text-[11.5px] text-gray-500">
+                      {plot.kelompok_tani || 'Mandiri'} ·{' '}
+                      <span className="capitalize font-semibold text-[#166534]">
+                        {plot.komoditas}
+                      </span>
+                    </div>
+                  </div>
+                  <span
+                    className={`px-2 py-0.5 rounded-full text-[10px] font-extrabold uppercase ${
+                      status === 'kritis'
+                        ? 'bg-rose-100 text-rose-700'
+                        : status === 'optimal'
+                          ? 'bg-emerald-100 text-[#166534]'
+                          : 'bg-amber-100 text-amber-800'
+                    }`}
+                  >
+                    {status}
+                  </span>
+                </div>
+                <div className="flex items-center justify-between text-[11.5px] font-mono font-bold text-gray-700 pt-2 border-t border-[#E2E8F0]">
+                  <span>pH {plot.ph}</span>
+                  <span>Lembab {plot.moisture}%</span>
+                  <span>Subur {plot.fertility}/100</span>
+                </div>
+              </button>
+            );
+          })}
         </div>
       </div>
     </div>

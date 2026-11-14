@@ -6,6 +6,6 @@ class AppConfig {
 
   static const String apiKey = String.fromEnvironment(
     'API_KEY',
-    defaultValue: 'lapaktani_secure_gateway_2026_key',
+    defaultValue: '',
   );
 }

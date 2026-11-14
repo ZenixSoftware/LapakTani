@@ -69,12 +69,15 @@ app.*.map.json
 lapaktani_backend/public/uploads/
 uploads/
 
-# Academic & Personal Documents
+# Academic & Personal Documents & Local Reference Temp
 *.docx
 *.doc
 *.pdf
 *31255220*
 append_evaluation*.py
+temp/
+temp_*
 temp_*.py
 _temp_*
 test_*.js
+scripts/run_flutter_dev.ps1

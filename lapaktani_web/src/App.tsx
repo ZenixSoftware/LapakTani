@@ -1,80 +1,139 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { Header } from './components/Header';
-import { Sidebar } from './components/Sidebar';
+import { Sidebar, type PortalModuleTab } from './components/Sidebar';
 import { HeroBanner } from './components/HeroBanner';
 import { QueueTable } from './components/QueueTable';
 import { AuditDesk } from './components/AuditDesk';
 import { LoginModal } from './components/LoginModal';
+import { SmartAgriDashboard } from './components/SmartAgriDashboard';
 import { SumenepLandMonitoring } from './components/SumenepLandMonitoring';
+import { SensorDataTable } from './components/SensorDataTable';
+import { AiPolicyBrief } from './components/AiPolicyBrief';
+import { PlotInspectorModal } from './components/PlotInspectorModal';
+import { isPlotCritical } from './utils/monitoringHelpers';
 import {
   fetchPendingFarmers,
+  fetchMonitoringLahan,
+  fetchMonitoringSummary,
   verifyFarmer,
   getAuthToken,
   getStoredUser,
   removeAuthToken,
   type PendingFarmer,
   type AuthUser,
+  type LandPlotRecord,
+  type MonitoringSummaryResponse,
 } from './services/api';
 
+const MOBILE_TABS: { id: PortalModuleTab; label: string }[] = [
+  { id: 'dashboard', label: 'Dashboard' },
+  { id: 'peta-lahan', label: 'Peta Lahan' },
+  { id: 'data-sensor', label: 'Data Sensor' },
+  { id: 'policy-brief', label: 'Policy Brief' },
+  { id: 'validasi', label: 'Validasi' },
+];
+
 export function App() {
-  const [activeTab, setActiveTab] = useState<'validasi' | 'lahan'>('validasi');
+  const [activeTab, setActiveTab] = useState<PortalModuleTab>('dashboard');
   const [farmers, setFarmers] = useState<PendingFarmer[]>([]);
   const [selectedFarmerId, setSelectedFarmerId] = useState<string>('');
+  const [plots, setPlots] = useState<LandPlotRecord[]>([]);
+  const [summary, setSummary] = useState<MonitoringSummaryResponse | null>(null);
+  const [inspectedPlot, setInspectedPlot] = useState<LandPlotRecord | null>(null);
+
   const [isLoading, setIsLoading] = useState<boolean>(true);
+  const [isLoadingMonitoring, setIsLoadingMonitoring] = useState<boolean>(true);
   const [isProcessing, setIsProcessing] = useState<boolean>(false);
   const [isSyncing, setIsSyncing] = useState<boolean>(false);
   const [searchQuery, setSearchQuery] = useState<string>('');
-  const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' | 'info' } | null>(null);
+  const [toast, setToast] = useState<{
+    message: string;
+    type: 'success' | 'error' | 'info';
+  } | null>(null);
   const [currentUser, setCurrentUser] = useState<AuthUser | null>(() => getStoredUser());
   const [isLoginModalOpen, setIsLoginModalOpen] = useState<boolean>(() => !getAuthToken());
 
-  const showToast = useCallback((message: string, type: 'success' | 'error' | 'info' = 'success') => {
-    setToast({ message, type });
-    setTimeout(() => {
-      setToast(null);
-    }, 4500);
-  }, []);
+  const showToast = useCallback(
+    (message: string, type: 'success' | 'error' | 'info' = 'success') => {
+      setToast({ message, type });
+      window.setTimeout(() => {
+        setToast(null);
+      }, 4500);
+    },
+    []
+  );
 
-  const loadData = useCallback(async (quiet = false) => {
-    if (!quiet) setIsLoading(true);
-    try {
-      const data = await fetchPendingFarmers();
-      setFarmers(data);
-      if (data.length > 0) {
-        setSelectedFarmerId((prevId) => {
-          const exists = data.some((f) => f.id === prevId || f.user_id === prevId);
-          return exists ? prevId : (data[0].id || data[0].user_id);
-        });
-      } else {
-        setSelectedFarmerId('');
+  const loadMonitoringData = useCallback(
+    async (quiet = false) => {
+      if (!quiet) setIsLoadingMonitoring(true);
+      try {
+        const [lahanRows, summaryData] = await Promise.all([
+          fetchMonitoringLahan('all'),
+          fetchMonitoringSummary(),
+        ]);
+        setPlots(lahanRows);
+        setSummary(summaryData);
+      } catch (err) {
+        console.error('[WEB] Error fetching Sumenep monitoring data:', err);
+        if (!quiet) {
+          showToast(
+            err instanceof Error ? err.message : 'Gagal memuat data monitoring Sumenep.',
+            'error'
+          );
+        }
+      } finally {
+        if (!quiet) setIsLoadingMonitoring(false);
       }
-    } catch (err: any) {
-      console.error('[WEB] Error fetching pending farmers:', err);
-      if (err.message && err.message.includes('401')) {
-        setIsLoginModalOpen(true);
-        showToast('Sesi autentikasi belum tersedia atau kedaluwarsa. Silakan masuk.', 'error');
-      } else {
-        showToast(err.message || 'Gagal memuat data antrean dari backend.', 'error');
+    },
+    [showToast]
+  );
+
+  const loadData = useCallback(
+    async (quiet = false) => {
+      if (!quiet) setIsLoading(true);
+      try {
+        const data = await fetchPendingFarmers();
+        setFarmers(data);
+        if (data.length > 0) {
+          setSelectedFarmerId((prevId) => {
+            const exists = data.some((f) => f.id === prevId || f.user_id === prevId);
+            return exists ? prevId : data[0].id || data[0].user_id;
+          });
+        } else {
+          setSelectedFarmerId('');
+        }
+      } catch (err: unknown) {
+        const message = err instanceof Error ? err.message : 'Gagal memuat antrean petani.';
+        console.error('[WEB] Error fetching pending farmers:', err);
+        if (message.includes('401')) {
+          setIsLoginModalOpen(true);
+          showToast('Sesi autentikasi belum tersedia atau kedaluwarsa. Silakan masuk.', 'error');
+        } else {
+          showToast(message, 'error');
+        }
+      } finally {
+        if (!quiet) setIsLoading(false);
       }
-    } finally {
-      if (!quiet) setIsLoading(false);
-    }
-  }, [showToast]);
+    },
+    [showToast]
+  );
 
   useEffect(() => {
+    void loadMonitoringData();
     if (getAuthToken()) {
-      loadData();
+      void loadData();
     } else {
       setIsLoading(false);
       setIsLoginModalOpen(true);
     }
-  }, [loadData]);
+  }, [loadData, loadMonitoringData]);
 
   const handleLoginSuccess = (user: AuthUser) => {
     setCurrentUser(user);
     setIsLoginModalOpen(false);
     showToast(`Berhasil masuk sebagai ${user.full_name || 'Penyuluh Pertanian'}.`, 'success');
-    loadData();
+    void loadData();
+    void loadMonitoringData(true);
   };
 
   const handleLogout = () => {
@@ -93,22 +152,24 @@ export function App() {
       const actionText = status === 'verified' ? 'disetujui' : 'ditolak';
       showToast(res.message || `Akun petani berhasil ${actionText}.`, 'success');
       await loadData(true);
-    } catch (err: any) {
+    } catch (err: unknown) {
+      const message =
+        err instanceof Error ? err.message : 'Terjadi kesalahan saat memproses permohonan.';
       console.error('[WEB] Verification failed:', err);
-      if (err.message && err.message.includes('401')) {
+      if (message.includes('401')) {
         setIsLoginModalOpen(true);
       }
-      showToast(err.message || 'Terjadi kesalahan saat memproses permohonan.', 'error');
+      showToast(message, 'error');
     } finally {
       setIsProcessing(false);
     }
   };
 
-  const handleSyncSimluhtan = async () => {
+  const handleSyncAll = async () => {
     setIsSyncing(true);
     try {
-      await loadData(true);
-      showToast('Sinkronisasi data Simluhtan dan Dukcapil berhasil diperbarui.', 'info');
+      await Promise.all([loadMonitoringData(true), getAuthToken() ? loadData(true) : Promise.resolve()]);
+      showToast('Sinkronisasi Portal Penyuluh Sumenep berhasil diperbarui.', 'info');
     } finally {
       setIsSyncing(false);
     }
@@ -122,33 +183,51 @@ export function App() {
     }
   };
 
+  const handlePlotUpdated = (updated: LandPlotRecord) => {
+    setPlots((prev) => prev.map((p) => (p.id === updated.id ? updated : p)));
+    setInspectedPlot((prev) => (prev && prev.id === updated.id ? updated : prev));
+    void loadMonitoringData(true);
+  };
+
   const selectedFarmer =
     farmers.find((f) => f.id === selectedFarmerId || f.user_id === selectedFarmerId) ||
     (farmers.length > 0 ? farmers[0] : null);
 
-  const displayedFarmers = searchQuery.trim()
-    ? farmers.filter((f) => {
-        const q = searchQuery.toLowerCase();
-        return (
-          (f.name || f.full_name || '').toLowerCase().includes(q) ||
-          (f.nik || f.nik_number || '').includes(q) ||
-          (f.poktan || '').toLowerCase().includes(q) ||
-          (f.village || '').toLowerCase().includes(q)
-        );
-      })
-    : farmers;
+  const displayedFarmers = useMemo(() => {
+    const q = searchQuery.trim().toLowerCase();
+    if (!q) return farmers;
+    return farmers.filter(
+      (f) =>
+        (f.name || f.full_name || '').toLowerCase().includes(q) ||
+        (f.nik || f.nik_number || '').includes(q) ||
+        (f.poktan || '').toLowerCase().includes(q) ||
+        (f.village || '').toLowerCase().includes(q)
+    );
+  }, [farmers, searchQuery]);
+
+  const displayedPlots = useMemo(() => {
+    const q = searchQuery.trim().toLowerCase();
+    if (!q) return plots;
+    return plots.filter((p) =>
+      [p.nama_desa, p.kecamatan, p.kelompok_tani, p.komoditas, p.varietas]
+        .filter(Boolean)
+        .some((v) => String(v).toLowerCase().includes(q))
+    );
+  }, [plots, searchQuery]);
+
+  const criticalPlotCount = useMemo(() => plots.filter(isPlotCritical).length, [plots]);
 
   return (
-    <div className="text-neutral-dark antialiased bg-[#f6f8f6] min-h-screen flex flex-col">
+    <div className="text-neutral-dark antialiased bg-[#F8FAF9] min-h-screen flex flex-col">
       {/* Toast Notification */}
       {toast && (
         <div
-          className={`fixed bottom-5 right-5 z-50 px-4 py-3 rounded-xl shadow-lg border text-[13px] font-semibold flex items-center gap-2.5 transition-all transform animate-in fade-in slide-in-from-bottom-2 ${
+          className={`fixed bottom-5 right-5 z-[60] px-4 py-3 rounded-xl shadow-lg border text-[13px] font-semibold flex items-center gap-2.5 transition-all ${
             toast.type === 'success'
-              ? 'bg-emerald-900 text-white border-emerald-700 shadow-emerald-950/20'
+              ? 'bg-[#0D5136] text-white border-emerald-700'
               : toast.type === 'error'
-              ? 'bg-red-900 text-white border-red-700 shadow-red-950/20'
-              : 'bg-forest-card text-white border-emerald-700 shadow-emerald-950/20'
+                ? 'bg-rose-800 text-white border-rose-600'
+                : 'bg-[#166534] text-white border-emerald-600'
           }`}
         >
           <span className="material-symbols-outlined text-[18px]">
@@ -162,16 +241,17 @@ export function App() {
       <Header
         searchQuery={searchQuery}
         onSearchChange={setSearchQuery}
-        onSync={handleSyncSimluhtan}
+        onSync={handleSyncAll}
         isSyncing={isSyncing}
         currentUser={currentUser}
         onOpenLogin={() => setIsLoginModalOpen(true)}
       />
 
       <div className="flex pt-16 min-h-screen">
-        {/* SIDEBAR NAVIGATION */}
+        {/* LEFT SIDEBAR (Deep Forest Green SmartAgri x LapakTani) */}
         <Sidebar
           pendingCount={farmers.length}
+          criticalPlotCount={criticalPlotCount}
           activeTab={activeTab}
           onTabChange={setActiveTab}
           currentUser={currentUser}
@@ -182,46 +262,76 @@ export function App() {
         <main className="flex-1 md:pl-64 lg:pl-72 p-4 lg:p-8 overflow-x-hidden">
           <div className="max-w-[1440px] mx-auto space-y-6">
             {/* Compact Mobile View Switcher */}
-            <div className="flex md:hidden gap-2">
-              <button
-                type="button"
-                onClick={() => setActiveTab('validasi')}
-                className={`flex-1 py-2 px-3 rounded-xl text-[12px] font-bold transition-all ${
-                  activeTab === 'validasi'
-                    ? 'bg-forest-emerald text-white shadow-sm'
-                    : 'bg-surface-white text-gray-600 border border-gray-200'
-                }`}
-              >
-                Validasi Petani ({farmers.length})
-              </button>
-              <button
-                type="button"
-                onClick={() => setActiveTab('lahan')}
-                className={`flex-1 py-2 px-3 rounded-xl text-[12px] font-bold transition-all ${
-                  activeTab === 'lahan'
-                    ? 'bg-forest-emerald text-white shadow-sm'
-                    : 'bg-surface-white text-gray-600 border border-gray-200'
-                }`}
-              >
-                Pemantauan Lahan Sumenep
-              </button>
+            <div className="flex md:hidden gap-1.5 overflow-x-auto pb-1">
+              {MOBILE_TABS.map((tab) => {
+                const active = activeTab === tab.id;
+                return (
+                  <button
+                    key={tab.id}
+                    type="button"
+                    onClick={() => setActiveTab(tab.id)}
+                    className={`shrink-0 py-2 px-3 rounded-xl text-[12px] font-bold transition-all ${
+                      active
+                        ? 'bg-[#0D5136] text-white shadow-sm'
+                        : 'bg-white text-gray-700 border border-[#E2E8F0]'
+                    }`}
+                  >
+                    {tab.label}
+                    {tab.id === 'validasi' ? ` (${farmers.length})` : ''}
+                  </button>
+                );
+              })}
             </div>
 
-            {activeTab === 'lahan' ? (
-              <SumenepLandMonitoring onShowToast={showToast} />
-            ) : (
+            {activeTab === 'dashboard' && (
+              <SmartAgriDashboard
+                plots={displayedPlots}
+                summary={summary}
+                pendingFarmerCount={farmers.length}
+                isLoading={isLoadingMonitoring}
+                onRefresh={() => void loadMonitoringData(false)}
+                onNavigateTab={setActiveTab}
+                onInspectPlot={setInspectedPlot}
+              />
+            )}
+
+            {activeTab === 'peta-lahan' && (
+              <SumenepLandMonitoring
+                plots={displayedPlots}
+                isLoading={isLoadingMonitoring}
+                onRefresh={() => void loadMonitoringData(false)}
+                onInspectPlot={setInspectedPlot}
+              />
+            )}
+
+            {activeTab === 'data-sensor' && (
+              <SensorDataTable
+                plots={displayedPlots}
+                isLoading={isLoadingMonitoring}
+                onRefresh={() => void loadMonitoringData(false)}
+                onInspectPlot={setInspectedPlot}
+              />
+            )}
+
+            {activeTab === 'policy-brief' && (
+              <AiPolicyBrief
+                plots={displayedPlots}
+                summary={summary}
+                onRefresh={() => void loadMonitoringData(false)}
+                onInspectPlot={setInspectedPlot}
+              />
+            )}
+
+            {activeTab === 'validasi' && (
               <>
-                {/* HERO BANNER */}
                 <HeroBanner
                   totalQueue={farmers.length}
-                  onSync={handleSyncSimluhtan}
+                  onSync={handleSyncAll}
                   onQuickReview={handleQuickReview}
                   isSyncing={isSyncing}
                 />
 
-                {/* MAIN DUAL-PANE WORKSPACE */}
                 <div className="grid grid-cols-1 xl:grid-cols-12 gap-6 items-start">
-                  {/* LEFT QUEUE TABLE */}
                   <QueueTable
                     farmers={displayedFarmers}
                     selectedFarmerId={selectedFarmerId}
@@ -229,10 +339,9 @@ export function App() {
                       setSelectedFarmerId(farmer.id || farmer.user_id)
                     }
                     isLoading={isLoading}
-                    onRefresh={() => loadData(false)}
+                    onRefresh={() => void loadData(false)}
                   />
 
-                  {/* RIGHT AUDIT DESK */}
                   <AuditDesk
                     farmer={selectedFarmer}
                     onVerify={handleVerify}
@@ -244,6 +353,14 @@ export function App() {
           </div>
         </main>
       </div>
+
+      {/* Click-to-Inspect 8-in-1 Drawer Modal */}
+      <PlotInspectorModal
+        plot={inspectedPlot}
+        onClose={() => setInspectedPlot(null)}
+        onPlotUpdated={handlePlotUpdated}
+        onShowToast={showToast}
+      />
 
       {/* Penyuluh Authentication Modal */}
       <LoginModal

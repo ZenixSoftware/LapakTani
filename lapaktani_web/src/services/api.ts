@@ -1,6 +1,6 @@
 const API_BASE_URL = (import.meta.env.VITE_API_BASE_URL || 'https://api-lapaktani.velosixraptor.my.id/api').replace(/\/+$/, '');
 const API_ORIGIN = API_BASE_URL.replace(/\/api$/, '');
-const API_KEY = import.meta.env.VITE_API_KEY || 'lapaktani_secure_gateway_2026_key';
+const API_KEY = import.meta.env.VITE_API_KEY || '';
 export const TOKEN_KEY = 'lapaktani_token';
 export const USER_KEY = 'lapaktani_user';
 

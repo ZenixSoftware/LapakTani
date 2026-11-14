@@ -1,6 +1,7 @@
-const DEFAULT_API_KEY = 'lapaktani_secure_gateway_2026_key';
+const crypto = require('crypto');
 
 const BYPASS_EXACT_PATHS = new Set([
+  '/',
   '/api/health',
   '/health',
   '/api/payments/midtrans-webhook',
@@ -16,6 +17,18 @@ const BYPASS_EXACT_PATHS = new Set([
   '/notification',
   '/webhook',
 ]);
+
+/**
+ * Constant-time string comparison using crypto.timingSafeEqual.
+ * Returns false if either key is empty or lengths do not match.
+ */
+const safeCompareKeys = (providedKey, expectedKey) => {
+  if (!providedKey || !expectedKey) return false;
+  const providedBuf = Buffer.from(providedKey, 'utf8');
+  const expectedBuf = Buffer.from(expectedKey, 'utf8');
+  if (providedBuf.length !== expectedBuf.length) return false;
+  return crypto.timingSafeEqual(providedBuf, expectedBuf);
+};
 
 /**
  * Global/API Gateway X-API-Key anti-spoofing middleware.
@@ -38,10 +51,18 @@ const apiKeyMiddleware = (req, res, next) => {
     return next();
   }
 
-  const expectedApiKey = process.env.LAPAKTANI_API_KEY || DEFAULT_API_KEY;
-  const providedApiKey = req.headers['x-api-key'];
+  const expectedApiKey = (process.env.LAPAKTANI_API_KEY || '').trim();
+  const providedApiKey =
+    typeof req.headers['x-api-key'] === 'string' ? req.headers['x-api-key'].trim() : '';
 
-  if (!providedApiKey || providedApiKey !== expectedApiKey) {
+  if (!expectedApiKey) {
+    return res.status(500).json({
+      success: false,
+      message: 'Server API key configuration error',
+    });
+  }
+
+  if (!safeCompareKeys(providedApiKey, expectedApiKey)) {
     return res.status(401).json({
       success: false,
       message: 'Unauthorized: Invalid or missing X-API-Key',
