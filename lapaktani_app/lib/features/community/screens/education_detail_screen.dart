@@ -4,6 +4,7 @@ import 'package:lucide_icons/lucide_icons.dart';
 import '../../../core/theme/app_colors.dart';
 import '../community_repository.dart';
 import '../models/education_article.dart';
+import '../widgets/discussion_comment_sheet.dart';
 import '../widgets/penyuluh_official_badge.dart';
 
 class EducationDetailScreen extends StatefulWidget {
@@ -70,6 +71,25 @@ class _EducationDetailScreenState extends State<EducationDetailScreen> {
           onPressed: () => Navigator.of(context).pop(),
         ),
         actions: [
+          IconButton(
+            icon: const Icon(LucideIcons.messageSquare, color: Color(0xFF64748B), size: 19),
+            tooltip: 'Komentar Diskusi',
+            onPressed: () {
+              showModalBottomSheet<void>(
+                context: context,
+                isScrollControlled: true,
+                backgroundColor: Colors.transparent,
+                builder: (ctx) => DiscussionCommentSheet(
+                  article: _article,
+                  onCommentAdded: (newCount) {
+                    setState(() {
+                      _article = _article.copyWith(commentsCount: newCount);
+                    });
+                  },
+                ),
+              );
+            },
+          ),
           IconButton(
             icon: Icon(
               _isLiked ? LucideIcons.heart : LucideIcons.heart,

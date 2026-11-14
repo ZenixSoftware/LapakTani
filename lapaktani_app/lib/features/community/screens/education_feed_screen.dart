@@ -4,6 +4,8 @@ import 'package:lucide_icons/lucide_icons.dart';
 import '../../../core/theme/app_colors.dart';
 import '../community_repository.dart';
 import '../models/education_article.dart';
+import '../widgets/create_post_sheet.dart';
+import '../widgets/discussion_comment_sheet.dart';
 import '../widgets/penyuluh_official_badge.dart';
 import 'create_education_post_screen.dart';
 import 'education_detail_screen.dart';
@@ -30,6 +32,8 @@ class _EducationFeedScreenState extends State<EducationFeedScreen> {
 
   bool _verifiedOnly = false;
   String _selectedCategory = 'Semua';
+
+  final Set<String> _likedArticleIds = {};
 
   final List<String> _categories = [
     'Semua',
@@ -89,10 +93,81 @@ class _EducationFeedScreenState extends State<EducationFeedScreen> {
     _loadArticles();
   }
 
+  void _toggleLike(EducationArticle article) {
+    final isLiked = _likedArticleIds.contains(article.id);
+    final newCount = isLiked
+        ? (article.likesCount > 0 ? article.likesCount - 1 : 0)
+        : article.likesCount + 1;
+
+    setState(() {
+      if (isLiked) {
+        _likedArticleIds.remove(article.id);
+      } else {
+        _likedArticleIds.add(article.id);
+      }
+      final idx = _articles.indexWhere((a) => a.id == article.id);
+      if (idx >= 0) {
+        _articles[idx] = _articles[idx].copyWith(likesCount: newCount);
+      }
+    });
+
+    _repository.toggleArticleLike(article.id, !isLiked);
+  }
+
+  void _openDiscussionCommentSheet(EducationArticle article) {
+    showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (ctx) => DiscussionCommentSheet(
+        article: article,
+        onCommentAdded: (newCount) {
+          setState(() {
+            final idx = _articles.indexWhere((a) => a.id == article.id);
+            if (idx >= 0) {
+              _articles[idx] = _articles[idx].copyWith(commentsCount: newCount);
+            }
+          });
+        },
+      ),
+    );
+  }
+
+  void _openCreatePostSheet() {
+    showModalBottomSheet<bool>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (ctx) => CreatePostSheet(
+        onPostPublished: () {
+          _loadArticles();
+        },
+      ),
+    ).then((result) {
+      if (result == true) {
+        _loadArticles();
+      }
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.background,
+      floatingActionButton: FloatingActionButton.extended(
+        onPressed: _openCreatePostSheet,
+        backgroundColor: AppColors.primary,
+        foregroundColor: Colors.white,
+        elevation: 3,
+        icon: const Icon(LucideIcons.messageSquarePlus, size: 18),
+        label: Text(
+          '+ Buat Diskusi',
+          style: GoogleFonts.inter(
+            fontSize: 13,
+            fontWeight: FontWeight.w700,
+          ),
+        ),
+      ),
       appBar: AppBar(
         backgroundColor: AppColors.surface,
         elevation: 0,
@@ -155,7 +230,7 @@ class _EducationFeedScreenState extends State<EducationFeedScreen> {
       ),
       body: RefreshIndicator(
         onRefresh: _loadArticles,
-        color: const Color(0xFF03AC0E),
+        color: AppColors.primary,
         child: Column(
           children: [
             _buildSearchAndFilters(),
@@ -192,7 +267,7 @@ class _EducationFeedScreenState extends State<EducationFeedScreen> {
                     onSubmitted: (_) => _loadArticles(),
                     style: GoogleFonts.inter(
                       fontSize: 12.5,
-                      color: const Color(0xFF0F172A),
+                      color: AppColors.textPrimary,
                     ),
                     decoration: InputDecoration(
                       hintText: 'Cari tips budidaya, jagung, tomat, penyuluh...',
@@ -265,13 +340,13 @@ class _EducationFeedScreenState extends State<EducationFeedScreen> {
                     padding: const EdgeInsets.symmetric(vertical: 7),
                     decoration: BoxDecoration(
                       color: _verifiedOnly
-                          ? const Color(0xFF03AC0E)
-                          : const Color(0xFFE8F5E9),
+                          ? AppColors.primary
+                          : AppColors.surfaceMint,
                       borderRadius: BorderRadius.circular(8),
                       border: Border.all(
                         color: _verifiedOnly
-                            ? const Color(0xFF03AC0E)
-                            : const Color(0xFFA5D6A7),
+                            ? AppColors.primary
+                            : AppColors.surfaceSoftBorder,
                         width: 1,
                       ),
                     ),
@@ -281,7 +356,7 @@ class _EducationFeedScreenState extends State<EducationFeedScreen> {
                         Icon(
                           LucideIcons.badgeCheck,
                           size: 14,
-                          color: _verifiedOnly ? Colors.white : const Color(0xFF15803D),
+                          color: _verifiedOnly ? Colors.white : AppColors.primary,
                         ),
                         const SizedBox(width: 5),
                         Text(
@@ -291,7 +366,7 @@ class _EducationFeedScreenState extends State<EducationFeedScreen> {
                             fontWeight: FontWeight.w700,
                             color: _verifiedOnly
                                 ? Colors.white
-                                : const Color(0xFF14532D),
+                                : AppColors.primaryDark,
                           ),
                         ),
                       ],
@@ -354,7 +429,7 @@ class _EducationFeedScreenState extends State<EducationFeedScreen> {
   Widget _buildFeedBody() {
     if (_isLoading) {
       return const Center(
-        child: CircularProgressIndicator(color: Color(0xFF03AC0E)),
+        child: CircularProgressIndicator(color: AppColors.primary),
       );
     }
 
@@ -365,14 +440,14 @@ class _EducationFeedScreenState extends State<EducationFeedScreen> {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              const Icon(LucideIcons.alertCircle, size: 40, color: Color(0xFFEF4444)),
+              const Icon(LucideIcons.alertCircle, size: 40, color: AppColors.error),
               const SizedBox(height: 10),
               Text(
                 'Terjadi Kendala',
                 style: GoogleFonts.inter(
                   fontSize: 15,
                   fontWeight: FontWeight.w700,
-                  color: const Color(0xFF0F172A),
+                  color: AppColors.textPrimary,
                 ),
               ),
               const SizedBox(height: 4),
@@ -385,7 +460,7 @@ class _EducationFeedScreenState extends State<EducationFeedScreen> {
               ElevatedButton(
                 onPressed: _loadArticles,
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFF03AC0E),
+                  backgroundColor: AppColors.primary,
                   foregroundColor: Colors.white,
                 ),
                 child: const Text('Coba Lagi'),
@@ -422,7 +497,7 @@ class _EducationFeedScreenState extends State<EducationFeedScreen> {
                 style: GoogleFonts.inter(
                   fontSize: 15,
                   fontWeight: FontWeight.w700,
-                  color: const Color(0xFF0F172A),
+                  color: AppColors.textPrimary,
                 ),
               ),
               const SizedBox(height: 4),
@@ -433,7 +508,7 @@ class _EducationFeedScreenState extends State<EducationFeedScreen> {
                 textAlign: TextAlign.center,
                 style: GoogleFonts.inter(
                   fontSize: 12,
-                  color: const Color(0xFF64748B),
+                  color: AppColors.textMuted,
                 ),
               ),
               const SizedBox(height: 16),
@@ -464,6 +539,7 @@ class _EducationFeedScreenState extends State<EducationFeedScreen> {
   }
 
   Widget _buildArticleCard(EducationArticle article) {
+    final bool isLiked = _likedArticleIds.contains(article.id);
     return Container(
       decoration: BoxDecoration(
         color: AppColors.surface,
@@ -530,7 +606,7 @@ class _EducationFeedScreenState extends State<EducationFeedScreen> {
                                   style: GoogleFonts.inter(
                                     fontSize: 12.5,
                                     fontWeight: FontWeight.w700,
-                                    color: const Color(0xFF0F172A),
+                                    color: AppColors.textPrimary,
                                   ),
                                   overflow: TextOverflow.ellipsis,
                                 ),
@@ -548,7 +624,7 @@ class _EducationFeedScreenState extends State<EducationFeedScreen> {
                             article.authorRole,
                             style: GoogleFonts.inter(
                               fontSize: 10.5,
-                              color: const Color(0xFF64748B),
+                              color: AppColors.textMuted,
                             ),
                           ),
                         ],
@@ -632,7 +708,7 @@ class _EducationFeedScreenState extends State<EducationFeedScreen> {
                   style: GoogleFonts.inter(
                     fontSize: 14,
                     fontWeight: FontWeight.w700,
-                    color: const Color(0xFF0F172A),
+                    color: AppColors.textPrimary,
                     height: 1.35,
                   ),
                 ),
@@ -650,11 +726,14 @@ class _EducationFeedScreenState extends State<EducationFeedScreen> {
                   ),
                 ),
                 const SizedBox(height: 10),
+                const Divider(height: 1, color: Color(0xFFF1F5F9)),
+                const SizedBox(height: 8),
 
-                // Meta footer
+                // Meta footer & interactive actions
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
+                    // Reading time & BPP
                     Row(
                       children: [
                         const Icon(LucideIcons.clock, size: 12, color: Color(0xFF94A3B8)),
@@ -667,30 +746,109 @@ class _EducationFeedScreenState extends State<EducationFeedScreen> {
                           ),
                         ),
                         if (article.bppOffice != null) ...[
-                          const SizedBox(width: 8),
-                          Text('•', style: TextStyle(color: Color(0xFFCBD5E1))),
-                          const SizedBox(width: 8),
+                          const SizedBox(width: 6),
+                          const Text('•', style: TextStyle(color: Color(0xFFCBD5E1), fontSize: 10)),
+                          const SizedBox(width: 6),
                           Text(
                             article.bppOffice!,
                             style: GoogleFonts.inter(
                               fontSize: 10.5,
-                              color: const Color(0xFF15803D),
+                              color: AppColors.primary,
                               fontWeight: FontWeight.w600,
                             ),
                           ),
                         ],
                       ],
                     ),
+
+                    // Interactive Action Buttons
                     Row(
                       children: [
-                        const Icon(LucideIcons.heart, size: 12, color: Color(0xFFDC2626)),
-                        const SizedBox(width: 3),
-                        Text(
-                          '${article.likesCount}',
-                          style: GoogleFonts.inter(
-                            fontSize: 11,
-                            fontWeight: FontWeight.w600,
-                            color: const Color(0xFF64748B),
+                        // Interactive Like / Upvote Button with toggleable counter
+                        Material(
+                          color: Colors.transparent,
+                          child: InkWell(
+                            onTap: () => _toggleLike(article),
+                            borderRadius: BorderRadius.circular(16),
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                              decoration: BoxDecoration(
+                                color: isLiked ? AppColors.errorSoft : AppColors.background,
+                                borderRadius: BorderRadius.circular(16),
+                                border: Border.all(
+                                  color: isLiked ? AppColors.errorBorder : AppColors.outline,
+                                  width: 0.8,
+                                ),
+                              ),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Icon(
+                                    LucideIcons.heart,
+                                    size: 13,
+                                    color: isLiked ? AppColors.error : AppColors.textMuted,
+                                  ),
+                                  const SizedBox(width: 4),
+                                  Text(
+                                    '${article.likesCount}',
+                                    style: GoogleFonts.inter(
+                                      fontSize: 11,
+                                      fontWeight: isLiked ? FontWeight.w700 : FontWeight.w600,
+                                      color: isLiked ? AppColors.error : AppColors.textSecondary,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+
+                        // Interactive Comment Button opening DiscussionCommentSheet
+                        Material(
+                          color: Colors.transparent,
+                          child: InkWell(
+                            onTap: () => _openDiscussionCommentSheet(article),
+                            borderRadius: BorderRadius.circular(16),
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                              decoration: BoxDecoration(
+                                color: AppColors.surfaceSoft,
+                                borderRadius: BorderRadius.circular(16),
+                                border: Border.all(
+                                  color: AppColors.surfaceSoftBorder,
+                                  width: 0.8,
+                                ),
+                              ),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  const Icon(
+                                    LucideIcons.messageSquare,
+                                    size: 13,
+                                    color: AppColors.primary,
+                                  ),
+                                  const SizedBox(width: 4),
+                                  Text(
+                                    '${article.commentsCount}',
+                                    style: GoogleFonts.inter(
+                                      fontSize: 11,
+                                      fontWeight: FontWeight.w600,
+                                      color: AppColors.primary,
+                                    ),
+                                  ),
+                                  const SizedBox(width: 3),
+                                  Text(
+                                    'Komentar',
+                                    style: GoogleFonts.inter(
+                                      fontSize: 10,
+                                      color: AppColors.primaryDark,
+                                      fontWeight: FontWeight.w500,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
                           ),
                         ),
                       ],
