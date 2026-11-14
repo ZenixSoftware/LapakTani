@@ -2,6 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 import '../../../core/theme/app_colors.dart';
+import '../../chat/screens/chat_list_screen.dart';
+import '../../chat/screens/chat_room_screen.dart';
+import '../../chat/services/chat_service.dart';
 import '../community_repository.dart';
 import '../models/education_article.dart';
 import '../widgets/create_post_sheet.dart';
@@ -150,6 +153,33 @@ class _EducationFeedScreenState extends State<EducationFeedScreen> {
     });
   }
 
+  Future<void> _openAuthorDirectChat(EducationArticle article) async {
+    try {
+      final conv = await ChatService().openDirectConversation(
+        targetName: article.authorName,
+        targetRole: article.isOfficialPenyuluh ? 'penyuluh' : 'petani',
+        title: 'Diskusi: ${article.title}',
+      );
+      if (!mounted) return;
+      Navigator.push(
+        context,
+        MaterialPageRoute(builder: (_) => ChatRoomScreen(conversation: conv)),
+      );
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Membuka daftar pesan... ($e)'),
+          backgroundColor: AppColors.primary,
+        ),
+      );
+      Navigator.push(
+        context,
+        MaterialPageRoute(builder: (_) => const ChatListScreen()),
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -193,6 +223,16 @@ class _EducationFeedScreenState extends State<EducationFeedScreen> {
           ],
         ),
         actions: [
+          IconButton(
+            icon: const Icon(LucideIcons.messageCircle, color: AppColors.primary),
+            tooltip: 'Pesan & DM',
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => const ChatListScreen()),
+              );
+            },
+          ),
           Padding(
             padding: const EdgeInsets.only(right: 12),
             child: ElevatedButton.icon(
@@ -844,6 +884,49 @@ class _EducationFeedScreenState extends State<EducationFeedScreen> {
                                       fontSize: 10,
                                       color: AppColors.primaryDark,
                                       fontWeight: FontWeight.w500,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 6),
+
+                        // Direct Message (DM) Author / Penyuluh
+                        Material(
+                          color: Colors.transparent,
+                          child: InkWell(
+                            onTap: () => _openAuthorDirectChat(article),
+                            borderRadius: BorderRadius.circular(16),
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 8,
+                                vertical: 4,
+                              ),
+                              decoration: BoxDecoration(
+                                color: AppColors.infoSoft,
+                                borderRadius: BorderRadius.circular(16),
+                                border: Border.all(
+                                  color: AppColors.info.withValues(alpha: 0.35),
+                                  width: 0.8,
+                                ),
+                              ),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  const Icon(
+                                    LucideIcons.send,
+                                    size: 12,
+                                    color: AppColors.info,
+                                  ),
+                                  const SizedBox(width: 4),
+                                  Text(
+                                    'DM',
+                                    style: GoogleFonts.inter(
+                                      fontSize: 10,
+                                      color: AppColors.info,
+                                      fontWeight: FontWeight.w700,
                                     ),
                                   ),
                                 ],

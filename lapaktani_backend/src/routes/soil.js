@@ -7,6 +7,7 @@ const router = express.Router();
 const productController = require('../controllers/productController');
 const penyuluhController = require('../controllers/penyuluhController');
 const { validateImageMagicBytes } = require('../middlewares/uploadMiddleware');
+const { optionalVerifyToken } = require('../middlewares/authMiddleware');
 
 const soilUploadDir = path.resolve(__dirname, '../../public/uploads/soil');
 const ALLOWED_EXT = new Set(['.jpg', '.jpeg', '.png', '.webp']);
@@ -66,8 +67,8 @@ const uploadSoilPhotos = (req, res, next) => {
 // Static/named Sumenep monitoring routes MUST appear before /:farm_id
 router.get('/monitoring-lahan', penyuluhController.getMonitoringLahan);
 router.get('/monitoring-summary', penyuluhController.getMonitoringSummary);
-router.post('/monitoring-lahan', uploadSoilPhotos, penyuluhController.saveMonitoringLahan);
-router.post('/save', uploadSoilPhotos, penyuluhController.saveMonitoringLahan);
+router.post('/monitoring-lahan', optionalVerifyToken, uploadSoilPhotos, penyuluhController.saveMonitoringLahan);
+router.post('/save', optionalVerifyToken, uploadSoilPhotos, penyuluhController.saveMonitoringLahan);
 
 // GET /api/soil/telemetry/:productId
 router.get('/telemetry/:productId', productController.getSoilTelemetry);

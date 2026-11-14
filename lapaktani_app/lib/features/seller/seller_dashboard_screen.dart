@@ -5,6 +5,9 @@ import '../../core/services/api_service.dart';
 import '../../core/services/user_session.dart';
 import '../../core/theme/app_colors.dart';
 import '../auth/auth_repository.dart';
+import '../chat/screens/chat_list_screen.dart';
+import '../chat/screens/chat_room_screen.dart';
+import '../chat/services/chat_service.dart';
 import '../navigation/role_based_app_shell.dart';
 import '../orders/models/order_model.dart';
 import '../orders/models/notification_model.dart';
@@ -517,6 +520,16 @@ class _SellerDashboardScreenState extends State<SellerDashboardScreen> {
                       ),
                     ),
                 ],
+              );
+            },
+          ),
+          IconButton(
+            icon: const Icon(LucideIcons.messageSquare, color: AppColors.primary, size: 20),
+            tooltip: 'Pesan & DM Pembeli',
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => const ChatListScreen()),
               );
             },
           ),
@@ -1240,7 +1253,32 @@ class _SellerDashboardScreenState extends State<SellerDashboardScreen> {
     );
   }
 
-  void _showOrderChatModal(OrderModel order) {
+  Future<void> _showOrderChatModal(OrderModel order) async {
+    try {
+      final conv = await ChatService().openDirectConversation(
+        targetUserId: order.buyerId,
+        targetRole: 'pembeli',
+        targetName: order.buyerName,
+        orderId: order.id,
+        title: 'Pesanan #${order.id} • ${order.buyerName}',
+        initialMessage:
+            'Halo ${order.buyerName}, Admin Poktan siap membantu terkait pesanan #${order.id}.',
+        messageType: 'ORDER_CARD',
+        metadata: {
+          'order_id': order.id,
+          'total_amount': order.totalPrice + order.shippingFee,
+        },
+      );
+      if (!mounted) return;
+      Navigator.push(
+        context,
+        MaterialPageRoute(builder: (_) => ChatRoomScreen(conversation: conv)),
+      );
+      return;
+    } catch (_) {
+      if (!mounted) return;
+    }
+
     showModalBottomSheet(
       context: context,
       backgroundColor: Colors.white,
@@ -1299,14 +1337,12 @@ class _SellerDashboardScreenState extends State<SellerDashboardScreen> {
                   trailing: OutlinedButton(
                     onPressed: () {
                       Navigator.pop(ctx);
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
-                          content: Text('Menghubungkan telepon ke ${order.buyerName}...'),
-                          backgroundColor: AppColors.primary,
-                        ),
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (_) => const ChatListScreen()),
                       );
                     },
-                    child: const Text('Hubungi'),
+                    child: const Text('Buka Pesan'),
                   ),
                 ),
               ],

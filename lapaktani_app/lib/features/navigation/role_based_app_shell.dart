@@ -43,6 +43,11 @@ class _RoleBasedAppShellState extends State<RoleBasedAppShell> {
           return const PenyuluhHubScreen();
         }
 
+        // 2B. KETUA POKTAN / ADMIN KOPERASI (role_id == 3 or role == 'admin')
+        if (roleId == 3 || roleStr == 'admin') {
+          return const PoktanMainShell();
+        }
+
         // 3. PETANI (role_id == 1 or role == 'petani')
         if (roleId == 1 || roleStr == 'petani') {
           if (isChairman) {

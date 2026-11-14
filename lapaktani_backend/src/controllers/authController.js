@@ -85,6 +85,30 @@ const register = async (req, res) => {
   }
 };
 
+const ROLE_ID_TO_NAME = {
+  1: 'petani',
+  2: 'penyuluh',
+  3: 'admin',
+  4: 'pembeli',
+  5: 'dinas'
+};
+
+const DEMO_ALIAS_PASSWORDS = {
+  'penyuluh@lapaktani.id': 'penyuluh123',
+  'dinas@lapaktani.id': 'dinas123',
+  'admin@lapaktani.id': 'admin123',
+  'made@poktan.lapaktani.id': 'admin123',
+  'supardi@petani.lapaktani.id': 'petani123',
+  'petani.supardi@lapaktani.id': 'petani123',
+  'pembeli@lapaktani.id': 'pembeli123'
+};
+
+const resolveCanonicalRole = (user) => {
+  const byId = ROLE_ID_TO_NAME[Number(user.role_id)];
+  if (byId) return byId;
+  return (user.role || 'pembeli').toLowerCase();
+};
+
 const login = async (req, res) => {
   try {
     const { email, password } = req.body;
@@ -96,9 +120,10 @@ const login = async (req, res) => {
       });
     }
 
+    const cleanEmail = email.trim().toLowerCase();
     const [users] = await pool.query(
       'SELECT * FROM users WHERE email = ? LIMIT 1',
-      [email.trim().toLowerCase()]
+      [cleanEmail]
     );
 
     if (users.length === 0) {
@@ -109,7 +134,12 @@ const login = async (req, res) => {
     }
 
     const user = users[0];
-    const isMatch = await bcrypt.compare(password, user.password_hash);
+    let isMatch = await bcrypt.compare(password, user.password_hash);
+
+    // Allow documented role-alias demo passwords only for seeded demo accounts still using the default 'password123' hash
+    if (!isMatch && DEMO_ALIAS_PASSWORDS[cleanEmail] === password) {
+      isMatch = await bcrypt.compare('password123', user.password_hash);
+    }
 
     if (!isMatch) {
       return res.status(401).json({
@@ -118,10 +148,10 @@ const login = async (req, res) => {
       });
     }
 
-    const userRole = user.role || (user.role_id === 1 ? 'petani' : 'pembeli');
+    const userRole = resolveCanonicalRole(user);
 
-    let isChairman = false;
-    if (user.role_id === 1) {
+    let isChairman = userRole === 'admin' || Number(user.role_id) === 3;
+    if (!isChairman && Number(user.role_id) === 1) {
       const [chairmanRows] = await pool.query(
         'SELECT 1 FROM farmer_groups WHERE chairman_user_id = ? LIMIT 1',
         [user.id]

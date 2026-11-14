@@ -1,11 +1,12 @@
 import React from 'react';
+import type { AuthUser } from '../services/api';
 
 interface HeaderProps {
   searchQuery: string;
   onSearchChange: (query: string) => void;
   onSync: () => void;
   isSyncing: boolean;
-  currentUser?: { full_name?: string; email?: string } | null;
+  currentUser?: AuthUser | null;
   onOpenLogin?: () => void;
 }
 
@@ -17,6 +18,9 @@ export const Header: React.FC<HeaderProps> = ({
   currentUser,
   onOpenLogin,
 }) => {
+  const isDinas =
+    currentUser?.role?.toLowerCase() === 'dinas' || currentUser?.role_id === 5;
+
   return (
     <header className="fixed top-0 left-0 right-0 h-16 bg-white/95 backdrop-blur-md z-40 border-b border-[#E2E8F0] flex items-center justify-between px-4 lg:px-8">
       <div className="flex items-center gap-3 w-64 lg:w-72 flex-shrink-0">
@@ -28,12 +32,16 @@ export const Header: React.FC<HeaderProps> = ({
             <span className="font-extrabold text-[17px] tracking-tight text-[#0D5136] leading-tight">
               LAPAKTANI
             </span>
-            <span className="text-[10px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded bg-emerald-100 text-[#166534]">
-              PPL
+            <span
+              className={`text-[10px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded ${
+                isDinas ? 'bg-amber-100 text-amber-800' : 'bg-emerald-100 text-[#166534]'
+              }`}
+            >
+              {isDinas ? 'DINAS' : 'PPL'}
             </span>
           </div>
           <p className="text-[11px] text-gray-500 font-medium">
-            Portal Penyuluh · Kab. Sumenep
+            {isDinas ? 'Portal Dinas Pertanian · Kab. Sumenep' : 'Portal Penyuluh · Kab. Sumenep'}
           </p>
         </div>
       </div>

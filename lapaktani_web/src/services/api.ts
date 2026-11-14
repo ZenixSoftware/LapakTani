@@ -339,3 +339,122 @@ export const submitPplPlotRecommendation = async (
   const result = await response.json();
   return result.data as LandPlotRecord;
 };
+
+export interface DecisionReportRecord {
+  id: string;
+  plot_id?: string | null;
+  penyuluh_id: string;
+  penyuluh_name: string;
+  desa: string;
+  kecamatan: string;
+  poktan_id?: string | null;
+  komoditas: string;
+  rag_context?: Record<string, unknown> | null;
+  decision_summary: string;
+  action_plan: string;
+  target_scope: 'DINAS_ONLY' | 'FARMERS_ONLY' | 'BOTH';
+  status: 'SENT' | 'REVIEWED' | 'ACKNOWLEDGED';
+  dinas_notes?: string | null;
+  created_at: string;
+}
+
+export interface RagSynthesisResult {
+  plot_id?: string | null;
+  desa: string;
+  kecamatan: string;
+  komoditas: string;
+  rag_context: {
+    retrieved_at: string;
+    desa: string;
+    kecamatan: string;
+    komoditas: string;
+    primary_plot: LandPlotRecord | null;
+    related_plots_count: number;
+    pest_alerts: Array<Record<string, unknown>>;
+    farmer_daily_logs: Array<Record<string, unknown>>;
+  };
+  decision_summary: string;
+  action_plan: string;
+  dinas_escalation_note?: string;
+  farmer_field_steps?: string[];
+  synthesizer_engine?: string;
+}
+
+export const generateRagDecision = async (payload: {
+  plot_id?: string | number | null;
+  desa?: string;
+  kecamatan?: string;
+  komoditas?: string;
+  query_prompt?: string;
+}): Promise<RagSynthesisResult> => {
+  const response = await authFetch(`${API_BASE_URL}/penyuluh/rag-decision`, {
+    method: 'POST',
+    body: JSON.stringify(payload),
+  });
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => ({}));
+    throw new Error(errorData.message || `Gagal menyintesis keputusan RAG (${response.status})`);
+  }
+  const result = await response.json();
+  return result.data as RagSynthesisResult;
+};
+
+export const dispatchRagDecision = async (payload: {
+  plot_id?: string | number | null;
+  desa: string;
+  kecamatan?: string;
+  poktan_id?: string | null;
+  komoditas?: string;
+  rag_context?: Record<string, unknown> | null;
+  decision_summary: string;
+  action_plan: string;
+  target_scope: 'DINAS_ONLY' | 'FARMERS_ONLY' | 'BOTH';
+}): Promise<DecisionReportRecord> => {
+  const response = await authFetch(`${API_BASE_URL}/penyuluh/dispatch-decision`, {
+    method: 'POST',
+    body: JSON.stringify(payload),
+  });
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => ({}));
+    throw new Error(errorData.message || `Gagal mengirim keputusan RAG (${response.status})`);
+  }
+  const result = await response.json();
+  return result.data as DecisionReportRecord;
+};
+
+export const fetchDecisionReports = async (params?: {
+  role?: string;
+  desa?: string;
+  status?: string;
+}): Promise<DecisionReportRecord[]> => {
+  const qs = new URLSearchParams();
+  if (params?.role) qs.set('role', params.role);
+  if (params?.desa) qs.set('desa', params.desa);
+  if (params?.status) qs.set('status', params.status);
+  const queryStr = qs.toString() ? `?${qs.toString()}` : '';
+
+  const response = await authFetch(`${API_BASE_URL}/penyuluh/decision-reports${queryStr}`);
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => ({}));
+    throw new Error(errorData.message || `Gagal memuat laporan keputusan (${response.status})`);
+  }
+  const result = await response.json();
+  return (result.data || []) as DecisionReportRecord[];
+};
+
+export const updateDecisionReportStatus = async (
+  id: string,
+  status: 'SENT' | 'REVIEWED' | 'ACKNOWLEDGED',
+  dinas_notes?: string
+): Promise<DecisionReportRecord> => {
+  const response = await authFetch(`${API_BASE_URL}/penyuluh/decision-reports/${id}/status`, {
+    method: 'PUT',
+    body: JSON.stringify({ status, dinas_notes }),
+  });
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => ({}));
+    throw new Error(errorData.message || `Gagal memperbarui status laporan (${response.status})`);
+  }
+  const result = await response.json();
+  return result.data as DecisionReportRecord;
+};

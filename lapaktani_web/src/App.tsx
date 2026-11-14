@@ -9,6 +9,7 @@ import { SmartAgriDashboard } from './components/SmartAgriDashboard';
 import { SumenepLandMonitoring } from './components/SumenepLandMonitoring';
 import { SensorDataTable } from './components/SensorDataTable';
 import { AiPolicyBrief } from './components/AiPolicyBrief';
+import { AiDecisionSupport } from './components/AiDecisionSupport';
 import { PlotInspectorModal } from './components/PlotInspectorModal';
 import { isPlotCritical } from './utils/monitoringHelpers';
 import {
@@ -25,13 +26,10 @@ import {
   type MonitoringSummaryResponse,
 } from './services/api';
 
-const MOBILE_TABS: { id: PortalModuleTab; label: string }[] = [
-  { id: 'dashboard', label: 'Dashboard' },
-  { id: 'peta-lahan', label: 'Peta Lahan' },
-  { id: 'data-sensor', label: 'Data Sensor' },
-  { id: 'policy-brief', label: 'Policy Brief' },
-  { id: 'validasi', label: 'Validasi' },
-];
+function isUserDinas(user: AuthUser | null): boolean {
+  if (!user) return false;
+  return user.role?.toLowerCase() === 'dinas' || user.role_id === 5;
+}
 
 export function App() {
   const [activeTab, setActiveTab] = useState<PortalModuleTab>('dashboard');
@@ -53,6 +51,26 @@ export function App() {
   const [currentUser, setCurrentUser] = useState<AuthUser | null>(() => getStoredUser());
   const [isLoginModalOpen, setIsLoginModalOpen] = useState<boolean>(() => !getAuthToken());
 
+  const isDinas = isUserDinas(currentUser);
+
+  const mobileTabs = useMemo<{ id: PortalModuleTab; label: string }[]>(() => {
+    if (isDinas) {
+      return [
+        { id: 'dashboard', label: 'Dashboard' },
+        { id: 'peta-lahan', label: 'Peta GIS' },
+        { id: 'data-sensor', label: 'Sensor' },
+        { id: 'policy-brief', label: 'Policy Brief' },
+      ];
+    }
+    return [
+      { id: 'dashboard', label: 'Dashboard' },
+      { id: 'peta-lahan', label: 'Peta GIS' },
+      { id: 'data-sensor', label: 'Sensor' },
+      { id: 'rag-decision', label: 'AI Decision' },
+      { id: 'validasi', label: 'Validasi' },
+    ];
+  }, [isDinas]);
+
   const showToast = useCallback(
     (message: string, type: 'success' | 'error' | 'info' = 'success') => {
       setToast({ message, type });
@@ -62,6 +80,15 @@ export function App() {
     },
     []
   );
+
+  // Enforce strict role separation on active tab
+  useEffect(() => {
+    if (isDinas && (activeTab === 'validasi' || activeTab === 'rag-decision')) {
+      setActiveTab('dashboard');
+    } else if (!isDinas && activeTab === 'policy-brief') {
+      setActiveTab('dashboard');
+    }
+  }, [isDinas, activeTab]);
 
   const loadMonitoringData = useCallback(
     async (quiet = false) => {
@@ -90,6 +117,12 @@ export function App() {
 
   const loadData = useCallback(
     async (quiet = false) => {
+      const user = getStoredUser();
+      if (isUserDinas(user)) {
+        setFarmers([]);
+        setIsLoading(false);
+        return;
+      }
       if (!quiet) setIsLoading(true);
       try {
         const data = await fetchPendingFarmers();
@@ -131,8 +164,18 @@ export function App() {
   const handleLoginSuccess = (user: AuthUser) => {
     setCurrentUser(user);
     setIsLoginModalOpen(false);
-    showToast(`Berhasil masuk sebagai ${user.full_name || 'Penyuluh Pertanian'}.`, 'success');
-    void loadData();
+    const dinasRole = isUserDinas(user);
+    setActiveTab('dashboard');
+    showToast(
+      `Berhasil masuk sebagai ${user.full_name || (dinasRole ? 'Dinas Pertanian' : 'Penyuluh Pertanian')}.`,
+      'success'
+    );
+    if (!dinasRole) {
+      void loadData();
+    } else {
+      setFarmers([]);
+      setIsLoading(false);
+    }
     void loadMonitoringData(true);
   };
 
@@ -141,6 +184,7 @@ export function App() {
     setCurrentUser(null);
     setFarmers([]);
     setSelectedFarmerId('');
+    setActiveTab('dashboard');
     setIsLoginModalOpen(true);
     showToast('Sesi keluar berhasil.', 'info');
   };
@@ -168,8 +212,11 @@ export function App() {
   const handleSyncAll = async () => {
     setIsSyncing(true);
     try {
-      await Promise.all([loadMonitoringData(true), getAuthToken() ? loadData(true) : Promise.resolve()]);
-      showToast('Sinkronisasi Portal Penyuluh Sumenep berhasil diperbarui.', 'info');
+      await Promise.all([
+        loadMonitoringData(true),
+        getAuthToken() && !isDinas ? loadData(true) : Promise.resolve(),
+      ]);
+      showToast('Sinkronisasi Portal Sumenep berhasil diperbarui.', 'info');
     } finally {
       setIsSyncing(false);
     }
@@ -248,7 +295,7 @@ export function App() {
       />
 
       <div className="flex pt-16 min-h-screen">
-        {/* LEFT SIDEBAR (Deep Forest Green SmartAgri x LapakTani) */}
+        {/* LEFT SIDEBAR */}
         <Sidebar
           pendingCount={farmers.length}
           criticalPlotCount={criticalPlotCount}
@@ -263,7 +310,7 @@ export function App() {
           <div className="max-w-[1440px] mx-auto space-y-6">
             {/* Compact Mobile View Switcher */}
             <div className="flex md:hidden gap-1.5 overflow-x-auto pb-1">
-              {MOBILE_TABS.map((tab) => {
+              {mobileTabs.map((tab) => {
                 const active = activeTab === tab.id;
                 return (
                   <button
@@ -288,6 +335,7 @@ export function App() {
                 plots={displayedPlots}
                 summary={summary}
                 pendingFarmerCount={farmers.length}
+                userRole={currentUser?.role}
                 isLoading={isLoadingMonitoring}
                 onRefresh={() => void loadMonitoringData(false)}
                 onNavigateTab={setActiveTab}
@@ -313,16 +361,26 @@ export function App() {
               />
             )}
 
-            {activeTab === 'policy-brief' && (
+            {activeTab === 'rag-decision' && !isDinas && (
+              <AiDecisionSupport
+                plots={displayedPlots}
+                onRefresh={() => void loadMonitoringData(false)}
+                onInspectPlot={setInspectedPlot}
+                onShowToast={showToast}
+              />
+            )}
+
+            {activeTab === 'policy-brief' && isDinas && (
               <AiPolicyBrief
                 plots={displayedPlots}
                 summary={summary}
                 onRefresh={() => void loadMonitoringData(false)}
                 onInspectPlot={setInspectedPlot}
+                onShowToast={showToast}
               />
             )}
 
-            {activeTab === 'validasi' && (
+            {activeTab === 'validasi' && !isDinas && (
               <>
                 <HeroBanner
                   totalQueue={farmers.length}
@@ -357,12 +415,13 @@ export function App() {
       {/* Click-to-Inspect 8-in-1 Drawer Modal */}
       <PlotInspectorModal
         plot={inspectedPlot}
+        readOnly={isDinas}
         onClose={() => setInspectedPlot(null)}
         onPlotUpdated={handlePlotUpdated}
         onShowToast={showToast}
       />
 
-      {/* Penyuluh Authentication Modal */}
+      {/* Web Authentication Modal (Penyuluh BPP / Dinas Pertanian) */}
       <LoginModal
         isOpen={isLoginModalOpen}
         onClose={getAuthToken() ? () => setIsLoginModalOpen(false) : undefined}

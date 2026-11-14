@@ -7,6 +7,7 @@ interface SmartAgriDashboardProps {
   plots: LandPlotRecord[];
   summary: MonitoringSummaryResponse | null;
   pendingFarmerCount: number;
+  userRole?: string | null;
   isLoading: boolean;
   onRefresh: () => void;
   onNavigateTab: (tab: PortalModuleTab) => void;
@@ -17,11 +18,13 @@ export const SmartAgriDashboard: React.FC<SmartAgriDashboardProps> = ({
   plots,
   summary,
   pendingFarmerCount,
+  userRole,
   isLoading,
   onRefresh,
   onNavigateTab,
   onInspectPlot,
 }) => {
+  const isDinas = String(userRole || '').toLowerCase() === 'dinas';
   const [aiNoteTab, setAiNoteTab] = useState<'rekom' | 'lapangan'>('rekom');
   const [poktanTab, setPoktanTab] = useState<'binaan' | 'kritis'>('binaan');
 
@@ -102,11 +105,11 @@ export const SmartAgriDashboard: React.FC<SmartAgriDashboardProps> = ({
           <div className="flex flex-wrap items-center gap-2.5">
             <button
               type="button"
-              onClick={() => onNavigateTab('policy-brief')}
+              onClick={() => onNavigateTab(isDinas ? 'policy-brief' : 'rag-decision')}
               className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-[#F59E0B] hover:bg-amber-500 text-white font-extrabold text-[13px] shadow-sm transition-all"
             >
               <span className="material-symbols-outlined text-[18px]">psychology</span>
-              AI Policy Brief
+              {isDinas ? 'AI Policy Brief & Eskalasi' : 'AI Decision Support (RAG)'}
             </button>
             <button
               type="button"
@@ -202,12 +205,14 @@ export const SmartAgriDashboard: React.FC<SmartAgriDashboardProps> = ({
 
         <button
           type="button"
-          onClick={() => onNavigateTab(pendingFarmerCount > 0 ? 'validasi' : 'peta-lahan')}
+          onClick={() =>
+            onNavigateTab(!isDinas && pendingFarmerCount > 0 ? 'validasi' : 'peta-lahan')
+          }
           className="text-left bg-white rounded-2xl border border-[#E2E8F0] hover:border-[#F59E0B] p-5 shadow-sm transition-all group"
         >
           <div className="flex items-start justify-between">
             <span className="text-[11.5px] font-bold uppercase tracking-wider text-gray-500">
-              Titik Kritis &amp; Antrean KTP
+              {isDinas ? 'Zona Kritis Prioritas' : 'Titik Kritis & Antrean KTP'}
             </span>
             <span className="p-2 rounded-xl bg-rose-50 text-rose-600 group-hover:bg-rose-600 group-hover:text-white transition-colors">
               <span className="material-symbols-outlined text-[20px]">warning</span>
@@ -218,7 +223,9 @@ export const SmartAgriDashboard: React.FC<SmartAgriDashboardProps> = ({
             <span className="text-[14px] font-bold text-gray-600">Lahan Kritis</span>
           </div>
           <div className="mt-2 inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-amber-50 text-amber-800 border border-amber-200">
-            {pendingFarmerCount} Petani Menunggu Verifikasi
+            {isDinas
+              ? 'Lihat Peta Geospasial GIS'
+              : `${pendingFarmerCount} Petani Menunggu Verifikasi`}
           </div>
         </button>
       </div>
@@ -373,11 +380,13 @@ export const SmartAgriDashboard: React.FC<SmartAgriDashboardProps> = ({
             </button>
             <button
               type="button"
-              onClick={() => onNavigateTab('validasi')}
+              onClick={() => onNavigateTab(isDinas ? 'policy-brief' : 'validasi')}
               className="py-2.5 px-3 rounded-xl bg-[#0D5136] hover:bg-[#166534] text-white font-bold text-[12px] flex items-center justify-center gap-1.5 transition-colors"
             >
-              <span className="material-symbols-outlined text-[17px]">verified_user</span>
-              Validasi ({pendingFarmerCount})
+              <span className="material-symbols-outlined text-[17px]">
+                {isDinas ? 'policy' : 'verified_user'}
+              </span>
+              {isDinas ? 'Policy Brief' : `Validasi (${pendingFarmerCount})`}
             </button>
           </div>
         </div>
@@ -397,10 +406,10 @@ export const SmartAgriDashboard: React.FC<SmartAgriDashboardProps> = ({
             </div>
             <button
               type="button"
-              onClick={() => onNavigateTab('policy-brief')}
+              onClick={() => onNavigateTab(isDinas ? 'policy-brief' : 'rag-decision')}
               className="px-3 py-1.5 rounded-xl bg-[#166534] text-white text-[12px] font-bold hover:bg-[#0D5136]"
             >
-              Buka Policy Brief
+              {isDinas ? 'Buka Policy Brief' : 'Buka Decision RAG'}
             </button>
           </div>
 

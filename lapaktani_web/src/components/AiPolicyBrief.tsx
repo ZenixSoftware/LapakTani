@@ -1,5 +1,11 @@
-import React, { useMemo, useState } from 'react';
-import type { LandPlotRecord, MonitoringSummaryResponse } from '../services/api';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import {
+  fetchDecisionReports,
+  updateDecisionReportStatus,
+  type DecisionReportRecord,
+  type LandPlotRecord,
+  type MonitoringSummaryResponse,
+} from '../services/api';
 import {
   computePlotAverages,
   escapeHtml,
@@ -12,6 +18,7 @@ interface AiPolicyBriefProps {
   summary: MonitoringSummaryResponse | null;
   onRefresh: () => void;
   onInspectPlot: (plot: LandPlotRecord) => void;
+  onShowToast?: (message: string, type?: 'success' | 'error' | 'info') => void;
 }
 
 type PolicyFocus = 'semua' | 'pemupukan' | 'irigasi' | 'zonasi';
@@ -21,11 +28,51 @@ export const AiPolicyBrief: React.FC<AiPolicyBriefProps> = ({
   summary,
   onRefresh,
   onInspectPlot,
+  onShowToast,
 }) => {
   const [focus, setFocus] = useState<PolicyFocus>('semua');
   const [generatedAt, setGeneratedAt] = useState<string>(() =>
     new Date().toLocaleString('id-ID', { dateStyle: 'medium', timeStyle: 'short' })
   );
+  const [dinasReports, setDinasReports] = useState<DecisionReportRecord[]>([]);
+  const [isLoadingInbox, setIsLoadingInbox] = useState<boolean>(true);
+  const [reviewNotesMap, setReviewNotesMap] = useState<Record<string, string>>({});
+  const [updatingId, setUpdatingId] = useState<string | null>(null);
+
+  const loadDinasInbox = useCallback(async () => {
+    setIsLoadingInbox(true);
+    try {
+      const list = await fetchDecisionReports({ role: 'dinas' });
+      setDinasReports(list);
+    } catch (err) {
+      console.error('[DINAS_INBOX] Failed to load decision reports:', err);
+    } finally {
+      setIsLoadingInbox(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    void loadDinasInbox();
+  }, [loadDinasInbox]);
+
+  const handleApproveReview = async (reportId: string) => {
+    setUpdatingId(reportId);
+    try {
+      const note =
+        (reviewNotesMap[reportId] || '').trim() ||
+        'Disetujui Dinas Pertanian Kab. Sumenep untuk koordinasi sarpras BPP & Poktan.';
+      const updated = await updateDecisionReportStatus(reportId, 'REVIEWED', note);
+      setDinasReports((prev) => prev.map((r) => (r.id === reportId ? updated : r)));
+      onShowToast?.('Tindak lanjut Dinas Pertanian berhasil disimpan.', 'success');
+    } catch (err) {
+      onShowToast?.(
+        err instanceof Error ? err.message : 'Gagal memperbarui status laporan Dinas.',
+        'error'
+      );
+    } finally {
+      setUpdatingId(null);
+    }
+  };
 
   const stats = summary?.ringkasan_umum;
   const averages = useMemo(() => computePlotAverages(plots), [plots]);
@@ -176,6 +223,7 @@ export const AiPolicyBrief: React.FC<AiPolicyBriefProps> = ({
             type="button"
             onClick={() => {
               onRefresh();
+              void loadDinasInbox();
               setGeneratedAt(
                 new Date().toLocaleString('id-ID', { dateStyle: 'medium', timeStyle: 'short' })
               );
@@ -193,6 +241,113 @@ export const AiPolicyBrief: React.FC<AiPolicyBriefProps> = ({
             <span className="material-symbols-outlined text-[17px]">print</span>
             Cetak Policy Brief
           </button>
+        </div>
+      </div>
+
+      {/* Kotak Masuk Eskalasi RAG dari Penyuluh BPP (Eksklusif Dinas Pertanian) */}
+      <div className="bg-white rounded-2xl border border-amber-200 shadow-sm overflow-hidden">
+        <div className="px-5 py-4 bg-gradient-to-r from-[#0D5136] to-[#166534] text-white flex flex-wrap items-center justify-between gap-2">
+          <div className="flex items-center gap-2.5">
+            <span className="material-symbols-outlined text-[#F59E0B] text-[22px]">
+              inbox
+            </span>
+            <div>
+              <h2 className="text-[15px] font-extrabold">
+                Kotak Masuk Rekomendasi &amp; Eskalasi RAG Penyuluh BPP Sumenep
+              </h2>
+              <p className="text-[11.5px] text-emerald-100/85">
+                Laporan keputusan lapangan terverifikasi Penyuluh untuk tindak lanjut subsidi, pompa air, dan intervensi Dinas Pertanian
+              </p>
+            </div>
+          </div>
+          <span className="px-3 py-1 rounded-full bg-white/15 text-white text-[11px] font-extrabold">
+            {dinasReports.length} Laporan Masuk
+          </span>
+        </div>
+
+        <div className="p-4 space-y-3">
+          {isLoadingInbox ? (
+            <div className="py-6 text-center text-[13px] text-gray-500">
+              Memuat kotak masuk rekomendasi Penyuluh...
+            </div>
+          ) : dinasReports.length === 0 ? (
+            <div className="py-6 text-center text-[13px] text-gray-500">
+              Belum ada eskalasi keputusan RAG dari Penyuluh BPP untuk ditinjau Dinas.
+            </div>
+          ) : (
+            dinasReports.map((rep) => {
+              const isReviewed = rep.status === 'REVIEWED';
+              return (
+                <div
+                  key={rep.id}
+                  className="p-4 rounded-xl bg-[#F8FAF9] border border-[#E2E8F0] space-y-3"
+                >
+                  <div className="flex flex-wrap items-start justify-between gap-2">
+                    <div>
+                      <div className="flex flex-wrap items-center gap-2">
+                        <span className="px-2.5 py-0.5 rounded-full bg-emerald-100 text-[#166534] text-[11px] font-extrabold">
+                          Desa {rep.desa}, Kec. {rep.kecamatan}
+                        </span>
+                        <span className="px-2.5 py-0.5 rounded-full bg-amber-100 text-amber-800 text-[10.5px] font-extrabold">
+                          {rep.target_scope === 'BOTH' ? 'DINAS + PETANI DESA' : 'KHUSUS DINAS'}
+                        </span>
+                        <span
+                          className={`px-2.5 py-0.5 rounded-full text-[10.5px] font-extrabold ${
+                            isReviewed
+                              ? 'bg-[#22C55E] text-[#052e16]'
+                              : 'bg-rose-100 text-rose-800'
+                          }`}
+                        >
+                          {isReviewed ? 'SUDAH DITINJAU DINAS' : 'MENUNGGU TINDAK LANJUT'}
+                        </span>
+                      </div>
+                      <h3 className="text-[14px] font-extrabold text-gray-900 mt-1.5">
+                        {rep.decision_summary}
+                      </h3>
+                      <p className="text-[11.5px] text-gray-500 mt-0.5">
+                        Pelapor: {rep.penyuluh_name} · Komoditas: {rep.komoditas}
+                      </p>
+                    </div>
+                  </div>
+
+                  <pre className="whitespace-pre-wrap font-sans text-[12.5px] text-gray-700 bg-white p-3 rounded-xl border border-[#E2E8F0]">
+                    {rep.action_plan}
+                  </pre>
+
+                  {rep.dinas_notes && (
+                    <div className="px-3 py-2 rounded-xl bg-emerald-50 border border-emerald-200 text-[12px] text-[#0D5136]">
+                      <strong>Catatan Tindak Lanjut Dinas:</strong> {rep.dinas_notes}
+                    </div>
+                  )}
+
+                  <div className="flex flex-wrap items-center gap-2">
+                    <input
+                      type="text"
+                      value={reviewNotesMap[rep.id] ?? ''}
+                      onChange={(e) =>
+                        setReviewNotesMap((prev) => ({ ...prev, [rep.id]: e.target.value }))
+                      }
+                      placeholder="Tambahkan arahan / nomor disposisi bantuan Dinas..."
+                      className="flex-1 min-w-[220px] px-3 py-2 rounded-xl bg-white border border-[#E2E8F0] text-[12.5px] outline-none focus:border-[#166534]"
+                    />
+                    <button
+                      type="button"
+                      disabled={updatingId === rep.id}
+                      onClick={() => void handleApproveReview(rep.id)}
+                      className="px-4 py-2 rounded-xl bg-[#166534] hover:bg-[#0D5136] text-white text-[12px] font-extrabold flex items-center gap-1.5 disabled:opacity-60"
+                    >
+                      <span className="material-symbols-outlined text-[16px]">task_alt</span>
+                      {updatingId === rep.id
+                        ? 'Menyimpan...'
+                        : isReviewed
+                          ? 'Perbarui Catatan Dinas'
+                          : 'Tinjau & Setujui Tindak Lanjut'}
+                    </button>
+                  </div>
+                </div>
+              );
+            })
+          )}
         </div>
       </div>
 

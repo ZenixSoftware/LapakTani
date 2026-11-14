@@ -361,6 +361,13 @@ class SumenepVillagePreset {
       latitude: -6.8894200,
       longitude: 113.7582400,
     ),
+    SumenepVillagePreset(
+      desa: 'Dungkek',
+      kecamatan: 'Dungkek',
+      poktan: 'Poktan Harapan Dungkek (Dungkek)',
+      latitude: -6.9942000,
+      longitude: 114.0725000,
+    ),
   ];
 }
 

@@ -364,6 +364,67 @@ const checkoutOrder = async (req, res) => {
 
     console.log(`[ORDER] Checkout success: ${orderId} (${invoiceNumber}) [${payment_method}] Status: ${initialPaymentStatus}`);
 
+    // 10. Unified Order Chat & Poktan Admin Notification Hook (non-blocking post-commit)
+    try {
+      const [adminRows] = await pool.query(
+        `SELECT id, full_name FROM users
+         WHERE id != ? AND (role = 'admin' OR role_id = 3)
+         ORDER BY CASE WHEN email = 'admin@lapaktani.id' THEN 0 WHEN email = 'made@poktan.lapaktani.id' THEN 1 ELSE 2 END
+         LIMIT 1`,
+        [userId]
+      );
+      const poktanAdminId = adminRows.length > 0 ? adminRows[0].id : validatedOrderItems[0]?.farmer_id;
+
+      if (poktanAdminId && poktanAdminId !== userId) {
+        const convId = `conv-ord-${uuidv4().slice(0, 12)}`;
+        const itemsSummary = validatedOrderItems
+          .map((i) => `${i.title} (${i.quantity} kg)`)
+          .join(', ');
+
+        await pool.query(
+          `INSERT INTO chat_conversations (id, type, order_id, title) VALUES (?, 'ORDER', ?, ?)`,
+          [convId, orderId, `Pesanan #${invoiceNumber}`]
+        );
+        await pool.query(
+          `INSERT IGNORE INTO chat_participants (conversation_id, user_id) VALUES (?, ?), (?, ?)`,
+          [convId, userId, convId, poktanAdminId]
+        );
+        await pool.query(
+          `INSERT INTO chat_messages (id, conversation_id, sender_id, message_type, body, metadata_json)
+           VALUES (?, ?, ?, 'ORDER_CARD', ?, ?)`,
+          [
+            `msg-${uuidv4().slice(0, 12)}`,
+            convId,
+            userId,
+            `Pesanan Baru #${invoiceNumber} — ${itemsSummary} (Total Rp ${Number(totalAmount).toLocaleString('id-ID')})`,
+            JSON.stringify({
+              order_id: orderId,
+              invoice_number: invoiceNumber,
+              items_summary: itemsSummary,
+              total_amount: totalAmount,
+              shipping_fee: numericShippingFee,
+              delivery_address: cleanAddress,
+              status: initialOrderStatus
+            })
+          ]
+        );
+
+        await pool.query(
+          `INSERT INTO notifications (id, user_id, title, message, type, reference_id, is_read)
+           VALUES (?, ?, ?, ?, 'new_order', ?, 0)`,
+          [
+            `ntf-${uuidv4().slice(0, 12)}`,
+            poktanAdminId,
+            `Pesanan Baru ${invoiceNumber}`,
+            `${itemsSummary} senilai Rp ${Number(totalAmount).toLocaleString('id-ID')}. Alamat: ${cleanAddress}`,
+            orderId
+          ]
+        );
+      }
+    } catch (chatHookErr) {
+      console.warn('[ORDER] Order chat hook notice:', chatHookErr.message);
+    }
+
     return res.status(201).json({
       success: true,
       message: isSimulator 
@@ -872,6 +933,12 @@ const getFarmerOrders = async (req, res) => {
   }
 
   try {
+    const isPoktanAdmin = String(req.user?.role || '').toLowerCase() === 'admin' || Number(req.user?.role_id) === 3 || Boolean(req.user?.is_chairman);
+    const whereClause = isPoktanAdmin
+      ? '1=1'
+      : '(p.farmer_id = ? OR p.farmer_id = (SELECT user_id FROM farmer_profiles WHERE user_id = ? LIMIT 1))';
+    const queryParams = isPoktanAdmin ? [] : [userId, userId];
+
     const [orderRows] = await pool.query(
       `SELECT DISTINCT 
         o.id,
@@ -890,9 +957,9 @@ const getFarmerOrders = async (req, res) => {
       JOIN order_items oi ON o.id = oi.order_id
       JOIN products p ON (oi.product_id = p.id OR CAST(oi.product_id AS CHAR) = CAST(p.id AS CHAR))
       LEFT JOIN users u ON (o.user_id = u.id OR o.buyer_id = u.id)
-      WHERE (p.farmer_id = ? OR p.farmer_id = (SELECT user_id FROM farmer_profiles WHERE user_id = ? LIMIT 1))
+      WHERE ${whereClause}
       ORDER BY o.created_at DESC`,
-      [userId, userId]
+      queryParams
     );
 
     if (orderRows.length === 0) {

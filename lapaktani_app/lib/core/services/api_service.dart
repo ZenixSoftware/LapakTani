@@ -803,5 +803,129 @@ class ApiService {
         : 'Gagal menyimpan data monitoring lahan (${response.statusCode})';
     throw Exception(msg);
   }
+
+  Map<String, dynamic> _decodeResponseMap(
+    http.Response response,
+    String fallbackError,
+  ) {
+    final dynamic decoded = response.body.isNotEmpty ? jsonDecode(response.body) : {};
+    if (response.statusCode >= 200 && response.statusCode < 300) {
+      if (decoded is Map<String, dynamic>) {
+        return decoded;
+      }
+      return {'success': true, 'data': decoded};
+    }
+    final msg = decoded is Map && decoded['message'] != null
+        ? decoded['message'].toString()
+        : '$fallbackError (${response.statusCode})';
+    throw Exception(msg);
+  }
+
+  /// Ambil laporan keputusan RAG & arahan dari Penyuluh BPP Sumenep
+  Future<List<Map<String, dynamic>>> getDecisionReports({
+    String? role,
+    String? desa,
+    String? status,
+  }) async {
+    final queryParams = <String>[];
+    if (role != null && role.trim().isNotEmpty) {
+      queryParams.add('role=${Uri.encodeQueryComponent(role.trim())}');
+    }
+    if (desa != null && desa.trim().isNotEmpty) {
+      queryParams.add('desa=${Uri.encodeQueryComponent(desa.trim())}');
+    }
+    if (status != null && status.trim().isNotEmpty) {
+      queryParams.add('status=${Uri.encodeQueryComponent(status.trim())}');
+    }
+    final qs = queryParams.isEmpty ? '' : '?${queryParams.join('&')}';
+    final response = await _fetchGet('/penyuluh/decision-reports$qs');
+    if (response.statusCode >= 200 && response.statusCode < 300) {
+      final decoded = jsonDecode(response.body);
+      if (decoded is Map<String, dynamic> && decoded['data'] is List) {
+        return (decoded['data'] as List)
+            .whereType<Map>()
+            .map((e) => Map<String, dynamic>.from(e))
+            .toList();
+      }
+    }
+    return <Map<String, dynamic>>[];
+  }
+
+  /// Tandai keputusan / arahan Penyuluh sudah dibaca atau ditindaklanjuti
+  Future<Map<String, dynamic>?> acknowledgeDecisionReport(
+    String reportId, {
+    String status = 'ACKNOWLEDGED',
+    String? notes,
+  }) async {
+    final response = await _put('/penyuluh/decision-reports/$reportId/status', {
+      'status': status,
+      if (notes != null && notes.trim().isNotEmpty) 'dinas_notes': notes.trim(),
+    });
+    final parsed = _decodeResponseMap(response, 'Gagal memperbarui status arahan');
+    final data = parsed['data'];
+    return data is Map ? Map<String, dynamic>.from(data) : parsed;
+  }
+
+  /// Kirim laporan harian kondisi lahan dari Petani ke Penyuluh Desa
+  Future<Map<String, dynamic>> submitFarmerDailyLog(
+    Map<String, dynamic> payload,
+  ) async {
+    final response = await _post('/petani/daily-log', payload);
+    return _decodeResponseMap(response, 'Gagal mengirim laporan harian petani');
+  }
+
+  /// Ambil riwayat laporan harian petani
+  Future<List<Map<String, dynamic>>> getFarmerDailyLogs({
+    String? desa,
+    String? userId,
+  }) async {
+    final queryParams = <String>[];
+    if (desa != null && desa.trim().isNotEmpty) {
+      queryParams.add('desa=${Uri.encodeQueryComponent(desa.trim())}');
+    }
+    if (userId != null && userId.trim().isNotEmpty) {
+      queryParams.add('user_id=${Uri.encodeQueryComponent(userId.trim())}');
+    }
+    final qs = queryParams.isEmpty ? '' : '?${queryParams.join('&')}';
+    final response = await _fetchGet('/petani/daily-log$qs');
+    if (response.statusCode >= 200 && response.statusCode < 300) {
+      final decoded = jsonDecode(response.body);
+      if (decoded is Map<String, dynamic> && decoded['data'] is List) {
+        return (decoded['data'] as List)
+            .whereType<Map>()
+            .map((e) => Map<String, dynamic>.from(e))
+            .toList();
+      }
+    }
+    return <Map<String, dynamic>>[];
+  }
+
+  /// Ambil daftar calon petani menunggu verifikasi Penyuluh (US-06)
+  Future<List<Map<String, dynamic>>> getPendingFarmers() async {
+    final response = await _fetchGet('/penyuluh/pending-farmers');
+    if (response.statusCode >= 200 && response.statusCode < 300) {
+      final decoded = jsonDecode(response.body);
+      if (decoded is Map<String, dynamic> && decoded['data'] is List) {
+        return (decoded['data'] as List)
+            .whereType<Map>()
+            .map((e) => Map<String, dynamic>.from(e))
+            .toList();
+      }
+    }
+    return <Map<String, dynamic>>[];
+  }
+
+  /// Verifikasi atau tolak akun petani oleh Penyuluh BPP (US-06)
+  Future<Map<String, dynamic>> verifyFarmerAccount(
+    String farmerId, {
+    String status = 'verified',
+    String? notes,
+  }) async {
+    final response = await _put('/penyuluh/verify-farmer/$farmerId', {
+      'status': status,
+      if (notes != null && notes.trim().isNotEmpty) 'notes': notes.trim(),
+    });
+    return _decodeResponseMap(response, 'Gagal memverifikasi akun petani');
+  }
 }
 

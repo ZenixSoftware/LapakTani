@@ -4,6 +4,8 @@ import 'package:lucide_icons/lucide_icons.dart';
 import '../../core/services/api_service.dart';
 import '../../core/theme/app_colors.dart';
 import '../cart/cart_screen.dart';
+import '../chat/screens/chat_room_screen.dart';
+import '../chat/services/chat_service.dart';
 import '../orders/models/order_model.dart';
 import '../orders/services/order_service.dart';
 import 'order_tracking_screen.dart';
@@ -88,6 +90,36 @@ class _OrderHistoryScreenState extends State<OrderHistoryScreen> {
   void dispose() {
     _searchController.dispose();
     super.dispose();
+  }
+
+  Future<void> _openOrderChat(OrderModel order) async {
+    try {
+      final conv = await ChatService().openDirectConversation(
+        targetRole: 'admin',
+        orderId: order.id,
+        title: 'Pesanan #${order.id}',
+        initialMessage:
+            'Halo Admin Poktan, mohon konfirmasi pesanan #${order.id}.',
+        messageType: 'ORDER_CARD',
+        metadata: {
+          'order_id': order.id,
+          'total_amount': order.totalPrice + order.shippingFee,
+        },
+      );
+      if (!mounted) return;
+      Navigator.push(
+        context,
+        MaterialPageRoute(builder: (_) => ChatRoomScreen(conversation: conv)),
+      );
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Gagal membuka chat pesanan: $e'),
+          backgroundColor: AppColors.error,
+        ),
+      );
+    }
   }
 
   String _formatRupiah(int amount) {
@@ -826,74 +858,133 @@ class _OrderHistoryScreenState extends State<OrderHistoryScreen> {
                 ),
               ),
               const SizedBox(width: 8),
-              if (isCompleted)
-                ElevatedButton(
-                  onPressed: () {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text('Menambahkan barang ke keranjang...'),
-                        backgroundColor: _tokopediaGreen,
-                        behavior: SnackBarBehavior.floating,
-                        duration: Duration(seconds: 1),
+              Wrap(
+                spacing: 6,
+                runSpacing: 6,
+                alignment: WrapAlignment.end,
+                children: [
+                  OutlinedButton.icon(
+                    onPressed: () => _openOrderChat(order),
+                    icon: const Icon(
+                      LucideIcons.messageCircle,
+                      size: 13,
+                      color: _tokopediaGreen,
+                    ),
+                    label: Text(
+                      'Chat',
+                      style: GoogleFonts.inter(
+                        fontSize: 11,
+                        fontWeight: FontWeight.w700,
+                        color: _tokopediaGreen,
                       ),
-                    );
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(builder: (_) => const CartScreen()),
-                    );
-                  },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: _tokopediaGreen,
-                    foregroundColor: Colors.white,
-                    elevation: 0,
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                    ),
+                    style: OutlinedButton.styleFrom(
+                      side: const BorderSide(color: AppColors.surfaceSoftBorder),
+                      backgroundColor: AppColors.surfaceSoft,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 8,
+                        vertical: 8,
+                      ),
+                    ),
                   ),
-                  child: Text(
-                    'Beli lagi',
-                    style: GoogleFonts.inter(fontSize: 12, fontWeight: FontWeight.w700),
-                  ),
-                )
-              else if (isInProgress)
-                Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
+                  if (isCompleted)
+                    ElevatedButton(
+                      onPressed: () {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text('Menambahkan barang ke keranjang...'),
+                            backgroundColor: _tokopediaGreen,
+                            behavior: SnackBarBehavior.floating,
+                            duration: Duration(seconds: 1),
+                          ),
+                        );
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(builder: (_) => const CartScreen()),
+                        );
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: _tokopediaGreen,
+                        foregroundColor: Colors.white,
+                        elevation: 0,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 12,
+                          vertical: 8,
+                        ),
+                      ),
+                      child: Text(
+                        'Beli lagi',
+                        style: GoogleFonts.inter(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                    )
+                  else if (isInProgress) ...[
                     OutlinedButton(
                       onPressed: () {
                         Navigator.push(
                           context,
                           MaterialPageRoute(
-                            builder: (_) => OrderTrackingScreen(orderId: order.id),
+                            builder: (_) =>
+                                OrderTrackingScreen(orderId: order.id),
                           ),
                         );
                       },
                       style: OutlinedButton.styleFrom(
-                        side: const BorderSide(color: _tokopediaGreen, width: 1.2),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                        side: const BorderSide(
+                          color: _tokopediaGreen,
+                          width: 1.2,
+                        ),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 10,
+                          vertical: 8,
+                        ),
                       ),
                       child: Text(
                         'Lacak',
-                        style: GoogleFonts.inter(fontSize: 11, fontWeight: FontWeight.w700, color: _tokopediaGreen),
+                        style: GoogleFonts.inter(
+                          fontSize: 11,
+                          fontWeight: FontWeight.w700,
+                          color: _tokopediaGreen,
+                        ),
                       ),
                     ),
-                    const SizedBox(width: 6),
                     ElevatedButton(
-                      onPressed: () => _showOrderCompletionModal(context, order),
+                      onPressed: () =>
+                          _showOrderCompletionModal(context, order),
                       style: ElevatedButton.styleFrom(
                         backgroundColor: _tokopediaGreen,
                         foregroundColor: Colors.white,
                         elevation: 0,
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 10,
+                          vertical: 8,
+                        ),
                       ),
                       child: Text(
                         'Selesai',
-                        style: GoogleFonts.inter(fontSize: 11, fontWeight: FontWeight.w700),
+                        style: GoogleFonts.inter(
+                          fontSize: 11,
+                          fontWeight: FontWeight.w700,
+                        ),
                       ),
                     ),
                   ],
-                ),
+                ],
+              ),
             ],
           ),
         ],

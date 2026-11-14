@@ -8,6 +8,7 @@ import { getPlotFertilityStatus } from '../utils/monitoringHelpers';
 
 interface PlotInspectorModalProps {
   plot: LandPlotRecord | null;
+  readOnly?: boolean;
   onClose: () => void;
   onPlotUpdated?: (updated: LandPlotRecord) => void;
   onShowToast?: (message: string, type?: 'success' | 'error' | 'info') => void;
@@ -15,6 +16,7 @@ interface PlotInspectorModalProps {
 
 export const PlotInspectorModal: React.FC<PlotInspectorModalProps> = ({
   plot,
+  readOnly = false,
   onClose,
   onPlotUpdated,
   onShowToast,
@@ -241,45 +243,61 @@ export const PlotInspectorModal: React.FC<PlotInspectorModalProps> = ({
             </div>
           )}
 
-          {/* PPL Agronomic Recommendation Form */}
-          <form
-            onSubmit={handleSubmit}
-            className="bg-white rounded-2xl border border-[#E2E8F0] p-4 space-y-3"
-          >
-            <div className="flex items-center justify-between gap-2">
-              <label className="text-[12px] font-extrabold text-[#0D5136] uppercase tracking-wider">
-                Rekomendasi Agronomis PPL
-              </label>
-              <select
-                value={verificationStatus}
-                onChange={(e) =>
-                  setVerificationStatus(e.target.value as 'verified' | 'needs_action' | 'pending')
-                }
-                className="px-2.5 py-1.5 rounded-lg border border-[#E2E8F0] text-[12px] font-bold bg-[#F8FAF9]"
-              >
-                <option value="verified">Terverifikasi PPL</option>
-                <option value="needs_action">Perlu Tindakan</option>
-                <option value="pending">Menunggu Review</option>
-              </select>
+          {/* PPL Agronomic Recommendation Form (editable by Penyuluh, read-only for Dinas) */}
+          {readOnly ? (
+            <div className="bg-white rounded-2xl border border-[#E2E8F0] p-4 space-y-2">
+              <div className="flex items-center justify-between gap-2">
+                <span className="text-[12px] font-extrabold text-[#0D5136] uppercase tracking-wider">
+                  Catatan Agronomis Penyuluh BPP
+                </span>
+                <span className="px-2.5 py-0.5 rounded-full bg-emerald-50 text-[#166534] text-[11px] font-bold">
+                  Mode Pantau Dinas (Read-Only)
+                </span>
+              </div>
+              <p className="text-[13px] text-gray-800 bg-[#F8FAF9] p-3 rounded-xl border border-[#E2E8F0]">
+                {plot.rekomendasi_ppl || 'Belum ada catatan rekomendasi dari Penyuluh BPP.'}
+              </p>
             </div>
-
-            <textarea
-              rows={3}
-              value={recommendationText}
-              onChange={(e) => setRecommendationText(e.target.value)}
-              placeholder="Tulis rekomendasi dosis pupuk berimbang (NPK/Urea/Dolomit), pengairan pompa, atau tindak lanjut lapangan..."
-              className="w-full px-3 py-2.5 text-[13px] rounded-xl border border-[#E2E8F0] bg-[#F8FAF9] focus:outline-none focus:ring-2 focus:ring-[#22C55E]/35 focus:border-[#166534]"
-            />
-
-            <button
-              type="submit"
-              disabled={isSubmitting}
-              className="w-full py-2.5 px-4 rounded-xl bg-[#166534] hover:bg-[#0D5136] text-white font-bold text-[13px] flex items-center justify-center gap-2 transition-all disabled:opacity-60 shadow-sm"
+          ) : (
+            <form
+              onSubmit={handleSubmit}
+              className="bg-white rounded-2xl border border-[#E2E8F0] p-4 space-y-3"
             >
-              <span className="material-symbols-outlined text-[18px]">save</span>
-              {isSubmitting ? 'Menyimpan...' : 'Simpan Rekomendasi PPL'}
-            </button>
-          </form>
+              <div className="flex items-center justify-between gap-2">
+                <label className="text-[12px] font-extrabold text-[#0D5136] uppercase tracking-wider">
+                  Rekomendasi Agronomis PPL
+                </label>
+                <select
+                  value={verificationStatus}
+                  onChange={(e) =>
+                    setVerificationStatus(e.target.value as 'verified' | 'needs_action' | 'pending')
+                  }
+                  className="px-2.5 py-1.5 rounded-lg border border-[#E2E8F0] text-[12px] font-bold bg-[#F8FAF9]"
+                >
+                  <option value="verified">Terverifikasi PPL</option>
+                  <option value="needs_action">Perlu Tindakan</option>
+                  <option value="pending">Menunggu Review</option>
+                </select>
+              </div>
+
+              <textarea
+                rows={3}
+                value={recommendationText}
+                onChange={(e) => setRecommendationText(e.target.value)}
+                placeholder="Tulis rekomendasi dosis pupuk berimbang (NPK/Urea/Dolomit), pengairan pompa, atau tindak lanjut lapangan..."
+                className="w-full px-3 py-2.5 text-[13px] rounded-xl border border-[#E2E8F0] bg-[#F8FAF9] focus:outline-none focus:ring-2 focus:ring-[#22C55E]/35 focus:border-[#166534]"
+              />
+
+              <button
+                type="submit"
+                disabled={isSubmitting}
+                className="w-full py-2.5 px-4 rounded-xl bg-[#166534] hover:bg-[#0D5136] text-white font-bold text-[13px] flex items-center justify-center gap-2 transition-all disabled:opacity-60 shadow-sm"
+              >
+                <span className="material-symbols-outlined text-[18px]">save</span>
+                {isSubmitting ? 'Menyimpan...' : 'Simpan Rekomendasi PPL'}
+              </button>
+            </form>
+          )}
         </div>
       </div>
     </div>

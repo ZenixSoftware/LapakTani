@@ -102,6 +102,7 @@ class _PetaniLandMonitoringScreenState
         'tadahan_hujan': _tadahanHujan,
         'gagal_panen': _gagalPanen,
         'tipe_penginput': 'petani',
+        'submitted_by_role': 'petani',
         ..._telemetry.toMap(),
       };
 

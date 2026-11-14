@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 import '../../../core/theme/app_colors.dart';
+import '../../chat/screens/chat_room_screen.dart';
+import '../../chat/services/chat_service.dart';
 import '../models/order_model.dart';
 import '../services/order_service.dart';
 import 'order_tracking_screen.dart';
@@ -68,6 +70,36 @@ class _BuyerOrdersScreenState extends State<BuyerOrdersScreen> with SingleTicker
   void dispose() {
     _tabController.dispose();
     super.dispose();
+  }
+
+  Future<void> _openOrderChat(OrderModel order) async {
+    try {
+      final conv = await ChatService().openDirectConversation(
+        targetRole: 'admin',
+        orderId: order.id,
+        title: 'Pesanan #${order.id}',
+        initialMessage:
+            'Halo Admin Poktan, mohon informasi status pesanan #${order.id}.',
+        messageType: 'ORDER_CARD',
+        metadata: {
+          'order_id': order.id,
+          'total_amount': order.totalPrice + order.shippingFee,
+        },
+      );
+      if (!mounted) return;
+      Navigator.push(
+        context,
+        MaterialPageRoute(builder: (_) => ChatRoomScreen(conversation: conv)),
+      );
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Gagal membuka chat pesanan: $e'),
+          backgroundColor: AppColors.error,
+        ),
+      );
+    }
   }
 
   List<OrderModel> _filterOrders(List<OrderModel> orders, int tabIndex) {
@@ -580,51 +612,82 @@ class _BuyerOrdersScreenState extends State<BuyerOrdersScreen> with SingleTicker
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'Total Belanja ($totalQty barang)',
-                    style: GoogleFonts.plusJakartaSans(
-                      fontSize: 10.5,
-                      color: const Color(0xFF94A3B8),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Total Belanja ($totalQty barang)',
+                      style: GoogleFonts.plusJakartaSans(
+                        fontSize: 10.5,
+                        color: const Color(0xFF94A3B8),
+                      ),
                     ),
-                  ),
-                  Text(
-                    'Rp ${(order.totalPrice + order.shippingFee).toString().replaceAllMapped(RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'), (m) => '${m[1]}.')}',
-                    style: GoogleFonts.plusJakartaSans(
-                      fontSize: 14.5,
-                      fontWeight: FontWeight.w800,
-                      color: const Color(0xFF006E04),
+                    Text(
+                      'Rp ${(order.totalPrice + order.shippingFee).toString().replaceAllMapped(RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'), (m) => '${m[1]}.')}',
+                      style: GoogleFonts.plusJakartaSans(
+                        fontSize: 14.5,
+                        fontWeight: FontWeight.w800,
+                        color: const Color(0xFF006E04),
+                      ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
-              Row(
+              const SizedBox(width: 8),
+              Wrap(
+                spacing: 6,
+                runSpacing: 6,
                 children: [
+                  OutlinedButton.icon(
+                    onPressed: () => _openOrderChat(order),
+                    icon: const Icon(
+                      LucideIcons.messageCircle,
+                      size: 13,
+                      color: AppColors.primary,
+                    ),
+                    label: Text(
+                      'Chat',
+                      style: GoogleFonts.plusJakartaSans(
+                        fontSize: 11,
+                        fontWeight: FontWeight.w700,
+                        color: AppColors.primary,
+                      ),
+                    ),
+                    style: OutlinedButton.styleFrom(
+                      side: const BorderSide(color: AppColors.surfaceSoftBorder),
+                      backgroundColor: AppColors.surfaceSoft,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 8,
+                        vertical: 6,
+                      ),
+                    ),
+                  ),
                   OutlinedButton(
                     onPressed: () => _showOrderDetailSheet(order),
                     style: OutlinedButton.styleFrom(
                       side: const BorderSide(color: Color(0xFFCBD5E1)),
                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
                     ),
                     child: Text(
                       'Rincian',
                       style: GoogleFonts.plusJakartaSans(
-                        fontSize: 11.5,
+                        fontSize: 11,
                         fontWeight: FontWeight.w700,
                         color: const Color(0xFF334155),
                       ),
                     ),
                   ),
-                  const SizedBox(width: 8),
                   ElevatedButton.icon(
-                    icon: const Icon(LucideIcons.truck, size: 14),
+                    icon: const Icon(LucideIcons.truck, size: 13),
                     label: Text(
                       'Lacak',
                       style: GoogleFonts.plusJakartaSans(
-                        fontSize: 11.5,
+                        fontSize: 11,
                         fontWeight: FontWeight.w700,
                       ),
                     ),
@@ -632,7 +695,7 @@ class _BuyerOrdersScreenState extends State<BuyerOrdersScreen> with SingleTicker
                       backgroundColor: AppColors.primary,
                       foregroundColor: Colors.white,
                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
                     ),
                     onPressed: () {
                       Navigator.push(

@@ -19,6 +19,9 @@ const paymentRoutes = require('./src/routes/payments');
 const poktanRoutes = require('./src/routes/poktan');
 const b2bRoutes = require('./src/routes/b2b');
 const pestReportRoutes = require('./src/routes/pestReports');
+const chatRoutes = require('./src/routes/chat');
+const petaniRoutes = require('./src/routes/petani');
+const { optionalVerifyToken } = require('./src/middlewares/authMiddleware');
 const penyuluhController = require('./src/controllers/penyuluhController');
 const runPestAlertMigration = require('./src/config/migrate_pest_alert');
 const runMonitoringLahanMigration = require('./src/config/migrate_monitoring_lahan');
@@ -85,7 +88,7 @@ app.get('/api/health', async (req, res) => {
 
 app.get('/api/monitoring-lahan', penyuluhController.getMonitoringLahan);
 app.get('/api/monitoring-summary', penyuluhController.getMonitoringSummary);
-app.post('/api/monitoring-lahan', soilRoutes.uploadSoilPhotos, penyuluhController.saveMonitoringLahan);
+app.post('/api/monitoring-lahan', optionalVerifyToken, soilRoutes.uploadSoilPhotos, penyuluhController.saveMonitoringLahan);
 
 app.use('/api/auth', authRoutes);
 app.use('/api/products', productRoutes);
@@ -104,6 +107,8 @@ app.use('/api/contracts', b2bRoutes);
 app.use('/api/pest-reports', pestReportRoutes);
 app.use('/api/pest-alerts', pestReportRoutes);
 app.use('/api/ppl', penyuluhRoutes);
+app.use('/api/chat', chatRoutes);
+app.use('/api/petani', petaniRoutes);
 
 
 app.use((req, res) => {

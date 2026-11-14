@@ -29,7 +29,7 @@ export const HeroBanner: React.FC<HeroBannerProps> = ({
             </span>
             <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/10 text-emerald-100 text-[12px] font-semibold backdrop-blur-sm border border-white/10">
               <span className="w-2 h-2 rounded-full bg-primary animate-pulse"></span>
-              BPP Lembang &amp; Parongpong
+              BPP Kabupaten Sumenep
             </span>
           </div>
 
