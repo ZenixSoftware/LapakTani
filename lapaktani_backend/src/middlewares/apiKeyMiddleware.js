@@ -1,9 +1,6 @@
 const crypto = require('crypto');
 
 const BYPASS_EXACT_PATHS = new Set([
-  '/',
-  '/api/health',
-  '/health',
   '/api/payments/midtrans-webhook',
   '/api/payments/midtrans-callback',
   '/api/payments/notification',
@@ -17,6 +14,8 @@ const BYPASS_EXACT_PATHS = new Set([
   '/notification',
   '/webhook',
 ]);
+
+const BYPASS_PREFIXES = ['/uploads'];
 
 /**
  * Constant-time string comparison using crypto.timingSafeEqual.
@@ -32,7 +31,7 @@ const safeCompareKeys = (providedKey, expectedKey) => {
 
 /**
  * Global/API Gateway X-API-Key anti-spoofing middleware.
- * Bypasses CORS preflight (OPTIONS), Midtrans payment webhooks, static /uploads assets, and health checks.
+ * Bypasses only CORS preflight (OPTIONS), Midtrans payment webhooks, and static /uploads assets.
  */
 const apiKeyMiddleware = (req, res, next) => {
   if (req.method === 'OPTIONS') {
@@ -42,9 +41,16 @@ const apiKeyMiddleware = (req, res, next) => {
   const originalPath = (req.originalUrl || '').split('?')[0].replace(/\/+$/, '') || '/';
   const routePath = (req.path || '').split('?')[0].replace(/\/+$/, '') || '/';
 
+  const isBypassPrefix = BYPASS_PREFIXES.some(
+    (prefix) =>
+      originalPath === prefix ||
+      originalPath.startsWith(`${prefix}/`) ||
+      routePath === prefix ||
+      routePath.startsWith(`${prefix}/`)
+  );
+
   if (
-    originalPath.startsWith('/uploads') ||
-    routePath.startsWith('/uploads') ||
+    isBypassPrefix ||
     BYPASS_EXACT_PATHS.has(originalPath) ||
     BYPASS_EXACT_PATHS.has(routePath)
   ) {

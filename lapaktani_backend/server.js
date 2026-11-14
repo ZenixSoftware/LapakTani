@@ -19,6 +19,7 @@ const paymentRoutes = require('./src/routes/payments');
 const poktanRoutes = require('./src/routes/poktan');
 const b2bRoutes = require('./src/routes/b2b');
 const pestReportRoutes = require('./src/routes/pestReports');
+const penyuluhController = require('./src/controllers/penyuluhController');
 const runPestAlertMigration = require('./src/config/migrate_pest_alert');
 const runMonitoringLahanMigration = require('./src/config/migrate_monitoring_lahan');
 const requestLogger = require('./src/middlewares/requestLogger');
@@ -37,15 +38,15 @@ app.use(cors({
 app.use(requestLogger);
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
-app.use(express.static(path.join(__dirname, 'public')));
 app.use('/uploads', express.static(path.join(__dirname, 'public/uploads')));
 
+// Strict global X-API-Key gateway: runs before root & all /api/* routes (only /uploads & Midtrans webhooks exempted)
+app.use(apiKeyMiddleware);
+app.use(express.static(path.join(__dirname, 'public')));
 
 app.get('/', (req, res) => {
   res.status(200).json({
     status: 'online',
-    service: 'LapakTani Local REST API',
-    version: '1.0.0',
     timestamp: new Date().toISOString()
   });
 });
@@ -82,7 +83,9 @@ app.get('/api/health', async (req, res) => {
   });
 });
 
-app.use('/api', apiKeyMiddleware);
+app.get('/api/monitoring-lahan', penyuluhController.getMonitoringLahan);
+app.get('/api/monitoring-summary', penyuluhController.getMonitoringSummary);
+app.post('/api/monitoring-lahan', soilRoutes.uploadSoilPhotos, penyuluhController.saveMonitoringLahan);
 
 app.use('/api/auth', authRoutes);
 app.use('/api/products', productRoutes);

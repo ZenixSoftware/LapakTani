@@ -82,3 +82,9 @@ temp_*.py
 _temp_*
 test_*.js
 scripts/run_flutter_dev.ps1
+
+# Database Dumps (keep migrations/*.sql tracked)
+lapaktani_backend/database/*.sql
+database/*.sql
+*dump*.sql
+*backup*.sql
