@@ -1,3 +1,13 @@
+/**
+ * [US-24] Dashboard Konsolidasi Lahan & Alokasi Kuota Panen Poktan
+ * Lead Backend & Database Architect: Rafael Rizky (Rafariz19)
+ * 
+ * Provides:
+ * - Aggregated Poktan member land area visualization (total hectares)
+ * - Member roster with GPS coordinates and individual land parcels
+ * - B2B harvest contract pool management and allocation dialog
+ * - Zero-waste retail spillover triggering
+ */
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';

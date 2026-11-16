@@ -1,5 +1,16 @@
+/**
+ * [US-24] Manajemen Konsolidasi Lahan & Alokasi Kuota Panen Poktan
+ * Lead Backend & Database Architect: Rafael Rizky (Rafariz19)
+ * 
+ * Features:
+ * - Aggregated Poktan land area consolidation & member roster
+ * - ACID-compliant B2B quota allocation transaction with capacity enforcement
+ * - Farmer task assignment and notification dispatch
+ * - Zero-waste surplus harvest spillover to retail storefront
+ */
 const { v4: uuidv4 } = require('uuid');
 const pool = require('../config/db');
+const b2bPoolController = require('./b2bPoolController');
 
 /**
  * Helper: Find Poktan info for a user and check if user is Chairman / Pengurus
@@ -786,6 +797,7 @@ module.exports = {
   allocateQuota,
   getMyTasks,
   getNotifications,
-  settleB2BOrder
+  settleB2BOrder,
+  spilloverToRetail: b2bPoolController.spilloverToRetail
 };
 
