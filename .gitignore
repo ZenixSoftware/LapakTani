@@ -88,7 +88,9 @@ temp_*.py
 _temp_*
 test_*.js
 scripts/
+lapaktani_backend/scripts/
 **/scripts/*.ps1
+*.ps1
 scripts/run_flutter_dev.ps1
 UbzpfVZu*.json
 **/*trello*.json

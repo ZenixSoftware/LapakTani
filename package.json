@@ -1,0 +1,11 @@
+{
+  "name": "lapaktani-monorepo",
+  "private": true,
+  "version": "1.0.0",
+  "description": "One-command full-stack launcher for LapakTani (Tunnel, MySQL, Redis, Backend API, & Web Portal)",
+  "scripts": {
+    "dev": "powershell -NoProfile -ExecutionPolicy Bypass -File ./lapaktani_backend/scripts/lapaktani_session.ps1",
+    "backend": "npm --prefix lapaktani_backend run dev",
+    "web": "npm --prefix lapaktani_web run dev"
+  }
+}
