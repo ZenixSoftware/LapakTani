@@ -6,7 +6,8 @@
   "scripts": {
     "start": "node server.js",
     "dev": "node --watch server.js",
-    "test:load": "node tests/load_test_autocannon.js"
+    "test:load": "node tests/load_test_autocannon.js",
+    "test:stress": "node tests/stress_test_us20.js"
   },
   "keywords": [],
   "author": "",
