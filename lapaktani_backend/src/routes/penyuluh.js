@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const penyuluhController = require('../controllers/penyuluhController');
+const agroController = require('../controllers/agroSupplyChainController');
 const soilRouter = require('./soil');
 const { verifyToken, requireRole } = require('../middlewares/authMiddleware');
 
@@ -44,5 +45,23 @@ router.post(
   soilRouter.uploadSoilPhotos,
   penyuluhController.saveMonitoringLahan
 );
+
+// Store approval, village store quota, scoped forums & village fertilizer coordination
+router.get('/store-applications', requireRole('penyuluh', 'dinas'), agroController.getStoreApplicationsForPpl);
+router.put('/store-applications/:id/verify', requireRole('penyuluh'), agroController.verifyStoreApplication);
+router.put('/village-store-quota', requireRole('penyuluh'), agroController.updateVillageStoreQuota);
+
+router.get('/inter-ppl-forum', requireRole('penyuluh', 'dinas'), agroController.getInterPplForum);
+router.post('/inter-ppl-forum', requireRole('penyuluh'), agroController.createInterPplForumPost);
+
+router.get('/village-forum', requireRole('penyuluh', 'petani', 'admin'), agroController.getVillageForum);
+router.post('/village-forum', requireRole('penyuluh', 'petani', 'admin'), agroController.createVillageForumPost);
+
+router.get('/fertilizer-subsidies', requireRole('penyuluh', 'dinas', 'petani'), agroController.getFertilizerSubsidies);
+router.post('/fertilizer-request', requireRole('penyuluh'), agroController.proposeFertilizerSubsidy);
+router.put('/fertilizer-subsidies/:id/receive', requireRole('penyuluh'), (req, res, next) => {
+  req.body = { ...(req.body || {}), status: 'DITERIMA_DESA' };
+  agroController.dispatchFertilizerSubsidy(req, res, next);
+});
 
 module.exports = router;

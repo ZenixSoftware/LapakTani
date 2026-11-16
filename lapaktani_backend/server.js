@@ -21,10 +21,13 @@ const b2bRoutes = require('./src/routes/b2b');
 const pestReportRoutes = require('./src/routes/pestReports');
 const chatRoutes = require('./src/routes/chat');
 const petaniRoutes = require('./src/routes/petani');
+const dinasRoutes = require('./src/routes/dinas');
+const storeRoutes = require('./src/routes/store');
 const { optionalVerifyToken } = require('./src/middlewares/authMiddleware');
 const penyuluhController = require('./src/controllers/penyuluhController');
 const runPestAlertMigration = require('./src/config/migrate_pest_alert');
 const runMonitoringLahanMigration = require('./src/config/migrate_monitoring_lahan');
+const runStreamlinedAgroFlowMigration = require('./src/config/migrate_streamlined_agro_flow');
 const requestLogger = require('./src/middlewares/requestLogger');
 const apiKeyMiddleware = require('./src/middlewares/apiKeyMiddleware');
 
@@ -109,6 +112,8 @@ app.use('/api/pest-alerts', pestReportRoutes);
 app.use('/api/ppl', penyuluhRoutes);
 app.use('/api/chat', chatRoutes);
 app.use('/api/petani', petaniRoutes);
+app.use('/api/dinas', dinasRoutes);
+app.use('/api/store', storeRoutes);
 
 
 app.use((req, res) => {
@@ -159,6 +164,12 @@ const startServer = async () => {
         await runMonitoringLahanMigration();
       } catch (monitoringMigErr) {
         console.warn('[MIGRATION] Monitoring lahan migration notice:', monitoringMigErr.message);
+      }
+
+      try {
+        await runStreamlinedAgroFlowMigration();
+      } catch (agroMigErr) {
+        console.warn('[MIGRATION] Streamlined agro flow migration notice:', agroMigErr.message);
       }
     } catch (dbErr) {
       console.warn('[MYSQL] Connection warning:', dbErr.message);

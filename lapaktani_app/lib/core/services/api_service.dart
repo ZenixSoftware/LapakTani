@@ -234,6 +234,8 @@ class ApiService {
     required int shippingFee,
     required String courierService,
     String paymentMethod = 'LAPAKPAY_SIMULATOR',
+    bool? wholesaleAgreementAccepted,
+    String? wholesaleAgreementNote,
   }) async {
     final response = await _post('/orders/checkout', {
       'items': items,
@@ -241,6 +243,10 @@ class ApiService {
       'shipping_fee': shippingFee,
       'courier_service': courierService,
       'payment_method': paymentMethod,
+      'wholesale_agreement_accepted': ?wholesaleAgreementAccepted,
+      if (wholesaleAgreementNote != null &&
+          wholesaleAgreementNote.trim().isNotEmpty)
+        'wholesale_agreement_note': wholesaleAgreementNote.trim(),
     });
 
     final decoded = jsonDecode(response.body);
@@ -926,6 +932,171 @@ class ApiService {
       if (notes != null && notes.trim().isNotEmpty) 'notes': notes.trim(),
     });
     return _decodeResponseMap(response, 'Gagal memverifikasi akun petani');
+  }
+
+  List<Map<String, dynamic>> _extractDataList(http.Response response) {
+    if (response.statusCode >= 200 && response.statusCode < 300) {
+      final decoded = jsonDecode(response.body);
+      if (decoded is Map && decoded['data'] is List) {
+        return (decoded['data'] as List)
+            .whereType<Map>()
+            .map((e) => Map<String, dynamic>.from(e))
+            .toList();
+      }
+    }
+    return <Map<String, dynamic>>[];
+  }
+
+  // ============================================================================
+  // Store 2-Step Registration, Store Settings, Harvest Absorption & Forums
+  // ============================================================================
+
+  Future<Map<String, dynamic>> getMyStoreApplication() async {
+    final response = await _fetchGet('/store/my-application');
+    return _decodeResponseMap(response, 'Gagal memuat status pengajuan toko');
+  }
+
+  Future<Map<String, dynamic>> submitStoreApplication(
+    Map<String, dynamic> payload,
+  ) async {
+    final response = await _post('/store/apply', payload);
+    return _decodeResponseMap(
+      response,
+      'Gagal mengirim pengajuan pembukaan toko',
+    );
+  }
+
+  Future<Map<String, dynamic>> updateStoreSettings(
+    Map<String, dynamic> payload,
+  ) async {
+    final response = await _put('/store/settings', payload);
+    return _decodeResponseMap(response, 'Gagal memperbarui pengaturan toko');
+  }
+
+  Future<Map<String, dynamic>> updateProductPricing(
+    String productId,
+    Map<String, dynamic> payload,
+  ) async {
+    final response = await _put('/products/$productId', payload);
+    return _decodeResponseMap(response, 'Gagal memperbarui harga produk');
+  }
+
+  Future<List<Map<String, dynamic>>> getNearbyHarvests() async {
+    final response = await _fetchGet('/store/nearby-harvests');
+    return _extractDataList(response);
+  }
+
+  Future<List<Map<String, dynamic>>> getStorePurchaseOffers() async {
+    final response = await _fetchGet('/store/purchase-offers');
+    return _extractDataList(response);
+  }
+
+  Future<Map<String, dynamic>> createHarvestPurchaseOffer(
+    Map<String, dynamic> payload,
+  ) async {
+    final response = await _post('/store/purchase-offers', payload);
+    return _decodeResponseMap(response, 'Gagal mengirim penawaran panen');
+  }
+
+  Future<Map<String, dynamic>> weighAndPayHarvestOffer(
+    String offerId,
+    double realWeightKg, {
+    String? notes,
+  }) async {
+    final response = await _put('/store/purchase-offers/$offerId/weigh-and-pay', {
+      'berat_timbang_riil_kg': realWeightKg,
+      if (notes != null && notes.trim().isNotEmpty) 'notes': notes.trim(),
+    });
+    return _decodeResponseMap(response, 'Gagal menyelesaikan timbang ulang');
+  }
+
+  Future<List<Map<String, dynamic>>> getFarmerHarvestReports() async {
+    final response = await _fetchGet('/petani/harvest-reports');
+    return _extractDataList(response);
+  }
+
+  Future<Map<String, dynamic>> submitFarmerHarvestReport(
+    Map<String, dynamic> payload,
+  ) async {
+    final response = await _post('/petani/harvest-reports', payload);
+    return _decodeResponseMap(response, 'Gagal mengirim siaran panen');
+  }
+
+  Future<List<Map<String, dynamic>>> getFarmerPurchaseOffers() async {
+    final response = await _fetchGet('/petani/purchase-offers');
+    return _extractDataList(response);
+  }
+
+  Future<Map<String, dynamic>> respondToPurchaseOffer(
+    String offerId,
+    String status,
+  ) async {
+    final response = await _put('/petani/purchase-offers/$offerId/respond', {
+      'status': status,
+    });
+    return _decodeResponseMap(response, 'Gagal merespon tawaran panen');
+  }
+
+  Future<Map<String, dynamic>> getStoreApplicationsForPpl() async {
+    final response = await _fetchGet('/penyuluh/store-applications');
+    return _decodeResponseMap(response, 'Gagal memuat antrean pembukaan toko');
+  }
+
+  Future<Map<String, dynamic>> verifyStoreApplicationByPpl(
+    String id,
+    String status, {
+    String? reason,
+  }) async {
+    final response = await _put('/penyuluh/store-applications/$id/verify', {
+      'status': status,
+      if (reason != null && reason.trim().isNotEmpty)
+        'rejection_reason': reason.trim(),
+    });
+    return _decodeResponseMap(response, 'Gagal memverifikasi pengajuan toko');
+  }
+
+  Future<Map<String, dynamic>> updateVillageStoreQuota(
+    Map<String, dynamic> payload,
+  ) async {
+    final response = await _put('/penyuluh/village-store-quota', payload);
+    return _decodeResponseMap(response, 'Gagal memperbarui kuota toko desa');
+  }
+
+  Future<List<Map<String, dynamic>>> getVillageForumPosts({int? villageId}) async {
+    final qs = villageId != null ? '?village_id=$villageId' : '';
+    final response = await _fetchGet('/penyuluh/village-forum$qs');
+    return _extractDataList(response);
+  }
+
+  Future<Map<String, dynamic>> createVillageForumPost(
+    Map<String, dynamic> payload,
+  ) async {
+    final response = await _post('/penyuluh/village-forum', payload);
+    return _decodeResponseMap(response, 'Gagal mengirim pesan forum desa');
+  }
+
+  Future<List<Map<String, dynamic>>> getInterPplForumPosts() async {
+    final response = await _fetchGet('/penyuluh/inter-ppl-forum');
+    return _extractDataList(response);
+  }
+
+  Future<Map<String, dynamic>> createInterPplForumPost(
+    Map<String, dynamic> payload,
+  ) async {
+    final response = await _post('/penyuluh/inter-ppl-forum', payload);
+    return _decodeResponseMap(response, 'Gagal mengirim diskusi antar-PPL');
+  }
+
+  Future<List<Map<String, dynamic>>> getFertilizerAllocations() async {
+    final response = await _fetchGet('/penyuluh/fertilizer-subsidies');
+    return _extractDataList(response);
+  }
+
+  Future<Map<String, dynamic>> proposeFertilizerAllocation(
+    Map<String, dynamic> payload,
+  ) async {
+    final response = await _post('/penyuluh/fertilizer-request', payload);
+    return _decodeResponseMap(response, 'Gagal mengajukan pupuk subsidi');
   }
 }
 

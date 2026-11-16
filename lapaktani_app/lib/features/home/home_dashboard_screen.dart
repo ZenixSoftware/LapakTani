@@ -3,11 +3,13 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 import 'package:lucide_icons/lucide_icons.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../../core/services/api_service.dart';
 import '../../core/services/user_session.dart';
 import '../../core/theme/app_colors.dart';
 import '../auth/auth_repository.dart';
 import '../auth/login_screen.dart';
+import '../auth/store_registration_screen.dart';
 import '../cart/cart_screen.dart';
 import '../buyer/screens/wholesale_detail_screen.dart';
 import '../order/order_history_screen.dart';
@@ -31,6 +33,8 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen> {
   List<Map<String, dynamic>> _b2bHarvestPools = [];
   bool _isLoading = true;
   bool _isLoadingB2BPools = false;
+  bool _hasFrozenStoreDraft = false;
+  String _frozenStoreName = 'Toko Mitra';
   final NumberFormat _currencyFormat = NumberFormat('#,###', 'id_ID');
 
   String _searchQuery = '';
@@ -164,6 +168,38 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen> {
     super.initState();
     fetchProducts();
     _fetchB2BHarvestPools();
+    _checkFrozenStoreApplication();
+  }
+
+  Future<void> _checkFrozenStoreApplication() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      bool hasFrozen = prefs.getBool('frozen_store_draft') ?? false;
+      String storeName = prefs.getString('frozen_store_name') ?? 'Toko Anda';
+
+      final token = await _apiService.getToken();
+      if (token != null && token.isNotEmpty) {
+        try {
+          final res = await _apiService.getMyStoreApplication();
+          final app = res['data'] is Map ? res['data']['application'] : null;
+          if (app is Map) {
+            final status = (app['status'] ?? '').toString().toUpperCase();
+            hasFrozen = status == 'DRAFT_FROZEN';
+            if (app['nama_toko'] != null) {
+              storeName = app['nama_toko'].toString();
+            }
+            await prefs.setBool('frozen_store_draft', hasFrozen);
+          }
+        } catch (_) {}
+      }
+
+      if (mounted) {
+        setState(() {
+          _hasFrozenStoreDraft = hasFrozen;
+          _frozenStoreName = storeName;
+        });
+      }
+    } catch (_) {}
   }
 
   Future<void> _fetchB2BHarvestPools() async {
@@ -571,6 +607,66 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
+                    if (_hasFrozenStoreDraft)
+                      Container(
+                        margin: const EdgeInsets.fromLTRB(12, 10, 12, 2),
+                        padding: const EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                          color: AppColors.warningSoft,
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(
+                            color: AppColors.accent.withValues(alpha: 0.5),
+                          ),
+                        ),
+                        child: Row(
+                          children: [
+                            const Icon(
+                              LucideIcons.pauseCircle,
+                              size: 20,
+                              color: AppColors.warning,
+                            ),
+                            const SizedBox(width: 10),
+                            Expanded(
+                              child: Text(
+                                'Pengajuan toko "$_frozenStoreName" dibekukan (Draft). Lanjutkan kapan saja.',
+                                style: GoogleFonts.inter(
+                                  fontSize: 11.5,
+                                  fontWeight: FontWeight.w700,
+                                  color: AppColors.textPrimary,
+                                ),
+                              ),
+                            ),
+                            const SizedBox(width: 8),
+                            ElevatedButton(
+                              onPressed: () {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (_) =>
+                                        const StoreRegistrationScreen(),
+                                  ),
+                                ).then((_) => _checkFrozenStoreApplication());
+                              },
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: AppColors.primary,
+                                foregroundColor: Colors.white,
+                                elevation: 0,
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 10,
+                                  vertical: 6,
+                                ),
+                              ),
+                              child: Text(
+                                'Lanjutkan',
+                                style: GoogleFonts.inter(
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.w700,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
                     _buildQuickActionServices(),
                     _buildRecentlyViewedSection(),
                     _buildCategoryTabBar(),
@@ -2269,8 +2365,22 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen> {
     final productId = product['id'];
     final isWishlisted = _wishlistIds.contains(productId);
     final String title = product['title']?.toString() ?? 'Produk Tani';
-    final String price =
-        _formatRupiah(product['price_per_kg'] ?? product['price']);
+    final num basePrice =
+        num.tryParse('${product['price_per_kg'] ?? product['price'] ?? 0}') ?? 0;
+    final num discPct =
+        num.tryParse('${product['discount_percent'] ?? 0}') ?? 0;
+    final num discPrice =
+        num.tryParse('${product['discount_price'] ?? 0}') ?? 0;
+    final bool hasDiscount =
+        discPct > 0 && discPrice > 0 && discPrice < basePrice;
+    final String price = _formatRupiah(hasDiscount ? discPrice : basePrice);
+    final String basePriceStr = _formatRupiah(basePrice);
+    final bool isWholesaleEnabled = product['is_wholesale_enabled'] != false &&
+        product['is_wholesale_enabled'] != 0;
+    final int minWholesaleQty =
+        int.tryParse('${product['min_wholesale_qty'] ?? 30}') ?? 30;
+    final num wholesalePrice =
+        num.tryParse('${product['wholesale_price'] ?? (basePrice * 0.85)}') ?? 0;
     final String location = product['village_name']?.toString() ??
         product['location']?.toString() ??
         'Lokal';
@@ -2457,23 +2567,68 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen> {
                             crossAxisAlignment: CrossAxisAlignment.start,
                             mainAxisSize: MainAxisSize.min,
                             children: [
-                              Text(
-                                price,
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                                style: GoogleFonts.inter(
-                                  fontSize: 13.5,
-                                  fontWeight: FontWeight.bold,
-                                  color: const Color(0xFF028A0B),
-                                ),
+                              Row(
+                                children: [
+                                  Flexible(
+                                    child: Text(
+                                      price,
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                      style: GoogleFonts.inter(
+                                        fontSize: 13.0,
+                                        fontWeight: FontWeight.bold,
+                                        color: const Color(0xFF028A0B),
+                                      ),
+                                    ),
+                                  ),
+                                  if (hasDiscount) ...[
+                                    const SizedBox(width: 4),
+                                    Container(
+                                      padding: const EdgeInsets.symmetric(
+                                        horizontal: 3,
+                                        vertical: 1,
+                                      ),
+                                      decoration: BoxDecoration(
+                                        color: AppColors.errorSoft,
+                                        borderRadius: BorderRadius.circular(3),
+                                      ),
+                                      child: Text(
+                                        '-${discPct.toStringAsFixed(0)}%',
+                                        style: GoogleFonts.inter(
+                                          fontSize: 7.5,
+                                          fontWeight: FontWeight.w800,
+                                          color: AppColors.error,
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ],
                               ),
+                              if (hasDiscount)
+                                Text(
+                                  basePriceStr,
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: GoogleFonts.inter(
+                                    fontSize: 8.5,
+                                    decoration: TextDecoration.lineThrough,
+                                    color: const Color(0xFF94A3B8),
+                                  ),
+                                ),
                               Text(
-                                unit,
+                                isWholesaleEnabled
+                                    ? '$unit • Partai Min.${minWholesaleQty}kg ${_formatRupiah(wholesalePrice)}'
+                                    : unit,
                                 maxLines: 1,
                                 overflow: TextOverflow.ellipsis,
                                 style: GoogleFonts.inter(
                                   fontSize: 8.0,
-                                  color: const Color(0xFF94A3B8),
+                                  fontWeight: isWholesaleEnabled
+                                      ? FontWeight.w700
+                                      : FontWeight.w400,
+                                  color: isWholesaleEnabled
+                                      ? AppColors.primaryDark
+                                      : const Color(0xFF94A3B8),
                                 ),
                               ),
                             ],

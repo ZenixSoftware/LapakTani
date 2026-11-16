@@ -23,10 +23,14 @@ class _AddProductScreenState extends State<AddProductScreen> {
 
   final TextEditingController _titleController = TextEditingController();
   final TextEditingController _priceController = TextEditingController();
+  final TextEditingController _discountPercentController = TextEditingController();
   final TextEditingController _promoPriceController = TextEditingController();
   final TextEditingController _stockController = TextEditingController();
   final TextEditingController _minOrderController = TextEditingController(text: '1');
+  final TextEditingController _minWholesaleQtyController = TextEditingController(text: '30');
+  final TextEditingController _wholesalePriceController = TextEditingController();
   final TextEditingController _descriptionController = TextEditingController();
+  bool _isWholesaleEnabled = true;
 
   final List<File> _selectedImages = [];
   final ImagePicker _picker = ImagePicker();
@@ -64,21 +68,28 @@ class _AddProductScreenState extends State<AddProductScreen> {
     _promoPriceController.removeListener(_onPriceChanged);
     _titleController.dispose();
     _priceController.dispose();
+    _discountPercentController.dispose();
     _promoPriceController.dispose();
     _stockController.dispose();
     _minOrderController.dispose();
+    _minWholesaleQtyController.dispose();
+    _wholesalePriceController.dispose();
     _descriptionController.dispose();
     super.dispose();
   }
 
   String get _promoDiscountLabel {
+    final pctTyped = double.tryParse(_discountPercentController.text.trim());
+    if (pctTyped != null && pctTyped > 0) {
+      return 'Hemat ${pctTyped.toStringAsFixed(0)}%';
+    }
     final normal = double.tryParse(_priceController.text.trim());
     final promo = double.tryParse(_promoPriceController.text.trim());
     if (normal != null && promo != null && normal > 0 && promo < normal && promo > 0) {
       final pct = (((normal - promo) / normal) * 100).round();
       return 'Hemat $pct%';
     }
-    return 'Hemat 14%';
+    return 'Opsional Diskon';
   }
 
   Future<void> _fetchMasterData() async {
@@ -297,11 +308,27 @@ class _AddProductScreenState extends State<AddProductScreen> {
       request.headers['X-API-Key'] = AppConfig.apiKey;
 
       request.fields['title'] = _titleController.text.trim();
-      request.fields['price_per_kg'] = double.parse(_priceController.text.trim()).toString();
+      final basePriceVal = double.parse(_priceController.text.trim());
+      request.fields['price_per_kg'] = basePriceVal.toString();
+      request.fields['price'] = basePriceVal.toString();
       request.fields['stock_kg'] = double.parse(_stockController.text.trim()).toString();
       request.fields['commodity_id'] = _selectedCommodity!;
       request.fields['grade_id'] = _selectedGrade!;
       request.fields['unit_id'] = _selectedUnitId ?? 'unit-kg';
+      final discPct = double.tryParse(_discountPercentController.text.trim());
+      if (discPct != null && discPct > 0) {
+        request.fields['discount_percent'] = discPct.toString();
+      }
+      final promoPrice = double.tryParse(_promoPriceController.text.trim());
+      if (promoPrice != null && promoPrice > 0 && promoPrice < basePriceVal) {
+        request.fields['discount_price'] = promoPrice.toString();
+      }
+      request.fields['is_wholesale_enabled'] = _isWholesaleEnabled ? '1' : '0';
+      request.fields['min_wholesale_qty'] =
+          (int.tryParse(_minWholesaleQtyController.text.trim()) ?? 30).toString();
+      final wholesaleVal = double.tryParse(_wholesalePriceController.text.trim()) ??
+          (basePriceVal * 0.85).roundToDouble();
+      request.fields['wholesale_price'] = wholesaleVal.toString();
       if (_descriptionController.text.trim().isNotEmpty) {
         request.fields['description'] = _descriptionController.text.trim();
       }
@@ -677,6 +704,91 @@ class _AddProductScreenState extends State<AddProductScreen> {
                               color: const Color(0xFF64748B),
                             ),
                           ),
+                          const SizedBox(height: 12),
+                          _buildFieldLabel('Atau Masukkan Persentase Diskon Promo (%)'),
+                          TextFormField(
+                            controller: _discountPercentController,
+                            keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                            onChanged: (_) => _onPriceChanged(),
+                            decoration: InputDecoration(
+                              hintText: 'Contoh: 10 (untuk diskon 10%)',
+                              suffixText: '%',
+                              contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                              filled: true,
+                              fillColor: const Color(0xFFF8FAFC),
+                              border: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(10),
+                                borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
+                              ),
+                            ),
+                          ),
+                          const Divider(height: 24),
+                          SwitchListTile(
+                            contentPadding: EdgeInsets.zero,
+                            value: _isWholesaleEnabled,
+                            activeThumbColor: const Color(0xFF166534),
+                            title: Text(
+                              'Aktifkan Pembelian Partai (B2B)',
+                              style: GoogleFonts.plusJakartaSans(
+                                fontSize: 13.5,
+                                fontWeight: FontWeight.w700,
+                                color: const Color(0xFF0F172A),
+                              ),
+                            ),
+                            subtitle: Text(
+                              'Pembeli otomatis mendapat harga grosir saat memesan melebihi batas minimal kg.',
+                              style: GoogleFonts.plusJakartaSans(
+                                fontSize: 11,
+                                color: const Color(0xFF64748B),
+                              ),
+                            ),
+                            onChanged: (v) => setState(() => _isWholesaleEnabled = v),
+                          ),
+                          if (_isWholesaleEnabled) ...[
+                            const SizedBox(height: 8),
+                            Row(
+                              children: [
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      _buildFieldLabel('Min. Partai (kg)'),
+                                      TextFormField(
+                                        controller: _minWholesaleQtyController,
+                                        keyboardType: TextInputType.number,
+                                        decoration: InputDecoration(
+                                          hintText: '30',
+                                          suffixText: 'kg',
+                                          contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+                                          border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                                const SizedBox(width: 10),
+                                Expanded(
+                                  flex: 2,
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      _buildFieldLabel('Harga Khusus Partai (Rp/kg)'),
+                                      TextFormField(
+                                        controller: _wholesalePriceController,
+                                        keyboardType: TextInputType.number,
+                                        decoration: InputDecoration(
+                                          prefixText: 'Rp ',
+                                          hintText: 'Otomatis 85% jika kosong',
+                                          contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+                                          border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ],
                         ],
                       ),
                     ),

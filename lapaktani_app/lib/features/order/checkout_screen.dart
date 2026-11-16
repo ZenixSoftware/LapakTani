@@ -37,8 +37,22 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
   bool _useCoins = true;
   bool _isSubmitting = false;
   late bool _protectionActive;
+  bool _wholesaleAgreementAccepted = true;
+  final TextEditingController _wholesaleNoteCtrl = TextEditingController(
+    text: 'Pembeli & Admin Toko menyepakati kuantitas Partai (B2B), harga grosir per kg, serta protokol kirim segar.',
+  );
 
   late List<CartItemModel> _items;
+
+  bool get _isPartaiCheckout => _items.any(
+        (i) => i.badgeText.toUpperCase().contains('PARTAI') || i.quantity >= 25,
+      );
+
+  @override
+  void dispose() {
+    _wholesaleNoteCtrl.dispose();
+    super.dispose();
+  }
 
   @override
   void initState() {
@@ -216,12 +230,25 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
       }).toList();
 
       // Backend Checkout API with MySQL ACID transaction & payment gateway support
+      if (_isPartaiCheckout && !_wholesaleAgreementAccepted) {
+        setState(() => _isSubmitting = false);
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Harap setujui Nota Kesepakatan Pembelian Partai (B2B).'),
+            backgroundColor: AppColors.error,
+          ),
+        );
+        return;
+      }
+
       final backendResult = await ApiService().createCheckoutOrder(
         items: checkoutPayload,
         deliveryAddress: _deliveryAddress,
         shippingFee: _shippingCost,
         courierService: _selectedLogisticsIndex == 0 ? 'Kurir Pendingin Mitra' : 'Kargo Agribisnis Dingin',
         paymentMethod: _selectedPaymentCode,
+        wholesaleAgreementAccepted: _isPartaiCheckout ? _wholesaleAgreementAccepted : null,
+        wholesaleAgreementNote: _isPartaiCheckout ? _wholesaleNoteCtrl.text.trim() : null,
       );
 
       if (backendResult == null) {
@@ -1551,6 +1578,67 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
           ],
           const SizedBox(height: 6),
           _buildBreakdownRow('Biaya Jasa Aplikasi', _formatRupiah(_serviceFee)),
+          if (_isPartaiCheckout) ...[
+            const SizedBox(height: 12),
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: AppColors.surfaceSoft,
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: AppColors.surfaceSoftBorder),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      const Icon(LucideIcons.fileCheck2, size: 16, color: AppColors.primary),
+                      const SizedBox(width: 6),
+                      Expanded(
+                        child: Text(
+                          'Nota Kesepakatan Pembelian Partai (B2B)',
+                          style: GoogleFonts.inter(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w800,
+                            color: AppColors.primaryDark,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 8),
+                  TextField(
+                    controller: _wholesaleNoteCtrl,
+                    maxLines: 2,
+                    style: GoogleFonts.inter(fontSize: 11.5),
+                    decoration: const InputDecoration(
+                      isDense: true,
+                      filled: true,
+                      fillColor: Colors.white,
+                      border: OutlineInputBorder(),
+                      labelText: 'Catatan Kesepakatan Partai',
+                    ),
+                  ),
+                  CheckboxListTile(
+                    contentPadding: EdgeInsets.zero,
+                    dense: true,
+                    activeColor: AppColors.primary,
+                    value: _wholesaleAgreementAccepted,
+                    onChanged: (v) => setState(
+                      () => _wholesaleAgreementAccepted = v ?? true,
+                    ),
+                    title: Text(
+                      'Saya menyetujui ketentuan transaksi Partai (B2B) dengan harga grosir penjual.',
+                      style: GoogleFonts.inter(
+                        fontSize: 11,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
           const SizedBox(height: 10),
           const Divider(height: 1, color: Color(0xFFE2E8F0)),
           const SizedBox(height: 10),

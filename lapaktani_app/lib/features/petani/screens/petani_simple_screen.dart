@@ -43,7 +43,11 @@ class _PetaniSimpleScreenState extends State<PetaniSimpleScreen> {
   // Village Advisory & Farmer Daily Logs State
   List<Map<String, dynamic>> _advisories = [];
   List<Map<String, dynamic>> _dailyLogs = [];
+  List<Map<String, dynamic>> _harvestReports = [];
+  List<Map<String, dynamic>> _purchaseOffers = [];
+  List<Map<String, dynamic>> _villageForumPosts = [];
   String? _ackingReportId;
+  String? _respondingOfferId;
 
   @override
   void initState() {
@@ -75,9 +79,21 @@ class _PetaniSimpleScreenState extends State<PetaniSimpleScreen> {
         _apiService
             .getFarmerDailyLogs(userId: currentUser?.id)
             .catchError((_) => <Map<String, dynamic>>[]),
+        _apiService
+            .getFarmerHarvestReports()
+            .catchError((_) => <Map<String, dynamic>>[]),
+        _apiService
+            .getFarmerPurchaseOffers()
+            .catchError((_) => <Map<String, dynamic>>[]),
+        _apiService
+            .getVillageForumPosts()
+            .catchError((_) => <Map<String, dynamic>>[]),
       ]);
       _advisories = extraResults[0];
       _dailyLogs = extraResults[1];
+      _harvestReports = extraResults[2];
+      _purchaseOffers = extraResults[3];
+      _villageForumPosts = extraResults[4];
 
       // Fetch soil telemetry if product available
       try {
@@ -385,6 +401,18 @@ class _PetaniSimpleScreenState extends State<PetaniSimpleScreen> {
                   children: [
                     // CARD 0: Arahan & Keputusan Penyuluh Desa
                     _buildCardPenyuluhAdvisories(),
+                    const SizedBox(height: 14),
+
+                    // CARD 0B: Tawaran Beli & Kontrak Panen Offtaker (Transparan)
+                    _buildCardPurchaseOffers(),
+                    const SizedBox(height: 14),
+
+                    // CARD 0C: Forum Privat Desa & Info Titik Ambil Pupuk
+                    _buildCardVillageForumAndFertilizer(),
+                    const SizedBox(height: 14),
+
+                    // CARD 0D: Siaran Status Tanam & Estimasi Panen ke Toko Sekitar
+                    _buildCardHarvestBroadcast(),
                     const SizedBox(height: 14),
 
                     // CARD 1: Status Lahan & Prediksi Panen
@@ -1403,6 +1431,590 @@ class _PetaniSimpleScreenState extends State<PetaniSimpleScreen> {
                 );
               }).toList(),
             ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _respondOffer(String offerId, String status) async {
+    setState(() => _respondingOfferId = offerId);
+    try {
+      await _apiService.respondToPurchaseOffer(offerId, status);
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            status == 'ACCEPTED_CONTRACT'
+                ? 'Kontrak panen disetujui! Menunggu timbang ulang di lokasi.'
+                : 'Tawaran pembelian ditolak.',
+          ),
+          backgroundColor:
+              status == 'ACCEPTED_CONTRACT' ? AppColors.primary : AppColors.warning,
+        ),
+      );
+      await _loadFarmerData();
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Gagal memproses tawaran: $e'),
+          backgroundColor: AppColors.error,
+        ),
+      );
+    } finally {
+      if (mounted) setState(() => _respondingOfferId = null);
+    }
+  }
+
+  void _showHarvestBroadcastModal() {
+    String statusTanam = 'HAMPIR_PANEN';
+    final komCtrl = TextEditingController(text: 'Bawang Merah Sumenep');
+    final beratCtrl = TextEditingController(text: '350');
+    final catatanCtrl = TextEditingController();
+    bool sending = false;
+
+    showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.white,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (ctx) => StatefulBuilder(
+        builder: (ctx, setModalState) => Padding(
+          padding: EdgeInsets.only(
+            left: 20,
+            right: 20,
+            top: 20,
+            bottom: MediaQuery.of(ctx).viewInsets.bottom + 20,
+          ),
+          child: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Siaran Tanam & Estimasi Panen',
+                  style: GoogleFonts.plusJakartaSans(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  'Mulai Tanam, Hampir Panen, dan Siap Panen otomatis disiarkan ke Penyuluh & Admin Toko sekitar.',
+                  style: GoogleFonts.plusJakartaSans(
+                    fontSize: 11.5,
+                    color: AppColors.textMuted,
+                  ),
+                ),
+                const SizedBox(height: 12),
+                DropdownButtonFormField<String>(
+                  initialValue: statusTanam,
+                  decoration: const InputDecoration(
+                    labelText: 'Jenis Laporan',
+                    border: OutlineInputBorder(),
+                  ),
+                  items: const [
+                    DropdownMenuItem(value: 'MULAI_TANAM', child: Text('Mulai Tanam')),
+                    DropdownMenuItem(value: 'HAMPIR_PANEN', child: Text('Hampir Panen')),
+                    DropdownMenuItem(value: 'SIAP_PANEN', child: Text('Siap Panen')),
+                    DropdownMenuItem(value: 'LAPOR_HAMA', child: Text('Lapor Hama')),
+                    DropdownMenuItem(value: 'MINTA_SARAN', child: Text('Minta Saran PPL')),
+                  ],
+                  onChanged: (v) {
+                    if (v != null) setModalState(() => statusTanam = v);
+                  },
+                ),
+                const SizedBox(height: 10),
+                Row(
+                  children: [
+                    Expanded(
+                      flex: 2,
+                      child: TextField(
+                        controller: komCtrl,
+                        decoration: const InputDecoration(
+                          labelText: 'Komoditas',
+                          border: OutlineInputBorder(),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: TextField(
+                        controller: beratCtrl,
+                        keyboardType: TextInputType.number,
+                        decoration: const InputDecoration(
+                          labelText: 'Est. kg',
+                          border: OutlineInputBorder(),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 10),
+                TextField(
+                  controller: catatanCtrl,
+                  maxLines: 2,
+                  decoration: const InputDecoration(
+                    labelText: 'Catatan Lapangan',
+                    hintText: 'Contoh: Siap dipetik 2 hari lagi, mutu umbi super.',
+                    border: OutlineInputBorder(),
+                  ),
+                ),
+                const SizedBox(height: 14),
+                SizedBox(
+                  width: double.infinity,
+                  height: 46,
+                  child: ElevatedButton(
+                    onPressed: sending
+                        ? null
+                        : () async {
+                            setModalState(() => sending = true);
+                            try {
+                              await _apiService.submitFarmerHarvestReport({
+                                'komoditas': komCtrl.text.trim(),
+                                'status_tanam': statusTanam,
+                                'estimasi_berat_kg':
+                                    double.tryParse(beratCtrl.text) ?? 100,
+                                'catatan': catatanCtrl.text.trim(),
+                              });
+                              if (ctx.mounted) Navigator.pop(ctx);
+                              if (!mounted) return;
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(
+                                  content: Text('Siaran tanam/panen berhasil dikirim!'),
+                                  backgroundColor: AppColors.primary,
+                                ),
+                              );
+                              await _loadFarmerData();
+                            } catch (e) {
+                              setModalState(() => sending = false);
+                              if (ctx.mounted) {
+                                ScaffoldMessenger.of(ctx).showSnackBar(
+                                  SnackBar(
+                                    content: Text('Gagal: $e'),
+                                    backgroundColor: AppColors.error,
+                                  ),
+                                );
+                              }
+                            }
+                          },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppColors.primary,
+                      foregroundColor: Colors.white,
+                    ),
+                    child: Text(
+                      sending ? 'Menyiarkan...' : 'Kirim & Siarkan Sekarang',
+                      style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w700),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  void _showVillageQuestionModal() {
+    final titleCtrl = TextEditingController();
+    final bodyCtrl = TextEditingController();
+    bool sending = false;
+
+    showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.white,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (ctx) => StatefulBuilder(
+        builder: (ctx, setModalState) => Padding(
+          padding: EdgeInsets.only(
+            left: 20,
+            right: 20,
+            top: 20,
+            bottom: MediaQuery.of(ctx).viewInsets.bottom + 20,
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'Kirim Pertanyaan ke Forum Privat Desa',
+                style: GoogleFonts.plusJakartaSans(
+                  fontSize: 15.5,
+                  fontWeight: FontWeight.w800,
+                ),
+              ),
+              const SizedBox(height: 10),
+              TextField(
+                controller: titleCtrl,
+                decoration: const InputDecoration(
+                  labelText: 'Judul / Keluhan Tanaman',
+                  border: OutlineInputBorder(),
+                ),
+              ),
+              const SizedBox(height: 10),
+              TextField(
+                controller: bodyCtrl,
+                maxLines: 3,
+                decoration: const InputDecoration(
+                  labelText: 'Isi Pertanyaan untuk PPL Desa',
+                  border: OutlineInputBorder(),
+                ),
+              ),
+              const SizedBox(height: 14),
+              SizedBox(
+                width: double.infinity,
+                height: 46,
+                child: ElevatedButton(
+                  onPressed: sending
+                      ? null
+                      : () async {
+                          if (titleCtrl.text.trim().isEmpty ||
+                              bodyCtrl.text.trim().isEmpty) {
+                            return;
+                          }
+                          setModalState(() => sending = true);
+                          try {
+                            await _apiService.createVillageForumPost({
+                              'kategori': 'TANYA_JAWAB',
+                              'judul': titleCtrl.text.trim(),
+                              'isi_pesan': bodyCtrl.text.trim(),
+                            });
+                            if (ctx.mounted) Navigator.pop(ctx);
+                            await _loadFarmerData();
+                          } catch (_) {
+                            setModalState(() => sending = false);
+                          }
+                        },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.primary,
+                    foregroundColor: Colors.white,
+                  ),
+                  child: Text(
+                    sending ? 'Mengirim...' : 'Kirim ke Forum Desa',
+                    style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w700),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildCardHarvestBroadcast() {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: AppColors.outline),
+        boxShadow: AppColors.softShadow,
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              const Icon(LucideIcons.radio, color: AppColors.primary, size: 18),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  'Siaran Tanam & Estimasi Panen',
+                  style: GoogleFonts.plusJakartaSans(
+                    fontSize: 14.5,
+                    fontWeight: FontWeight.w700,
+                    color: AppColors.textPrimary,
+                  ),
+                ),
+              ),
+              ElevatedButton(
+                onPressed: _showHarvestBroadcastModal,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColors.primary,
+                  foregroundColor: Colors.white,
+                  elevation: 0,
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                ),
+                child: Text(
+                  '+ Siarkan',
+                  style: GoogleFonts.plusJakartaSans(
+                    fontSize: 11.5,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 6),
+          Text(
+            'Keanggotaan Resmi: Maks. 1 Poktan ($_poktanName) • Bebas Jual ke Banyak Toko Mitra.',
+            style: GoogleFonts.plusJakartaSans(
+              fontSize: 11,
+              fontWeight: FontWeight.w600,
+              color: AppColors.primaryDark,
+            ),
+          ),
+          if (_harvestReports.isNotEmpty) ...[
+            const SizedBox(height: 8),
+            ..._harvestReports.take(2).map((hr) {
+              return Container(
+                width: double.infinity,
+                margin: const EdgeInsets.only(top: 6),
+                padding: const EdgeInsets.all(10),
+                decoration: BoxDecoration(
+                  color: AppColors.background,
+                  borderRadius: BorderRadius.circular(10),
+                  border: Border.all(color: AppColors.outline),
+                ),
+                child: Text(
+                  '${hr['status_tanam']} • ${hr['komoditas']} (${hr['estimasi_berat_kg']} kg) — ${hr['catatan'] ?? ''}',
+                  style: GoogleFonts.plusJakartaSans(
+                    fontSize: 11.5,
+                    color: AppColors.textPrimary,
+                  ),
+                ),
+              );
+            }),
+          ],
+        ],
+      ),
+    );
+  }
+
+  Widget _buildCardPurchaseOffers() {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: AppColors.warningSoft,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: AppColors.accent.withValues(alpha: 0.4)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              const Icon(LucideIcons.badgeDollarSign, size: 18, color: AppColors.warning),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  'Tawaran Beli & Kontrak Panen Offtaker',
+                  style: GoogleFonts.plusJakartaSans(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w800,
+                    color: AppColors.textPrimary,
+                  ),
+                ),
+              ),
+              Text(
+                '${_purchaseOffers.length}',
+                style: GoogleFonts.plusJakartaSans(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w800,
+                  color: AppColors.warning,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          if (_purchaseOffers.isEmpty)
+            Text(
+              'Belum ada tawaran pembelian masuk dari Admin Toko sekitar.',
+              style: GoogleFonts.plusJakartaSans(
+                fontSize: 11.5,
+                color: AppColors.textSecondary,
+              ),
+            )
+          else
+            ..._purchaseOffers.take(3).map((offer) {
+              final id = offer['id'].toString();
+              final status = (offer['status'] ?? 'OFFER_SENT').toString();
+              final market = offer['harga_acuan_pasar_per_kg'] ?? 0;
+              final trans = offer['biaya_transport_per_kg'] ?? 0;
+              final ops = offer['biaya_operasional_lain_per_kg'] ?? 0;
+              final net = offer['harga_tawar_bersih_per_kg'] ?? 0;
+              final isBusy = _respondingOfferId == id;
+
+              return Container(
+                margin: const EdgeInsets.only(bottom: 8),
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: AppColors.outline),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Expanded(
+                          child: Text(
+                            '${offer['store_name'] ?? 'Toko Mitra'} • ${offer['komoditas']}',
+                            style: GoogleFonts.plusJakartaSans(
+                              fontSize: 12.5,
+                              fontWeight: FontWeight.w800,
+                            ),
+                          ),
+                        ),
+                        Text(
+                          status,
+                          style: GoogleFonts.plusJakartaSans(
+                            fontSize: 9.5,
+                            fontWeight: FontWeight.w800,
+                            color: AppColors.primary,
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      'Acuan Pasar: Rp $market/kg - Transport: Rp $trans - Ops: Rp $ops => Harga Bersih: Rp $net/kg',
+                      style: GoogleFonts.plusJakartaSans(
+                        fontSize: 11,
+                        fontWeight: FontWeight.w600,
+                        color: AppColors.primaryDark,
+                      ),
+                    ),
+                    if (status == 'OFFER_SENT') ...[
+                      const SizedBox(height: 8),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.end,
+                        children: [
+                          TextButton(
+                            onPressed: isBusy
+                                ? null
+                                : () => _respondOffer(id, 'REJECTED'),
+                            child: const Text('Tolak'),
+                          ),
+                          const SizedBox(width: 6),
+                          ElevatedButton(
+                            onPressed: isBusy
+                                ? null
+                                : () => _respondOffer(id, 'ACCEPTED_CONTRACT'),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: AppColors.primary,
+                              foregroundColor: Colors.white,
+                              elevation: 0,
+                            ),
+                            child: Text(
+                              isBusy ? 'Menyimpan...' : 'Setuju Kontrak Panen',
+                              style: GoogleFonts.plusJakartaSans(
+                                fontSize: 11.5,
+                                fontWeight: FontWeight.w700,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ],
+                ),
+              );
+            }),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildCardVillageForumAndFertilizer() {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: AppColors.outline),
+        boxShadow: AppColors.softShadow,
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              const Icon(LucideIcons.mapPin, size: 18, color: AppColors.primary),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  'Forum Privat Desa & Info Pupuk Subsidi',
+                  style: GoogleFonts.plusJakartaSans(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w700,
+                    color: AppColors.textPrimary,
+                  ),
+                ),
+              ),
+              TextButton(
+                onPressed: _showVillageQuestionModal,
+                child: Text(
+                  '+ Tanya PPL',
+                  style: GoogleFonts.plusJakartaSans(
+                    fontSize: 11.5,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          if (_villageForumPosts.isEmpty)
+            Text(
+              'Belum ada pengumuman titik ambil pupuk atau diskusi desa terbaru.',
+              style: GoogleFonts.plusJakartaSans(
+                fontSize: 11.5,
+                color: AppColors.textMuted,
+              ),
+            )
+          else
+            ..._villageForumPosts.take(3).map((post) {
+              return Container(
+                width: double.infinity,
+                margin: const EdgeInsets.only(top: 8),
+                padding: const EdgeInsets.all(10),
+                decoration: BoxDecoration(
+                  color: AppColors.surfaceSoft,
+                  borderRadius: BorderRadius.circular(10),
+                  border: Border.all(color: AppColors.surfaceSoftBorder),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      '${post['kategori']} • ${post['judul']}',
+                      style: GoogleFonts.plusJakartaSans(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w800,
+                        color: AppColors.primaryDark,
+                      ),
+                    ),
+                    const SizedBox(height: 3),
+                    Text(
+                      post['isi_pesan']?.toString() ?? '',
+                      style: GoogleFonts.plusJakartaSans(
+                        fontSize: 11.5,
+                        color: AppColors.textPrimary,
+                      ),
+                    ),
+                    if (post['titik_ambil_pupuk'] != null) ...[
+                      const SizedBox(height: 4),
+                      Text(
+                        'Titik Ambil Pupuk: ${post['titik_ambil_pupuk']}',
+                        style: GoogleFonts.plusJakartaSans(
+                          fontSize: 11,
+                          fontWeight: FontWeight.w700,
+                          color: AppColors.primary,
+                        ),
+                      ),
+                    ],
+                  ],
+                ),
+              );
+            }),
         ],
       ),
     );

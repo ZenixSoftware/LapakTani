@@ -2,6 +2,85 @@ const { v4: uuidv4 } = require('uuid');
 const pool = require('../config/db');
 const redisClient = require('../config/redis');
 
+function formatProductPricing(row) {
+  const basePrice = Number(row.price_per_kg || row.price || 0);
+  const discountPercent = Number(row.discount_percent || 0);
+  const rawDiscountPrice = row.discount_price !== null && row.discount_price !== undefined ? Number(row.discount_price) : null;
+  const effectiveDiscountPrice =
+    discountPercent > 0
+      ? (rawDiscountPrice && rawDiscountPrice > 0 && rawDiscountPrice < basePrice
+          ? rawDiscountPrice
+          : Math.round(basePrice * (1 - discountPercent / 100)))
+      : (rawDiscountPrice && rawDiscountPrice > 0 && rawDiscountPrice < basePrice ? rawDiscountPrice : null);
+  const minWholesaleQty = Math.max(2, parseInt(row.min_wholesale_qty || 30, 10));
+  const isWholesaleEnabled =
+    row.is_wholesale_enabled === undefined || row.is_wholesale_enabled === null
+      ? true
+      : Boolean(Number(row.is_wholesale_enabled));
+  const wholesalePrice =
+    row.wholesale_price !== null && row.wholesale_price !== undefined && Number(row.wholesale_price) > 0
+      ? Number(row.wholesale_price)
+      : Math.round(basePrice * 0.85);
+
+  return {
+    ...row,
+    price: basePrice,
+    price_per_kg: basePrice,
+    base_price: basePrice,
+    discount_percent: discountPercent,
+    discount_price: effectiveDiscountPrice,
+    effective_retail_price: effectiveDiscountPrice || basePrice,
+    is_wholesale_enabled: isWholesaleEnabled,
+    min_wholesale_qty: minWholesaleQty,
+    wholesale_price: wholesalePrice,
+    store_village_id: row.store_village_id ? Number(row.store_village_id) : 101,
+    in_cart_count: Number(row.in_cart_count || 0),
+    in_cart_users_count: Number(row.in_cart_users_count || 0),
+    in_cart_qty: Number(row.in_cart_qty || 0),
+    in_cart_total_qty: Number(row.in_cart_total_qty || 0),
+  };
+}
+
+function normalizePricingInput(basePrice, body = {}) {
+  const rawDiscPct = body.discount_percent !== undefined ? parseFloat(body.discount_percent) : 0;
+  const rawDiscPrice =
+    body.discount_price !== undefined && body.discount_price !== null && String(body.discount_price).trim() !== ''
+      ? parseFloat(body.discount_price)
+      : null;
+
+  let discountPercent = !isNaN(rawDiscPct) && rawDiscPct > 0 && rawDiscPct < 95 ? Number(rawDiscPct.toFixed(2)) : 0;
+  let discountPrice = rawDiscPrice && !isNaN(rawDiscPrice) && rawDiscPrice > 0 && rawDiscPrice < basePrice ? rawDiscPrice : null;
+
+  if (discountPercent > 0 && discountPrice === null) {
+    discountPrice = Math.round(basePrice * (1 - discountPercent / 100));
+  } else if (discountPrice !== null && discountPercent === 0 && basePrice > 0) {
+    discountPercent = Number((((basePrice - discountPrice) / basePrice) * 100).toFixed(2));
+  }
+
+  const rawEnabled = body.is_wholesale_enabled;
+  const isWholesaleEnabled =
+    rawEnabled === false || rawEnabled === 0 || String(rawEnabled).toLowerCase() === 'false' || String(rawEnabled) === '0'
+      ? 0
+      : 1;
+
+  const parsedMinQty = parseInt(body.min_wholesale_qty || 30, 10);
+  const minWholesaleQty = !isNaN(parsedMinQty) && parsedMinQty >= 2 ? parsedMinQty : 30;
+
+  const parsedWholesale =
+    body.wholesale_price !== undefined && body.wholesale_price !== null && String(body.wholesale_price).trim() !== ''
+      ? parseFloat(body.wholesale_price)
+      : Math.round(basePrice * 0.85);
+  const wholesalePrice = !isNaN(parsedWholesale) && parsedWholesale > 0 ? parsedWholesale : Math.round(basePrice * 0.85);
+
+  return {
+    discount_percent: discountPercent,
+    discount_price: discountPrice,
+    is_wholesale_enabled: isWholesaleEnabled,
+    min_wholesale_qty: minWholesaleQty,
+    wholesale_price: wholesalePrice,
+  };
+}
+
 /**
  * Public catalog
  */
@@ -47,6 +126,13 @@ const getProducts = async (req, res) => {
         p.id, 
         p.title, 
         p.price_per_kg, 
+        p.price,
+        p.discount_percent,
+        p.discount_price,
+        p.is_wholesale_enabled,
+        p.min_wholesale_qty,
+        p.wholesale_price,
+        p.store_village_id,
         p.stock_kg, 
         p.image_url, 
         p.unit_id,
@@ -116,13 +202,7 @@ const getProducts = async (req, res) => {
       }
     }
 
-    const formattedRows = rows.map(row => ({
-      ...row,
-      in_cart_count: Number(row.in_cart_count || 0),
-      in_cart_users_count: Number(row.in_cart_users_count || 0),
-      in_cart_qty: Number(row.in_cart_qty || 0),
-      in_cart_total_qty: Number(row.in_cart_total_qty || 0)
-    }));
+    const formattedRows = rows.map(formatProductPricing);
 
     if (!sanitizedSearch && redisClient.isOpen) {
       try {
@@ -167,6 +247,13 @@ const getFarmerProducts = async (req, res) => {
         p.id, 
         p.title, 
         p.price_per_kg, 
+        p.price,
+        p.discount_percent,
+        p.discount_price,
+        p.is_wholesale_enabled,
+        p.min_wholesale_qty,
+        p.wholesale_price,
+        p.store_village_id,
         p.stock_kg, 
         p.image_url, 
         p.description,
@@ -202,13 +289,7 @@ const getFarmerProducts = async (req, res) => {
 
     const [rows] = await pool.query(query, [farmerId]);
 
-    const formattedRows = rows.map(row => ({
-      ...row,
-      in_cart_count: Number(row.in_cart_count || 0),
-      in_cart_users_count: Number(row.in_cart_users_count || 0),
-      in_cart_qty: Number(row.in_cart_qty || 0),
-      in_cart_total_qty: Number(row.in_cart_total_qty || 0)
-    }));
+    const formattedRows = rows.map(formatProductPricing);
 
     return res.status(200).json({
       success: true,
@@ -238,7 +319,21 @@ const createProduct = async (req, res) => {
       });
     }
 
-    const { title, price_per_kg, stock_kg, commodity_id, grade_id, unit_id, description, image_url, image_urls } = req.body;
+    const {
+      title,
+      price_per_kg,
+      price,
+      stock_kg,
+      commodity_id,
+      grade_id,
+      unit_id,
+      description,
+      image_url,
+      image_urls,
+      store_village_id
+    } = req.body;
+
+    const effectiveRawPrice = price_per_kg !== undefined && price_per_kg !== null ? price_per_kg : price;
 
     if (!title || String(title).trim().length === 0) {
       return res.status(400).json({
@@ -247,7 +342,7 @@ const createProduct = async (req, res) => {
       });
     }
 
-    if (price_per_kg === undefined || price_per_kg === null || String(price_per_kg).trim() === '') {
+    if (effectiveRawPrice === undefined || effectiveRawPrice === null || String(effectiveRawPrice).trim() === '') {
       return res.status(400).json({
         success: false,
         message: 'Harga per kg wajib diisi.'
@@ -261,8 +356,10 @@ const createProduct = async (req, res) => {
       });
     }
 
-    const numericPrice = parseFloat(price_per_kg);
+    const numericPrice = parseFloat(effectiveRawPrice);
     const numericStock = parseFloat(stock_kg);
+    const pricing = normalizePricingInput(numericPrice, req.body);
+    const villageId = store_village_id ? parseInt(store_village_id, 10) : 101;
 
     if (isNaN(numericPrice) || numericPrice < 0 || isNaN(numericStock) || numericStock < 0) {
       return res.status(400).json({
@@ -330,8 +427,8 @@ const createProduct = async (req, res) => {
 
     await pool.query(
       `INSERT INTO products 
-       (id, farmer_id, commodity_id, grade_id, unit_id, title, description, price_per_kg, stock_kg, price, stock, image_url, created_at)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())`,
+       (id, farmer_id, commodity_id, grade_id, unit_id, title, description, price_per_kg, stock_kg, price, stock, image_url, discount_percent, discount_price, is_wholesale_enabled, min_wholesale_qty, wholesale_price, store_village_id, created_at)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())`,
       [
         productId,
         farmerId,
@@ -344,7 +441,13 @@ const createProduct = async (req, res) => {
         numericStock,
         numericPrice,
         Math.floor(numericStock),
-        primaryImageUrl
+        primaryImageUrl,
+        pricing.discount_percent,
+        pricing.discount_price,
+        pricing.is_wholesale_enabled,
+        pricing.min_wholesale_qty,
+        pricing.wholesale_price,
+        villageId
       ]
     );
 
@@ -371,7 +474,7 @@ const createProduct = async (req, res) => {
     return res.status(201).json({
       success: true,
       message: 'Produk berhasil ditambahkan ke katalog.',
-      data: {
+      data: formatProductPricing({
         id: productId,
         farmer_id: farmerId,
         commodity_id: resolvedCommodityId,
@@ -379,10 +482,13 @@ const createProduct = async (req, res) => {
         unit_id: selectedUnitId,
         title: title.trim(),
         price_per_kg: numericPrice,
+        price: numericPrice,
         stock_kg: numericStock,
         image_url: primaryImageUrl,
-        image_urls: formattedImageUrls
-      }
+        image_urls: formattedImageUrls,
+        ...pricing,
+        store_village_id: villageId
+      })
     });
 
   } catch (error) {
@@ -450,6 +556,7 @@ const deleteProduct = async (req, res) => {
 const updateProduct = async (req, res) => {
   try {
     const farmerId = req.user ? req.user.id : null;
+    const userRole = String(req.user?.role || '').toLowerCase();
     const { id } = req.params;
 
     if (!farmerId) {
@@ -459,11 +566,30 @@ const updateProduct = async (req, res) => {
       });
     }
 
-    const { title, price_per_kg, stock_kg, commodity_id, grade_id, unit_id, description, image_url, image_urls } = req.body;
+    const {
+      title,
+      price_per_kg,
+      price,
+      stock_kg,
+      commodity_id,
+      grade_id,
+      unit_id,
+      description,
+      image_url,
+      image_urls,
+      discount_percent,
+      discount_price,
+      is_wholesale_enabled,
+      min_wholesale_qty,
+      wholesale_price
+    } = req.body;
 
+    const isAdminStore = userRole === 'admin' || Number(req.user?.role_id) === 3;
     const [existing] = await pool.query(
-      'SELECT id FROM products WHERE id = ? AND farmer_id = ? LIMIT 1',
-      [id, farmerId]
+      isAdminStore
+        ? 'SELECT * FROM products WHERE id = ? LIMIT 1'
+        : 'SELECT * FROM products WHERE id = ? AND farmer_id = ? LIMIT 1',
+      isAdminStore ? [id] : [id, farmerId]
     );
 
     if (existing.length === 0) {
@@ -472,6 +598,7 @@ const updateProduct = async (req, res) => {
         message: 'Produk tidak ditemukan atau bukan milik Anda.'
       });
     }
+    const currentProduct = existing[0];
 
     const updates = [];
     const params = [];
@@ -496,21 +623,57 @@ const updateProduct = async (req, res) => {
       updates.push('title = ?');
       params.push(String(title).trim());
     }
-    if (price_per_kg !== undefined && price_per_kg !== null) {
-      const numPrice = parseFloat(price_per_kg);
+
+    const effectiveRawPrice = price_per_kg !== undefined && price_per_kg !== null ? price_per_kg : price;
+    let resolvedBasePrice = Number(currentProduct.price_per_kg || currentProduct.price || 0);
+    if (effectiveRawPrice !== undefined && effectiveRawPrice !== null) {
+      const numPrice = parseFloat(effectiveRawPrice);
       if (isNaN(numPrice) || numPrice < 0) {
         return res.status(400).json({ success: false, message: 'Harga per kg harus angka positif.' });
       }
-      updates.push('price_per_kg = ?');
-      params.push(numPrice);
+      resolvedBasePrice = numPrice;
+      updates.push('price_per_kg = ?', 'price = ?');
+      params.push(numPrice, numPrice);
     }
+
+    const hasPricingChange =
+      discount_percent !== undefined ||
+      discount_price !== undefined ||
+      is_wholesale_enabled !== undefined ||
+      min_wholesale_qty !== undefined ||
+      wholesale_price !== undefined;
+
+    if (hasPricingChange) {
+      const pricing = normalizePricingInput(resolvedBasePrice, {
+        discount_percent: discount_percent !== undefined ? discount_percent : currentProduct.discount_percent,
+        discount_price: discount_price !== undefined ? discount_price : (discount_percent !== undefined ? null : currentProduct.discount_price),
+        is_wholesale_enabled: is_wholesale_enabled !== undefined ? is_wholesale_enabled : currentProduct.is_wholesale_enabled,
+        min_wholesale_qty: min_wholesale_qty !== undefined ? min_wholesale_qty : currentProduct.min_wholesale_qty,
+        wholesale_price: wholesale_price !== undefined ? wholesale_price : currentProduct.wholesale_price
+      });
+      updates.push(
+        'discount_percent = ?',
+        'discount_price = ?',
+        'is_wholesale_enabled = ?',
+        'min_wholesale_qty = ?',
+        'wholesale_price = ?'
+      );
+      params.push(
+        pricing.discount_percent,
+        pricing.discount_price,
+        pricing.is_wholesale_enabled,
+        pricing.min_wholesale_qty,
+        pricing.wholesale_price
+      );
+    }
+
     if (stock_kg !== undefined && stock_kg !== null) {
       const numStock = parseFloat(stock_kg);
       if (isNaN(numStock) || numStock < 0) {
         return res.status(400).json({ success: false, message: 'Stok kg harus angka positif.' });
       }
-      updates.push('stock_kg = ?');
-      params.push(numStock);
+      updates.push('stock_kg = ?', 'stock = ?');
+      params.push(numStock, Math.floor(numStock));
     }
     if (commodity_id !== undefined && commodity_id !== null) {
       updates.push('commodity_id = ?');
@@ -534,9 +697,11 @@ const updateProduct = async (req, res) => {
     }
 
     if (updates.length > 0) {
-      params.push(id, farmerId);
-      await pool.query(`UPDATE products SET ${updates.join(', ')} WHERE id = ? AND farmer_id = ?`, params);
+      params.push(id);
+      await pool.query(`UPDATE products SET ${updates.join(', ')} WHERE id = ?`, params);
     }
+
+    const [reloaded] = await pool.query('SELECT * FROM products WHERE id = ? LIMIT 1', [id]);
 
     if (redisClient.isOpen) {
       try {
@@ -548,7 +713,8 @@ const updateProduct = async (req, res) => {
 
     return res.status(200).json({
       success: true,
-      message: 'Produk berhasil diperbarui.'
+      message: 'Produk dan pengaturan harga berhasil diperbarui.',
+      data: reloaded[0] ? formatProductPricing(reloaded[0]) : null
     });
   } catch (error) {
     console.error('[PRODUCTS] Error updating product:', error.message);

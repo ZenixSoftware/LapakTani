@@ -6,6 +6,7 @@ export type PortalModuleTab =
   | 'peta-lahan'
   | 'data-sensor'
   | 'rag-decision'
+  | 'toko-forum'
   | 'policy-brief'
   | 'validasi';
 
@@ -141,6 +142,29 @@ export const Sidebar: React.FC<SidebarProps> = ({
                   }`}
                 >
                   {pendingCount}
+                </span>
+              </button>
+              <button
+                type="button"
+                onClick={() => onTabChange('toko-forum')}
+                className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-[13px] transition-all ${
+                  activeTab === 'toko-forum'
+                    ? 'bg-[#22C55E] text-[#052e16] font-extrabold shadow-md shadow-emerald-950/30'
+                    : 'text-emerald-100/85 hover:bg-[#166534] hover:text-white font-semibold'
+                }`}
+              >
+                <div className="flex items-center gap-3">
+                  <span
+                    className={`material-symbols-outlined text-[20px] ${
+                      activeTab === 'toko-forum' ? 'text-[#052e16]' : 'text-emerald-200/80'
+                    }`}
+                  >
+                    storefront
+                  </span>
+                  <span>Toko &amp; Forum</span>
+                </div>
+                <span className="px-2 py-0.5 rounded-md text-[10px] font-extrabold bg-white/10 text-emerald-100 border border-white/10">
+                  DESA
                 </span>
               </button>
             </nav>

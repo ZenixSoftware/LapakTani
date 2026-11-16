@@ -9,6 +9,7 @@ import '../../core/widgets/lapaktani_text_field.dart';
 import '../profile/complete_farmer_profile_screen.dart';
 import '../home/home_dashboard_screen.dart';
 import 'auth_repository.dart';
+import 'store_registration_screen.dart';
 
 class RegisterScreen extends StatefulWidget {
   const RegisterScreen({super.key});
@@ -786,6 +787,31 @@ class _RegisterScreenState extends State<RegisterScreen> {
                         ),
                       ),
                     ],
+                  ),
+                  const SizedBox(height: 8),
+                  Center(
+                    child: TextButton.icon(
+                      onPressed: () {
+                        Navigator.of(context).push(
+                          MaterialPageRoute(
+                            builder: (_) => const StoreRegistrationScreen(),
+                          ),
+                        );
+                      },
+                      icon: const Icon(
+                        LucideIcons.store,
+                        size: 16,
+                        color: AppColors.primary,
+                      ),
+                      label: const Text(
+                        'Daftar Pengajuan Buka Toko Desa (2 Tahap)',
+                        style: TextStyle(
+                          fontSize: 12.5,
+                          fontWeight: FontWeight.w700,
+                          color: AppColors.primary,
+                        ),
+                      ),
+                    ),
                   ),
                   const SizedBox(height: 16),
                 ],

@@ -1,4 +1,4 @@
-const API_BASE_URL = (import.meta.env.VITE_API_BASE_URL || 'https://api-lapaktani.velosixraptor.my.id/api').replace(/\/+$/, '');
+﻿const API_BASE_URL = (import.meta.env.VITE_API_BASE_URL || 'https://api-lapaktani.velosixraptor.my.id/api').replace(/\/+$/, '');
 const API_ORIGIN = API_BASE_URL.replace(/\/api$/, '');
 const API_KEY = import.meta.env.VITE_API_KEY || '';
 export const TOKEN_KEY = 'lapaktani_token';
@@ -457,4 +457,285 @@ export const updateDecisionReportStatus = async (
   }
   const result = await response.json();
   return result.data as DecisionReportRecord;
+};
+
+// ============================================================================
+// Streamlined Agro Supply Chain: Fertilizer, Store Quota & Scoped Forums
+// ============================================================================
+
+export interface VillageQuotaRecord {
+  id: number;
+  district_id: number;
+  name: string;
+  district_name: string;
+  postal_code: string;
+  is_store_quota_enabled: boolean;
+  max_stores_quota: number;
+  approved_stores_count: number;
+  pending_stores_count: number;
+  is_quota_full: boolean;
+  remaining_quota: number | null;
+}
+
+export interface FertilizerAllocationRecord {
+  id: string;
+  village_id: number;
+  district_id: number;
+  village_name: string;
+  penyuluh_id: string;
+  penyuluh_name: string;
+  jenis_pupuk: string;
+  jumlah_ton: number | string;
+  alasan_kebutuhan?: string | null;
+  status: 'USULAN_PPL' | 'KONFIRMASI_DINAS' | 'DIKIRIM_DINAS' | 'DITERIMA_DESA';
+  titik_ambil_desa?: string | null;
+  catatan_dinas?: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface StoreApplicationRecord {
+  id: string;
+  user_id: string;
+  nama_toko: string;
+  tipe_pengelola: 'POKTAN' | 'KOPERASI' | 'PENGEPUL_DESA';
+  nik?: string | null;
+  no_hp?: string | null;
+  village_id: number;
+  village_name: string;
+  resolved_village_name?: string;
+  postal_code?: string | null;
+  alamat_lengkap?: string | null;
+  dokumen_syarat_url?: string | null;
+  default_min_wholesale_kg: number;
+  status: 'DRAFT_FROZEN' | 'PENDING_PPL' | 'APPROVED' | 'REJECTED';
+  rejection_reason?: string | null;
+  applicant_name?: string | null;
+  applicant_email?: string | null;
+  is_store_quota_enabled?: number | boolean;
+  max_stores_quota?: number;
+  created_at: string;
+}
+
+export interface PplForumPost {
+  id: string;
+  penyuluh_id: string;
+  penyuluh_name: string;
+  bpp_kecamatan: string;
+  topik: string;
+  komoditas: string;
+  isi_diskusi: string;
+  rekomendasi_teknis?: string | null;
+  likes_count: number;
+  created_at: string;
+}
+
+export interface VillageForumPost {
+  id: string;
+  village_id: number;
+  village_name: string;
+  author_id: string;
+  author_name: string;
+  author_role: 'penyuluh' | 'petani' | 'admin';
+  kategori: 'INFO_PUPUK' | 'TANYA_JAWAB' | 'PERINGATAN_HAMA' | 'ARAHAN_TANAM';
+  judul: string;
+  isi_pesan: string;
+  titik_ambil_pupuk?: string | null;
+  created_at: string;
+}
+
+export const fetchFertilizerSubsidies = async (): Promise<FertilizerAllocationRecord[]> => {
+  const response = await authFetch(`${API_BASE_URL}/dinas/fertilizer-subsidies`);
+  if (!response.ok) {
+    throw new Error(`Gagal memuat data pupuk subsidi (${response.status})`);
+  }
+  const result = await response.json();
+  return (result.data || []) as FertilizerAllocationRecord[];
+};
+
+export const confirmFertilizerSubsidy = async (payload: {
+  allocation_id?: string;
+  village_id?: number;
+  village_name?: string;
+  jenis_pupuk?: string;
+  jumlah_ton?: number;
+  titik_ambil_desa?: string;
+  catatan_dinas?: string;
+  status?: 'KONFIRMASI_DINAS' | 'DIKIRIM_DINAS';
+}): Promise<FertilizerAllocationRecord> => {
+  const response = await authFetch(`${API_BASE_URL}/dinas/fertilizer-subsidies/confirm`, {
+    method: 'POST',
+    body: JSON.stringify(payload),
+  });
+  if (!response.ok) {
+    const err = await response.json().catch(() => ({}));
+    throw new Error(err.message || `Gagal mengonfirmasi pupuk (${response.status})`);
+  }
+  const result = await response.json();
+  return result.data as FertilizerAllocationRecord;
+};
+
+export const dispatchFertilizerSubsidy = async (
+  id: string,
+  payload: {
+    status: 'KONFIRMASI_DINAS' | 'DIKIRIM_DINAS' | 'DITERIMA_DESA';
+    jumlah_ton?: number;
+    titik_ambil_desa?: string;
+    catatan_dinas?: string;
+  }
+): Promise<FertilizerAllocationRecord> => {
+  const response = await authFetch(`${API_BASE_URL}/dinas/fertilizer-subsidies/${id}/dispatch`, {
+    method: 'PUT',
+    body: JSON.stringify(payload),
+  });
+  if (!response.ok) {
+    const err = await response.json().catch(() => ({}));
+    throw new Error(err.message || `Gagal memperbarui status pupuk (${response.status})`);
+  }
+  const result = await response.json();
+  return result.data as FertilizerAllocationRecord;
+};
+
+export const proposeFertilizerSubsidy = async (payload: {
+  village_id: number;
+  jenis_pupuk: string;
+  jumlah_ton: number;
+  alasan_kebutuhan: string;
+  titik_ambil_desa?: string;
+}): Promise<FertilizerAllocationRecord> => {
+  const response = await authFetch(`${API_BASE_URL}/penyuluh/fertilizer-request`, {
+    method: 'POST',
+    body: JSON.stringify(payload),
+  });
+  if (!response.ok) {
+    const err = await response.json().catch(() => ({}));
+    throw new Error(err.message || `Gagal mengusulkan pupuk (${response.status})`);
+  }
+  const result = await response.json();
+  return result.data as FertilizerAllocationRecord;
+};
+
+export const markFertilizerReceivedByPpl = async (
+  id: string,
+  titik_ambil_desa?: string
+): Promise<FertilizerAllocationRecord> => {
+  const response = await authFetch(`${API_BASE_URL}/penyuluh/fertilizer-subsidies/${id}/receive`, {
+    method: 'PUT',
+    body: JSON.stringify({ titik_ambil_desa }),
+  });
+  if (!response.ok) {
+    const err = await response.json().catch(() => ({}));
+    throw new Error(err.message || `Gagal mencatat penerimaan pupuk desa (${response.status})`);
+  }
+  const result = await response.json();
+  return result.data as FertilizerAllocationRecord;
+};
+
+export const fetchStoreApplications = async (): Promise<{
+  applications: StoreApplicationRecord[];
+  villages: VillageQuotaRecord[];
+}> => {
+  const response = await authFetch(`${API_BASE_URL}/penyuluh/store-applications`);
+  if (!response.ok) {
+    throw new Error(`Gagal memuat pengajuan pembukaan toko (${response.status})`);
+  }
+  const result = await response.json();
+  return {
+    applications: (result.data || []) as StoreApplicationRecord[],
+    villages: (result.villages || []) as VillageQuotaRecord[],
+  };
+};
+
+export const verifyStoreApplication = async (
+  id: string,
+  status: 'APPROVED' | 'REJECTED',
+  rejection_reason?: string
+): Promise<StoreApplicationRecord> => {
+  const response = await authFetch(`${API_BASE_URL}/penyuluh/store-applications/${id}/verify`, {
+    method: 'PUT',
+    body: JSON.stringify({ status, rejection_reason }),
+  });
+  if (!response.ok) {
+    const err = await response.json().catch(() => ({}));
+    throw new Error(err.message || `Gagal memverifikasi toko (${response.status})`);
+  }
+  const result = await response.json();
+  return result.data as StoreApplicationRecord;
+};
+
+export const updateVillageStoreQuota = async (payload: {
+  village_id: number;
+  is_store_quota_enabled: boolean;
+  max_stores_quota: number;
+  postal_code?: string;
+}): Promise<{ data: VillageQuotaRecord | null; villages: VillageQuotaRecord[] }> => {
+  const response = await authFetch(`${API_BASE_URL}/penyuluh/village-store-quota`, {
+    method: 'PUT',
+    body: JSON.stringify(payload),
+  });
+  if (!response.ok) {
+    const err = await response.json().catch(() => ({}));
+    throw new Error(err.message || `Gagal memperbarui kuota toko desa (${response.status})`);
+  }
+  const result = await response.json();
+  return {
+    data: result.data as VillageQuotaRecord | null,
+    villages: (result.villages || []) as VillageQuotaRecord[],
+  };
+};
+
+export const fetchInterPplForum = async (): Promise<PplForumPost[]> => {
+  const response = await authFetch(`${API_BASE_URL}/penyuluh/inter-ppl-forum`);
+  if (!response.ok) {
+    throw new Error(`Gagal memuat forum antar-penyuluh (${response.status})`);
+  }
+  const result = await response.json();
+  return (result.data || []) as PplForumPost[];
+};
+
+export const createInterPplForumPost = async (payload: {
+  topik: string;
+  komoditas?: string;
+  isi_diskusi: string;
+  rekomendasi_teknis?: string;
+}): Promise<PplForumPost> => {
+  const response = await authFetch(`${API_BASE_URL}/penyuluh/inter-ppl-forum`, {
+    method: 'POST',
+    body: JSON.stringify(payload),
+  });
+  if (!response.ok) {
+    const err = await response.json().catch(() => ({}));
+    throw new Error(err.message || `Gagal mengirim diskusi antar-penyuluh (${response.status})`);
+  }
+  const result = await response.json();
+  return result.data as PplForumPost;
+};
+
+export const fetchVillageForum = async (villageId?: number): Promise<VillageForumPost[]> => {
+  const qs = villageId ? `?village_id=${villageId}` : '';
+  const response = await authFetch(`${API_BASE_URL}/penyuluh/village-forum${qs}`);
+  if (!response.ok) {
+    throw new Error(`Gagal memuat forum privat desa (${response.status})`);
+  }
+  const result = await response.json();
+  return (result.data || []) as VillageForumPost[];
+};
+
+export const createVillageForumPost = async (payload: {
+  village_id: number;
+  kategori: 'INFO_PUPUK' | 'TANYA_JAWAB' | 'PERINGATAN_HAMA' | 'ARAHAN_TANAM';
+  judul: string;
+  isi_pesan: string;
+  titik_ambil_pupuk?: string;
+}): Promise<VillageForumPost> => {
+  const response = await authFetch(`${API_BASE_URL}/penyuluh/village-forum`, {
+    method: 'POST',
+    body: JSON.stringify(payload),
+  });
+  if (!response.ok) {
+    const err = await response.json().catch(() => ({}));
+    throw new Error(err.message || `Gagal mengirim pengumuman desa (${response.status})`);
+  }
+  const result = await response.json();
+  return result.data as VillageForumPost;
 };

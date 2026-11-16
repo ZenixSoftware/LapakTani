@@ -29,7 +29,13 @@ class _PenyuluhHubScreenState extends State<PenyuluhHubScreen> {
   bool _isLoading = true;
   List<PestReportModel> _pestReports = [];
   List<Map<String, dynamic>> _pendingFarmers = [];
+  List<Map<String, dynamic>> _storeApps = [];
+  List<Map<String, dynamic>> _villageQuotas = [];
+  List<Map<String, dynamic>> _villageForumPosts = [];
+  List<Map<String, dynamic>> _interPplPosts = [];
+  final int _selectedForumVillageId = 109;
   String? _verifyingFarmerId;
+  String? _busyStoreId;
   int _pendingVerificationCount = 0;
 
   @override
@@ -44,13 +50,43 @@ class _PenyuluhHubScreenState extends State<PenyuluhHubScreen> {
       final results = await Future.wait([
         _pestAlertService.getPestReports(),
         _apiService.getPendingFarmers().catchError((_) => <Map<String, dynamic>>[]),
+        _apiService
+            .getStoreApplicationsForPpl()
+            .catchError((_) => <String, dynamic>{}),
+        _apiService
+            .getVillageForumPosts(villageId: _selectedForumVillageId)
+            .catchError((_) => <Map<String, dynamic>>[]),
+        _apiService
+            .getInterPplForumPosts()
+            .catchError((_) => <Map<String, dynamic>>[]),
       ]);
       final reports = results[0] as List<PestReportModel>;
       final pending = results[1] as List<Map<String, dynamic>>;
+      final storeRes = results[2] as Map<String, dynamic>;
+      final vPosts = results[3] as List<Map<String, dynamic>>;
+      final pplPosts = results[4] as List<Map<String, dynamic>>;
+
+      final rawApps = storeRes['data'] is List
+          ? (storeRes['data'] as List)
+              .whereType<Map>()
+              .map((e) => Map<String, dynamic>.from(e))
+              .toList()
+          : <Map<String, dynamic>>[];
+      final rawQuotas = storeRes['villages'] is List
+          ? (storeRes['villages'] as List)
+              .whereType<Map>()
+              .map((e) => Map<String, dynamic>.from(e))
+              .toList()
+          : <Map<String, dynamic>>[];
+
       if (!mounted) return;
       setState(() {
         _pestReports = reports;
         _pendingFarmers = pending;
+        _storeApps = rawApps;
+        _villageQuotas = rawQuotas;
+        _villageForumPosts = vPosts;
+        _interPplPosts = pplPosts;
         _pendingVerificationCount = reports
             .where((r) => r.isEmergency && r.actionTaken == null)
             .length;
@@ -230,6 +266,18 @@ class _PenyuluhHubScreenState extends State<PenyuluhHubScreen> {
 
                     // CARD US-06: Validasi Calon Petani Mitra Tani
                     _buildFarmerVerificationSection(),
+                    const SizedBox(height: 16),
+
+                    // CARD: ACC Pembukaan Toko & Toggle Kuota Toko Desa
+                    _buildStoreApprovalAndQuotaSection(),
+                    const SizedBox(height: 16),
+
+                    // CARD: Forum Privat Desa & Pengumuman Pupuk Subsidi
+                    _buildVillageForumSection(),
+                    const SizedBox(height: 16),
+
+                    // CARD: Forum Khusus Antar-Penyuluh Lintas Desa
+                    _buildInterPplForumSection(),
                     const SizedBox(height: 16),
 
                     // CARD 2: Quick Action Hub (Publish Edukasi & Buka Feed)
@@ -988,6 +1036,667 @@ class _PenyuluhHubScreenState extends State<PenyuluhHubScreen> {
                 );
               },
             ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _verifyStoreApp(String id, String storeName, String status) async {
+    setState(() => _busyStoreId = id);
+    try {
+      await _apiService.verifyStoreApplicationByPpl(
+        id,
+        status,
+        reason: status == 'REJECTED' ? 'Lengkapi syarat toko desa.' : null,
+      );
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            status == 'APPROVED'
+                ? 'Toko $storeName disetujui menjadi Admin Toko!'
+                : 'Pengajuan toko $storeName ditolak.',
+          ),
+          backgroundColor:
+              status == 'APPROVED' ? AppColors.primary : AppColors.warning,
+        ),
+      );
+      await _loadPenyuluhData();
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Gagal memverifikasi toko: $e'),
+          backgroundColor: AppColors.error,
+        ),
+      );
+    } finally {
+      if (mounted) setState(() => _busyStoreId = null);
+    }
+  }
+
+  void _showVillageQuotaDialog() {
+    int selectedId = _selectedForumVillageId;
+    final found = _villageQuotas.firstWhere(
+      (v) => int.tryParse('${v['id']}') == selectedId,
+      orElse: () => <String, dynamic>{
+        'id': selectedId,
+        'is_store_quota_enabled': true,
+        'max_stores_quota': 3,
+      },
+    );
+    bool quotaOn = found['is_store_quota_enabled'] == true ||
+        found['is_store_quota_enabled'] == 1;
+    final maxCtrl = TextEditingController(
+      text: '${found['max_stores_quota'] ?? 3}',
+    );
+    bool saving = false;
+
+    showDialog<void>(
+      context: context,
+      builder: (ctx) => StatefulBuilder(
+        builder: (ctx, setDlgState) => AlertDialog(
+          title: const Text('Pengaturan Kuota Toko Desa'),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              if (_villageQuotas.isNotEmpty)
+                DropdownButtonFormField<int>(
+                  initialValue: selectedId,
+                  decoration: const InputDecoration(
+                    labelText: 'Pilih Desa Binaan',
+                    border: OutlineInputBorder(),
+                  ),
+                  items: _villageQuotas.map((v) {
+                    final id = int.tryParse('${v['id']}') ?? 109;
+                    return DropdownMenuItem<int>(
+                      value: id,
+                      child: Text('Desa ${v['name']}'),
+                    );
+                  }).toList(),
+                  onChanged: (val) {
+                    if (val != null) {
+                      setDlgState(() {
+                        selectedId = val;
+                        final match = _villageQuotas.firstWhere(
+                          (x) => int.tryParse('${x['id']}') == val,
+                          orElse: () => found,
+                        );
+                        quotaOn = match['is_store_quota_enabled'] == true ||
+                            match['is_store_quota_enabled'] == 1;
+                        maxCtrl.text = '${match['max_stores_quota'] ?? 3}';
+                      });
+                    }
+                  },
+                ),
+              const SizedBox(height: 8),
+              SwitchListTile(
+                contentPadding: EdgeInsets.zero,
+                value: quotaOn,
+                activeThumbColor: AppColors.primary,
+                title: const Text('Aktifkan Batas Kuota Toko'),
+                onChanged: (v) => setDlgState(() => quotaOn = v),
+              ),
+              TextField(
+                controller: maxCtrl,
+                keyboardType: TextInputType.number,
+                decoration: const InputDecoration(
+                  labelText: 'Maksimal Toko Aktif per Desa',
+                  border: OutlineInputBorder(),
+                ),
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(ctx),
+              child: const Text('Batal'),
+            ),
+            ElevatedButton(
+              onPressed: saving
+                  ? null
+                  : () async {
+                      setDlgState(() => saving = true);
+                      try {
+                        await _apiService.updateVillageStoreQuota({
+                          'village_id': selectedId,
+                          'is_store_quota_enabled': quotaOn,
+                          'max_stores_quota': int.tryParse(maxCtrl.text) ?? 3,
+                        });
+                        if (ctx.mounted) Navigator.pop(ctx);
+                        await _loadPenyuluhData();
+                      } catch (_) {
+                        setDlgState(() => saving = false);
+                      }
+                    },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.primary,
+                foregroundColor: Colors.white,
+              ),
+              child: Text(saving ? 'Menyimpan...' : 'Simpan Kuota'),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _showVillageForumPostModal() {
+    String kategori = 'INFO_PUPUK';
+    final judulCtrl = TextEditingController();
+    final isiCtrl = TextEditingController();
+    final pickupCtrl = TextEditingController(
+      text: 'Balai Poktan Harapan Dungkek (Depan Embung Desa)',
+    );
+    bool sending = false;
+
+    showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.white,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (ctx) => StatefulBuilder(
+        builder: (ctx, setModalState) => Padding(
+          padding: EdgeInsets.only(
+            left: 20,
+            right: 20,
+            top: 20,
+            bottom: MediaQuery.of(ctx).viewInsets.bottom + 20,
+          ),
+          child: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Kirim Info Pupuk / Arahan Forum Desa',
+                  style: GoogleFonts.plusJakartaSans(
+                    fontSize: 15.5,
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+                const SizedBox(height: 10),
+                DropdownButtonFormField<String>(
+                  initialValue: kategori,
+                  decoration: const InputDecoration(
+                    labelText: 'Kategori',
+                    border: OutlineInputBorder(),
+                  ),
+                  items: const [
+                    DropdownMenuItem(value: 'INFO_PUPUK', child: Text('Info Titik Ambil Pupuk')),
+                    DropdownMenuItem(value: 'ARAHAN_TANAM', child: Text('Arahan Tanam Desa')),
+                    DropdownMenuItem(value: 'PERINGATAN_HAMA', child: Text('Peringatan Hama')),
+                    DropdownMenuItem(value: 'TANYA_JAWAB', child: Text('Respon Tanya Jawab')),
+                  ],
+                  onChanged: (v) {
+                    if (v != null) setModalState(() => kategori = v);
+                  },
+                ),
+                if (kategori == 'INFO_PUPUK') ...[
+                  const SizedBox(height: 10),
+                  TextField(
+                    controller: pickupCtrl,
+                    decoration: const InputDecoration(
+                      labelText: 'Titik Ambil Pupuk Desa',
+                      border: OutlineInputBorder(),
+                    ),
+                  ),
+                ],
+                const SizedBox(height: 10),
+                TextField(
+                  controller: judulCtrl,
+                  decoration: const InputDecoration(
+                    labelText: 'Judul Pengumuman',
+                    border: OutlineInputBorder(),
+                  ),
+                ),
+                const SizedBox(height: 10),
+                TextField(
+                  controller: isiCtrl,
+                  maxLines: 3,
+                  decoration: const InputDecoration(
+                    labelText: 'Isi Pesan ke Petani Desa',
+                    border: OutlineInputBorder(),
+                  ),
+                ),
+                const SizedBox(height: 14),
+                SizedBox(
+                  width: double.infinity,
+                  height: 46,
+                  child: ElevatedButton(
+                    onPressed: sending
+                        ? null
+                        : () async {
+                            if (judulCtrl.text.trim().isEmpty ||
+                                isiCtrl.text.trim().isEmpty) {
+                              return;
+                            }
+                            setModalState(() => sending = true);
+                            try {
+                              await _apiService.createVillageForumPost({
+                                'village_id': _selectedForumVillageId,
+                                'kategori': kategori,
+                                'judul': judulCtrl.text.trim(),
+                                'isi_pesan': isiCtrl.text.trim(),
+                                if (kategori == 'INFO_PUPUK')
+                                  'titik_ambil_pupuk': pickupCtrl.text.trim(),
+                              });
+                              if (ctx.mounted) Navigator.pop(ctx);
+                              await _loadPenyuluhData();
+                            } catch (_) {
+                              setModalState(() => sending = false);
+                            }
+                          },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppColors.primary,
+                      foregroundColor: Colors.white,
+                    ),
+                    child: Text(
+                      sending ? 'Mengirim...' : 'Terbitkan ke Forum Desa',
+                      style: GoogleFonts.plusJakartaSans(
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  void _showInterPplPostModal() {
+    final topicCtrl = TextEditingController();
+    final komCtrl = TextEditingController(text: 'Bawang Merah');
+    final discCtrl = TextEditingController();
+    bool sending = false;
+
+    showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.white,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (ctx) => StatefulBuilder(
+        builder: (ctx, setModalState) => Padding(
+          padding: EdgeInsets.only(
+            left: 20,
+            right: 20,
+            top: 20,
+            bottom: MediaQuery.of(ctx).viewInsets.bottom + 20,
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'Diskusi Khusus Antar-Penyuluh',
+                style: GoogleFonts.plusJakartaSans(
+                  fontSize: 15.5,
+                  fontWeight: FontWeight.w800,
+                ),
+              ),
+              const SizedBox(height: 10),
+              TextField(
+                controller: topicCtrl,
+                decoration: const InputDecoration(
+                  labelText: 'Topik Agronomi',
+                  border: OutlineInputBorder(),
+                ),
+              ),
+              const SizedBox(height: 10),
+              TextField(
+                controller: komCtrl,
+                decoration: const InputDecoration(
+                  labelText: 'Komoditas',
+                  border: OutlineInputBorder(),
+                ),
+              ),
+              const SizedBox(height: 10),
+              TextField(
+                controller: discCtrl,
+                maxLines: 3,
+                decoration: const InputDecoration(
+                  labelText: 'Studi Kasus & Solusi',
+                  border: OutlineInputBorder(),
+                ),
+              ),
+              const SizedBox(height: 14),
+              SizedBox(
+                width: double.infinity,
+                height: 46,
+                child: ElevatedButton(
+                  onPressed: sending
+                      ? null
+                      : () async {
+                          if (topicCtrl.text.trim().isEmpty ||
+                              discCtrl.text.trim().isEmpty) {
+                            return;
+                          }
+                          setModalState(() => sending = true);
+                          try {
+                            await _apiService.createInterPplForumPost({
+                              'topik': topicCtrl.text.trim(),
+                              'komoditas': komCtrl.text.trim(),
+                              'isi_diskusi': discCtrl.text.trim(),
+                            });
+                            if (ctx.mounted) Navigator.pop(ctx);
+                            await _loadPenyuluhData();
+                          } catch (_) {
+                            setModalState(() => sending = false);
+                          }
+                        },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.primary,
+                    foregroundColor: Colors.white,
+                  ),
+                  child: Text(
+                    sending ? 'Mengirim...' : 'Bagikan ke Sesama Penyuluh',
+                    style: GoogleFonts.plusJakartaSans(
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildStoreApprovalAndQuotaSection() {
+    final pendingStores = _storeApps
+        .where((s) => (s['status'] ?? '').toString().toUpperCase() == 'PENDING_PPL')
+        .toList();
+
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: AppColors.outline),
+        boxShadow: AppColors.softShadow,
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              const Icon(LucideIcons.store, color: AppColors.primary, size: 18),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  'ACC Toko & Kuota Toko Desa',
+                  style: GoogleFonts.plusJakartaSans(
+                    fontSize: 14.5,
+                    fontWeight: FontWeight.w700,
+                    color: AppColors.textPrimary,
+                  ),
+                ),
+              ),
+              OutlinedButton.icon(
+                onPressed: _showVillageQuotaDialog,
+                icon: const Icon(LucideIcons.slidersHorizontal, size: 13),
+                label: Text(
+                  'Atur Kuota',
+                  style: GoogleFonts.plusJakartaSans(
+                    fontSize: 11,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 6),
+          if (pendingStores.isEmpty)
+            Text(
+              'Tidak ada pengajuan pembukaan toko baru yang menunggu ACC.',
+              style: GoogleFonts.plusJakartaSans(
+                fontSize: 11.5,
+                color: AppColors.textMuted,
+              ),
+            )
+          else
+            ...pendingStores.take(3).map((app) {
+              final id = app['id'].toString();
+              final name = (app['nama_toko'] ?? 'Toko Baru').toString();
+              final village =
+                  (app['resolved_village_name'] ?? app['village_name'] ?? 'Sumenep')
+                      .toString();
+              final isBusy = _busyStoreId == id;
+
+              return Container(
+                margin: const EdgeInsets.only(top: 8),
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: AppColors.background,
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: AppColors.outline),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      '$name (${app['tipe_pengelola']})',
+                      style: GoogleFonts.plusJakartaSans(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                    Text(
+                      'Desa $village • Pemohon: ${app['applicant_name'] ?? app['user_id']}',
+                      style: GoogleFonts.plusJakartaSans(
+                        fontSize: 11,
+                        color: AppColors.textMuted,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: OutlinedButton(
+                            onPressed: isBusy
+                                ? null
+                                : () => _verifyStoreApp(id, name, 'REJECTED'),
+                            child: const Text('Tolak'),
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: ElevatedButton(
+                            onPressed: isBusy
+                                ? null
+                                : () => _verifyStoreApp(id, name, 'APPROVED'),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: AppColors.primary,
+                              foregroundColor: Colors.white,
+                            ),
+                            child: Text(isBusy ? 'Memproses...' : 'ACC Buka Toko'),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              );
+            }),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildVillageForumSection() {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: AppColors.surfaceSoft,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: AppColors.surfaceSoftBorder),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              const Icon(LucideIcons.megaphone, color: AppColors.primary, size: 18),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  'Forum Privat Desa & Info Pupuk',
+                  style: GoogleFonts.plusJakartaSans(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w800,
+                    color: AppColors.primaryDark,
+                  ),
+                ),
+              ),
+              ElevatedButton(
+                onPressed: _showVillageForumPostModal,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColors.primary,
+                  foregroundColor: Colors.white,
+                  elevation: 0,
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                ),
+                child: Text(
+                  '+ Pengumuman',
+                  style: GoogleFonts.plusJakartaSans(
+                    fontSize: 11,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          if (_villageForumPosts.isEmpty)
+            Padding(
+              padding: const EdgeInsets.only(top: 6),
+              child: Text(
+                'Belum ada diskusi di forum desa terpilih.',
+                style: GoogleFonts.plusJakartaSans(
+                  fontSize: 11.5,
+                  color: AppColors.textMuted,
+                ),
+              ),
+            )
+          else
+            ..._villageForumPosts.take(2).map((p) {
+              return Container(
+                width: double.infinity,
+                margin: const EdgeInsets.only(top: 8),
+                padding: const EdgeInsets.all(10),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(10),
+                  border: Border.all(color: AppColors.surfaceSoftBorder),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      '${p['kategori']} • ${p['judul']}',
+                      style: GoogleFonts.plusJakartaSans(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      p['isi_pesan']?.toString() ?? '',
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: GoogleFonts.plusJakartaSans(
+                        fontSize: 11,
+                        color: AppColors.textSecondary,
+                      ),
+                    ),
+                  ],
+                ),
+              );
+            }),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildInterPplForumSection() {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: AppColors.outline),
+        boxShadow: AppColors.softShadow,
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              const Icon(LucideIcons.users, color: AppColors.info, size: 18),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  'Forum Khusus Antar-Penyuluh',
+                  style: GoogleFonts.plusJakartaSans(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w700,
+                    color: AppColors.textPrimary,
+                  ),
+                ),
+              ),
+              TextButton(
+                onPressed: _showInterPplPostModal,
+                child: Text(
+                  '+ Diskusi',
+                  style: GoogleFonts.plusJakartaSans(
+                    fontSize: 11.5,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          ..._interPplPosts.take(2).map((p) {
+            return Container(
+              width: double.infinity,
+              margin: const EdgeInsets.only(top: 6),
+              padding: const EdgeInsets.all(10),
+              decoration: BoxDecoration(
+                color: AppColors.background,
+                borderRadius: BorderRadius.circular(10),
+                border: Border.all(color: AppColors.outline),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    '${p['komoditas']} • ${p['topik']}',
+                    style: GoogleFonts.plusJakartaSans(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    '${p['penyuluh_name']}: ${p['isi_diskusi']}',
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    style: GoogleFonts.plusJakartaSans(
+                      fontSize: 11,
+                      color: AppColors.textSecondary,
+                    ),
+                  ),
+                ],
+              ),
+            );
+          }),
         ],
       ),
     );

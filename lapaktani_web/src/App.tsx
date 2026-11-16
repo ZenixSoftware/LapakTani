@@ -10,6 +10,7 @@ import { SumenepLandMonitoring } from './components/SumenepLandMonitoring';
 import { SensorDataTable } from './components/SensorDataTable';
 import { AiPolicyBrief } from './components/AiPolicyBrief';
 import { AiDecisionSupport } from './components/AiDecisionSupport';
+import { PenyuluhStoreAndForumHub } from './components/PenyuluhStoreAndForumHub';
 import { PlotInspectorModal } from './components/PlotInspectorModal';
 import { isPlotCritical } from './utils/monitoringHelpers';
 import {
@@ -68,6 +69,7 @@ export function App() {
       { id: 'data-sensor', label: 'Sensor' },
       { id: 'rag-decision', label: 'AI Decision' },
       { id: 'validasi', label: 'Validasi' },
+      { id: 'toko-forum', label: 'Toko & Forum' },
     ];
   }, [isDinas]);
 
@@ -83,7 +85,7 @@ export function App() {
 
   // Enforce strict role separation on active tab
   useEffect(() => {
-    if (isDinas && (activeTab === 'validasi' || activeTab === 'rag-decision')) {
+    if (isDinas && (activeTab === 'validasi' || activeTab === 'rag-decision' || activeTab === 'toko-forum')) {
       setActiveTab('dashboard');
     } else if (!isDinas && activeTab === 'policy-brief') {
       setActiveTab('dashboard');
@@ -368,6 +370,10 @@ export function App() {
                 onInspectPlot={setInspectedPlot}
                 onShowToast={showToast}
               />
+            )}
+
+            {activeTab === 'toko-forum' && !isDinas && (
+              <PenyuluhStoreAndForumHub onShowToast={showToast} />
             )}
 
             {activeTab === 'policy-brief' && isDinas && (

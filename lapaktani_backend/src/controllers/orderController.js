@@ -160,10 +160,21 @@ const checkoutOrder = async (req, res) => {
     }
 
     // 2. Query and lock rows in explicit ascending order
-    const [productRows] = await connection.query(
-      'SELECT id, stock_kg, COALESCE(price_per_kg, price, 0) AS price, title, image_url, farmer_id FROM products WHERE id IN (?) ORDER BY id ASC FOR UPDATE',
-      [sortedProductIds]
-    );
+    let productRows;
+    try {
+      [productRows] = await connection.query(
+        `SELECT id, stock_kg, COALESCE(price_per_kg, price, 0) AS price,
+                discount_percent, discount_price, is_wholesale_enabled, min_wholesale_qty, wholesale_price,
+                title, image_url, farmer_id
+         FROM products WHERE id IN (?) ORDER BY id ASC FOR UPDATE`,
+        [sortedProductIds]
+      );
+    } catch (_) {
+      [productRows] = await connection.query(
+        'SELECT id, stock_kg, COALESCE(price_per_kg, price, 0) AS price, title, image_url, farmer_id FROM products WHERE id IN (?) ORDER BY id ASC FOR UPDATE',
+        [sortedProductIds]
+      );
+    }
 
     const productMap = new Map();
     for (const p of productRows) {
@@ -201,12 +212,45 @@ const checkoutOrder = async (req, res) => {
       }
     }
 
-    // Build validated order items and calculate subtotal
+    // Build validated order items and calculate subtotal using seller-configured Retail / Discount / Partai B2B tier
+    let discountSaved = 0;
+    let anyPartaiB2B = false;
+    let appliedUnitPrice = null;
+
     for (const item of items) {
       const pid = String(item.product_id || item.productId || item.id);
       const product = productMap.get(pid);
       const quantity = Math.max(1, parseInt(item.quantity || item.qty || 1, 10));
-      const pricePerUnit = Number(item.price_per_unit || item.price || product.price || 0);
+      const basePrice = Number(product.price || 0);
+      const wholesaleEnabled =
+        product.is_wholesale_enabled === undefined || product.is_wholesale_enabled === null
+          ? true
+          : Boolean(Number(product.is_wholesale_enabled));
+      const minWholesaleQty = Math.max(2, parseInt(product.min_wholesale_qty || 30, 10));
+      const wholesalePrice = Number(product.wholesale_price || Math.round(basePrice * 0.85));
+      const discountPct = Number(product.discount_percent || 0);
+      const discountPrice = Number(product.discount_price || 0);
+
+      let pricePerUnit = basePrice;
+      let itemTier = 'RETAIL';
+
+      if (wholesaleEnabled && quantity >= minWholesaleQty && wholesalePrice > 0) {
+        pricePerUnit = wholesalePrice;
+        itemTier = 'PARTAI_B2B';
+        anyPartaiB2B = true;
+      } else if (discountPct > 0 && discountPrice > 0 && discountPrice < basePrice) {
+        pricePerUnit = discountPrice;
+      } else if (basePrice <= 0 && item.price_per_unit) {
+        pricePerUnit = Number(item.price_per_unit);
+      }
+
+      if (basePrice > pricePerUnit) {
+        discountSaved += (basePrice - pricePerUnit) * quantity;
+      }
+      if (appliedUnitPrice === null) {
+        appliedUnitPrice = pricePerUnit;
+      }
+
       const subtotal = pricePerUnit * quantity;
       itemsSubtotal += subtotal;
 
@@ -216,11 +260,24 @@ const checkoutOrder = async (req, res) => {
         grade_id: item.grade_id || item.gradeId || null,
         quantity: quantity,
         price_per_unit: pricePerUnit,
+        base_price: basePrice,
+        order_tier: itemTier,
         subtotal: subtotal,
         image_url: product.image_url,
         farmer_id: product.farmer_id
       });
     }
+
+    const orderTier = anyPartaiB2B ? 'PARTAI_B2B' : 'RETAIL';
+    const wholesaleAgreementAccepted =
+      req.body.wholesale_agreement_accepted === true ||
+      Number(req.body.wholesale_agreement_accepted) === 1 ||
+      anyPartaiB2B
+        ? 1
+        : 0;
+    const wholesaleAgreementNote = req.body.wholesale_agreement_note
+      ? String(req.body.wholesale_agreement_note).trim()
+      : (anyPartaiB2B ? 'Pembelian Partai (B2B) mengikuti minimum kuantitas dan harga grosir penjual.' : null);
 
     const totalAmount = itemsSubtotal + numericShippingFee;
 
@@ -279,12 +336,12 @@ const checkoutOrder = async (req, res) => {
       }
     }
 
-    // 6. Insert record into orders table (dual-schema alignment + US-14 payment gateway support)
+    // 6. Insert record into orders table (dual-schema alignment + tiered pricing + US-14 payment gateway support)
     try {
       await connection.query(
         `INSERT INTO orders
-         (id, user_id, buyer_id, invoice_number, order_code, total_amount, total_payment, payment_method, payment_status, order_status, delivery_address, shipping_address, shipping_fee, payment_channel, payment_reference, payment_expired_at, created_at, updated_at)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW(), NOW())`,
+         (id, user_id, buyer_id, invoice_number, order_code, total_amount, total_payment, payment_method, payment_status, order_status, delivery_address, shipping_address, shipping_fee, payment_channel, payment_reference, payment_expired_at, order_tier, applied_unit_price, discount_saved, wholesale_agreement_accepted, wholesale_agreement_note, created_at, updated_at)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW(), NOW())`,
         [
           orderId,
           userId,
@@ -301,7 +358,12 @@ const checkoutOrder = async (req, res) => {
           numericShippingFee,
           isSimulator ? 'LapakPay Simulator' : (payment_method || null),
           isSimulator ? invoiceNumber : null,
-          isSimulator ? null : new Date(Date.now() + 24 * 60 * 60 * 1000)
+          isSimulator ? null : new Date(Date.now() + 24 * 60 * 60 * 1000),
+          orderTier,
+          appliedUnitPrice,
+          discountSaved,
+          wholesaleAgreementAccepted,
+          wholesaleAgreementNote
         ]
       );
     } catch (_) {
@@ -437,6 +499,11 @@ const checkoutOrder = async (req, res) => {
         total_amount: totalAmount,
         shipping_fee: numericShippingFee,
         items_subtotal: itemsSubtotal,
+        order_tier: orderTier,
+        applied_unit_price: appliedUnitPrice,
+        discount_saved: discountSaved,
+        wholesale_agreement_accepted: Boolean(wholesaleAgreementAccepted),
+        wholesale_agreement_note: wholesaleAgreementNote,
         payment_method: payment_method,
         payment_status: initialPaymentStatus,
         order_status: initialOrderStatus,

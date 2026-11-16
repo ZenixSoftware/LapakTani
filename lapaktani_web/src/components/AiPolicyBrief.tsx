@@ -1,8 +1,12 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import {
+  confirmFertilizerSubsidy,
+  dispatchFertilizerSubsidy,
   fetchDecisionReports,
+  fetchFertilizerSubsidies,
   updateDecisionReportStatus,
   type DecisionReportRecord,
+  type FertilizerAllocationRecord,
   type LandPlotRecord,
   type MonitoringSummaryResponse,
 } from '../services/api';
@@ -35,21 +39,81 @@ export const AiPolicyBrief: React.FC<AiPolicyBriefProps> = ({
     new Date().toLocaleString('id-ID', { dateStyle: 'medium', timeStyle: 'short' })
   );
   const [dinasReports, setDinasReports] = useState<DecisionReportRecord[]>([]);
+  const [fertilizerList, setFertilizerList] = useState<FertilizerAllocationRecord[]>([]);
   const [isLoadingInbox, setIsLoadingInbox] = useState<boolean>(true);
   const [reviewNotesMap, setReviewNotesMap] = useState<Record<string, string>>({});
   const [updatingId, setUpdatingId] = useState<string | null>(null);
+  const [newFertVillageId, setNewFertVillageId] = useState<number>(109);
+  const [newFertJenis, setNewFertJenis] = useState<string>('NPK Phonska & Dolomit Subsidi');
+  const [newFertTon, setNewFertTon] = useState<string>('3.0');
+  const [newFertTitik, setNewFertTitik] = useState<string>('Balai Poktan Harapan Dungkek');
+  const [isSendingFert, setIsSendingFert] = useState<boolean>(false);
 
   const loadDinasInbox = useCallback(async () => {
     setIsLoadingInbox(true);
     try {
-      const list = await fetchDecisionReports({ role: 'dinas' });
+      const [list, ferts] = await Promise.all([
+        fetchDecisionReports({ role: 'dinas' }),
+        fetchFertilizerSubsidies().catch(() => []),
+      ]);
       setDinasReports(list);
+      setFertilizerList(ferts);
     } catch (err) {
       console.error('[DINAS_INBOX] Failed to load decision reports:', err);
     } finally {
       setIsLoadingInbox(false);
     }
   }, []);
+
+  const handleDispatchFertilizer = async (
+    alloc: FertilizerAllocationRecord,
+    status: 'KONFIRMASI_DINAS' | 'DIKIRIM_DINAS'
+  ) => {
+    setUpdatingId(alloc.id);
+    try {
+      const updated = await dispatchFertilizerSubsidy(alloc.id, {
+        status,
+        titik_ambil_desa: alloc.titik_ambil_desa || `Balai Poktan Desa ${alloc.village_name}`,
+        catatan_dinas:
+          status === 'DIKIRIM_DINAS'
+            ? `Pupuk ${alloc.jenis_pupuk} dikirim oleh Dinas Pertanian ke Desa ${alloc.village_name}.`
+            : `Kebutuhan pupuk Desa ${alloc.village_name} dikonfirmasi dengan PPL.`,
+      });
+      setFertilizerList((prev) => prev.map((f) => (f.id === alloc.id ? updated : f)));
+      onShowToast?.(`Status pupuk Desa ${alloc.village_name} diperbarui ke ${status}.`, 'success');
+    } catch (err) {
+      onShowToast?.(
+        err instanceof Error ? err.message : 'Gagal memproses distribusi pupuk subsidi.',
+        'error'
+      );
+    } finally {
+      setUpdatingId(null);
+    }
+  };
+
+  const handleCreateFertilizerDispatch = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsSendingFert(true);
+    try {
+      const created = await confirmFertilizerSubsidy({
+        village_id: newFertVillageId,
+        jenis_pupuk: newFertJenis,
+        jumlah_ton: Number(newFertTon) || 2.5,
+        titik_ambil_desa: newFertTitik,
+        catatan_dinas: 'Alokasi resmi Dinas Pertanian Kab. Sumenep setelah koordinasi PPL desa.',
+        status: 'DIKIRIM_DINAS',
+      });
+      setFertilizerList((prev) => [created, ...prev]);
+      onShowToast?.('Distribusi pupuk subsidi baru berhasil diterbitkan.', 'success');
+    } catch (err) {
+      onShowToast?.(
+        err instanceof Error ? err.message : 'Gagal membuat distribusi pupuk.',
+        'error'
+      );
+    } finally {
+      setIsSendingFert(false);
+    }
+  };
 
   useEffect(() => {
     void loadDinasInbox();
@@ -452,6 +516,135 @@ export const AiPolicyBrief: React.FC<AiPolicyBriefProps> = ({
               </p>
             </div>
           )}
+        </div>
+      </div>
+
+      {/* Fertilizer Subsidy Dispatch Center (Dinas -> Penyuluh Desa) */}
+      <div className="bg-white rounded-2xl border border-[#E2E8F0] shadow-sm overflow-hidden">
+        <div className="px-5 py-4 border-b border-[#E2E8F0] bg-gradient-to-r from-[#0D5136] to-[#166534] text-white flex flex-wrap items-center justify-between gap-2">
+          <div>
+            <h2 className="text-[14.5px] font-extrabold">
+              Distribusi &amp; Konfirmasi Pupuk Subsidi Desa (Kontak Penyuluh)
+            </h2>
+            <p className="text-[11.5px] text-emerald-100/90">
+              Konfirmasi kebutuhan pupuk dengan PPL desa, tetapkan tonase &amp; kirim alokasi ke titik distribusi
+            </p>
+          </div>
+          <span className="px-2.5 py-1 rounded-full bg-white/15 text-[11px] font-extrabold">
+            {fertilizerList.length} Pengiriman / Usulan
+          </span>
+        </div>
+
+        <div className="p-5 grid grid-cols-1 lg:grid-cols-12 gap-5">
+          <form onSubmit={handleCreateFertilizerDispatch} className="lg:col-span-4 space-y-3 bg-[#F8FAF9] p-4 rounded-xl border border-[#E2E8F0]">
+            <h3 className="text-[13px] font-extrabold text-[#0D5136]">
+              Kirim Alokasi Pupuk Langsung ke Desa
+            </h3>
+            <div>
+              <label className="block text-[11px] font-bold text-gray-600 mb-1">Desa Tujuan</label>
+              <select
+                value={newFertVillageId}
+                onChange={(e) => setNewFertVillageId(Number(e.target.value))}
+                className="w-full px-3 py-2 rounded-lg border border-gray-300 text-[12px] bg-white"
+              >
+                <option value={109}>Desa Dungkek (Kec. Dungkek)</option>
+                <option value={101}>Desa Mandala (Kec. Gapura)</option>
+                <option value={102}>Desa Pakondang (Kec. Rubaru)</option>
+                <option value={103}>Desa Karangnangka (Kec. Rubaru)</option>
+                <option value={108}>Desa Ambunten (Kec. Ambunten)</option>
+              </select>
+            </div>
+            <div>
+              <label className="block text-[11px] font-bold text-gray-600 mb-1">Jenis Pupuk Subsidi</label>
+              <input
+                type="text"
+                value={newFertJenis}
+                onChange={(e) => setNewFertJenis(e.target.value)}
+                required
+                className="w-full px-3 py-2 rounded-lg border border-gray-300 text-[12px] bg-white"
+              />
+            </div>
+            <div className="grid grid-cols-2 gap-2">
+              <div>
+                <label className="block text-[11px] font-bold text-gray-600 mb-1">Tonase (Ton)</label>
+                <input
+                  type="number"
+                  step="0.5"
+                  min="0.5"
+                  value={newFertTon}
+                  onChange={(e) => setNewFertTon(e.target.value)}
+                  className="w-full px-3 py-2 rounded-lg border border-gray-300 text-[12px] bg-white"
+                />
+              </div>
+              <div>
+                <label className="block text-[11px] font-bold text-gray-600 mb-1">Titik Ambil Desa</label>
+                <input
+                  type="text"
+                  value={newFertTitik}
+                  onChange={(e) => setNewFertTitik(e.target.value)}
+                  className="w-full px-3 py-2 rounded-lg border border-gray-300 text-[12px] bg-white"
+                />
+              </div>
+            </div>
+            <button
+              type="submit"
+              disabled={isSendingFert}
+              className="w-full py-2.5 rounded-xl bg-[#0D5136] hover:bg-[#166534] text-white text-[12px] font-extrabold transition-colors disabled:opacity-50"
+            >
+              {isSendingFert ? 'Mengirim Alokasi...' : 'Konfirmasi & Kirim Pupuk ke Desa'}
+            </button>
+          </form>
+
+          <div className="lg:col-span-8 space-y-2.5 max-h-[340px] overflow-y-auto pr-1">
+            {fertilizerList.length === 0 ? (
+              <div className="p-6 text-center text-[12.5px] text-gray-500 border border-dashed rounded-xl">
+                Belum ada usulan atau pengiriman pupuk subsidi.
+              </div>
+            ) : (
+              fertilizerList.map((f) => (
+                <div key={f.id} className="p-3.5 rounded-xl border border-[#E2E8F0] bg-white flex flex-wrap items-center justify-between gap-3">
+                  <div className="space-y-1 flex-1 min-w-[240px]">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <span className="font-extrabold text-[13px] text-[#0D5136]">
+                        Desa {f.village_name} · {f.jenis_pupuk} ({f.jumlah_ton} Ton)
+                      </span>
+                      <span className="px-2 py-0.5 rounded-full text-[10px] font-extrabold bg-emerald-50 text-[#166534] border border-emerald-200">
+                        {f.status}
+                      </span>
+                    </div>
+                    <p className="text-[11.5px] text-gray-600">
+                      PPL: {f.penyuluh_name} · Titik Ambil: {f.titik_ambil_desa || 'Balai Poktan'}
+                    </p>
+                    {f.alasan_kebutuhan && (
+                      <p className="text-[11px] text-gray-500">{f.alasan_kebutuhan}</p>
+                    )}
+                  </div>
+                  <div className="flex items-center gap-2">
+                    {f.status === 'USULAN_PPL' && (
+                      <button
+                        type="button"
+                        disabled={updatingId === f.id}
+                        onClick={() => void handleDispatchFertilizer(f, 'KONFIRMASI_DINAS')}
+                        className="px-3 py-1.5 rounded-lg bg-[#F59E0B] hover:bg-[#D97706] text-white text-[11.5px] font-bold"
+                      >
+                        Konfirmasi PPL
+                      </button>
+                    )}
+                    {f.status !== 'DIKIRIM_DINAS' && f.status !== 'DITERIMA_DESA' && (
+                      <button
+                        type="button"
+                        disabled={updatingId === f.id}
+                        onClick={() => void handleDispatchFertilizer(f, 'DIKIRIM_DINAS')}
+                        className="px-3 py-1.5 rounded-lg bg-[#0D5136] hover:bg-[#166534] text-white text-[11.5px] font-bold"
+                      >
+                        Kirim ke Desa
+                      </button>
+                    )}
+                  </div>
+                </div>
+              ))
+            )}
+          </div>
         </div>
       </div>
 
