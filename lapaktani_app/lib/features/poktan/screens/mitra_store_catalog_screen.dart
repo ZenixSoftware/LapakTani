@@ -1,3 +1,14 @@
+/**
+ * ============================================================================
+ * LAPAKTANI MOBILE APP - [US-09] MITRA STORE COMMODITY CATALOG & INVENTORY
+ * ============================================================================
+ * Module       : Features / Mitra Store & Poktan Catalog
+ * User Story   : [US-09] CRUD Stok/Harga Toko (Retail, Diskon, Partai/Grosir)
+ * Author       : Moch. Ilham Abdul Aziz (MochIlham05 - 3125522014)
+ * Architecture : Flutter Multi-Tab View, Wholesale Tier Calculation, Dynamic Quota
+ * ============================================================================
+ */
+
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';

@@ -1,3 +1,15 @@
+/**
+ * ============================================================================
+ * LAPAKTANI BACKEND - [US-08] MULTER MULTIPART FILE UPLOAD PIPELINE
+ * ============================================================================
+ * Module       : Middlewares / Upload Pipeline
+ * User Story   : [US-08] Unggah Foto Komoditas, KTP, dan Berkas Legalitas Toko
+ * Author       : Moch. Ilham Abdul Aziz (MochIlham05 - 3125522014)
+ * Architecture : Multer diskStorage, Magic Bytes Inspection (JPEG/PNG/WEBP/PDF),
+ *                Directory Partitioning (/products, /ktp, /docs, /soil)
+ * ============================================================================
+ */
+
 const multer = require('multer');
 const path = require('path');
 const fs = require('fs');

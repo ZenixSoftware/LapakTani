@@ -1,3 +1,15 @@
+/**
+ * ============================================================================
+ * LAPAKTANI MOBILE APP - [US-07, US-08] ADD COMMODITY & QUALITY GRADING FORM
+ * ============================================================================
+ * Module       : Features / Product Management
+ * User Stories : [US-07] Input Komoditas Panen & Varietas Petani
+ *                [US-08] Multi-Photo Upload & Quality Grade Selection
+ * Author       : Moch. Ilham Abdul Aziz (MochIlham05 - 3125522014)
+ * Architecture : Flutter Form State, Multipart Image Upload via ApiService
+ * ============================================================================
+ */
+
 import 'dart:convert';
 import 'dart:io';
 import 'package:flutter/material.dart';

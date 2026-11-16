@@ -1,3 +1,16 @@
+/**
+ * ============================================================================
+ * LAPAKTANI BACKEND - [US-07, US-08, US-09] PRODUCT & QUALITY GRADING ENGINE
+ * ============================================================================
+ * Module       : Controllers / Product & Mitra Catalog
+ * User Stories : [US-07] Penambahan Komoditas & Varietas Pertanian
+ *                [US-08] Multi-Tier Quality Grading (Grade A, B, Standard)
+ *                [US-09] CRUD Stok/Harga Toko (Retail, Diskon, Partai/Grosir)
+ * Author       : Moch. Ilham Abdul Aziz (MochIlham05 - 3125522014)
+ * Architecture : Express.js 5.x, MySQL2 Connection Pool, Redis L2 Catalog Cache
+ * ============================================================================
+ */
+
 const { v4: uuidv4 } = require('uuid');
 const pool = require('../config/db');
 const redisClient = require('../config/redis');
