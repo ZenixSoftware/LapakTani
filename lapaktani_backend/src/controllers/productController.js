@@ -97,16 +97,17 @@ const getProducts = async (req, res) => {
       }
     }
 
-    if (!sanitizedSearch && redisClient.isOpen) {
+    if (!sanitizedSearch) {
       try {
-        const cachedCatalog = await redisClient.get('lapaktani_catalog');
-        if (cachedCatalog) {
-          const parsedData = JSON.parse(cachedCatalog);
+        const cached = await redisClient.getCache('lapaktani_catalog');
+        if (cached && cached.hit && Array.isArray(cached.value)) {
+          res.setHeader('X-Redis-Cache', 'HIT');
           return res.status(200).json({
             success: true,
             source: 'redis_cache',
-            count: parsedData.length,
-            data: parsedData
+            cache_backend: cached.backend,
+            count: cached.value.length,
+            data: cached.value
           });
         }
       } catch (redisErr) {
@@ -204,12 +205,15 @@ const getProducts = async (req, res) => {
 
     const formattedRows = rows.map(formatProductPricing);
 
-    if (!sanitizedSearch && redisClient.isOpen) {
+    if (!sanitizedSearch) {
       try {
-        await redisClient.setEx('lapaktani_catalog', 3600, JSON.stringify(formattedRows));
+        await redisClient.setCache('lapaktani_catalog', formattedRows, 3600);
+        res.setHeader('X-Redis-Cache', 'MISS');
       } catch (redisErr) {
         console.warn('[REDIS] Cache set warning:', redisErr.message);
       }
+    } else {
+      res.setHeader('X-Redis-Cache', 'BYPASS');
     }
 
     return res.status(200).json({
@@ -463,13 +467,7 @@ const createProduct = async (req, res) => {
       }
     }
 
-    if (redisClient.isOpen) {
-      try {
-        await redisClient.del('lapaktani_catalog');
-      } catch (redisErr) {
-        console.warn('[REDIS] Invalidation warning:', redisErr.message);
-      }
-    }
+    await redisClient.delCache('lapaktani_catalog');
 
     return res.status(201).json({
       success: true,
@@ -529,13 +527,7 @@ const deleteProduct = async (req, res) => {
 
     await pool.query('DELETE FROM products WHERE id = ? AND farmer_id = ?', [id, farmerId]);
 
-    if (redisClient.isOpen) {
-      try {
-        await redisClient.del('lapaktani_catalog');
-      } catch (redisErr) {
-        console.warn('[REDIS] Invalidation warning:', redisErr.message);
-      }
-    }
+    await redisClient.delCache('lapaktani_catalog');
 
     return res.status(200).json({
       success: true,
@@ -703,13 +695,7 @@ const updateProduct = async (req, res) => {
 
     const [reloaded] = await pool.query('SELECT * FROM products WHERE id = ? LIMIT 1', [id]);
 
-    if (redisClient.isOpen) {
-      try {
-        await redisClient.del('lapaktani_catalog');
-      } catch (redisErr) {
-        console.warn('[REDIS] Invalidation warning:', redisErr.message);
-      }
-    }
+    await redisClient.delCache('lapaktani_catalog');
 
     return res.status(200).json({
       success: true,
@@ -763,13 +749,7 @@ const deductStock = async (req, res) => {
     await connection.query('UPDATE products SET stock_kg = ? WHERE id = ?', [newStock, id]);
     await connection.commit();
 
-    if (redisClient.isOpen) {
-      try {
-        await redisClient.del('lapaktani_catalog');
-      } catch (redisErr) {
-        console.warn('[REDIS] Invalidation warning:', redisErr.message);
-      }
-    }
+    await redisClient.delCache('lapaktani_catalog');
 
     return res.status(200).json({
       success: true,
@@ -823,13 +803,7 @@ const restoreStock = async (req, res) => {
     await connection.query('UPDATE products SET stock_kg = ? WHERE id = ?', [newStock, id]);
     await connection.commit();
 
-    if (redisClient.isOpen) {
-      try {
-        await redisClient.del('lapaktani_catalog');
-      } catch (redisErr) {
-        console.warn('[REDIS] Invalidation warning:', redisErr.message);
-      }
-    }
+    await redisClient.delCache('lapaktani_catalog');
 
     return res.status(200).json({
       success: true,

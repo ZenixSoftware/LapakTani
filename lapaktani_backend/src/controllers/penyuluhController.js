@@ -1,5 +1,6 @@
 const { v4: uuidv4 } = require('uuid');
 const pool = require('../config/db');
+const redisClient = require('../config/redis');
 
 /**
  * Helper: safely post an ADVISORY_CARD to DM conversations with village/target farmers
@@ -566,6 +567,17 @@ const getMonitoringLahan = async (req, res) => {
  */
 const getMonitoringSummary = async (req, res) => {
   try {
+    const cached = await redisClient.getCache('gis_monitoring_summary');
+    if (cached && cached.hit && cached.value) {
+      res.setHeader('X-Redis-Cache', 'HIT');
+      return res.status(200).json({
+        success: true,
+        status: true,
+        source: 'redis_cache',
+        data: cached.value
+      });
+    }
+
     const [summaryRows] = await pool.query(`
       SELECT
         COUNT(*) AS total_titik,
@@ -611,15 +623,21 @@ const getMonitoringSummary = async (req, res) => {
       LIMIT 10
     `);
 
+    const summaryPayload = {
+      ringkasan_umum: summaryRows[0] || {},
+      distribusi_komoditas: distribusiKomoditas,
+      sampel_titik_kritis: sampelTitikKritis,
+      recent_logs: recentLogs
+    };
+
+    await redisClient.setCache('gis_monitoring_summary', summaryPayload, 180).catch(() => {});
+    res.setHeader('X-Redis-Cache', 'MISS');
+
     return res.status(200).json({
       success: true,
       status: true,
-      data: {
-        ringkasan_umum: summaryRows[0] || {},
-        distribusi_komoditas: distribusiKomoditas,
-        sampel_titik_kritis: sampelTitikKritis,
-        recent_logs: recentLogs
-      }
+      source: 'mysql_db',
+      data: summaryPayload
     });
   } catch (error) {
     console.error('[MONITORING_SUMMARY] Error computing stats:', error.message);
@@ -725,6 +743,8 @@ const saveMonitoringLahan = async (req, res) => {
     const [createdRows] = await pool.query('SELECT * FROM monitoring_lahan WHERE id = ?', [
       result.insertId
     ]);
+
+    await redisClient.delCache('gis_monitoring_summary').catch(() => {});
 
     return res.status(201).json({
       success: true,
@@ -1030,6 +1050,8 @@ const dispatchRagDecision = async (req, res) => {
 
     const [createdRows] = await pool.query('SELECT * FROM ppl_decision_reports WHERE id = ?', [reportId]);
     const createdReport = createdRows[0];
+
+    await redisClient.delCache('gis_monitoring_summary').catch(() => {});
 
     if (normalizedScope === 'FARMERS_ONLY' || normalizedScope === 'BOTH') {
       await broadcastAdvisoryToFarmerChat(penyuluhId, createdReport);

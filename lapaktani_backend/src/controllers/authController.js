@@ -1,7 +1,8 @@
 const { v4: uuidv4 } = require('uuid');
 const bcrypt = require('bcryptjs');
-const jwt = require('jsonwebtoken');
 const pool = require('../config/db');
+const redisClient = require('../config/redis');
+const { signUserToken, ROLE_ID_MAP } = require('../middlewares/authMiddleware');
 require('dotenv').config({ quiet: true });
 
 const register = async (req, res) => {
@@ -58,11 +59,13 @@ const register = async (req, res) => {
       connection.release();
     }
 
-    const token = jwt.sign(
-      { id: userId, email: email.trim().toLowerCase(), role_id: roleId, role: assignedRole },
-      process.env.JWT_SECRET || 'lapaktani_secret_2026',
-      { expiresIn: process.env.JWT_EXPIRES_IN || '7d' }
-    );
+    const token = signUserToken({
+      id: userId,
+      email: email.trim().toLowerCase(),
+      role_id: roleId,
+      role: assignedRole,
+      is_chairman: false
+    });
 
     return res.status(201).json({
       success: true,
@@ -85,13 +88,7 @@ const register = async (req, res) => {
   }
 };
 
-const ROLE_ID_TO_NAME = {
-  1: 'petani',
-  2: 'penyuluh',
-  3: 'admin',
-  4: 'pembeli',
-  5: 'dinas'
-};
+const ROLE_ID_TO_NAME = ROLE_ID_MAP;
 
 const DEMO_ALIAS_PASSWORDS = {
   'penyuluh@lapaktani.id': 'penyuluh123',
@@ -159,11 +156,25 @@ const login = async (req, res) => {
       isChairman = chairmanRows.length > 0;
     }
 
-    const token = jwt.sign(
-      { id: user.id, email: user.email, role_id: user.role_id, role: userRole, is_chairman: isChairman },
-      process.env.JWT_SECRET || 'lapaktani_secret_2026',
-      { expiresIn: process.env.JWT_EXPIRES_IN || '7d' }
-    );
+    const token = signUserToken({
+      id: user.id,
+      email: user.email,
+      role_id: user.role_id,
+      role: userRole,
+      is_chairman: isChairman
+    });
+
+    await redisClient.setCache(
+      `session_state:${user.id}`,
+      {
+        userId: user.id,
+        role: userRole,
+        role_id: user.role_id,
+        is_chairman: isChairman,
+        lastLoginAt: new Date().toISOString()
+      },
+      86400
+    ).catch(() => {});
 
     return res.status(200).json({
       success: true,

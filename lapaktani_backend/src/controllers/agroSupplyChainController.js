@@ -1,11 +1,26 @@
 const { v4: uuidv4 } = require('uuid');
 const pool = require('../config/db');
 const redisClient = require('../config/redis');
+const nodeCache = require('../utils/nodeCache');
+const { applyNodeCacheHeader } = nodeCache;
+const jobQueue = require('../utils/jobQueue');
+const { encryptData, decryptData, maskNik } = require('../utils/encryption');
 const {
   generateRagDecision,
   dispatchRagDecision,
   getDecisionReports,
 } = require('./penyuluhController');
+
+function enrichStoreSecurityFields(row) {
+  if (!row) return row;
+  const plainNik = row.nik ? decryptData(row.nik) : null;
+  return {
+    ...row,
+    nik: plainNik,
+    nik_masked: plainNik ? maskNik(plainNik) : null,
+    nik_encrypted_preview: plainNik ? encryptData(plainNik) : null,
+  };
+}
 
 async function resolveUserSummary(userId) {
   const [rows] = await pool.query(
@@ -23,7 +38,15 @@ async function resolveUserSummary(userId) {
   return rows[0] || null;
 }
 
-async function resolveVillagesWithQuota() {
+async function resolveVillagesWithQuota(forceRefresh = false) {
+  const cacheKey = 'sumenep_villages_quota';
+  if (!forceRefresh) {
+    const cached = nodeCache.get(cacheKey);
+    if (cached !== null) {
+      return cached;
+    }
+  }
+
   const [rows] = await pool.query(`
     SELECT
       v.id,
@@ -47,7 +70,7 @@ async function resolveVillagesWithQuota() {
     ORDER BY v.id ASC
   `);
 
-  return rows.map((r) => {
+  const mapped = rows.map((r) => {
     const quotaEnabled = Boolean(Number(r.is_store_quota_enabled));
     const maxQuota = Number(r.max_stores_quota || 5);
     const approvedCount = Number(r.approved_stores_count || 0);
@@ -61,6 +84,14 @@ async function resolveVillagesWithQuota() {
       remaining_quota: quotaEnabled ? Math.max(0, maxQuota - approvedCount) : null,
     };
   });
+
+  nodeCache.set(cacheKey, mapped, 180);
+  return mapped;
+}
+
+function invalidateSumenepNodeCaches() {
+  nodeCache.del('sumenep_villages_quota');
+  nodeCache.del('sumenep_regions_villages');
 }
 
 // ============================================================================
@@ -356,11 +387,12 @@ const getStoreApplicationsForPpl = async (req, res) => {
     );
 
     const villages = await resolveVillagesWithQuota();
+    const enrichedRows = rows.map(enrichStoreSecurityFields);
 
     return res.status(200).json({
       success: true,
-      count: rows.length,
-      data: rows,
+      count: enrichedRows.length,
+      data: enrichedRows,
       villages,
     });
   } catch (error) {
@@ -427,6 +459,7 @@ const verifyStoreApplication = async (req, res) => {
     );
 
     await connection.commit();
+    invalidateSumenepNodeCaches();
     const [updated] = await pool.query('SELECT * FROM store_applications WHERE id = ?', [id]);
     return res.status(200).json({
       success: true,
@@ -434,7 +467,7 @@ const verifyStoreApplication = async (req, res) => {
         nextStatus === 'APPROVED'
           ? `Toko '${appRow.nama_toko}' disetujui! Pemilik kini aktif sebagai Admin Toko.`
           : `Pengajuan toko '${appRow.nama_toko}' ditolak.`,
-      data: updated[0],
+      data: enrichStoreSecurityFields(updated[0]),
     });
   } catch (error) {
     if (connection) await connection.rollback().catch(() => {});
@@ -461,7 +494,8 @@ const updateVillageStoreQuota = async (req, res) => {
       [enabledFlag, maxQuotaNum, postal_code ? String(postal_code).trim() : '', Number(village_id)]
     );
 
-    const villages = await resolveVillagesWithQuota();
+    invalidateSumenepNodeCaches();
+    const villages = await resolveVillagesWithQuota(true);
     const updatedVillage = villages.find((v) => Number(v.id) === Number(village_id)) || null;
 
     return res.status(200).json({
@@ -706,32 +740,24 @@ const createFarmerHarvestReport = async (req, res) => {
       ]
     );
 
-    // Broadcast harvest readiness to Penyuluh & Store Admins
+    // Broadcast harvest readiness asynchronously via LapakTaniJobQueue
+    let queuedJob = null;
     if (['MULAI_TANAM', 'HAMPIR_PANEN', 'SIAP_PANEN'].includes(normalizedStatus)) {
-      try {
-        const [recipients] = await pool.query(
-          "SELECT id FROM users WHERE role IN ('penyuluh','admin') OR role_id IN (2, 3) LIMIT 20"
-        );
-        for (const r of recipients) {
-          await pool.query(
-            `INSERT INTO notifications (id, user_id, title, message, type, reference_id, is_read)
-             VALUES (?, ?, ?, ?, 'harvest_broadcast', ?, 0)`,
-            [
-              `ntf-${uuidv4().slice(0, 12)}`,
-              r.id,
-              `Siaran ${normalizedStatus}: ${String(komoditas).trim()}`,
-              `${userSummary?.full_name || 'Petani'} (${villageName}) melaporkan ${estimasi_berat_kg || 0} kg.`,
-              reportId,
-            ]
-          );
-        }
-      } catch (_) {}
+      queuedJob = jobQueue.enqueue('HARVEST_BROADCAST_FANOUT', {
+        reportId,
+        komoditas: String(komoditas).trim(),
+        statusTanam: normalizedStatus,
+        farmerName: userSummary?.full_name || 'Petani Mitra',
+        villageName,
+        estimasiBeratKg: Math.max(0, Number(estimasi_berat_kg) || 0),
+      });
     }
 
     const [created] = await pool.query('SELECT * FROM harvest_reports WHERE id = ?', [reportId]);
     return res.status(201).json({
       success: true,
       message: 'Laporan tanam & estimasi panen berhasil disiarkan ke Penyuluh dan Admin Toko sekitar.',
+      queued_job_id: queuedJob ? queuedJob.id : null,
       data: created[0],
     });
   } catch (error) {
@@ -795,13 +821,29 @@ const respondToPurchaseOffer = async (req, res) => {
 
 const getSumenepRegionsAndVillages = async (req, res) => {
   try {
+    const cacheKey = 'sumenep_regions_villages';
+    const cached = nodeCache.get(cacheKey);
+    if (cached !== null) {
+      applyNodeCacheHeader(res, 'HIT');
+      return res.status(200).json({
+        success: true,
+        source: 'node_cache',
+        districts: cached.districts,
+        villages: cached.villages,
+      });
+    }
+
     const [districts] = await pool.query(
       `SELECT id, regency_id, name FROM districts WHERE regency_id = 3529 ORDER BY name ASC`
     );
     const villages = await resolveVillagesWithQuota();
 
+    nodeCache.set(cacheKey, { districts, villages }, 300);
+    applyNodeCacheHeader(res, 'MISS');
+
     return res.status(200).json({
       success: true,
+      source: 'mysql_db',
       districts,
       villages,
     });
@@ -825,7 +867,7 @@ const getMyStoreApplication = async (req, res) => {
     return res.status(200).json({
       success: true,
       data: {
-        application: apps[0] || null,
+        application: apps[0] ? enrichStoreSecurityFields(apps[0]) : null,
         villages,
       },
     });
@@ -1036,6 +1078,7 @@ const applyForStore = async (req, res) => {
       );
     }
 
+    invalidateSumenepNodeCaches();
     const [saved] = await pool.query('SELECT * FROM store_applications WHERE id = ?', [appId]);
     return res.status(200).json({
       success: true,
@@ -1043,7 +1086,7 @@ const applyForStore = async (req, res) => {
       message: isFreeze
         ? 'Pengajuan toko dibekukan (Draft). Anda tetap dapat berbelanja sebagai Pembeli dan melanjutkan pengajuan kapan saja.'
         : `Pengajuan pembukaan toko berhasil dikirim ke Penyuluh Desa ${village.name} untuk diverifikasi.`,
-      data: saved[0],
+      data: enrichStoreSecurityFields(saved[0]),
     });
   } catch (error) {
     console.error('[STORE] Error applying for store:', error.message);
@@ -1203,9 +1246,7 @@ const createPurchaseOffer = async (req, res) => {
         'UPDATE products SET stock_kg = stock_kg + ? WHERE LOWER(title) LIKE ? LIMIT 1',
         [weightKg, `%${String(komoditas).trim().toLowerCase()}%`]
       );
-      if (redisClient.isOpen) {
-        await redisClient.del('lapaktani_catalog').catch(() => {});
-      }
+      await redisClient.delCache('lapaktani_catalog').catch(() => {});
     }
 
     const [created] = await pool.query('SELECT * FROM harvest_purchase_offers WHERE id = ?', [offerId]);

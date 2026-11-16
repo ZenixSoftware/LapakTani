@@ -2,6 +2,7 @@ const fs = require('fs');
 const path = require('path');
 const { v4: uuidv4 } = require('uuid');
 const pool = require('../config/db');
+const { encryptData, decryptData, maskNik } = require('../utils/encryption');
 
 /**
  * Helper to delete uploaded files on disk during transaction rollback
@@ -214,6 +215,8 @@ const setupFarmerProfile = async (req, res) => {
         profile_id: profileId,
         user_id: userId,
         nik_number: sanitizedNik,
+        nik_masked: maskNik(sanitizedNik),
+        nik_encrypted_token: encryptData(sanitizedNik),
         birth_date: formattedBirthDate,
         land_area_ha: landAreaNumber,
         village_id: resolvedVillageId,
@@ -291,9 +294,16 @@ const getMyProfile = async (req, res) => {
       });
     }
 
+    const profile = { ...rows[0] };
+    if (profile.nik_number) {
+      profile.nik_number = decryptData(profile.nik_number);
+      profile.nik_masked = maskNik(profile.nik_number);
+      profile.nik_encrypted_token = encryptData(profile.nik_number);
+    }
+
     return res.status(200).json({
       success: true,
-      data: rows[0]
+      data: profile
     });
   } catch (error) {
     console.error('[PROFILE] Error fetching profile:', error.message);

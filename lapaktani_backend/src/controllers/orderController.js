@@ -1,6 +1,9 @@
 const crypto = require('crypto');
 const { v4: uuidv4 } = require('uuid');
 const pool = require('../config/db');
+const redisClient = require('../config/redis');
+const { encryptJsonPayload } = require('../utils/encryption');
+const { notifyTransactionEvent } = require('../utils/notificationService');
 
 const PAYMENT_GATEWAY_SERVER_KEY = process.env.PAYMENT_GATEWAY_SERVER_KEY || process.env.MIDTRANS_SERVER_KEY || '';
 
@@ -423,8 +426,20 @@ const checkoutOrder = async (req, res) => {
 
     // 9. Commit transaction
     await connection.commit();
+    await redisClient.delCache('lapaktani_catalog').catch(() => {});
+
+    const escrowSeal = encryptJsonPayload({
+      order_id: orderId,
+      invoice_number: invoiceNumber,
+      buyer_id: userId,
+      total_amount: totalAmount,
+      order_tier: orderTier,
+      timestamp: new Date().toISOString()
+    });
 
     console.log(`[ORDER] Checkout success: ${orderId} (${invoiceNumber}) [${payment_method}] Status: ${initialPaymentStatus}`);
+
+    let resolvedSellerTarget = validatedOrderItems[0]?.farmer_id || null;
 
     // 10. Unified Order Chat & Poktan Admin Notification Hook (non-blocking post-commit)
     try {
@@ -436,6 +451,7 @@ const checkoutOrder = async (req, res) => {
         [userId]
       );
       const poktanAdminId = adminRows.length > 0 ? adminRows[0].id : validatedOrderItems[0]?.farmer_id;
+      resolvedSellerTarget = poktanAdminId || resolvedSellerTarget;
 
       if (poktanAdminId && poktanAdminId !== userId) {
         const itemsSummary = validatedOrderItems
@@ -497,7 +513,8 @@ const checkoutOrder = async (req, res) => {
               total_amount: totalAmount,
               shipping_fee: numericShippingFee,
               delivery_address: cleanAddress,
-              status: initialOrderStatus
+              status: initialOrderStatus,
+              escrow_encrypted_seal: escrowSeal
             })
           ]
         );
@@ -517,6 +534,17 @@ const checkoutOrder = async (req, res) => {
     } catch (chatHookErr) {
       console.warn('[ORDER] Order chat hook notice:', chatHookErr.message);
     }
+
+    notifyTransactionEvent({
+      eventType: isSimulator ? 'ORDER_PAID' : 'ORDER_CREATED',
+      orderId,
+      invoiceNumber,
+      buyerId: userId,
+      sellerId: resolvedSellerTarget,
+      totalAmount,
+      status: initialOrderStatus,
+      message: `Pesanan ${invoiceNumber} senilai Rp ${Number(totalAmount).toLocaleString('id-ID')} berstatus ${initialOrderStatus}.`,
+    }).catch(() => {});
 
     return res.status(201).json({
       success: true,
@@ -542,6 +570,7 @@ const checkoutOrder = async (req, res) => {
         courier_service: courier_service,
         wallet_balance_before: userWalletBalance,
         remaining_wallet_balance: remainingBalance,
+        escrow_seal: escrowSeal,
         payment_details: paymentDetails,
         items: validatedOrderItems,
         created_at: new Date().toISOString()
@@ -604,7 +633,7 @@ const handlePaymentWebhook = async (req, res) => {
     await connection.beginTransaction();
 
     const [orderRows] = await connection.query(
-      'SELECT id, invoice_number, total_amount, payment_status, order_status FROM orders WHERE id = ? OR invoice_number = ? LIMIT 1 FOR UPDATE',
+      'SELECT id, user_id, buyer_id, invoice_number, total_amount, payment_status, order_status FROM orders WHERE id = ? OR invoice_number = ? LIMIT 1 FOR UPDATE',
       [orderId, orderId]
     );
 
@@ -709,6 +738,20 @@ const handlePaymentWebhook = async (req, res) => {
     }
 
     await connection.commit();
+
+    if (newOrderStatus === 'CANCELLED') {
+      await redisClient.delCache('lapaktani_catalog').catch(() => {});
+    }
+
+    notifyTransactionEvent({
+      eventType: newPaymentStatus === 'PAID' ? 'ORDER_PAID' : (newOrderStatus === 'CANCELLED' ? 'ORDER_CANCELLED' : 'ORDER_PAYMENT_UPDATE'),
+      orderId: order.id,
+      invoiceNumber: order.invoice_number,
+      buyerId: order.buyer_id || order.user_id || null,
+      totalAmount: order.total_amount,
+      status: newOrderStatus,
+      message: `Pembayaran pesanan ${order.invoice_number || order.id} diperbarui: ${newPaymentStatus} (${newOrderStatus}).`,
+    }).catch(() => {});
 
     console.log(`[WEBHOOK] Order ${order.id} status successfully updated: ${newPaymentStatus} (${newOrderStatus})`);
 
@@ -1193,6 +1236,26 @@ const updateOrderStatus = async (req, res) => {
       'UPDATE orders SET order_status = ?, updated_at = NOW() WHERE (id = ? OR invoice_number = ?)',
       [requestedStatus, order.id, order.id]
     );
+
+    const txEventType =
+      requestedStatus === 'SHIPPED' || requestedStatus === 'IN_TRANSIT'
+        ? 'ORDER_SHIPPED'
+        : requestedStatus === 'COMPLETED'
+          ? 'ORDER_COMPLETED'
+          : requestedStatus === 'CANCELLED'
+            ? 'ORDER_CANCELLED'
+            : 'ORDER_STATUS_UPDATED';
+
+    notifyTransactionEvent({
+      eventType: txEventType,
+      orderId: order.id,
+      invoiceNumber: order.invoice_number,
+      buyerId: order.buyer_id || order.user_id || null,
+      sellerId: userId,
+      totalAmount: order.total_amount,
+      status: requestedStatus,
+      message: `Status pesanan ${order.invoice_number || order.id} berubah menjadi ${requestedStatus}.`,
+    }).catch(() => {});
 
     console.log(`[ORDER] Order ${order.id} status transitioned from ${order.order_status} to ${requestedStatus} by user: ${userId}`);
 

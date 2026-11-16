@@ -9,6 +9,44 @@ const ROLE_ID_MAP = {
   5: 'dinas'
 };
 
+const ROLE_NAME_TO_ID = {
+  petani: 1,
+  penyuluh: 2,
+  admin: 3,
+  pembeli: 4,
+  dinas: 5
+};
+
+const getJwtSecret = () => process.env.JWT_SECRET || 'lapaktani_secret_2026';
+
+/**
+ * Sign a multi-role JWT across the 5 LapakTani roles (petani, penyuluh, admin, pembeli, dinas)
+ */
+const signUserToken = (userPayload = {}, options = {}) => {
+  const normalizedRole = String(
+    userPayload.role || ROLE_ID_MAP[Number(userPayload.role_id)] || 'pembeli'
+  ).toLowerCase();
+  const resolvedRoleId = Number(userPayload.role_id) || ROLE_NAME_TO_ID[normalizedRole] || 4;
+  const payload = {
+    id: userPayload.id,
+    email: userPayload.email,
+    role_id: resolvedRoleId,
+    role: ROLE_ID_MAP[resolvedRoleId] || normalizedRole,
+    is_chairman: Boolean(userPayload.is_chairman),
+  };
+
+  return jwt.sign(payload, getJwtSecret(), {
+    expiresIn: options.expiresIn || process.env.JWT_EXPIRES_IN || '7d',
+  });
+};
+
+/**
+ * Verify a raw JWT string and return the decoded payload
+ */
+const verifyRawToken = (token) => {
+  return jwt.verify(token, getJwtSecret());
+};
+
 const verifyToken = (req, res, next) => {
   const authHeader = req.headers.authorization || req.headers.Authorization;
 
@@ -22,7 +60,7 @@ const verifyToken = (req, res, next) => {
   const token = authHeader.split(' ')[1];
 
   try {
-    const decoded = jwt.verify(token, process.env.JWT_SECRET || 'lapaktani_secret_2026');
+    const decoded = verifyRawToken(token);
     req.user = decoded;
     next();
   } catch (error) {
@@ -42,7 +80,7 @@ const optionalVerifyToken = (req, res, next) => {
   if (authHeader && authHeader.startsWith('Bearer ')) {
     const token = authHeader.split(' ')[1];
     try {
-      req.user = jwt.verify(token, process.env.JWT_SECRET || 'lapaktani_secret_2026');
+      req.user = verifyRawToken(token);
     } catch (_) {
       req.user = undefined;
     }
@@ -94,5 +132,9 @@ const requireRole = (...allowedRoles) => {
 module.exports = {
   verifyToken,
   optionalVerifyToken,
-  requireRole
+  requireRole,
+  signUserToken,
+  verifyRawToken,
+  ROLE_ID_MAP,
+  ROLE_NAME_TO_ID
 };
