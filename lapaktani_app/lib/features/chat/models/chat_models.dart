@@ -27,18 +27,11 @@ class ChatParticipant {
   }
 
   String get roleLabel {
-    switch (role) {
-      case 'penyuluh':
-        return 'Penyuluh BPP';
-      case 'admin':
-        return 'Ketua Poktan';
-      case 'dinas':
-        return 'Dinas Pertanian';
-      case 'pembeli':
-        return 'Pembeli';
-      default:
-        return 'Petani';
-    }
+    if (role == 'dinas' || roleId == 5) return 'Dinas Pertanian';
+    if (role == 'penyuluh' || roleId == 2) return 'Penyuluh BPP';
+    if (role == 'admin' || roleId == 3) return 'Admin Toko';
+    if (role == 'pembeli' || roleId == 4) return 'Pembeli';
+    return 'Petani';
   }
 }
 

@@ -941,6 +941,7 @@ const dispatchRagDecision = async (req, res) => {
     const body = req.body || {};
     const {
       plot_id,
+      village_id: rawVillageId,
       desa,
       kecamatan = 'Sumenep',
       poktan_id = null,
@@ -963,6 +964,23 @@ const dispatchRagDecision = async (req, res) => {
       ? String(target_scope).toUpperCase()
       : 'BOTH';
 
+    // Resolve village_id from body or villages table by desa name
+    let resolvedVillageId = Number(rawVillageId) || null;
+    if (!resolvedVillageId) {
+      try {
+        const [vRows] = await pool.query(
+          'SELECT id FROM villages WHERE LOWER(name) LIKE ? LIMIT 1',
+          [`%${String(desa).trim().toLowerCase()}%`]
+        );
+        if (vRows.length > 0) {
+          resolvedVillageId = Number(vRows[0].id);
+        }
+      } catch (_) {}
+    }
+    if (!resolvedVillageId) {
+      resolvedVillageId = String(desa).toLowerCase().includes('mandala') ? 101 : 109;
+    }
+
     const reportId = `dec-${uuidv4().slice(0, 12)}`;
     const penyuluhId = req.user?.id || 'usr-ppl-03';
 
@@ -979,12 +997,13 @@ const dispatchRagDecision = async (req, res) => {
 
     await pool.query(
       `INSERT INTO ppl_decision_reports (
-        id, plot_id, penyuluh_id, penyuluh_name, desa, kecamatan, poktan_id, komoditas,
+        id, plot_id, village_id, penyuluh_id, penyuluh_name, desa, kecamatan, poktan_id, komoditas,
         rag_context_json, decision_summary, action_plan, target_scope, status
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'SENT')`,
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'SENT')`,
       [
         reportId,
         plot_id ? String(plot_id) : null,
+        resolvedVillageId,
         penyuluhId,
         penyuluhName,
         String(desa).trim(),
@@ -1014,6 +1033,27 @@ const dispatchRagDecision = async (req, res) => {
 
     if (normalizedScope === 'FARMERS_ONLY' || normalizedScope === 'BOTH') {
       await broadcastAdvisoryToFarmerChat(penyuluhId, createdReport);
+
+      // Post advisory announcement into village_forum_posts for the affected village
+      try {
+        await pool.query(
+          `INSERT INTO village_forum_posts (
+            id, village_id, village_name, author_id, author_name, author_role,
+            kategori, judul, isi_pesan, titik_ambil_pupuk
+          ) VALUES (?, ?, ?, ?, ?, 'penyuluh', 'ARAHAN_TANAM', ?, ?, NULL)`,
+          [
+            `vf-rag-${uuidv4().slice(0, 8)}`,
+            resolvedVillageId,
+            String(desa).trim(),
+            penyuluhId,
+            penyuluhName,
+            `Keputusan RAG Penyuluh: ${String(decision_summary).trim().slice(0, 140)}`,
+            String(action_plan).trim()
+          ]
+        );
+      } catch (forumErr) {
+        console.warn('[RAG_DISPATCH] Village forum announcement warning:', forumErr.message);
+      }
     }
 
     if (normalizedScope === 'DINAS_ONLY' || normalizedScope === 'BOTH') {
@@ -1062,7 +1102,7 @@ const getDecisionReports = async (req, res) => {
     const callerRole = String(req.user?.role || '').toLowerCase();
     const callerRoleId = Number(req.user?.role_id || 0);
     const requestedRole = String(req.query.role || callerRole || '').toLowerCase();
-    const { desa, poktan_id, status } = req.query;
+    const { desa, poktan_id, status, village_id } = req.query;
 
     const conditions = [];
     const params = [];
@@ -1073,6 +1113,11 @@ const getDecisionReports = async (req, res) => {
       conditions.push("target_scope IN ('FARMERS_ONLY', 'BOTH')");
     } else if (requestedRole === 'admin' || callerRole === 'admin' || callerRoleId === 3) {
       conditions.push("target_scope IN ('FARMERS_ONLY', 'BOTH')");
+    }
+
+    if (village_id && String(village_id).trim() !== 'all') {
+      conditions.push('village_id = ?');
+      params.push(Number(village_id));
     }
 
     if (desa && String(desa).trim().toLowerCase() !== 'all') {

@@ -17,6 +17,7 @@ interface SidebarProps {
   onTabChange: (tab: PortalModuleTab) => void;
   currentUser?: AuthUser | null;
   onLogout?: () => void;
+  onOpenDm?: () => void;
 }
 
 export const Sidebar: React.FC<SidebarProps> = ({
@@ -26,6 +27,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
   onTabChange,
   currentUser,
   onLogout,
+  onOpenDm,
 }) => {
   const isDinas =
     currentUser?.role?.toLowerCase() === 'dinas' || currentUser?.role_id === 5;
@@ -168,6 +170,25 @@ export const Sidebar: React.FC<SidebarProps> = ({
                 </span>
               </button>
             </nav>
+          </div>
+        )}
+
+        {/* Direct Message Shortcut */}
+        {currentUser && onOpenDm && (
+          <div>
+            <button
+              type="button"
+              onClick={onOpenDm}
+              className="w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-[13px] font-bold bg-[#F59E0B] hover:bg-amber-500 text-white shadow-sm transition-all"
+            >
+              <div className="flex items-center gap-2.5">
+                <span className="material-symbols-outlined text-[19px]">forum</span>
+                <span>Pesan DM (5 Role)</span>
+              </div>
+              <span className="px-2 py-0.5 rounded-md bg-white/20 text-[10px] font-extrabold">
+                LIVE
+              </span>
+            </button>
           </div>
         )}
 

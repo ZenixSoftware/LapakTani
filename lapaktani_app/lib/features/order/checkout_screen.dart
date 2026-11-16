@@ -4,6 +4,8 @@ import 'package:lucide_icons/lucide_icons.dart';
 import '../../core/services/api_service.dart';
 import '../../core/theme/app_colors.dart';
 import '../cart/cart_screen.dart';
+import '../chat/screens/chat_room_screen.dart';
+import '../chat/services/chat_service.dart';
 import 'order_success_screen.dart';
 import 'payment_method_selection_screen.dart';
 import 'payment_instruction_screen.dart';
@@ -805,17 +807,57 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                   ),
                 ],
               ),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
-                decoration: BoxDecoration(
-                  color: const Color(0xFFECFDF5),
-                  borderRadius: BorderRadius.circular(10),
-                  border: Border.all(color: const Color(0xFFA7F3D0)),
-                ),
-                child: Text(
-                  'Petani Langsung',
-                  style: GoogleFonts.inter(fontSize: 9.5, fontWeight: FontWeight.w700, color: const Color(0xFF065F46)),
-                ),
+              Row(
+                children: [
+                  OutlinedButton.icon(
+                    onPressed: () async {
+                      try {
+                        final firstPid =
+                            _items.isNotEmpty ? _items.first.productId : 'CHECKOUT';
+                        final conv = await ChatService().openDirectConversation(
+                          targetRole: 'admin',
+                          orderId: 'PRE-$firstPid',
+                          title: 'Chat Penjual • $_recipientName',
+                          initialMessage:
+                              'Halo Admin Toko, saya ingin menanyakan detail pesanan sebelum pembayaran.',
+                        );
+                        if (!mounted) return;
+                        await Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => ChatRoomScreen(conversation: conv),
+                          ),
+                        );
+                      } catch (e) {
+                        if (!mounted) return;
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text('Gagal membuka chat penjual: $e'),
+                            backgroundColor: AppColors.error,
+                          ),
+                        );
+                      }
+                    },
+                    icon: const Icon(LucideIcons.messageSquare, size: 12),
+                    label: Text(
+                      'Chat Penjual',
+                      style: GoogleFonts.inter(
+                        fontSize: 10,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: _tokopediaGreen,
+                      side: const BorderSide(color: Color(0xFFA7F3D0)),
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                      minimumSize: Size.zero,
+                      tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                    ),
+                  ),
+                ],
               ),
             ],
           ),

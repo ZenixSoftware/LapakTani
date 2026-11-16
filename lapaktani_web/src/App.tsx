@@ -12,6 +12,7 @@ import { AiPolicyBrief } from './components/AiPolicyBrief';
 import { AiDecisionSupport } from './components/AiDecisionSupport';
 import { PenyuluhStoreAndForumHub } from './components/PenyuluhStoreAndForumHub';
 import { PlotInspectorModal } from './components/PlotInspectorModal';
+import { WebDirectMessageDrawer } from './components/WebDirectMessageDrawer';
 import { isPlotCritical } from './utils/monitoringHelpers';
 import {
   fetchPendingFarmers,
@@ -51,6 +52,7 @@ export function App() {
   } | null>(null);
   const [currentUser, setCurrentUser] = useState<AuthUser | null>(() => getStoredUser());
   const [isLoginModalOpen, setIsLoginModalOpen] = useState<boolean>(() => !getAuthToken());
+  const [isDmDrawerOpen, setIsDmDrawerOpen] = useState<boolean>(false);
 
   const isDinas = isUserDinas(currentUser);
 
@@ -294,6 +296,7 @@ export function App() {
         isSyncing={isSyncing}
         currentUser={currentUser}
         onOpenLogin={() => setIsLoginModalOpen(true)}
+        onOpenDm={() => setIsDmDrawerOpen(true)}
       />
 
       <div className="flex pt-16 min-h-screen">
@@ -305,6 +308,7 @@ export function App() {
           onTabChange={setActiveTab}
           currentUser={currentUser}
           onLogout={handleLogout}
+          onOpenDm={() => setIsDmDrawerOpen(true)}
         />
 
         {/* MAIN WORKSPACE */}
@@ -424,6 +428,14 @@ export function App() {
         readOnly={isDinas}
         onClose={() => setInspectedPlot(null)}
         onPlotUpdated={handlePlotUpdated}
+        onShowToast={showToast}
+      />
+
+      {/* Web Direct Messaging (5 Roles) Slide-Over Drawer */}
+      <WebDirectMessageDrawer
+        isOpen={isDmDrawerOpen}
+        onClose={() => setIsDmDrawerOpen(false)}
+        currentUser={currentUser}
         onShowToast={showToast}
       />
 

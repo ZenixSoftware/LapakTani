@@ -1,6 +1,11 @@
 const { v4: uuidv4 } = require('uuid');
 const pool = require('../config/db');
 const redisClient = require('../config/redis');
+const {
+  generateRagDecision,
+  dispatchRagDecision,
+  getDecisionReports,
+} = require('./penyuluhController');
 
 async function resolveUserSummary(userId) {
   const [rows] = await pool.query(
@@ -1181,4 +1186,7 @@ module.exports = {
   getStorePurchaseOffers,
   createPurchaseOffer,
   weighAndPayOffer,
+  generateRagDecision,
+  dispatchRagDecision,
+  getDecisionReports,
 };

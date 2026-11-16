@@ -16,7 +16,9 @@ function normalizeUserRow(u) {
     full_name: u.full_name || u.email || 'Pengguna LapakTani',
     email: u.email,
     role_id: u.role_id,
-    role: canonicalRole
+    role: canonicalRole,
+    village_id: u.village_id ?? null,
+    village_name: u.village_name ?? null
   };
 }
 
@@ -91,17 +93,32 @@ async function enrichConversation(conversationId, currentUserId) {
 
 /**
  * GET /api/chat/conversations
+ * Returns DIRECT conversations for all 5 roles, and ORDER conversations strictly to pembeli/admin.
  */
 const getConversations = async (req, res) => {
   try {
     const userId = req.user.id;
+    const callerRole = ROLE_ID_MAP[Number(req.user.role_id)] || String(req.user.role || 'petani').toLowerCase();
+    const canSeeOrders = callerRole === 'pembeli' || callerRole === 'admin';
+    const requestedType = String(req.query.type || '').trim().toUpperCase();
+
+    const conditions = ['cp.user_id = ?'];
+    const params = [userId];
+
+    if (!canSeeOrders) {
+      conditions.push("cc.type = 'DIRECT'");
+    } else if (requestedType === 'DIRECT' || requestedType === 'ORDER') {
+      conditions.push('cc.type = ?');
+      params.push(requestedType);
+    }
+
     const [convIds] = await pool.query(
       `SELECT cc.id
        FROM chat_conversations cc
        JOIN chat_participants cp ON cc.id = cp.conversation_id
-       WHERE cp.user_id = ?
+       WHERE ${conditions.join(' AND ')}
        ORDER BY cc.updated_at DESC`,
-      [userId]
+      params
     );
 
     const enriched = [];
@@ -126,19 +143,60 @@ const getConversations = async (req, res) => {
 
 /**
  * GET /api/chat/contacts
- * Returns quick-chat contacts (Penyuluh, Ketua Poktan/Admin, and Petani peers)
+ * Returns 5-role DM contacts (dinas, penyuluh, admin, petani, pembeli).
+ * When caller is penyuluh, petani contacts are scoped to the Penyuluh's village_id (or prioritized).
  */
 const getContacts = async (req, res) => {
   try {
     const userId = req.user.id;
-    const [rows] = await pool.query(
-      `SELECT id, full_name, email, role_id, role
-       FROM users
-       WHERE id != ? AND is_verified = 1 AND (role_id IN (1, 2, 3) OR role IN ('petani', 'penyuluh', 'admin'))
-       ORDER BY CASE WHEN role_id = 2 THEN 0 WHEN role_id = 3 THEN 1 ELSE 2 END, full_name ASC
-       LIMIT 25`,
-      [userId]
-    );
+    const callerRole = ROLE_ID_MAP[Number(req.user.role_id)] || String(req.user.role || 'petani').toLowerCase();
+
+    let callerVillageId = null;
+    try {
+      const [meRows] = await pool.query(
+        'SELECT village_id FROM user_profiles WHERE user_id = ? LIMIT 1',
+        [userId]
+      );
+      if (meRows.length > 0 && meRows[0].village_id) {
+        callerVillageId = Number(meRows[0].village_id);
+      }
+    } catch (_) {}
+
+    let querySql = `
+      SELECT u.id, u.full_name, u.email, u.role_id, u.role,
+             up.village_id, v.name AS village_name
+      FROM users u
+      LEFT JOIN user_profiles up ON u.id = up.user_id
+      LEFT JOIN villages v ON up.village_id = v.id
+      WHERE u.id != ?
+        AND (u.is_verified = 1 OR u.role_id IN (2, 3, 4, 5) OR u.role IN ('penyuluh', 'admin', 'pembeli', 'dinas'))
+        AND (u.role_id IN (1, 2, 3, 4, 5) OR u.role IN ('petani', 'penyuluh', 'admin', 'pembeli', 'dinas'))
+    `;
+    const params = [userId];
+
+    if (callerRole === 'penyuluh' && callerVillageId) {
+      querySql += `
+        AND (
+          (u.role_id != 1 AND u.role != 'petani')
+          OR up.village_id = ?
+          OR up.village_id IS NULL
+        )
+      `;
+      params.push(callerVillageId);
+    }
+
+    querySql += `
+      ORDER BY CASE
+        WHEN u.role_id = 5 OR u.role = 'dinas' THEN 0
+        WHEN u.role_id = 2 OR u.role = 'penyuluh' THEN 1
+        WHEN u.role_id = 3 OR u.role = 'admin' THEN 2
+        WHEN u.role_id = 1 OR u.role = 'petani' THEN 3
+        ELSE 4
+      END, u.full_name ASC
+      LIMIT 40
+    `;
+
+    const [rows] = await pool.query(querySql, params);
 
     return res.status(200).json({
       success: true,
@@ -197,20 +255,34 @@ const openDirectConversation = async (req, res) => {
 
     if (!targetUser && target_role) {
       const r = String(target_role).trim().toLowerCase();
-      let roleFilter = "role = 'penyuluh' OR role_id = 2";
-      if (r === 'admin' || r === 'poktan' || r === 'ketua poktan') {
-        roleFilter = "role = 'admin' OR role_id = 3";
+      let roleFilter = "u.role = 'penyuluh' OR u.role_id = 2";
+      if (r === 'dinas' || r === 'pemerintah' || r === 'disperta') {
+        roleFilter = "u.role = 'dinas' OR u.role_id = 5";
+      } else if (r === 'admin' || r === 'poktan' || r === 'ketua poktan' || r === 'toko') {
+        roleFilter = "u.role = 'admin' OR u.role_id = 3";
       } else if (r === 'petani') {
-        roleFilter = "role = 'petani' OR role_id = 1";
+        roleFilter = "u.role = 'petani' OR u.role_id = 1";
       } else if (r === 'pembeli') {
-        roleFilter = "role = 'pembeli' OR role_id = 4";
+        roleFilter = "u.role = 'pembeli' OR u.role_id = 4";
       }
+
+      let callerVillageId = null;
+      if (r === 'petani') {
+        try {
+          const [vRows] = await pool.query('SELECT village_id FROM user_profiles WHERE user_id = ? LIMIT 1', [currentUserId]);
+          callerVillageId = vRows[0]?.village_id ? Number(vRows[0].village_id) : null;
+        } catch (_) {}
+      }
+
       const [rows] = await pool.query(
-        `SELECT id, full_name, email, role_id, role FROM users
-         WHERE id != ? AND (${roleFilter})
-         ORDER BY CASE WHEN email LIKE '%@lapaktani.id' THEN 0 ELSE 1 END
+        `SELECT u.id, u.full_name, u.email, u.role_id, u.role, up.village_id
+         FROM users u
+         LEFT JOIN user_profiles up ON u.id = up.user_id
+         WHERE u.id != ? AND (${roleFilter})
+         ORDER BY ${callerVillageId ? 'CASE WHEN up.village_id = ? THEN 0 ELSE 1 END,' : ''}
+                  CASE WHEN u.email LIKE '%@lapaktani.id' THEN 0 ELSE 1 END
          LIMIT 1`,
-        [currentUserId]
+        callerVillageId ? [currentUserId, callerVillageId] : [currentUserId]
       );
       if (rows.length > 0) {
         targetUser = rows[0];
@@ -234,8 +306,18 @@ const openDirectConversation = async (req, res) => {
       });
     }
 
+    const callerRole = ROLE_ID_MAP[Number(req.user.role_id)] || String(req.user.role || 'petani').toLowerCase();
+    const targetCanonicalRole = ROLE_ID_MAP[Number(targetUser.role_id)] || String(targetUser.role || 'petani').toLowerCase();
+    const wantsOrderConv = Boolean(order_id);
+    if (wantsOrderConv && !['pembeli', 'admin'].includes(callerRole)) {
+      return res.status(403).json({
+        success: false,
+        message: 'Chat penjualan (ORDER) hanya tersedia untuk Pembeli dan Admin Toko.'
+      });
+    }
+
     let conversationId = null;
-    const convType = order_id ? 'ORDER' : 'DIRECT';
+    const convType = wantsOrderConv ? 'ORDER' : 'DIRECT';
 
     if (order_id) {
       const [existingOrderConvs] = await pool.query(
@@ -247,6 +329,19 @@ const openDirectConversation = async (req, res) => {
       );
       if (existingOrderConvs.length > 0) {
         conversationId = existingOrderConvs[0].id;
+      } else if (['pembeli', 'admin'].includes(targetCanonicalRole)) {
+        const [pairOrderConvs] = await pool.query(
+          `SELECT cc.id FROM chat_conversations cc
+           JOIN chat_participants cp1 ON cc.id = cp1.conversation_id AND cp1.user_id = ?
+           JOIN chat_participants cp2 ON cc.id = cp2.conversation_id AND cp2.user_id = ?
+           WHERE cc.type = 'ORDER'
+           ORDER BY cc.updated_at DESC
+           LIMIT 1`,
+          [currentUserId, targetUser.id]
+        );
+        if (pairOrderConvs.length > 0) {
+          conversationId = pairOrderConvs[0].id;
+        }
       }
     } else {
       const [existingDirectConvs] = await pool.query(
@@ -323,7 +418,9 @@ const getConversationMessages = async (req, res) => {
     const { id } = req.params;
 
     const [memberRows] = await pool.query(
-      'SELECT 1 FROM chat_participants WHERE conversation_id = ? AND user_id = ? LIMIT 1',
+      `SELECT cc.type FROM chat_participants cp
+       JOIN chat_conversations cc ON cp.conversation_id = cc.id
+       WHERE cp.conversation_id = ? AND cp.user_id = ? LIMIT 1`,
       [id, userId]
     );
 
@@ -331,6 +428,14 @@ const getConversationMessages = async (req, res) => {
       return res.status(403).json({
         success: false,
         message: 'Anda bukan peserta dalam percakapan ini.'
+      });
+    }
+
+    const callerRole = ROLE_ID_MAP[Number(req.user.role_id)] || String(req.user.role || 'petani').toLowerCase();
+    if (memberRows[0].type === 'ORDER' && !['pembeli', 'admin'].includes(callerRole)) {
+      return res.status(403).json({
+        success: false,
+        message: 'Chat penjualan hanya dapat diakses oleh Pembeli dan Admin Toko.'
       });
     }
 

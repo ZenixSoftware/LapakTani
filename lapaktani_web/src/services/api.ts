@@ -343,6 +343,7 @@ export const submitPplPlotRecommendation = async (
 export interface DecisionReportRecord {
   id: string;
   plot_id?: string | null;
+  village_id?: number | null;
   penyuluh_id: string;
   penyuluh_name: string;
   desa: string;
@@ -401,6 +402,7 @@ export const generateRagDecision = async (payload: {
 
 export const dispatchRagDecision = async (payload: {
   plot_id?: string | number | null;
+  village_id?: number;
   desa: string;
   kecamatan?: string;
   poktan_id?: string | null;
@@ -425,11 +427,13 @@ export const dispatchRagDecision = async (payload: {
 export const fetchDecisionReports = async (params?: {
   role?: string;
   desa?: string;
+  village_id?: number;
   status?: string;
 }): Promise<DecisionReportRecord[]> => {
   const qs = new URLSearchParams();
   if (params?.role) qs.set('role', params.role);
   if (params?.desa) qs.set('desa', params.desa);
+  if (params?.village_id) qs.set('village_id', String(params.village_id));
   if (params?.status) qs.set('status', params.status);
   const queryStr = qs.toString() ? `?${qs.toString()}` : '';
 
@@ -738,4 +742,103 @@ export const createVillageForumPost = async (payload: {
   }
   const result = await response.json();
   return result.data as VillageForumPost;
+};
+
+// ============================================================================
+// 5-Role Web Direct Messaging (Dinas <-> Penyuluh <-> Petani / Admin Toko)
+// ============================================================================
+
+export interface WebChatParticipant {
+  id: string;
+  full_name: string;
+  email: string;
+  role_id: number;
+  role: string;
+  village_id?: number | null;
+  village_name?: string | null;
+}
+
+export interface WebChatMessage {
+  id: string;
+  conversation_id: string;
+  sender_id: string;
+  sender_name: string;
+  sender_role?: string;
+  message_type: 'TEXT' | 'ORDER_CARD' | 'ADVISORY_CARD' | string;
+  body: string;
+  metadata?: Record<string, unknown> | null;
+  created_at: string;
+}
+
+export interface WebChatConversation {
+  id: string;
+  type: 'DIRECT' | 'ORDER' | string;
+  order_id?: string | null;
+  title?: string | null;
+  participants: WebChatParticipant[];
+  other_participant?: WebChatParticipant | null;
+  last_message?: WebChatMessage | null;
+  unread_count: number;
+  updated_at?: string | null;
+}
+
+export const fetchWebChatConversations = async (): Promise<WebChatConversation[]> => {
+  const response = await authFetch(`${API_BASE_URL}/chat/conversations?type=DIRECT`);
+  if (!response.ok) {
+    throw new Error(`Gagal memuat percakapan DM (${response.status})`);
+  }
+  const result = await response.json();
+  return (result.data || []) as WebChatConversation[];
+};
+
+export const fetchWebChatContacts = async (): Promise<WebChatParticipant[]> => {
+  const response = await authFetch(`${API_BASE_URL}/chat/contacts`);
+  if (!response.ok) {
+    throw new Error(`Gagal memuat kontak DM (${response.status})`);
+  }
+  const result = await response.json();
+  return (result.data || []) as WebChatParticipant[];
+};
+
+export const openWebDirectConversation = async (payload: {
+  target_user_id?: string;
+  target_role?: string;
+  title?: string;
+  initial_message?: string;
+}): Promise<WebChatConversation> => {
+  const response = await authFetch(`${API_BASE_URL}/chat/conversations/direct`, {
+    method: 'POST',
+    body: JSON.stringify(payload),
+  });
+  if (!response.ok) {
+    const err = await response.json().catch(() => ({}));
+    throw new Error(err.message || `Gagal membuka ruang DM (${response.status})`);
+  }
+  const result = await response.json();
+  return result.data as WebChatConversation;
+};
+
+export const fetchWebChatMessages = async (conversationId: string): Promise<WebChatMessage[]> => {
+  const response = await authFetch(`${API_BASE_URL}/chat/conversations/${conversationId}/messages`);
+  if (!response.ok) {
+    throw new Error(`Gagal memuat riwayat pesan (${response.status})`);
+  }
+  const result = await response.json();
+  return (result.data || []) as WebChatMessage[];
+};
+
+export const sendWebChatMessage = async (
+  conversationId: string,
+  body: string
+): Promise<WebChatMessage> => {
+  const response = await authFetch(`${API_BASE_URL}/chat/conversations/${conversationId}/messages`, {
+    method: 'POST',
+    body: JSON.stringify({ body, message_type: 'TEXT' }),
+  });
+  if (!response.ok) {
+    const err = await response.json().catch(() => ({}));
+    throw new Error(err.message || `Gagal mengirim pesan DM (${response.status})`);
+  }
+  const result = await response.json();
+  return result.data as WebChatMessage;
 };

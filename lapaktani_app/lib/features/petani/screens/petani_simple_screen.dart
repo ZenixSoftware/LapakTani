@@ -1,4 +1,3 @@
-import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:lucide_icons/lucide_icons.dart';
@@ -7,11 +6,12 @@ import 'package:lapaktani_app/core/services/user_session.dart';
 import 'package:lapaktani_app/core/theme/app_colors.dart';
 import 'package:lapaktani_app/features/auth/auth_repository.dart';
 import 'package:lapaktani_app/features/chat/screens/chat_list_screen.dart';
+import 'package:lapaktani_app/features/chat/screens/chat_room_screen.dart';
+import 'package:lapaktani_app/features/chat/services/chat_service.dart';
 import 'package:lapaktani_app/features/community/screens/create_pest_report_screen.dart';
 import 'package:lapaktani_app/features/community/screens/education_feed_screen.dart';
 import 'package:lapaktani_app/features/navigation/role_based_app_shell.dart';
 import 'package:lapaktani_app/features/penyuluh/models/precision_soil_models.dart';
-import 'package:lapaktani_app/features/petani/screens/petani_land_monitoring_screen.dart';
 import 'package:lapaktani_app/features/poktan/screens/farmer_tasks_screen.dart';
 import 'package:lapaktani_app/features/poktan/services/poktan_service.dart';
 
@@ -31,14 +31,6 @@ class _PetaniSimpleScreenState extends State<PetaniSimpleScreen> {
   double _totalAssignedKg = 0.0;
   final double _landAreaHa = 1.2;
   final String _commodity = 'Cabai Rawit';
-
-  // IoT Telemetry State (US-26)
-  double _phLevel = 6.50;
-  double _nitrogen = 155.00;
-  double _phosphorus = 42.00;
-  double _potassium = 220.00;
-  double _moisture = 72.00;
-  String _fertilityIndex = 'OPTIMAL';
 
   // Village Advisory & Farmer Daily Logs State
   List<Map<String, dynamic>> _advisories = [];
@@ -94,28 +86,38 @@ class _PetaniSimpleScreenState extends State<PetaniSimpleScreen> {
       _harvestReports = extraResults[2];
       _purchaseOffers = extraResults[3];
       _villageForumPosts = extraResults[4];
-
-      // Fetch soil telemetry if product available
-      try {
-        final res = await ApiService.get('/soil/telemetry/prod-tomat-lembang-001');
-        if (res.statusCode == 200) {
-          final data = jsonDecode(res.body);
-          if (data['success'] == true && data['data'] != null) {
-            final t = data['data'];
-            _phLevel = (t['ph_level'] as num?)?.toDouble() ?? _phLevel;
-            _nitrogen = (t['nitrogen_mg_kg'] as num?)?.toDouble() ?? _nitrogen;
-            _phosphorus = (t['phosphorus_mg_kg'] as num?)?.toDouble() ?? _phosphorus;
-            _potassium = (t['potassium_mg_kg'] as num?)?.toDouble() ?? _potassium;
-            _moisture = (t['moisture_percentage'] as num?)?.toDouble() ?? _moisture;
-            _fertilityIndex = t['fertility_index']?.toString() ?? _fertilityIndex;
-          }
-        }
-      } catch (_) {}
     } catch (_) {
     } finally {
       if (mounted) {
         setState(() => _isLoading = false);
       }
+    }
+  }
+
+  Future<void> _openDirectChat({
+    String? targetUserId,
+    String? targetRole,
+    required String title,
+  }) async {
+    try {
+      final conv = await ChatService().openDirectConversation(
+        targetUserId: targetUserId,
+        targetRole: targetRole,
+        title: title,
+      );
+      if (!mounted) return;
+      await Navigator.push(
+        context,
+        MaterialPageRoute(builder: (_) => ChatRoomScreen(conversation: conv)),
+      );
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Gagal membuka DM: $e'),
+          backgroundColor: AppColors.error,
+        ),
+      );
     }
   }
 
@@ -423,10 +425,6 @@ class _PetaniSimpleScreenState extends State<PetaniSimpleScreen> {
                     _buildCardContractQuota(),
                     const SizedBox(height: 14),
 
-                    // CARD 3: Telemetri Kualitas Tanah IoT (US-26)
-                    _buildCardSoilTelemetry(),
-                    const SizedBox(height: 14),
-
                     // CARD 3B: Laporan Harian Kondisi Lahan ke Penyuluh
                     _buildCardDailyLogs(),
                     const SizedBox(height: 14),
@@ -691,148 +689,6 @@ class _PetaniSimpleScreenState extends State<PetaniSimpleScreen> {
     );
   }
 
-  Widget _buildCardSoilTelemetry() {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: const Color(0xFFE2E8F0)),
-        boxShadow: const [
-          BoxShadow(
-            color: Color(0x08000000),
-            blurRadius: 8,
-            offset: Offset(0, 2),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Container(
-                padding: const EdgeInsets.all(8),
-                decoration: BoxDecoration(
-                  color: const Color(0xFFFEF3C7),
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: const Icon(LucideIcons.activity, size: 18, color: Color(0xFFD97706)),
-              ),
-              const SizedBox(width: 10),
-              Expanded(
-                child: Text(
-                  'Telemetri Kualitas Tanah IoT',
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: GoogleFonts.plusJakartaSans(
-                    fontSize: 14.5,
-                    fontWeight: FontWeight.w700,
-                    color: const Color(0xFF121C2A),
-                  ),
-                ),
-              ),
-              const SizedBox(width: 8),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                decoration: BoxDecoration(
-                  color: const Color(0xFFDCFCE7),
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Text(
-                  _fertilityIndex,
-                  style: GoogleFonts.plusJakartaSans(
-                    fontSize: 10.5,
-                    fontWeight: FontWeight.w700,
-                    color: const Color(0xFF166534),
-                  ),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 14),
-          Row(
-            children: [
-              Expanded(child: _buildTelemetryPill('pH Tanah', '$_phLevel', 'Optimal: 6.0-7.0')),
-              const SizedBox(width: 8),
-              Expanded(child: _buildTelemetryPill('Kelembaban', '$_moisture%', 'Kadar Lengas')),
-              const SizedBox(width: 8),
-              Expanded(child: _buildTelemetryPill('Nitrogen (N)', '${_nitrogen.toStringAsFixed(0)} mg/kg', 'NPK Sensor')),
-            ],
-          ),
-          const SizedBox(height: 8),
-          Row(
-            children: [
-              Expanded(child: _buildTelemetryPill('Fosfor (P)', '${_phosphorus.toStringAsFixed(0)} mg/kg', 'NPK Sensor')),
-              const SizedBox(width: 8),
-              Expanded(child: _buildTelemetryPill('Kalium (K)', '${_potassium.toStringAsFixed(0)} mg/kg', 'NPK Sensor')),
-            ],
-          ),
-          const SizedBox(height: 12),
-          SizedBox(
-            width: double.infinity,
-            child: OutlinedButton.icon(
-              onPressed: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (_) => const PetaniLandMonitoringScreen(),
-                  ),
-                );
-              },
-              icon: const Icon(LucideIcons.activity, size: 16),
-              label: Text(
-                'Input Kondisi Lahan & Sensor 8-in-1',
-                style: GoogleFonts.plusJakartaSans(
-                  fontSize: 12,
-                  fontWeight: FontWeight.w700,
-                ),
-              ),
-              style: OutlinedButton.styleFrom(
-                foregroundColor: AppColors.primary,
-                side: const BorderSide(color: AppColors.surfaceSoftBorder),
-                backgroundColor: AppColors.surfaceSoft,
-                padding: const EdgeInsets.symmetric(vertical: 11),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(10),
-                ),
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildTelemetryPill(String label, String value, String sub) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-      decoration: BoxDecoration(
-        color: const Color(0xFFF8FAFC),
-        borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: const Color(0xFFE2E8F0)),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            label,
-            style: GoogleFonts.plusJakartaSans(fontSize: 10, color: const Color(0xFF64748B)),
-          ),
-          const SizedBox(height: 2),
-          Text(
-            value,
-            style: GoogleFonts.plusJakartaSans(fontSize: 13, fontWeight: FontWeight.w700, color: const Color(0xFF0F172A)),
-          ),
-          Text(
-            sub,
-            style: GoogleFonts.plusJakartaSans(fontSize: 9.5, color: const Color(0xFF94A3B8)),
-          ),
-        ],
-      ),
-    );
-  }
-
   Widget _buildCardPestAlertAction() {
     return Container(
       padding: const EdgeInsets.all(16),
@@ -933,8 +789,8 @@ class _PetaniSimpleScreenState extends State<PetaniSimpleScreen> {
     String selectedActivity = 'Pemupukan & Pengapuran';
     String selectedKomoditas = 'Bawang Merah';
     final notesCtrl = TextEditingController();
-    final moistureCtrl = TextEditingController(text: _moisture.toStringAsFixed(0));
-    final phCtrl = TextEditingController(text: _phLevel.toStringAsFixed(1));
+    final moistureCtrl = TextEditingController();
+    final phCtrl = TextEditingController();
     bool isSubmitting = false;
 
     showModalBottomSheet(
@@ -1883,18 +1739,34 @@ class _PetaniSimpleScreenState extends State<PetaniSimpleScreen> {
                         color: AppColors.primaryDark,
                       ),
                     ),
-                    if (status == 'OFFER_SENT') ...[
-                      const SizedBox(height: 8),
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.end,
-                        children: [
+                    const SizedBox(height: 8),
+                    Wrap(
+                      alignment: WrapAlignment.end,
+                      spacing: 6,
+                      runSpacing: 6,
+                      children: [
+                        OutlinedButton.icon(
+                          onPressed: () => _openDirectChat(
+                            targetUserId: offer['store_admin_id']?.toString(),
+                            targetRole: 'admin',
+                            title: 'DM — ${offer['store_name'] ?? 'Admin Toko'}',
+                          ),
+                          icon: const Icon(LucideIcons.messageSquare, size: 13),
+                          label: Text(
+                            'DM Toko',
+                            style: GoogleFonts.plusJakartaSans(
+                              fontSize: 11,
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                        ),
+                        if (status == 'OFFER_SENT') ...[
                           TextButton(
                             onPressed: isBusy
                                 ? null
                                 : () => _respondOffer(id, 'REJECTED'),
                             child: const Text('Tolak'),
                           ),
-                          const SizedBox(width: 6),
                           ElevatedButton(
                             onPressed: isBusy
                                 ? null
@@ -1913,8 +1785,8 @@ class _PetaniSimpleScreenState extends State<PetaniSimpleScreen> {
                             ),
                           ),
                         ],
-                      ),
-                    ],
+                      ],
+                    ),
                   ],
                 ),
               );
@@ -1959,6 +1831,14 @@ class _PetaniSimpleScreenState extends State<PetaniSimpleScreen> {
                     fontWeight: FontWeight.w700,
                   ),
                 ),
+              ),
+              IconButton(
+                onPressed: () => _openDirectChat(
+                  targetRole: 'penyuluh',
+                  title: 'Konsultasi Penyuluh BPP Desa',
+                ),
+                icon: const Icon(LucideIcons.messageSquare, size: 17, color: AppColors.primary),
+                tooltip: 'Kirim DM Penyuluh',
               ),
             ],
           ),

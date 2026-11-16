@@ -4,12 +4,15 @@ import 'package:intl/intl.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 
 import '../../../core/theme/app_colors.dart';
+import '../../auth/auth_repository.dart';
 import '../models/chat_models.dart';
 import '../services/chat_service.dart';
 import 'chat_room_screen.dart';
 
 class ChatListScreen extends StatefulWidget {
-  const ChatListScreen({super.key});
+  final String initialTab; // 'DIRECT' | 'ORDER'
+
+  const ChatListScreen({super.key, this.initialTab = 'DIRECT'});
 
   @override
   State<ChatListScreen> createState() => _ChatListScreenState();
@@ -18,13 +21,24 @@ class ChatListScreen extends StatefulWidget {
 class _ChatListScreenState extends State<ChatListScreen> {
   final ChatService _chatService = ChatService();
   bool _isLoading = true;
-  String _activeFilter = 'ALL'; // ALL | DIRECT | ORDER
+  late String _activeFilter; // DIRECT | ORDER
   List<ChatConversationModel> _conversations = [];
   List<ChatParticipant> _contacts = [];
+
+  bool get _canAccessOrderChat {
+    final role = (AuthRepository().currentUser?.role ?? '').toLowerCase();
+    return role == 'pembeli' || role == 'admin';
+  }
+
+  bool get _isPenyuluh =>
+      (AuthRepository().currentUser?.role ?? '').toLowerCase() == 'penyuluh';
 
   @override
   void initState() {
     super.initState();
+    _activeFilter = (_canAccessOrderChat && widget.initialTab.toUpperCase() == 'ORDER')
+        ? 'ORDER'
+        : 'DIRECT';
     _loadData();
   }
 
@@ -95,17 +109,18 @@ class _ChatListScreenState extends State<ChatListScreen> {
   }
 
   List<ChatConversationModel> get _filteredConversations {
-    if (_activeFilter == 'DIRECT') {
-      return _conversations.where((c) => !c.isOrderChat).toList();
-    }
-    if (_activeFilter == 'ORDER') {
+    if (_activeFilter == 'ORDER' && _canAccessOrderChat) {
       return _conversations.where((c) => c.isOrderChat).toList();
     }
-    return _conversations;
+    return _conversations.where((c) => !c.isOrderChat).toList();
   }
 
   @override
   Widget build(BuildContext context) {
+    final orderSubtitle = _canAccessOrderChat
+        ? 'Direct Message 5-Role & Chat Penjualan Order'
+        : 'Direct Message 5-Role Komunitas & Koordinasi Desa';
+
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: AppBar(
@@ -124,7 +139,7 @@ class _ChatListScreenState extends State<ChatListScreen> {
               ),
             ),
             Text(
-              'Direct Message Komunitas, PPL & Pesanan Poktan',
+              orderSubtitle,
               style: GoogleFonts.plusJakartaSans(
                 fontSize: 11,
                 color: Colors.white70,
@@ -163,23 +178,46 @@ class _ChatListScreenState extends State<ChatListScreen> {
                     scrollDirection: Axis.horizontal,
                     child: Row(
                       children: [
-                        _QuickRoleChip(
-                          icon: LucideIcons.stethoscope,
-                          label: 'Chat Penyuluh BPP',
-                          color: AppColors.primaryDark,
-                          onTap: () => _openQuickRoleChat(
-                            'penyuluh',
-                            'Konsultasi Penyuluh BPP Sumenep',
+                        if (_isPenyuluh) ...[
+                          _QuickRoleChip(
+                            icon: LucideIcons.landmark,
+                            label: 'DM Dinas Pertanian',
+                            color: AppColors.accent,
+                            onTap: () => _openQuickRoleChat(
+                              'dinas',
+                              'Koordinasi Dinas Pertanian Sumenep',
+                            ),
                           ),
-                        ),
-                        const SizedBox(width: 8),
+                          const SizedBox(width: 8),
+                          _QuickRoleChip(
+                            icon: LucideIcons.user,
+                            label: 'DM Petani Desa',
+                            color: AppColors.primary,
+                            onTap: () => _openQuickRoleChat(
+                              'petani',
+                              'Pendampingan Petani Desa',
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                        ] else ...[
+                          _QuickRoleChip(
+                            icon: LucideIcons.stethoscope,
+                            label: 'Chat Penyuluh BPP',
+                            color: AppColors.primaryDark,
+                            onTap: () => _openQuickRoleChat(
+                              'penyuluh',
+                              'Konsultasi Penyuluh BPP Sumenep',
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                        ],
                         _QuickRoleChip(
                           icon: LucideIcons.store,
-                          label: 'Chat Ketua Poktan',
+                          label: 'Chat Admin Toko',
                           color: AppColors.accent,
                           onTap: () => _openQuickRoleChat(
                             'admin',
-                            'Koordinasi Ketua Poktan',
+                            'Koordinasi Toko Mitra Tani',
                           ),
                         ),
                         ..._contacts.take(6).map(
@@ -199,11 +237,11 @@ class _ChatListScreenState extends State<ChatListScreen> {
                   const SizedBox(height: 14),
                   Row(
                     children: [
-                      _buildFilterChip('ALL', 'Semua'),
-                      const SizedBox(width: 8),
-                      _buildFilterChip('DIRECT', 'DM Sosial / PPL'),
-                      const SizedBox(width: 8),
-                      _buildFilterChip('ORDER', 'Pesanan'),
+                      _buildFilterChip('DIRECT', 'Pesan Langsung (DM)'),
+                      if (_canAccessOrderChat) ...[
+                        const SizedBox(width: 8),
+                        _buildFilterChip('ORDER', 'Chat Penjualan'),
+                      ],
                     ],
                   ),
                   const SizedBox(height: 12),

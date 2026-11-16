@@ -8,6 +8,8 @@ import 'package:lapaktani_app/core/theme/app_colors.dart';
 import 'package:lapaktani_app/features/auth/auth_repository.dart';
 import 'package:lapaktani_app/features/auth/login_screen.dart';
 import 'package:lapaktani_app/features/chat/screens/chat_list_screen.dart';
+import 'package:lapaktani_app/features/chat/screens/chat_room_screen.dart';
+import 'package:lapaktani_app/features/chat/services/chat_service.dart';
 import 'package:lapaktani_app/features/community/models/pest_report_model.dart';
 import 'package:lapaktani_app/features/community/screens/create_education_post_screen.dart';
 import 'package:lapaktani_app/features/community/screens/education_feed_screen.dart';
@@ -132,6 +134,33 @@ class _PenyuluhHubScreenState extends State<PenyuluhHubScreen> {
       );
     } finally {
       if (mounted) setState(() => _verifyingFarmerId = null);
+    }
+  }
+
+  Future<void> _openDirectChat({
+    String? targetUserId,
+    String? targetRole,
+    required String title,
+  }) async {
+    try {
+      final conv = await ChatService().openDirectConversation(
+        targetUserId: targetUserId,
+        targetRole: targetRole,
+        title: title,
+      );
+      if (!mounted) return;
+      await Navigator.push(
+        context,
+        MaterialPageRoute(builder: (_) => ChatRoomScreen(conversation: conv)),
+      );
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Gagal membuka ruang DM: $e'),
+          backgroundColor: AppColors.error,
+        ),
+      );
     }
   }
 
@@ -262,6 +291,10 @@ class _PenyuluhHubScreenState extends State<PenyuluhHubScreen> {
 
                     // CARD PROBE 8-IN-1: Uji Sampel Tanah Presisi Sumenep
                     _buildPrecisionSoilCheckupCard(),
+                    const SizedBox(height: 14),
+
+                    // CARD AI RAG: Penyelesaian Masalah Desa -> Dinas & Petani
+                    _buildAiRagQuickDispatchCard(),
                     const SizedBox(height: 16),
 
                     // CARD US-06: Validasi Calon Petani Mitra Tani
@@ -475,7 +508,330 @@ class _PenyuluhHubScreenState extends State<PenyuluhHubScreen> {
               ],
             ),
           ),
+          const SizedBox(height: 10),
+          SizedBox(
+            width: double.infinity,
+            child: OutlinedButton.icon(
+              onPressed: () => _openDirectChat(
+                targetRole: 'dinas',
+                title: 'Koordinasi Dinas Pertanian Sumenep',
+              ),
+              icon: const Icon(LucideIcons.messageSquare, size: 15),
+              label: Text(
+                'DM Langsung ke Dinas Pertanian',
+                style: GoogleFonts.plusJakartaSans(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+              style: OutlinedButton.styleFrom(
+                foregroundColor: AppColors.primaryDark,
+                side: const BorderSide(color: AppColors.surfaceSoftBorder),
+                backgroundColor: Colors.white,
+              ),
+            ),
+          ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildAiRagQuickDispatchCard() {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: AppColors.outline),
+        boxShadow: AppColors.softShadow,
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                width: 42,
+                height: 42,
+                decoration: BoxDecoration(
+                  color: AppColors.warningSoft,
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: const Icon(
+                  LucideIcons.sparkles,
+                  color: AppColors.accent,
+                  size: 21,
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'AI RAG Penyelesaian Masalah Desa',
+                      style: GoogleFonts.plusJakartaSans(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w800,
+                        color: AppColors.textPrimary,
+                      ),
+                    ),
+                    Text(
+                      'Sintesis solusi agronomis dari sensor 8-in-1, OPT, & log petani.',
+                      style: GoogleFonts.plusJakartaSans(
+                        fontSize: 11.5,
+                        color: AppColors.textSecondary,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          SizedBox(
+            width: double.infinity,
+            height: 44,
+            child: ElevatedButton.icon(
+              onPressed: _showAiRagDispatchModal,
+              icon: const Icon(LucideIcons.send, size: 16),
+              label: Text(
+                'Buat & Kirim ke Dinas + Petani Desa',
+                style: GoogleFonts.plusJakartaSans(
+                  fontSize: 12.5,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.primary,
+                foregroundColor: Colors.white,
+                elevation: 0,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showAiRagDispatchModal() {
+    String selectedDesa = 'Dungkek';
+    int selectedVillageId = 109;
+    final komCtrl = TextEditingController(text: 'Bawang Merah');
+    final promptCtrl = TextEditingController(
+      text: 'Atasi pH asam, salinitas pesisir, dan kebutuhan pupuk subsidi desa.',
+    );
+    final summaryCtrl = TextEditingController();
+    final actionCtrl = TextEditingController();
+    bool synthesizing = false;
+    bool dispatching = false;
+
+    showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.white,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (ctx) => StatefulBuilder(
+        builder: (ctx, setModalState) => Padding(
+          padding: EdgeInsets.only(
+            left: 20,
+            right: 20,
+            top: 20,
+            bottom: MediaQuery.of(ctx).viewInsets.bottom + 20,
+          ),
+          child: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'AI RAG Keputusan Agronomi (Dual-Target)',
+                  style: GoogleFonts.plusJakartaSans(
+                    fontSize: 15.5,
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+                const SizedBox(height: 10),
+                Row(
+                  children: [
+                    Expanded(
+                      child: DropdownButtonFormField<int>(
+                        initialValue: selectedVillageId,
+                        decoration: const InputDecoration(
+                          labelText: 'Desa Terdampak',
+                          border: OutlineInputBorder(),
+                        ),
+                        items: const [
+                          DropdownMenuItem(value: 109, child: Text('Desa Dungkek')),
+                          DropdownMenuItem(value: 101, child: Text('Desa Mandala')),
+                        ],
+                        onChanged: (v) {
+                          if (v != null) {
+                            setModalState(() {
+                              selectedVillageId = v;
+                              selectedDesa = v == 101 ? 'Mandala' : 'Dungkek';
+                            });
+                          }
+                        },
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: TextField(
+                        controller: komCtrl,
+                        decoration: const InputDecoration(
+                          labelText: 'Komoditas',
+                          border: OutlineInputBorder(),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 10),
+                TextField(
+                  controller: promptCtrl,
+                  maxLines: 2,
+                  decoration: const InputDecoration(
+                    labelText: 'Fokus Masalah Lapangan',
+                    border: OutlineInputBorder(),
+                  ),
+                ),
+                const SizedBox(height: 10),
+                SizedBox(
+                  width: double.infinity,
+                  child: OutlinedButton.icon(
+                    onPressed: synthesizing
+                        ? null
+                        : () async {
+                            setModalState(() => synthesizing = true);
+                            try {
+                              final res = await _apiService.generatePenyuluhRagDecision({
+                                'desa': selectedDesa,
+                                'komoditas': komCtrl.text.trim(),
+                                'query_prompt': promptCtrl.text.trim(),
+                              });
+                              final data = res['data'] is Map
+                                  ? Map<String, dynamic>.from(res['data'] as Map)
+                                  : res;
+                              setModalState(() {
+                                summaryCtrl.text =
+                                    (data['decision_summary'] ?? '').toString();
+                                actionCtrl.text =
+                                    (data['action_plan'] ?? '').toString();
+                                synthesizing = false;
+                              });
+                            } catch (e) {
+                              setModalState(() => synthesizing = false);
+                              if (ctx.mounted) {
+                                ScaffoldMessenger.of(ctx).showSnackBar(
+                                  SnackBar(
+                                    content: Text('Gagal sintesis RAG: $e'),
+                                    backgroundColor: AppColors.error,
+                                  ),
+                                );
+                              }
+                            }
+                          },
+                    icon: const Icon(LucideIcons.sparkles, size: 15),
+                    label: Text(
+                      synthesizing
+                          ? 'Menyintesis RAG...'
+                          : 'Sintesis Solusi RAG Otomatis',
+                      style: GoogleFonts.plusJakartaSans(
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 10),
+                TextField(
+                  controller: summaryCtrl,
+                  maxLines: 2,
+                  decoration: const InputDecoration(
+                    labelText: 'Ringkasan Keputusan',
+                    border: OutlineInputBorder(),
+                  ),
+                ),
+                const SizedBox(height: 10),
+                TextField(
+                  controller: actionCtrl,
+                  maxLines: 4,
+                  decoration: const InputDecoration(
+                    labelText: 'Rencana Aksi Petani & Eskalasi Dinas',
+                    border: OutlineInputBorder(),
+                  ),
+                ),
+                const SizedBox(height: 14),
+                SizedBox(
+                  width: double.infinity,
+                  height: 46,
+                  child: ElevatedButton.icon(
+                    onPressed: dispatching
+                        ? null
+                        : () async {
+                            if (summaryCtrl.text.trim().isEmpty ||
+                                actionCtrl.text.trim().isEmpty) {
+                              return;
+                            }
+                            setModalState(() => dispatching = true);
+                            try {
+                              await _apiService.dispatchPenyuluhRagDecision({
+                                'village_id': selectedVillageId,
+                                'desa': selectedDesa,
+                                'kecamatan':
+                                    selectedVillageId == 101 ? 'Gapura' : 'Dungkek',
+                                'komoditas': komCtrl.text.trim(),
+                                'decision_summary': summaryCtrl.text.trim(),
+                                'action_plan': actionCtrl.text.trim(),
+                                'target_scope': 'BOTH',
+                              });
+                              if (ctx.mounted) Navigator.pop(ctx);
+                              if (!mounted) return;
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                  content: Text(
+                                    'Keputusan RAG Desa $selectedDesa terkirim ke Dinas & Forum/DM Petani!',
+                                  ),
+                                  backgroundColor: AppColors.primary,
+                                ),
+                              );
+                              await _loadPenyuluhData();
+                            } catch (e) {
+                              setModalState(() => dispatching = false);
+                              if (ctx.mounted) {
+                                ScaffoldMessenger.of(ctx).showSnackBar(
+                                  SnackBar(
+                                    content: Text('Gagal mengirim RAG: $e'),
+                                    backgroundColor: AppColors.error,
+                                  ),
+                                );
+                              }
+                            }
+                          },
+                    icon: const Icon(LucideIcons.send, size: 15),
+                    label: Text(
+                      dispatching
+                          ? 'Mengirim...'
+                          : 'Kirim ke Dinas & Petani Desa Terdampak',
+                      style: GoogleFonts.plusJakartaSans(
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppColors.primary,
+                      foregroundColor: Colors.white,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
       ),
     );
   }
@@ -1616,6 +1972,32 @@ class _PenyuluhHubScreenState extends State<PenyuluhHubScreen> {
                         color: AppColors.textSecondary,
                       ),
                     ),
+                    const SizedBox(height: 4),
+                    Align(
+                      alignment: Alignment.centerRight,
+                      child: TextButton.icon(
+                        onPressed: () => _openDirectChat(
+                          targetUserId: (p['author_role'] == 'petani')
+                              ? p['author_id']?.toString()
+                              : null,
+                          targetRole: 'petani',
+                          title: 'DM — ${p['author_name'] ?? 'Petani Desa'}',
+                        ),
+                        icon: const Icon(LucideIcons.messageSquare, size: 12),
+                        label: Text(
+                          'Kirim DM',
+                          style: GoogleFonts.plusJakartaSans(
+                            fontSize: 11,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                        style: TextButton.styleFrom(
+                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                          minimumSize: Size.zero,
+                          tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                        ),
+                      ),
+                    ),
                   ],
                 ),
               );
@@ -1691,6 +2073,30 @@ class _PenyuluhHubScreenState extends State<PenyuluhHubScreen> {
                     style: GoogleFonts.plusJakartaSans(
                       fontSize: 11,
                       color: AppColors.textSecondary,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Align(
+                    alignment: Alignment.centerRight,
+                    child: TextButton.icon(
+                      onPressed: () => _openDirectChat(
+                        targetUserId: p['penyuluh_id']?.toString(),
+                        targetRole: 'penyuluh',
+                        title: 'DM — ${p['penyuluh_name'] ?? 'Rekan Penyuluh'}',
+                      ),
+                      icon: const Icon(LucideIcons.messageSquare, size: 12),
+                      label: Text(
+                        'Kirim DM',
+                        style: GoogleFonts.plusJakartaSans(
+                          fontSize: 11,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                      style: TextButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                        minimumSize: Size.zero,
+                        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                      ),
                     ),
                   ),
                 ],

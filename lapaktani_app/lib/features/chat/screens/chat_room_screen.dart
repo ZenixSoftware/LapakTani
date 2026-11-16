@@ -293,8 +293,14 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
     if (msg.messageType == 'ORDER_CARD') {
       final meta = msg.metadata ?? {};
       final orderNo =
-          meta['order_number'] ?? meta['order_id'] ?? widget.conversation.orderId ?? '';
+          meta['invoice_number'] ?? meta['order_number'] ?? meta['order_id'] ?? widget.conversation.orderId ?? '';
       final total = meta['total_amount'];
+      final orderTier = (meta['order_tier'] ?? 'RETAIL').toString().toUpperCase();
+      final isPartai = orderTier == 'PARTAI_B2B';
+      final unitPrice = meta['applied_unit_price'];
+      final discountSaved = num.tryParse('${meta['discount_saved'] ?? 0}') ?? 0;
+      final agreementNote = meta['wholesale_agreement_note']?.toString();
+
       return Container(
         margin: const EdgeInsets.only(bottom: 10),
         padding: const EdgeInsets.all(12),
@@ -324,7 +330,26 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
                     ),
                   ),
                 ),
-                if (timeStr.isNotEmpty)
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                  decoration: BoxDecoration(
+                    color: isPartai ? AppColors.primary : Colors.white,
+                    borderRadius: BorderRadius.circular(6),
+                    border: Border.all(
+                      color: isPartai ? AppColors.primary : AppColors.outline,
+                    ),
+                  ),
+                  child: Text(
+                    isPartai ? 'PARTAI B2B' : 'RETAIL',
+                    style: GoogleFonts.plusJakartaSans(
+                      fontSize: 9.5,
+                      fontWeight: FontWeight.w800,
+                      color: isPartai ? Colors.white : AppColors.textSecondary,
+                    ),
+                  ),
+                ),
+                if (timeStr.isNotEmpty) ...[
+                  const SizedBox(width: 6),
                   Text(
                     timeStr,
                     style: GoogleFonts.plusJakartaSans(
@@ -332,6 +357,7 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
                       color: AppColors.textMuted,
                     ),
                   ),
+                ],
               ],
             ),
             const SizedBox(height: 6),
@@ -342,14 +368,59 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
                 color: AppColors.textPrimary,
               ),
             ),
-            if (total != null) ...[
+            if (unitPrice != null || total != null) ...[
               const SizedBox(height: 6),
-              Text(
-                'Total Nilai: Rp $total',
-                style: GoogleFonts.plusJakartaSans(
-                  fontSize: 11.5,
-                  fontWeight: FontWeight.w700,
-                  color: AppColors.primaryDark,
+              Wrap(
+                spacing: 8,
+                runSpacing: 4,
+                children: [
+                  if (unitPrice != null)
+                    Text(
+                      'Harga Satuan: Rp $unitPrice/kg',
+                      style: GoogleFonts.plusJakartaSans(
+                        fontSize: 11,
+                        fontWeight: FontWeight.w700,
+                        color: AppColors.textSecondary,
+                      ),
+                    ),
+                  if (total != null)
+                    Text(
+                      'Total Nilai: Rp $total',
+                      style: GoogleFonts.plusJakartaSans(
+                        fontSize: 11.5,
+                        fontWeight: FontWeight.w800,
+                        color: AppColors.primaryDark,
+                      ),
+                    ),
+                  if (discountSaved > 0)
+                    Text(
+                      'Hemat: Rp ${discountSaved.round()}',
+                      style: GoogleFonts.plusJakartaSans(
+                        fontSize: 11,
+                        fontWeight: FontWeight.w700,
+                        color: AppColors.primary,
+                      ),
+                    ),
+                ],
+              ),
+            ],
+            if (isPartai && agreementNote != null && agreementNote.isNotEmpty) ...[
+              const SizedBox(height: 6),
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(color: AppColors.surfaceSoftBorder),
+                ),
+                child: Text(
+                  'Nota Kesepakatan B2B: $agreementNote',
+                  style: GoogleFonts.plusJakartaSans(
+                    fontSize: 10.5,
+                    fontWeight: FontWeight.w600,
+                    color: AppColors.primaryDark,
+                  ),
                 ),
               ),
             ],

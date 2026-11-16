@@ -8,6 +8,7 @@ interface HeaderProps {
   isSyncing: boolean;
   currentUser?: AuthUser | null;
   onOpenLogin?: () => void;
+  onOpenDm?: () => void;
 }
 
 export const Header: React.FC<HeaderProps> = ({
@@ -17,6 +18,7 @@ export const Header: React.FC<HeaderProps> = ({
   isSyncing,
   currentUser,
   onOpenLogin,
+  onOpenDm,
 }) => {
   const isDinas =
     currentUser?.role?.toLowerCase() === 'dinas' || currentUser?.role_id === 5;
@@ -68,6 +70,17 @@ export const Header: React.FC<HeaderProps> = ({
 
       {/* Header Actions */}
       <div className="flex items-center gap-2 sm:gap-3">
+        {currentUser && onOpenDm && (
+          <button
+            type="button"
+            onClick={onOpenDm}
+            className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl bg-amber-50 text-amber-800 hover:bg-amber-100 border border-amber-200 font-bold text-[12px] transition-colors"
+          >
+            <span className="material-symbols-outlined text-[18px]">forum</span>
+            <span>Pesan DM</span>
+          </button>
+        )}
+
         <button
           onClick={onSync}
           disabled={isSyncing}

@@ -1098,5 +1098,19 @@ class ApiService {
     final response = await _post('/penyuluh/fertilizer-request', payload);
     return _decodeResponseMap(response, 'Gagal mengajukan pupuk subsidi');
   }
+
+  Future<Map<String, dynamic>> generatePenyuluhRagDecision(
+    Map<String, dynamic> payload,
+  ) async {
+    final response = await _post('/penyuluh/rag-decision', payload);
+    return _decodeResponseMap(response, 'Gagal menyintesis keputusan RAG');
+  }
+
+  Future<Map<String, dynamic>> dispatchPenyuluhRagDecision(
+    Map<String, dynamic> payload,
+  ) async {
+    final response = await _post('/penyuluh/dispatch-decision', payload);
+    return _decodeResponseMap(response, 'Gagal mengirim keputusan RAG');
+  }
 }
 

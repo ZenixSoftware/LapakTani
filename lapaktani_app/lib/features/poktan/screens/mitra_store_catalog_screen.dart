@@ -6,6 +6,9 @@ import '../../../core/services/api_service.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/widgets/custom_soft_card.dart';
 import '../../buyer/screens/wholesale_detail_screen.dart';
+import '../../chat/screens/chat_list_screen.dart';
+import '../../chat/screens/chat_room_screen.dart';
+import '../../chat/services/chat_service.dart';
 import '../../product/add_product_screen.dart';
 import '../../store/screens/store_profile_screen.dart';
 import '../widgets/create_wholesale_pool_sheet.dart';
@@ -676,6 +679,18 @@ class _MitraStoreCatalogScreenState extends State<MitraStoreCatalogScreen>
         ),
         actions: [
           IconButton(
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (_) => const ChatListScreen(initialTab: 'ORDER'),
+                ),
+              );
+            },
+            icon: const Icon(LucideIcons.messageSquare, size: 19, color: AppColors.primary),
+            tooltip: 'Chat Pembeli',
+          ),
+          IconButton(
             onPressed: _showStoreSettingsDialog,
             icon: const Icon(LucideIcons.settings, size: 19, color: AppColors.primary),
             tooltip: 'Pengaturan Toko & Min. Partai',
@@ -1273,24 +1288,53 @@ class _MitraStoreCatalogScreenState extends State<MitraStoreCatalogScreen>
                     ),
                   ],
                   const SizedBox(height: 8),
-                  Align(
-                    alignment: Alignment.centerRight,
-                    child: ElevatedButton.icon(
-                      onPressed: () => _showSendOfferModal(h),
-                      icon: const Icon(LucideIcons.badgeDollarSign, size: 14),
-                      label: Text(
-                        'Kirim Tawaran Transparan',
-                        style: GoogleFonts.plusJakartaSans(
-                          fontSize: 11.5,
-                          fontWeight: FontWeight.w700,
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.end,
+                    children: [
+                      OutlinedButton.icon(
+                        onPressed: () async {
+                          try {
+                            final conv = await ChatService().openDirectConversation(
+                              targetUserId: h['farmer_id']?.toString(),
+                              targetRole: 'petani',
+                              title: 'DM — $farmer',
+                            );
+                            if (!mounted) return;
+                            await Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (_) => ChatRoomScreen(conversation: conv),
+                              ),
+                            );
+                          } catch (_) {}
+                        },
+                        icon: const Icon(LucideIcons.messageSquare, size: 13),
+                        label: Text(
+                          'DM Petani',
+                          style: GoogleFonts.plusJakartaSans(
+                            fontSize: 11,
+                            fontWeight: FontWeight.w700,
+                          ),
                         ),
                       ),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: AppColors.primary,
-                        foregroundColor: Colors.white,
-                        elevation: 0,
+                      const SizedBox(width: 8),
+                      ElevatedButton.icon(
+                        onPressed: () => _showSendOfferModal(h),
+                        icon: const Icon(LucideIcons.badgeDollarSign, size: 14),
+                        label: Text(
+                          'Kirim Tawaran Transparan',
+                          style: GoogleFonts.plusJakartaSans(
+                            fontSize: 11.5,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: AppColors.primary,
+                          foregroundColor: Colors.white,
+                          elevation: 0,
+                        ),
                       ),
-                    ),
+                    ],
                   ),
                 ],
               ),

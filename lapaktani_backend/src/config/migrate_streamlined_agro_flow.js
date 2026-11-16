@@ -88,6 +88,7 @@ const runStreamlinedAgroFlowMigration = async () => {
     }
 
     // Resolve seeded demo actors
+    const dinasId = await resolveUserIdByEmail(connection, 'dinas@lapaktani.id', 'usr-dinas-06');
     const penyuluhId = await resolveUserIdByEmail(connection, 'penyuluh@lapaktani.id', 'usr-ppl-03');
     const adminId = await resolveUserIdByEmail(connection, 'admin@lapaktani.id', 'usr-admin-05');
     const petaniId = await resolveUserIdByEmail(connection, 'supardi@petani.lapaktani.id', 'usr-petani-supardi');
@@ -311,6 +312,73 @@ const runStreamlinedAgroFlowMigration = async () => {
     await addColumnIfMissing(connection, 'orders', 'wholesale_agreement_accepted', 'TINYINT(1) NOT NULL DEFAULT 0');
     await addColumnIfMissing(connection, 'orders', 'wholesale_agreement_note', 'TEXT NULL');
 
+    // 8. Ensure Unified 5-Role DM Chat & Dual-Target RAG Decision Tables exist idempotently
+    await connection.query(`
+      CREATE TABLE IF NOT EXISTS chat_conversations (
+        id VARCHAR(50) PRIMARY KEY,
+        type ENUM('DIRECT','ORDER') DEFAULT 'DIRECT',
+        order_id VARCHAR(50) NULL,
+        title VARCHAR(200) NULL,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+        INDEX idx_chat_type (type),
+        INDEX idx_chat_order (order_id),
+        INDEX idx_chat_updated (updated_at DESC)
+      ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+    `);
+
+    await connection.query(`
+      CREATE TABLE IF NOT EXISTS chat_participants (
+        conversation_id VARCHAR(50) NOT NULL,
+        user_id VARCHAR(50) NOT NULL,
+        last_read_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        PRIMARY KEY (conversation_id, user_id),
+        INDEX idx_cp_user (user_id)
+      ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+    `);
+
+    await connection.query(`
+      CREATE TABLE IF NOT EXISTS chat_messages (
+        id VARCHAR(50) PRIMARY KEY,
+        conversation_id VARCHAR(50) NOT NULL,
+        sender_id VARCHAR(50) NOT NULL,
+        message_type ENUM('TEXT','ORDER_CARD','ADVISORY_CARD') DEFAULT 'TEXT',
+        body TEXT NOT NULL,
+        metadata_json LONGTEXT NULL,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        INDEX idx_cm_conv (conversation_id, created_at)
+      ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+    `);
+
+    await connection.query(`
+      CREATE TABLE IF NOT EXISTS ppl_decision_reports (
+        id VARCHAR(50) PRIMARY KEY,
+        plot_id VARCHAR(50) NULL,
+        village_id INT NOT NULL DEFAULT 109,
+        penyuluh_id VARCHAR(50) NOT NULL,
+        penyuluh_name VARCHAR(120) NOT NULL,
+        desa VARCHAR(100) NOT NULL,
+        kecamatan VARCHAR(100) DEFAULT 'Sumenep',
+        poktan_id VARCHAR(50) NULL,
+        komoditas VARCHAR(100) DEFAULT 'Hortikultura',
+        rag_context_json LONGTEXT NULL,
+        decision_summary TEXT NOT NULL,
+        action_plan TEXT NOT NULL,
+        target_scope ENUM('DINAS_ONLY','FARMERS_ONLY','BOTH') DEFAULT 'BOTH',
+        status ENUM('SENT','REVIEWED','ACKNOWLEDGED') DEFAULT 'SENT',
+        dinas_notes TEXT NULL,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+        INDEX idx_pdr_desa (desa),
+        INDEX idx_pdr_village (village_id),
+        INDEX idx_pdr_scope (target_scope),
+        INDEX idx_pdr_status (status),
+        INDEX idx_pdr_created (created_at DESC)
+      ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+    `);
+    await addColumnIfMissing(connection, 'ppl_decision_reports', 'village_id', 'INT NOT NULL DEFAULT 109');
+    await addColumnIfMissing(connection, 'ppl_decision_reports', 'updated_at', 'TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP');
+
     await alignTableCollations(connection, [
       'fertilizer_allocations',
       'store_applications',
@@ -318,7 +386,27 @@ const runStreamlinedAgroFlowMigration = async () => {
       'village_forum_posts',
       'harvest_reports',
       'harvest_purchase_offers',
+      'chat_conversations',
+      'chat_participants',
+      'chat_messages',
+      'ppl_decision_reports',
     ]);
+
+    // Ensure Dinas <-> Penyuluh starter DIRECT conversation exists for Web & Mobile DM
+    await connection.query(
+      `INSERT IGNORE INTO chat_conversations (id, type, order_id, title)
+       VALUES ('conv-dinas-ppl-01', 'DIRECT', NULL, 'Koordinasi Dinas Pertanian & Penyuluh BPP')`
+    );
+    await connection.query(
+      `INSERT IGNORE INTO chat_participants (conversation_id, user_id)
+       VALUES ('conv-dinas-ppl-01', ?), ('conv-dinas-ppl-01', ?)`,
+      [dinasId, penyuluhId]
+    );
+    await connection.query(
+      `INSERT IGNORE INTO chat_messages (id, conversation_id, sender_id, message_type, body, metadata_json)
+       VALUES ('msg-dinas-ppl-01', 'conv-dinas-ppl-01', ?, 'TEXT', 'Selamat pagi BPP Sumenep. Silakan laporkan kebutuhan pupuk subsidi dan kondisi lahan kritis melalui DM atau AI RAG Dispatch.', NULL)`,
+      [dinasId]
+    );
 
     console.log('[MIGRATION_AGRO_FLOW] Completed streamlined 5-role agro flow migration.');
   } catch (error) {

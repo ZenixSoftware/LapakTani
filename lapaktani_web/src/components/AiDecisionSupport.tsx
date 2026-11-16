@@ -138,6 +138,10 @@ export const AiDecisionSupport: React.FC<AiDecisionSupportProps> = ({
     try {
       await dispatchRagDecision({
         plot_id: selectedPlot ? selectedPlot.id : synthesis?.plot_id,
+        village_id:
+          (selectedPlot?.nama_desa || synthesis?.desa || '').toLowerCase().includes('mandala')
+            ? 101
+            : 109,
         desa: selectedPlot?.nama_desa || synthesis?.desa || 'Dungkek',
         kecamatan: selectedPlot?.kecamatan || synthesis?.kecamatan || 'Sumenep',
         komoditas: selectedPlot?.komoditas || synthesis?.komoditas || 'Hortikultura',
@@ -406,7 +410,15 @@ export const AiDecisionSupport: React.FC<AiDecisionSupportProps> = ({
             className="w-full py-3 px-4 rounded-xl bg-[#166534] hover:bg-[#0D5136] text-white font-extrabold text-[13.5px] flex items-center justify-center gap-2 shadow-md transition-all disabled:opacity-60"
           >
             <span className="material-symbols-outlined text-[19px]">send</span>
-            <span>{isDispatching ? 'Mengirim Keputusan...' : 'Kirim Keputusan RAG Sekarang'}</span>
+            <span>
+              {isDispatching
+                ? 'Mengirim Keputusan...'
+                : sendToDinas && sendToFarmers
+                  ? 'Kirim ke Dinas & Petani Desa Terdampak'
+                  : sendToDinas
+                    ? 'Kirim Eskalasi ke Dinas Pertanian'
+                    : 'Kirim Arahan ke Petani Desa Terdampak'}
+            </span>
           </button>
         </form>
       </div>
