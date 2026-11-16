@@ -1,3 +1,18 @@
+/**
+ * ============================================================================
+ * LAPAKTANI MOBILE APP - [US-03] INTERACTIVE ONBOARDING FLOW
+ * ============================================================================
+ * Module       : Presentation / User Onboarding
+ * User Story   : [US-03] Splash Screen & Interactive Onboarding Carousel
+ * Author       : Moch. Ilham Abdul Aziz (MochIlham05 - 3125522014)
+ * Framework    : Flutter 3.x / Dart 3.x
+ * Description  : Multi-stage carousel introducing 4-actor digital ecosystem:
+ *                1. Petani Langsung (Direct Farm-to-Table Marketplace)
+ *                2. Konsolidasi Poktan (Harvest Pooling & Fair Pricing)
+ *                3. Kepastian Pembayaran (Midtrans Digital Payment Gateway)
+ * ============================================================================
+ */
+
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:lucide_icons/lucide_icons.dart';
