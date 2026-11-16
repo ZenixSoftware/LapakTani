@@ -179,7 +179,25 @@ class RegionService {
     RegionItem(id: '3529060', name: 'SARONGGI'),
     RegionItem(id: '3529070', name: 'LENTENG'),
     RegionItem(id: '3529080', name: 'GULUK-GULUK'),
-    RegionItem(id: '3529090', name: 'PRAGAAN'),
+    RegionItem(id: '3529090', name: 'GANDING'),
+    RegionItem(id: '3529100', name: 'PRAGAAN'),
+    RegionItem(id: '3529110', name: 'AMBUNTEN'),
+    RegionItem(id: '3529120', name: 'PASONGSONGAN'),
+    RegionItem(id: '3529130', name: 'DASUK'),
+    RegionItem(id: '3529140', name: 'RUBARU'),
+    RegionItem(id: '3529150', name: 'BATUAN'),
+    RegionItem(id: '3529160', name: 'GAPURA'),
+    RegionItem(id: '3529170', name: 'DUNGKEK'),
+    RegionItem(id: '3529180', name: 'BATANG-BATANG'),
+    RegionItem(id: '3529190', name: 'BATUPUTIH'),
+    RegionItem(id: '3529200', name: 'NONGGUNONG'),
+    RegionItem(id: '3529210', name: 'GAYAM'),
+    RegionItem(id: '3529220', name: 'RAAS'),
+    RegionItem(id: '3529230', name: 'SAPEKEN'),
+    RegionItem(id: '3529240', name: 'ARJASA'),
+    RegionItem(id: '3529250', name: 'KANGAYAN'),
+    RegionItem(id: '3529260', name: 'MASALEMBU'),
+    RegionItem(id: '3529270', name: 'GILIGENTING'),
   ];
 
   static const Map<String, List<RegionItem>> _fallbackSumenepVillages = {
@@ -198,12 +216,134 @@ class RegionService {
       RegionItem(id: '3529020004', name: 'MARENGAN LAOK'),
       RegionItem(id: '3529020005', name: 'KERTASADA'),
     ],
+    '3529030': [
+      RegionItem(id: '3529030001', name: 'MANDING DAYA'),
+      RegionItem(id: '3529030002', name: 'MANDING LAOK'),
+      RegionItem(id: '3529030003', name: 'MANDING TIMUR'),
+    ],
+    '3529040': [
+      RegionItem(id: '3529040001', name: 'TALANGO'),
+      RegionItem(id: '3529040002', name: 'PADIKE'),
+      RegionItem(id: '3529040003', name: 'POTERAN'),
+    ],
     '3529050': [
       RegionItem(id: '3529050001', name: 'AENGDAKE'),
       RegionItem(id: '3529050002', name: 'BLUTO'),
       RegionItem(id: '3529050003', name: 'LOBUK'),
       RegionItem(id: '3529050004', name: 'ERRABU'),
       RegionItem(id: '3529050005', name: 'PAKANDANGAN BARAT'),
+    ],
+    '3529060': [
+      RegionItem(id: '3529060001', name: 'SARONGGI'),
+      RegionItem(id: '3529060002', name: 'TANJUNG'),
+      RegionItem(id: '3529060003', name: 'KEBUNDADAP TIMUR'),
+    ],
+    '3529070': [
+      RegionItem(id: '3529070001', name: 'LENTENG TIMUR'),
+      RegionItem(id: '3529070002', name: 'LENTENG BARAT'),
+      RegionItem(id: '3529070003', name: 'ELLAK DAYA'),
+    ],
+    '3529080': [
+      RegionItem(id: '3529080001', name: 'GULUK-GULUK'),
+      RegionItem(id: '3529080002', name: 'BAKAPUH'),
+      RegionItem(id: '3529080003', name: 'BRAGUNG'),
+    ],
+    '3529090': [
+      RegionItem(id: '3529090001', name: 'GANDING'),
+      RegionItem(id: '3529090002', name: 'BATAAL BARAT'),
+      RegionItem(id: '3529090003', name: 'KETAWANG KARAY'),
+    ],
+    '3529100': [
+      RegionItem(id: '3529100001', name: 'PRAGAAN LAOK'),
+      RegionItem(id: '3529100002', name: 'PRAGAAN DAYA'),
+      RegionItem(id: '3529100003', name: 'PRENDUAN'),
+    ],
+    '3529110': [
+      RegionItem(id: '3529110001', name: 'AMBUNTEN TIMUR'),
+      RegionItem(id: '3529110002', name: 'AMBUNTEN TENGAH'),
+      RegionItem(id: '3529110003', name: 'AMBUNTEN BARAT'),
+    ],
+    '3529120': [
+      RegionItem(id: '3529120001', name: 'PASONGSONGAN'),
+      RegionItem(id: '3529120002', name: 'PANAONGAN'),
+      RegionItem(id: '3529120003', name: 'LEBENG TIMUR'),
+    ],
+    '3529130': [
+      RegionItem(id: '3529130001', name: 'KERTA BARAT'),
+      RegionItem(id: '3529130002', name: 'KERTA TIMUR'),
+      RegionItem(id: '3529130003', name: 'SLOPENG'),
+    ],
+    '3529140': [
+      RegionItem(id: '3529140001', name: 'PAKONDANG'),
+      RegionItem(id: '3529140002', name: 'KARANGNANGKA'),
+      RegionItem(id: '3529140003', name: 'TAMBAK SARI'),
+    ],
+    '3529150': [
+      RegionItem(id: '3529150001', name: 'BATUAN'),
+      RegionItem(id: '3529150002', name: 'BABBALAN'),
+      RegionItem(id: '3529150003', name: 'PATEAN'),
+    ],
+    '3529160': [
+      RegionItem(id: '3529160001', name: 'MANDALA'),
+      RegionItem(id: '3529160002', name: 'GAPURA TIMUR'),
+      RegionItem(id: '3529160003', name: 'GAPURA BARAT'),
+      RegionItem(id: '3529160004', name: 'LONGOS'),
+    ],
+    '3529170': [
+      RegionItem(id: '3529170001', name: 'DUNGKEK'),
+      RegionItem(id: '3529170002', name: 'LAPA TAMAN'),
+      RegionItem(id: '3529170003', name: 'LAPA DAYA'),
+      RegionItem(id: '3529170004', name: 'CANDI'),
+    ],
+    '3529180': [
+      RegionItem(id: '3529180001', name: 'BATANG-BATANG DAYA'),
+      RegionItem(id: '3529180002', name: 'BATANG-BATANG LAOK'),
+      RegionItem(id: '3529180003', name: 'LOMBANG'),
+    ],
+    '3529190': [
+      RegionItem(id: '3529190001', name: 'BATUPUTIH LAOK'),
+      RegionItem(id: '3529190002', name: 'BATUPUTIH DAYA'),
+      RegionItem(id: '3529190003', name: 'JURUAN DAYA'),
+    ],
+    '3529200': [
+      RegionItem(id: '3529200001', name: 'NONGGUNONG'),
+      RegionItem(id: '3529200002', name: 'SONOK'),
+      RegionItem(id: '3529200003', name: 'TALAGA'),
+    ],
+    '3529210': [
+      RegionItem(id: '3529210001', name: 'GAYAM'),
+      RegionItem(id: '3529210002', name: 'KARANG TENGAH'),
+      RegionItem(id: '3529210003', name: 'NYAMPLONG'),
+    ],
+    '3529220': [
+      RegionItem(id: '3529220001', name: 'ALASMALANG'),
+      RegionItem(id: '3529220002', name: 'BRACOL'),
+      RegionItem(id: '3529220003', name: 'KETUPAT'),
+    ],
+    '3529230': [
+      RegionItem(id: '3529230001', name: 'SAPEKEN'),
+      RegionItem(id: '3529230002', name: 'PAGERUNGAN BESAR'),
+      RegionItem(id: '3529230003', name: 'SASIIL'),
+    ],
+    '3529240': [
+      RegionItem(id: '3529240001', name: 'KALINGANYAR'),
+      RegionItem(id: '3529240002', name: 'ARJASA'),
+      RegionItem(id: '3529240003', name: 'SUMBERNANGKA'),
+    ],
+    '3529250': [
+      RegionItem(id: '3529250001', name: 'KANGAYAN'),
+      RegionItem(id: '3529250002', name: 'DAANDUNG'),
+      RegionItem(id: '3529250003', name: 'SAOBI'),
+    ],
+    '3529260': [
+      RegionItem(id: '3529260001', name: 'MASAKAMBING'),
+      RegionItem(id: '3529260002', name: 'MASALIMA'),
+      RegionItem(id: '3529260003', name: 'SUKSA'),
+    ],
+    '3529270': [
+      RegionItem(id: '3529270001', name: 'AENGANYAR'),
+      RegionItem(id: '3529270002', name: 'BRINGSANG'),
+      RegionItem(id: '3529270003', name: 'LOMBANG'),
     ],
   };
 }

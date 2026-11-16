@@ -5,6 +5,7 @@ const { verifyToken, requireRole } = require('../middlewares/authMiddleware');
 
 router.use(verifyToken);
 
+router.get('/villages', agro.getSumenepRegionsAndVillages);
 router.get('/my-application', agro.getMyStoreApplication);
 router.post('/apply', agro.applyForStore);
 router.put('/settings', requireRole('admin'), agro.updateStoreSettings);

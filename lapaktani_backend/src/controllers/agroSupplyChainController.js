@@ -793,6 +793,27 @@ const respondToPurchaseOffer = async (req, res) => {
 // 4. STORE REGISTRATION (2-STEP + QUOTA), STORE SETTINGS & HARVEST ACQUISITION
 // ============================================================================
 
+const getSumenepRegionsAndVillages = async (req, res) => {
+  try {
+    const [districts] = await pool.query(
+      `SELECT id, regency_id, name FROM districts WHERE regency_id = 3529 ORDER BY name ASC`
+    );
+    const villages = await resolveVillagesWithQuota();
+
+    return res.status(200).json({
+      success: true,
+      districts,
+      villages,
+    });
+  } catch (error) {
+    console.error('[STORE] Error fetching Sumenep regions:', error.message);
+    return res.status(500).json({
+      success: false,
+      message: 'Gagal memuat daftar kecamatan dan desa Sumenep.',
+    });
+  }
+};
+
 const getMyStoreApplication = async (req, res) => {
   try {
     const [apps] = await pool.query(
@@ -823,9 +844,13 @@ const applyForStore = async (req, res) => {
       nik,
       no_hp,
       province_id = 35,
+      province_name = 'Jawa Timur',
       regency_id = 3529,
+      regency_name = 'Kabupaten Sumenep',
       district_id = 352901,
-      village_id = 101,
+      district_name = '',
+      village_id = 109,
+      village_name = '',
       postal_code,
       alamat_lengkap,
       dokumen_syarat_url,
@@ -841,18 +866,95 @@ const applyForStore = async (req, res) => {
       return res.status(400).json({ success: false, message: 'Nama toko wajib diisi.' });
     }
 
-    const [vRows] = await pool.query(
-      'SELECT id, district_id, name, postal_code, is_store_quota_enabled, max_stores_quota FROM villages WHERE id = ? LIMIT 1',
-      [Number(village_id)]
-    );
-    const village = vRows[0] || {
-      id: Number(village_id),
-      district_id: Number(district_id),
-      name: 'Mandala',
-      postal_code: postal_code || '69472',
-      is_store_quota_enabled: 0,
-      max_stores_quota: 5,
-    };
+    const parsedProvId = parseInt(province_id, 10) || 35;
+    const parsedRegId = parseInt(regency_id, 10) || 3529;
+    let parsedDistId = parseInt(district_id, 10) || 352917;
+    if (parsedDistId > 2147483647) {
+      parsedDistId = 352917;
+    }
+
+    const rawVillageNum = Number(village_id);
+    const cleanVillageName = String(village_name || '').trim();
+    const cleanDistrictName = String(district_name || '').trim();
+
+    let village = null;
+    if (Number.isInteger(rawVillageNum) && rawVillageNum > 0 && rawVillageNum <= 2147483647) {
+      const [byId] = await pool.query(
+        'SELECT id, district_id, name, postal_code, is_store_quota_enabled, max_stores_quota FROM villages WHERE id = ? LIMIT 1',
+        [rawVillageNum]
+      );
+      if (byId.length > 0) village = byId[0];
+    }
+
+    if (!village && cleanVillageName) {
+      const [byName] = await pool.query(
+        `SELECT id, district_id, name, postal_code, is_store_quota_enabled, max_stores_quota
+         FROM villages WHERE LOWER(name) LIKE ? LIMIT 1`,
+        [`%${cleanVillageName.toLowerCase()}%`]
+      );
+      if (byName.length > 0) village = byName[0];
+    }
+
+    if (!village) {
+      // Ensure province -> regency -> district hierarchy exists before inserting dynamic village
+      try {
+        await pool.query(
+          'INSERT IGNORE INTO provinces (id, name) VALUES (?, ?)',
+          [parsedProvId, String(province_name || 'Jawa Timur').trim()]
+        );
+        await pool.query(
+          'INSERT IGNORE INTO regencies (id, province_id, name) VALUES (?, ?, ?)',
+          [parsedRegId, parsedProvId, String(regency_name || 'Kabupaten Sumenep').trim()]
+        );
+
+        let resolvedDistId = parsedDistId;
+        if (cleanDistrictName) {
+          const [dByName] = await pool.query(
+            'SELECT id FROM districts WHERE regency_id = ? AND LOWER(name) LIKE ? LIMIT 1',
+            [parsedRegId, `%${cleanDistrictName.toLowerCase()}%`]
+          );
+          if (dByName.length > 0) {
+            resolvedDistId = Number(dByName[0].id);
+          }
+        }
+        await pool.query(
+          'INSERT IGNORE INTO districts (id, regency_id, name) VALUES (?, ?, ?)',
+          [resolvedDistId, parsedRegId, cleanDistrictName || 'Dungkek']
+        );
+
+        const [maxRows] = await pool.query(
+          'SELECT COALESCE(MAX(id), 1000) AS max_id FROM villages WHERE id >= 1000 AND id < 2147483647'
+        );
+        const nextVillageId = Math.max(1001, Number(maxRows[0]?.max_id || 1000) + 1);
+        const displayName = cleanVillageName
+          ? (cleanDistrictName ? `${cleanVillageName} (Kec. ${cleanDistrictName})` : cleanVillageName)
+          : 'Dungkek';
+
+        await pool.query(
+          `INSERT INTO villages (id, district_id, name, postal_code, is_store_quota_enabled, max_stores_quota)
+           VALUES (?, ?, ?, ?, 0, 5)`,
+          [nextVillageId, resolvedDistId, displayName, postal_code || '69471']
+        );
+        village = {
+          id: nextVillageId,
+          district_id: resolvedDistId,
+          name: displayName,
+          postal_code: postal_code || '69471',
+          is_store_quota_enabled: 0,
+          max_stores_quota: 5,
+        };
+      } catch (insErr) {
+        console.warn('[STORE] Dynamic region upsert notice:', insErr.message);
+        village = {
+          id: 109,
+          district_id: 352917,
+          name: cleanVillageName || 'Dungkek',
+          postal_code: postal_code || '69474',
+          is_store_quota_enabled: 1,
+          max_stores_quota: 3,
+        };
+      }
+    }
 
     if (!isFreeze && Number(village.is_store_quota_enabled) === 1) {
       const [cntRows] = await pool.query(
@@ -893,9 +995,9 @@ const applyForStore = async (req, res) => {
           resolvedType,
           nik || null,
           no_hp || null,
-          Number(province_id),
-          Number(regency_id),
-          Number(village.district_id || district_id),
+          parsedProvId,
+          parsedRegId,
+          Number(village.district_id || parsedDistId),
           Number(village.id),
           village.name,
           postal_code || village.postal_code || '69472',
@@ -919,9 +1021,9 @@ const applyForStore = async (req, res) => {
           resolvedType,
           nik || null,
           no_hp || null,
-          Number(province_id),
-          Number(regency_id),
-          Number(village.district_id || district_id),
+          parsedProvId,
+          parsedRegId,
+          Number(village.district_id || parsedDistId),
           Number(village.id),
           village.name,
           postal_code || village.postal_code || '69472',
@@ -1189,4 +1291,5 @@ module.exports = {
   generateRagDecision,
   dispatchRagDecision,
   getDecisionReports,
+  getSumenepRegionsAndVillages,
 };

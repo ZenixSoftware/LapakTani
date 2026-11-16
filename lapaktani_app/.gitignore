@@ -23,6 +23,7 @@ migrate_working_dir/
 # Environment & Secrets
 .env
 .env.*
+!.env.example
 *.env
 key.properties
 *.keystore

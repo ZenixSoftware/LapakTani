@@ -60,10 +60,81 @@ const runStreamlinedAgroFlowMigration = async () => {
       console.warn('[MIGRATION_AGRO_FLOW] users.role enum notice:', enumErr.message);
     }
 
-    // 2. Extend villages with postal code & configurable store quota
+    // 2. Seed all 27 Sumenep districts & villages + extend with postal code & store quota
+    await connection.query(`
+      INSERT INTO provinces (id, name) VALUES
+      (35, 'Jawa Timur')
+      ON DUPLICATE KEY UPDATE name = VALUES(name);
+    `);
+
+    await connection.query(`
+      INSERT INTO regencies (id, province_id, name) VALUES
+      (3529, 35, 'Kabupaten Sumenep')
+      ON DUPLICATE KEY UPDATE province_id = VALUES(province_id), name = VALUES(name);
+    `);
+
+    await connection.query(`
+      INSERT INTO districts (id, regency_id, name) VALUES
+      (352901, 3529, 'Kota Sumenep'),
+      (352902, 3529, 'Kalianget'),
+      (352903, 3529, 'Manding'),
+      (352904, 3529, 'Talango'),
+      (352905, 3529, 'Bluto'),
+      (352906, 3529, 'Saronggi'),
+      (352907, 3529, 'Lenteng'),
+      (352908, 3529, 'Guluk-Guluk'),
+      (352909, 3529, 'Ganding'),
+      (352910, 3529, 'Pragaan'),
+      (352911, 3529, 'Ambunten'),
+      (352912, 3529, 'Pasongsongan'),
+      (352913, 3529, 'Dasuk'),
+      (352914, 3529, 'Rubaru'),
+      (352915, 3529, 'Batuan'),
+      (352916, 3529, 'Gapura'),
+      (352917, 3529, 'Dungkek'),
+      (352918, 3529, 'Batang-Batang'),
+      (352919, 3529, 'Batuputih'),
+      (352920, 3529, 'Nonggunong'),
+      (352921, 3529, 'Gayam'),
+      (352922, 3529, 'Raas'),
+      (352923, 3529, 'Sapeken'),
+      (352924, 3529, 'Arjasa'),
+      (352925, 3529, 'Kangayan'),
+      (352926, 3529, 'Masalembu'),
+      (352927, 3529, 'Giligenting')
+      ON DUPLICATE KEY UPDATE regency_id = VALUES(regency_id), name = VALUES(name);
+    `);
+
     await addColumnIfMissing(connection, 'villages', 'postal_code', "VARCHAR(10) NULL DEFAULT '69471'");
     await addColumnIfMissing(connection, 'villages', 'is_store_quota_enabled', 'TINYINT(1) NOT NULL DEFAULT 0');
     await addColumnIfMissing(connection, 'villages', 'max_stores_quota', 'INT NOT NULL DEFAULT 5');
+
+    await connection.query(`
+      INSERT INTO villages (id, district_id, name, postal_code) VALUES
+      (110, 352901, 'Kolor (Kec. Kota Sumenep)', '69417'),
+      (111, 352901, 'Pabian (Kec. Kota Sumenep)', '69411'),
+      (112, 352902, 'Kalianget Timur (Kec. Kalianget)', '69471'),
+      (113, 352903, 'Manding Daya (Kec. Manding)', '69452'),
+      (114, 352905, 'Bluto (Kec. Bluto)', '69466'),
+      (115, 352906, 'Saronggi (Kec. Saronggi)', '69467'),
+      (116, 352907, 'Lenteng Timur (Kec. Lenteng)', '69461'),
+      (117, 352909, 'Ganding (Kec. Ganding)', '69462'),
+      (118, 352910, 'Pragaan Laok (Kec. Pragaan)', '69465'),
+      (119, 352913, 'Kerta Barat (Kec. Dasuk)', '69454'),
+      (120, 352915, 'Batuan (Kec. Batuan)', '69451'),
+      (121, 352917, 'Lapa Taman (Kec. Dungkek)', '69474'),
+      (122, 352918, 'Batang-Batang Daya (Kec. Batang-Batang)', '69473'),
+      (123, 352919, 'Batuputih Laok (Kec. Batuputih)', '69453'),
+      (124, 352920, 'Nonggunong (Kec. Nonggunong)', '69483'),
+      (125, 352921, 'Gayam (Kec. Gayam)', '69483'),
+      (126, 352922, 'Alasmalang (Kec. Raas)', '69485'),
+      (127, 352923, 'Sapeken (Kec. Sapeken)', '69493'),
+      (128, 352924, 'Kalinganyar (Kec. Arjasa)', '69491'),
+      (129, 352925, 'Kangayan (Kec. Kangayan)', '69491'),
+      (130, 352926, 'Masakambing (Kec. Masalembu)', '69492'),
+      (131, 352927, 'Aenganyar (Kec. Giligenting)', '69482')
+      ON DUPLICATE KEY UPDATE district_id = VALUES(district_id), name = VALUES(name), postal_code = COALESCE(NULLIF(postal_code, ''), VALUES(postal_code));
+    `);
 
     const villageDefaults = [
       { id: 101, postal: '69472', quotaEnabled: 1, maxQuota: 3 }, // Mandala (Gapura)

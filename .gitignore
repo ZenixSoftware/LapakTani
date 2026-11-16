@@ -25,7 +25,9 @@ security_reports/
 # Environment and Secrets (All Projects)
 .env
 .env.*
+lapaktani_app/.env
 !.env.example
+!lapaktani_app/.env.example
 *.env
 ngrok
 ngrok.exe

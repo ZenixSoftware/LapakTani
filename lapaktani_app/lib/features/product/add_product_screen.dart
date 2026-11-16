@@ -298,11 +298,12 @@ class _AddProductScreenState extends State<AddProductScreen> {
     });
 
     try {
+      await AppConfig.ensureLoaded();
       final token = await ApiService().getToken();
       final uri = Uri.parse('${ApiService.baseUrl}/products');
       final request = http.MultipartRequest('POST', uri);
-      if (token != null && token.isNotEmpty) {
-        request.headers['Authorization'] = 'Bearer $token';
+      if (token != null && token.trim().isNotEmpty) {
+        request.headers['Authorization'] = 'Bearer ${token.trim()}';
       }
       request.headers['Accept'] = 'application/json';
       request.headers['X-API-Key'] = AppConfig.apiKey;

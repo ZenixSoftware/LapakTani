@@ -4,6 +4,7 @@ import 'package:lucide_icons/lucide_icons.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../core/services/api_service.dart';
+import '../../core/services/region_service.dart';
 import '../../core/theme/app_colors.dart';
 import '../home/home_dashboard_screen.dart';
 
@@ -17,6 +18,8 @@ class StoreRegistrationScreen extends StatefulWidget {
 
 class _StoreRegistrationScreenState extends State<StoreRegistrationScreen> {
   final ApiService _apiService = ApiService();
+  final RegionService _regionService = RegionService();
+
   int _step = 0; // 0: Personal & Wilayah, 1: Syarat Toko
   bool _isLoading = true;
   bool _isSubmitting = false;
@@ -39,14 +42,32 @@ class _StoreRegistrationScreenState extends State<StoreRegistrationScreen> {
   );
 
   String _selectedType = 'POKTAN';
-  int _selectedVillageId = 109;
-  List<Map<String, dynamic>> _villages = [];
   String? _existingStatus;
 
-  static const List<Map<String, dynamic>> _fallbackVillages = [
+  // Backend quota-enabled villages list from GET /store/my-application or /store/villages
+  List<Map<String, dynamic>> _backendQuotaVillages = [];
+
+  // 4-Level Cascading Region State
+  List<RegionItem> _provinces = [];
+  RegionItem? _selectedProvince;
+  bool _isLoadingProvinces = false;
+
+  List<RegionItem> _regencies = [];
+  RegionItem? _selectedRegency;
+  bool _isLoadingRegencies = false;
+
+  List<RegionItem> _districts = [];
+  RegionItem? _selectedDistrict;
+  bool _isLoadingDistricts = false;
+
+  List<RegionItem> _villages = [];
+  RegionItem? _selectedVillage;
+  bool _isLoadingVillages = false;
+
+  static const List<Map<String, dynamic>> _fallbackBackendVillages = [
     {
       'id': 101,
-      'district_id': 352901,
+      'district_id': 352916,
       'name': 'Mandala',
       'district_name': 'Gapura',
       'postal_code': '69472',
@@ -68,7 +89,7 @@ class _StoreRegistrationScreenState extends State<StoreRegistrationScreen> {
     },
     {
       'id': 102,
-      'district_id': 352902,
+      'district_id': 352914,
       'name': 'Pakondang',
       'district_name': 'Rubaru',
       'postal_code': '69456',
@@ -98,15 +119,26 @@ class _StoreRegistrationScreenState extends State<StoreRegistrationScreen> {
     super.dispose();
   }
 
+  String _normalizeName(String raw) {
+    return raw.split('(').first.trim().toLowerCase();
+  }
+
   Future<void> _loadInitialData() async {
-    setState(() => _isLoading = true);
+    setState(() {
+      _isLoading = true;
+      _isLoadingProvinces = true;
+    });
+
+    String? savedVillageName;
+
+    // 1. Load backend application & store quota village list
     try {
       final res = await _apiService.getMyStoreApplication();
       final data = res['data'];
       if (data is Map) {
         final rawVillages = data['villages'];
         if (rawVillages is List && rawVillages.isNotEmpty) {
-          _villages = rawVillages
+          _backendQuotaVillages = rawVillages
               .whereType<Map>()
               .map((e) => Map<String, dynamic>.from(e))
               .toList();
@@ -125,9 +157,8 @@ class _StoreRegistrationScreenState extends State<StoreRegistrationScreen> {
           if (app['postal_code'] != null) {
             _postalCtrl.text = app['postal_code'].toString();
           }
-          if (app['village_id'] != null) {
-            _selectedVillageId =
-                int.tryParse(app['village_id'].toString()) ?? 109;
+          if (app['village_name'] != null) {
+            savedVillageName = app['village_name'].toString();
           }
           if (app['tipe_pengelola'] != null) {
             _selectedType = app['tipe_pengelola'].toString();
@@ -142,26 +173,204 @@ class _StoreRegistrationScreenState extends State<StoreRegistrationScreen> {
         }
       }
     } catch (_) {
-      // Fall back to default village options if offline
+      try {
+        final vRes = await _apiService.getStoreVillages();
+        if (vRes['villages'] is List) {
+          _backendQuotaVillages = (vRes['villages'] as List)
+              .whereType<Map>()
+              .map((e) => Map<String, dynamic>.from(e))
+              .toList();
+        }
+      } catch (_) {}
     }
 
-    if (_villages.isEmpty) {
-      _villages = _fallbackVillages;
-    }
-    if (!_villages.any((v) => int.tryParse('${v['id']}') == _selectedVillageId)) {
-      _selectedVillageId = int.tryParse('${_villages.first['id']}') ?? 109;
+    if (_backendQuotaVillages.isEmpty) {
+      _backendQuotaVillages = _fallbackBackendVillages;
     }
 
-    if (mounted) {
-      setState(() => _isLoading = false);
+    // 2. Load 4-level Cascading Regions pre-selected to Jawa Timur -> Kabupaten Sumenep -> Dungkek
+    final provinces = await _regionService.getProvinces();
+    final defaultProv = provinces.firstWhere(
+      (p) => p.id == '35' || p.name.toUpperCase().contains('JAWA TIMUR'),
+      orElse: () => provinces.isNotEmpty
+          ? provinces.first
+          : const RegionItem(id: '35', name: 'JAWA TIMUR'),
+    );
+
+    final regencies = await _regionService.getRegencies(defaultProv.id);
+    final defaultReg = regencies.firstWhere(
+      (r) => r.id == '3529' || r.name.toUpperCase().contains('SUMENEP'),
+      orElse: () => regencies.isNotEmpty
+          ? regencies.first
+          : const RegionItem(id: '3529', name: 'KABUPATEN SUMENEP'),
+    );
+
+    final districts = await _regionService.getDistricts(defaultReg.id);
+    RegionItem? defaultDist;
+    if (districts.isNotEmpty) {
+      final preferredDistKeyword =
+          savedVillageName != null && savedVillageName.toLowerCase().contains('mandala')
+              ? 'GAPURA'
+              : 'DUNGKEK';
+      defaultDist = districts.firstWhere(
+        (d) => d.name.toUpperCase().contains(preferredDistKeyword),
+        orElse: () => districts.first,
+      );
+    }
+
+    final villages = defaultDist != null
+        ? await _regionService.getVillages(defaultDist.id)
+        : <RegionItem>[];
+    RegionItem? defaultVill;
+    if (villages.isNotEmpty) {
+      final targetNorm = savedVillageName != null
+          ? _normalizeName(savedVillageName)
+          : 'dungkek';
+      defaultVill = villages.firstWhere(
+        (v) => _normalizeName(v.name).contains(targetNorm),
+        orElse: () => villages.first,
+      );
+    }
+
+    if (!mounted) return;
+    setState(() {
+      _provinces = provinces;
+      _selectedProvince = defaultProv;
+      _isLoadingProvinces = false;
+
+      _regencies = regencies;
+      _selectedRegency = defaultReg;
+      _isLoadingRegencies = false;
+
+      _districts = districts;
+      _selectedDistrict = defaultDist;
+      _isLoadingDistricts = false;
+
+      _villages = villages;
+      _selectedVillage = defaultVill;
+      _isLoadingVillages = false;
+
+      _syncPostalFromSelectedVillage();
+      _isLoading = false;
+    });
+  }
+
+  Future<void> _onProvinceChanged(RegionItem? prov) async {
+    if (prov == null || prov.id == _selectedProvince?.id) return;
+    setState(() {
+      _selectedProvince = prov;
+      _selectedRegency = null;
+      _regencies = [];
+      _selectedDistrict = null;
+      _districts = [];
+      _selectedVillage = null;
+      _villages = [];
+      _isLoadingRegencies = true;
+    });
+
+    final regencies = await _regionService.getRegencies(prov.id);
+    if (!mounted) return;
+
+    RegionItem? nextReg;
+    if (regencies.isNotEmpty) {
+      nextReg = regencies.firstWhere(
+        (r) => r.id == '3529' || r.name.toUpperCase().contains('SUMENEP'),
+        orElse: () => regencies.first,
+      );
+    }
+
+    setState(() {
+      _regencies = regencies;
+      _selectedRegency = nextReg;
+      _isLoadingRegencies = false;
+    });
+
+    if (nextReg != null) {
+      await _loadDistrictsForRegency(nextReg);
     }
   }
 
-  Map<String, dynamic> get _currentVillage {
-    return _villages.firstWhere(
-      (v) => int.tryParse('${v['id']}') == _selectedVillageId,
-      orElse: () => _villages.first,
-    );
+  Future<void> _onRegencyChanged(RegionItem? reg) async {
+    if (reg == null || reg.id == _selectedRegency?.id) return;
+    setState(() {
+      _selectedRegency = reg;
+      _selectedDistrict = null;
+      _districts = [];
+      _selectedVillage = null;
+      _villages = [];
+    });
+    await _loadDistrictsForRegency(reg);
+  }
+
+  Future<void> _loadDistrictsForRegency(RegionItem reg) async {
+    setState(() => _isLoadingDistricts = true);
+    final districts = await _regionService.getDistricts(reg.id);
+    if (!mounted) return;
+
+    final nextDist = districts.isNotEmpty ? districts.first : null;
+    setState(() {
+      _districts = districts;
+      _selectedDistrict = nextDist;
+      _isLoadingDistricts = false;
+    });
+
+    if (nextDist != null) {
+      await _loadVillagesForDistrict(nextDist);
+    }
+  }
+
+  Future<void> _onDistrictChanged(RegionItem? dist) async {
+    if (dist == null || dist.id == _selectedDistrict?.id) return;
+    setState(() {
+      _selectedDistrict = dist;
+      _selectedVillage = null;
+      _villages = [];
+    });
+    await _loadVillagesForDistrict(dist);
+  }
+
+  Future<void> _loadVillagesForDistrict(RegionItem dist) async {
+    setState(() => _isLoadingVillages = true);
+    final villages = await _regionService.getVillages(dist.id);
+    if (!mounted) return;
+
+    final nextVill = villages.isNotEmpty ? villages.first : null;
+    setState(() {
+      _villages = villages;
+      _selectedVillage = nextVill;
+      _isLoadingVillages = false;
+      _syncPostalFromSelectedVillage();
+    });
+  }
+
+  void _onVillageChanged(RegionItem? village) {
+    if (village == null) return;
+    setState(() {
+      _selectedVillage = village;
+      _syncPostalFromSelectedVillage();
+    });
+  }
+
+  Map<String, dynamic>? get _matchedBackendVillage {
+    if (_selectedVillage == null) return null;
+    final target = _normalizeName(_selectedVillage!.name);
+    for (final v in _backendQuotaVillages) {
+      final candidate = _normalizeName((v['name'] ?? '').toString());
+      if (candidate == target || candidate.contains(target) || target.contains(candidate)) {
+        return v;
+      }
+    }
+    return null;
+  }
+
+  void _syncPostalFromSelectedVillage() {
+    final matched = _matchedBackendVillage;
+    if (matched != null && matched['postal_code'] != null) {
+      final p = matched['postal_code'].toString().trim();
+      if (p.isNotEmpty) {
+        _postalCtrl.text = p;
+      }
+    }
   }
 
   Future<void> _submitApplication({required bool freezeAsBuyer}) async {
@@ -174,19 +383,41 @@ class _StoreRegistrationScreenState extends State<StoreRegistrationScreen> {
       );
       return;
     }
+    if (_selectedVillage == null || _selectedDistrict == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Harap pilih Kecamatan dan Desa terlebih dahulu.'),
+          backgroundColor: AppColors.warning,
+        ),
+      );
+      return;
+    }
 
     setState(() => _isSubmitting = true);
     try {
-      final v = _currentVillage;
+      final matched = _matchedBackendVillage;
+      final provId = int.tryParse(_selectedProvince?.id ?? '35') ?? 35;
+      final regId = int.tryParse(_selectedRegency?.id ?? '3529') ?? 3529;
+      final rawDistId = int.tryParse(_selectedDistrict?.id ?? '352917');
+      final resolvedDistId = (matched != null ? int.tryParse('${matched['district_id']}') : null) ??
+          (rawDistId != null && rawDistId <= 2147483647 ? rawDistId : 352917);
+      final resolvedVillageId = matched != null
+          ? int.tryParse('${matched['id']}')
+          : null;
+
       final res = await _apiService.submitStoreApplication({
         'nama_toko': _storeNameCtrl.text.trim(),
         'tipe_pengelola': _selectedType,
         'nik': _nikCtrl.text.trim(),
         'no_hp': _phoneCtrl.text.trim(),
-        'province_id': 35,
-        'regency_id': 3529,
-        'district_id': int.tryParse('${v['district_id']}') ?? 352917,
-        'village_id': _selectedVillageId,
+        'province_id': provId,
+        'province_name': _selectedProvince?.displayName ?? 'Jawa Timur',
+        'regency_id': regId,
+        'regency_name': _selectedRegency?.displayName ?? 'Kabupaten Sumenep',
+        'district_id': resolvedDistId,
+        'district_name': _selectedDistrict?.displayName ?? 'Dungkek',
+        'village_id': ?resolvedVillageId,
+        'village_name': _selectedVillage!.displayName,
         'postal_code': _postalCtrl.text.trim(),
         'alamat_lengkap': _addressCtrl.text.trim(),
         'dokumen_syarat_url': _docCtrl.text.trim(),
@@ -295,7 +526,6 @@ class _StoreRegistrationScreenState extends State<StoreRegistrationScreen> {
           : ListView(
               padding: const EdgeInsets.all(16),
               children: [
-                // 2-step indicator
                 Row(
                   children: [
                     _stepPill(0, '1. Diri & Desa'),
@@ -304,7 +534,6 @@ class _StoreRegistrationScreenState extends State<StoreRegistrationScreen> {
                   ],
                 ),
                 const SizedBox(height: 16),
-
                 if (_step == 0) _buildStepOne() else _buildStepTwo(),
               ],
             ),
@@ -341,12 +570,15 @@ class _StoreRegistrationScreenState extends State<StoreRegistrationScreen> {
   }
 
   Widget _buildStepOne() {
-    final v = _currentVillage;
-    final bool isQuotaFull = v['is_quota_full'] == true;
+    final matchedQuota = _matchedBackendVillage;
+    final bool isQuotaFull = matchedQuota?['is_quota_full'] == true;
     final bool quotaEnabled =
-        v['is_store_quota_enabled'] == true || v['is_store_quota_enabled'] == 1;
-    final approvedCnt = v['approved_stores_count'] ?? 0;
-    final maxQuota = v['max_stores_quota'] ?? 5;
+        matchedQuota?['is_store_quota_enabled'] == true ||
+            matchedQuota?['is_store_quota_enabled'] == 1;
+    final approvedCnt = matchedQuota?['approved_stores_count'] ?? 0;
+    final maxQuota = matchedQuota?['max_stores_quota'] ?? 5;
+    final villageDisplay =
+        _selectedVillage?.displayName ?? 'Desa Terpilih';
 
     return Container(
       padding: const EdgeInsets.all(16),
@@ -359,7 +591,7 @@ class _StoreRegistrationScreenState extends State<StoreRegistrationScreen> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'Tahap 1: Data Pengelola & Wilayah Desa',
+            'Tahap 1: Data Pengelola & Wilayah (Sumenep)',
             style: GoogleFonts.plusJakartaSans(
               fontSize: 15,
               fontWeight: FontWeight.w800,
@@ -384,46 +616,130 @@ class _StoreRegistrationScreenState extends State<StoreRegistrationScreen> {
               border: OutlineInputBorder(),
             ),
           ),
-          const SizedBox(height: 10),
-          DropdownButtonFormField<int>(
-            initialValue: _selectedVillageId,
-            decoration: const InputDecoration(
-              labelText: 'Pilih Desa (Prov. Jawa Timur • Kab. Sumenep)',
-              border: OutlineInputBorder(),
+          const SizedBox(height: 12),
+
+          // 1. Provinsi (Cascading Selector)
+          DropdownButtonFormField<RegionItem>(
+            key: ValueKey('prov-${_provinces.length}-${_selectedProvince?.id}'),
+            isExpanded: true,
+            initialValue: _provinces.contains(_selectedProvince)
+                ? _selectedProvince
+                : null,
+            decoration: InputDecoration(
+              labelText: _isLoadingProvinces
+                  ? '1. Provinsi (Memuat...)'
+                  : '1. Provinsi',
+              border: const OutlineInputBorder(),
             ),
-            items: _villages.map((item) {
-              final id = int.tryParse('${item['id']}') ?? 109;
-              final name = (item['name'] ?? 'Dungkek').toString();
-              final dist = (item['district_name'] ?? 'Sumenep').toString();
-              final qOn = item['is_store_quota_enabled'] == true ||
-                  item['is_store_quota_enabled'] == 1;
-              final full = item['is_quota_full'] == true;
-              final cnt = item['approved_stores_count'] ?? 0;
-              final maxQ = item['max_stores_quota'] ?? 5;
-              final badge = qOn
-                  ? (full ? ' [KUOTA PENUH $cnt/$maxQ]' : ' [Kuota $cnt/$maxQ]')
-                  : ' [Terbuka]';
-              return DropdownMenuItem<int>(
-                value: id,
-                child: Text('Desa $name ($dist)$badge'),
-              );
-            }).toList(),
-            onChanged: (val) {
-              if (val != null) {
-                setState(() {
-                  _selectedVillageId = val;
-                  final found = _villages.firstWhere(
-                    (x) => int.tryParse('${x['id']}') == val,
-                    orElse: () => _villages.first,
-                  );
-                  if (found['postal_code'] != null) {
-                    _postalCtrl.text = found['postal_code'].toString();
-                  }
-                });
-              }
-            },
+            items: _provinces
+                .map(
+                  (p) => DropdownMenuItem<RegionItem>(
+                    value: p,
+                    child: Text(
+                      p.displayName,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                )
+                .toList(),
+            onChanged: _isLoadingProvinces ? null : _onProvinceChanged,
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: 10),
+
+          // 2. Kabupaten / Kota (Cascading Selector)
+          DropdownButtonFormField<RegionItem>(
+            key: ValueKey(
+              'reg-${_selectedProvince?.id}-${_regencies.length}-${_selectedRegency?.id}',
+            ),
+            isExpanded: true,
+            initialValue: _regencies.contains(_selectedRegency)
+                ? _selectedRegency
+                : null,
+            decoration: InputDecoration(
+              labelText: _isLoadingRegencies
+                  ? '2. Kabupaten / Kota (Memuat...)'
+                  : '2. Kabupaten / Kota',
+              border: const OutlineInputBorder(),
+            ),
+            items: _regencies
+                .map(
+                  (r) => DropdownMenuItem<RegionItem>(
+                    value: r,
+                    child: Text(
+                      r.displayName,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                )
+                .toList(),
+            onChanged: _isLoadingRegencies ? null : _onRegencyChanged,
+          ),
+          const SizedBox(height: 10),
+
+          // 3. Kecamatan (27 Kecamatan Sumenep Cascading Selector)
+          DropdownButtonFormField<RegionItem>(
+            key: ValueKey(
+              'dist-${_selectedRegency?.id}-${_districts.length}-${_selectedDistrict?.id}',
+            ),
+            isExpanded: true,
+            initialValue: _districts.contains(_selectedDistrict)
+                ? _selectedDistrict
+                : null,
+            decoration: InputDecoration(
+              labelText: _isLoadingDistricts
+                  ? '3. Kecamatan (Memuat...)'
+                  : '3. Kecamatan',
+              border: const OutlineInputBorder(),
+            ),
+            items: _districts
+                .map(
+                  (d) => DropdownMenuItem<RegionItem>(
+                    value: d,
+                    child: Text(
+                      'Kec. ${d.displayName}',
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                )
+                .toList(),
+            onChanged: _isLoadingDistricts ? null : _onDistrictChanged,
+          ),
+          const SizedBox(height: 10),
+
+          // 4. Desa / Kelurahan (Cascading Selector)
+          DropdownButtonFormField<RegionItem>(
+            key: ValueKey(
+              'vill-${_selectedDistrict?.id}-${_villages.length}-${_selectedVillage?.id}',
+            ),
+            isExpanded: true,
+            initialValue:
+                _villages.contains(_selectedVillage) ? _selectedVillage : null,
+            decoration: InputDecoration(
+              labelText: _isLoadingVillages
+                  ? '4. Desa / Kelurahan (Memuat...)'
+                  : '4. Desa / Kelurahan',
+              border: const OutlineInputBorder(),
+            ),
+            items: _villages
+                .map(
+                  (v) => DropdownMenuItem<RegionItem>(
+                    value: v,
+                    child: Text(
+                      'Desa ${v.displayName}',
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                )
+                .toList(),
+            onChanged: _isLoadingVillages ? null : _onVillageChanged,
+          ),
+          const SizedBox(height: 10),
+
+          // Live Store Quota Badge rendered outside dropdown to avoid overflow
           Container(
             padding: const EdgeInsets.all(10),
             decoration: BoxDecoration(
@@ -447,11 +763,13 @@ class _StoreRegistrationScreenState extends State<StoreRegistrationScreen> {
                 const SizedBox(width: 8),
                 Expanded(
                   child: Text(
-                    quotaEnabled
-                        ? (isQuotaFull
-                            ? 'Kuota toko Desa ${v['name']} penuh ($approvedCnt/$maxQuota). Pilih desa lain atau tangguhkan.'
-                            : 'Kuota toko Desa ${v['name']}: $approvedCnt/$maxQuota terpakai (Tersedia).')
-                        : 'Desa ${v['name']} membuka pendaftaran toko tanpa batas kuota.',
+                    matchedQuota == null
+                        ? 'Desa $villageDisplay (Kec. ${_selectedDistrict?.displayName ?? '-'}) terbuka untuk pengajuan toko desa.'
+                        : quotaEnabled
+                            ? (isQuotaFull
+                                ? 'Kuota toko Desa $villageDisplay penuh ($approvedCnt/$maxQuota). Pilih desa lain atau tangguhkan.'
+                                : 'Kuota toko Desa $villageDisplay: $approvedCnt/$maxQuota terpakai (Tersedia).')
+                            : 'Desa $villageDisplay membuka pendaftaran toko tanpa batas kuota.',
                     style: GoogleFonts.plusJakartaSans(
                       fontSize: 11.5,
                       fontWeight: FontWeight.w600,
@@ -544,6 +862,7 @@ class _StoreRegistrationScreenState extends State<StoreRegistrationScreen> {
           ),
           const SizedBox(height: 10),
           DropdownButtonFormField<String>(
+            isExpanded: true,
             initialValue: _selectedType,
             decoration: const InputDecoration(
               labelText: 'Tipe Pengelola Toko',

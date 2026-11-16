@@ -13,7 +13,7 @@ class ApiService {
   factory ApiService() => _instance;
   ApiService._internal();
 
-  static const String baseUrl = AppConfig.baseUrl;
+  static String get baseUrl => AppConfig.baseUrl;
   static const String tokenKey = 'jwt_token';
   static const String userKey = 'auth_user';
 
@@ -100,6 +100,7 @@ class ApiService {
   Future<Map<String, String>> _buildHeaders({
     Map<String, String>? extraHeaders,
   }) async {
+    await AppConfig.ensureLoaded();
     final headers = <String, String>{
       'Content-Type': 'application/json',
       'Accept': 'application/json',
@@ -657,10 +658,11 @@ class ApiService {
     final url = Uri.parse('$baseUrl$normalizedPath');
 
     try {
+      await AppConfig.ensureLoaded();
       final request = http.MultipartRequest('POST', url);
       final token = await getToken();
-      if (token != null && token.isNotEmpty) {
-        request.headers['Authorization'] = 'Bearer $token';
+      if (token != null && token.trim().isNotEmpty) {
+        request.headers['Authorization'] = 'Bearer ${token.trim()}';
       }
       request.headers['Accept'] = 'application/json';
       request.headers['X-API-Key'] = AppConfig.apiKey;
@@ -769,11 +771,12 @@ class ApiService {
       throw Exception(msg);
     }
 
+    await AppConfig.ensureLoaded();
     final url = Uri.parse('$baseUrl/soil/monitoring-lahan');
     final request = http.MultipartRequest('POST', url);
     final token = await getToken();
-    if (token != null && token.isNotEmpty) {
-      request.headers['Authorization'] = 'Bearer $token';
+    if (token != null && token.trim().isNotEmpty) {
+      request.headers['Authorization'] = 'Bearer ${token.trim()}';
     }
     request.headers['Accept'] = 'application/json';
     request.headers['X-API-Key'] = AppConfig.apiKey;
@@ -954,6 +957,17 @@ class ApiService {
   Future<Map<String, dynamic>> getMyStoreApplication() async {
     final response = await _fetchGet('/store/my-application');
     return _decodeResponseMap(response, 'Gagal memuat status pengajuan toko');
+  }
+
+  Future<Map<String, dynamic>> getStoreVillages() async {
+    try {
+      final response = await _fetchGet('/store/villages');
+      if (response.statusCode >= 200 && response.statusCode < 300) {
+        return _decodeResponseMap(response, 'Gagal memuat daftar desa Sumenep');
+      }
+    } catch (_) {}
+    final fallbackRes = await _fetchGet('/regions/sumenep');
+    return _decodeResponseMap(fallbackRes, 'Gagal memuat daftar desa Sumenep');
   }
 
   Future<Map<String, dynamic>> submitStoreApplication(

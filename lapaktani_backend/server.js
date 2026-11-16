@@ -25,6 +25,7 @@ const dinasRoutes = require('./src/routes/dinas');
 const storeRoutes = require('./src/routes/store');
 const { optionalVerifyToken } = require('./src/middlewares/authMiddleware');
 const penyuluhController = require('./src/controllers/penyuluhController');
+const agroSupplyChainController = require('./src/controllers/agroSupplyChainController');
 const runPestAlertMigration = require('./src/config/migrate_pest_alert');
 const runMonitoringLahanMigration = require('./src/config/migrate_monitoring_lahan');
 const runStreamlinedAgroFlowMigration = require('./src/config/migrate_streamlined_agro_flow');
@@ -114,6 +115,7 @@ app.use('/api/chat', chatRoutes);
 app.use('/api/petani', petaniRoutes);
 app.use('/api/dinas', dinasRoutes);
 app.use('/api/store', storeRoutes);
+app.get('/api/regions/sumenep', agroSupplyChainController.getSumenepRegionsAndVillages);
 
 
 app.use((req, res) => {
