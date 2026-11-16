@@ -24,9 +24,13 @@ security_reports/
 
 # Environment and Secrets (All Projects)
 .env
+**/.env
 .env.*
+**/.env.local
+**/.env.*.local
 lapaktani_app/.env
 !.env.example
+!**/.env.example
 !lapaktani_app/.env.example
 *.env
 ngrok
@@ -72,7 +76,7 @@ app.*.map.json
 lapaktani_backend/public/uploads/
 uploads/
 
-# Academic & Personal Documents & Local Reference Temp
+# Academic, Local Reference, Scripts & Exports
 *.docx
 *.doc
 *.pdf
@@ -83,9 +87,14 @@ temp_*
 temp_*.py
 _temp_*
 test_*.js
+scripts/
+**/scripts/*.ps1
 scripts/run_flutter_dev.ps1
+UbzpfVZu*.json
+**/*trello*.json
 
-# Database Dumps (keep migrations/*.sql tracked)
+# Database SQL Files & Dumps
+**/*.sql
 lapaktani_backend/database/*.sql
 database/*.sql
 *dump*.sql

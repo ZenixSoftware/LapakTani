@@ -14,7 +14,7 @@ const http = require('http');
 const autocannon = require('autocannon');
 
 const BASE_URL = process.env.BASE_URL || 'http://localhost:3000';
-const API_KEY = process.env.LAPAKTANI_API_KEY || 'lpt_live_lapaktani_secret_key_2026';
+const API_KEY = process.env.LAPAKTANI_API_KEY || '';
 
 const STRESS_TARGETS = [
   {
