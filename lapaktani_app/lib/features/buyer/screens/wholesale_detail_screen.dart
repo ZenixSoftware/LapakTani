@@ -130,10 +130,14 @@ class _WholesaleDetailScreenState extends State<WholesaleDetailScreen> {
   void _showOrderQuotaSheet() {
     if (!_ensureAuthenticated()) return;
 
-    final double totalQuota = (_poolData['total_quota_kg'] as num?)?.toDouble() ?? 100.0;
-    final double remaining = (_poolData['remaining_quota_kg'] as num?)?.toDouble() ?? 50.0;
-    final double minOrder = (_poolData['min_order_kg'] as num?)?.toDouble() ?? 50.0;
-    final double pricePerKg = (_poolData['price_per_kg'] as num?)?.toDouble() ?? 0.0;
+    final double totalQuota =
+        double.tryParse('${_poolData['total_quota_kg'] ?? ''}') ?? 100.0;
+    final double remaining =
+        double.tryParse('${_poolData['remaining_quota_kg'] ?? ''}') ?? 50.0;
+    final double minOrder =
+        double.tryParse('${_poolData['min_order_kg'] ?? ''}') ?? 50.0;
+    final double pricePerKg =
+        double.tryParse('${_poolData['price_per_kg'] ?? ''}') ?? 0.0;
 
     double selectedQty = minOrder.clamp(1.0, remaining);
     final qtyController = TextEditingController(text: selectedQty.toStringAsFixed(0));
@@ -335,7 +339,9 @@ class _WholesaleDetailScreenState extends State<WholesaleDetailScreen> {
                             ),
                           );
                           setState(() {
-                            final double curRem = (_poolData['remaining_quota_kg'] as num?)?.toDouble() ?? remaining;
+                            final double curRem = double.tryParse(
+                                    '${_poolData['remaining_quota_kg'] ?? ''}') ??
+                                remaining;
                             _poolData['remaining_quota_kg'] = (curRem - qty).clamp(0.0, totalQuota);
                           });
                         } else {
@@ -374,12 +380,16 @@ class _WholesaleDetailScreenState extends State<WholesaleDetailScreen> {
     final String variety = _poolData['variety'] ?? 'Varietas Unggul';
     final String grade = _poolData['grade'] ?? 'Grade A Super';
     final String mitraName = _poolData['mitra_name'] ?? 'Mitra Tani Makmur';
-    final double totalKg = (_poolData['total_quota_kg'] as num?)?.toDouble() ?? 100.0;
-    final double remainingKg = (_poolData['remaining_quota_kg'] as num?)?.toDouble() ?? 50.0;
+    final double totalKg =
+        double.tryParse('${_poolData['total_quota_kg'] ?? ''}') ?? 100.0;
+    final double remainingKg =
+        double.tryParse('${_poolData['remaining_quota_kg'] ?? ''}') ?? 50.0;
     final double takenKg = (totalKg - remainingKg).clamp(0.0, totalKg);
     final double progress = totalKg > 0 ? (takenKg / totalKg).clamp(0.0, 1.0) : 0.0;
-    final double priceKg = (_poolData['price_per_kg'] as num?)?.toDouble() ?? 0.0;
-    final double minOrder = (_poolData['min_order_kg'] as num?)?.toDouble() ?? 50.0;
+    final double priceKg =
+        double.tryParse('${_poolData['price_per_kg'] ?? ''}') ?? 0.0;
+    final double minOrder =
+        double.tryParse('${_poolData['min_order_kg'] ?? ''}') ?? 50.0;
     final String harvestDate = _poolData['target_harvest_date'] ?? _poolData['est_harvest_date'] ?? '15 Nov 2026';
     final String packagingSop = _poolData['packaging_sop'] ?? 'Krat Plastik & Cold Storage (10-12°C)';
 

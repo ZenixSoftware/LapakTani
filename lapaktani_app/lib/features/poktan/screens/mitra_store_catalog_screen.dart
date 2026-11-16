@@ -38,6 +38,18 @@ class _MitraStoreCatalogScreenState extends State<MitraStoreCatalogScreen>
   List<Map<String, dynamic>> _nearbyHarvests = [];
   List<Map<String, dynamic>> _purchaseOffers = [];
 
+  double _toDouble(dynamic v, [double fallback = 0.0]) => v == null
+      ? fallback
+      : (v is num ? v.toDouble() : double.tryParse(v.toString()) ?? fallback);
+
+  int _toInt(dynamic v, [int fallback = 0]) => v == null
+      ? fallback
+      : (v is int
+          ? v
+          : (v is num
+              ? v.toInt()
+              : double.tryParse(v.toString())?.round() ?? fallback));
+
   @override
   void initState() {
     super.initState();
@@ -81,8 +93,7 @@ class _MitraStoreCatalogScreenState extends State<MitraStoreCatalogScreen>
         }
         if (storeApp['default_min_wholesale_kg'] != null) {
           _defaultMinWholesaleKg =
-              int.tryParse(storeApp['default_min_wholesale_kg'].toString()) ??
-                  30;
+              _toInt(storeApp['default_min_wholesale_kg'], 30);
         }
         if (storeApp['store_discount_banner'] != null) {
           _storeBanner = storeApp['store_discount_banner'].toString();
@@ -444,23 +455,20 @@ class _MitraStoreCatalogScreenState extends State<MitraStoreCatalogScreen>
 
   void _showEditStockModal(Map<String, dynamic> item) {
     final stockController = TextEditingController(
-      text: ((num.tryParse('${item['stock_kg'] ?? item['stock'] ?? 0}') ?? 0))
-          .toStringAsFixed(0),
+      text: _toDouble(item['stock_kg'] ?? item['stock']).toStringAsFixed(0),
     );
     final priceController = TextEditingController(
-      text: ((num.tryParse('${item['price_per_kg'] ?? item['price'] ?? 0}') ?? 0))
-          .toStringAsFixed(0),
+      text: _toDouble(item['price_per_kg'] ?? item['price']).toStringAsFixed(0),
     );
     final discountPctCtrl = TextEditingController(
-      text: ((num.tryParse('${item['discount_percent'] ?? 0}') ?? 0))
-          .toStringAsFixed(0),
+      text: _toDouble(item['discount_percent']).toStringAsFixed(0),
     );
     final minWholesaleCtrl = TextEditingController(
-      text: '${item['min_wholesale_qty'] ?? _defaultMinWholesaleKg}',
+      text: '${_toInt(item['min_wholesale_qty'], _defaultMinWholesaleKg)}',
     );
     final wholesalePriceCtrl = TextEditingController(
       text: item['wholesale_price'] != null
-          ? '${(num.tryParse('${item['wholesale_price']}') ?? 0).round()}'
+          ? '${_toInt(item['wholesale_price'])}'
           : '',
     );
     bool wholesaleEnabled = item['is_wholesale_enabled'] != false &&
@@ -585,11 +593,9 @@ class _MitraStoreCatalogScreenState extends State<MitraStoreCatalogScreen>
                   ? null
                   : () async {
                       final newPrice = double.tryParse(priceController.text) ??
-                          (num.tryParse('${item['price_per_kg'] ?? 0}') ?? 0)
-                              .toDouble();
+                          _toDouble(item['price_per_kg']);
                       final newStock = double.tryParse(stockController.text) ??
-                          (num.tryParse('${item['stock_kg'] ?? 0}') ?? 0)
-                              .toDouble();
+                          _toDouble(item['stock_kg']);
                       final newDiscPct =
                           double.tryParse(discountPctCtrl.text.trim()) ?? 0;
                       final newMinWholesale =
@@ -718,6 +724,7 @@ class _MitraStoreCatalogScreenState extends State<MitraStoreCatalogScreen>
         ],
       ),
       floatingActionButton: FloatingActionButton.extended(
+        heroTag: 'fab_mitra_store_catalog',
         onPressed: _showAddProductOptionSheet,
         backgroundColor: AppColors.primary,
         foregroundColor: Colors.white,
@@ -870,8 +877,16 @@ class _MitraStoreCatalogScreenState extends State<MitraStoreCatalogScreen>
       itemBuilder: (context, index) {
         final item = _retailProducts[index];
         final String title = item['title']?.toString() ?? 'Komoditas Segar';
-        final num price = (item['price_per_kg'] as num?) ?? (item['price'] as num?) ?? 0;
-        final num stock = (item['stock_kg'] as num?) ?? (item['stock'] as num?) ?? 0;
+        final double price = _toDouble(item['price_per_kg'] ?? item['price']);
+        final double stock = _toDouble(item['stock_kg'] ?? item['stock']);
+        final double discPct = _toDouble(item['discount_percent']);
+        final double rawDiscPrice = _toDouble(item['discount_price']);
+        final double effectiveRetailPrice =
+            (rawDiscPrice > 0 && rawDiscPrice < price) ? rawDiscPrice : price;
+        final double wholesalePrice =
+            _toDouble(item['wholesale_price'], (price * 0.85).roundToDouble());
+        final int minWholesaleQty =
+            _toInt(item['min_wholesale_qty'], _defaultMinWholesaleKg);
         final String rawImg = item['image_url']?.toString() ?? '';
         final String imageUrl = _resolveImageUrl(rawImg);
         final bool isActive = item['isActive'] ?? true;
@@ -919,15 +934,19 @@ class _MitraStoreCatalogScreenState extends State<MitraStoreCatalogScreen>
                     const SizedBox(height: 4),
                     Row(
                       children: [
-                        Text(
-                          'Rp ${_currencyFormat.format((item['discount_price'] as num?) ?? price)} / kg',
-                          style: GoogleFonts.plusJakartaSans(
-                            fontSize: 13,
-                            fontWeight: FontWeight.w800,
-                            color: AppColors.primary,
+                        Flexible(
+                          child: Text(
+                            'Rp ${_currencyFormat.format(effectiveRetailPrice)} / kg',
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: GoogleFonts.plusJakartaSans(
+                              fontSize: 13,
+                              fontWeight: FontWeight.w800,
+                              color: AppColors.primary,
+                            ),
                           ),
                         ),
-                        if ((num.tryParse('${item['discount_percent'] ?? 0}') ?? 0) > 0) ...[
+                        if (discPct > 0) ...[
                           const SizedBox(width: 6),
                           Container(
                             padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
@@ -936,7 +955,7 @@ class _MitraStoreCatalogScreenState extends State<MitraStoreCatalogScreen>
                               borderRadius: BorderRadius.circular(4),
                             ),
                             child: Text(
-                              '-${(num.tryParse('${item['discount_percent']}') ?? 0).toStringAsFixed(0)}%',
+                              '-${discPct.toStringAsFixed(0)}%',
                               style: GoogleFonts.plusJakartaSans(
                                 fontSize: 9.5,
                                 fontWeight: FontWeight.w800,
@@ -950,7 +969,7 @@ class _MitraStoreCatalogScreenState extends State<MitraStoreCatalogScreen>
                     const SizedBox(height: 2),
                     Text(
                       'Stok: ${stock.toStringAsFixed(0)} kg'
-                      '${(item['is_wholesale_enabled'] != false && item['is_wholesale_enabled'] != 0) ? " • Partai Min. ${item['min_wholesale_qty'] ?? _defaultMinWholesaleKg}kg @ Rp ${_currencyFormat.format(num.tryParse('${item['wholesale_price'] ?? (price * 0.85)}') ?? 0)}" : " • Partai Nonaktif"}',
+                      '${(item['is_wholesale_enabled'] != false && item['is_wholesale_enabled'] != 0) ? " • Partai Min. ${minWholesaleQty}kg @ Rp ${_currencyFormat.format(wholesalePrice)}" : " • Partai Nonaktif"}',
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
                       style: GoogleFonts.plusJakartaSans(
@@ -1017,13 +1036,13 @@ class _MitraStoreCatalogScreenState extends State<MitraStoreCatalogScreen>
       separatorBuilder: (context, index) => const SizedBox(height: 12),
       itemBuilder: (context, index) {
         final pool = _harvestPools[index];
-        final String commodity = pool['commodity_name'] ?? 'Komoditas Partai';
-        final double totalKg = (pool['total_quota_kg'] as num?)?.toDouble() ?? 100.0;
-        final double remainingKg = (pool['remaining_quota_kg'] as num?)?.toDouble() ?? 50.0;
+        final String commodity = pool['commodity_name']?.toString() ?? 'Komoditas Partai';
+        final double totalKg = _toDouble(pool['total_quota_kg'], 100.0);
+        final double remainingKg = _toDouble(pool['remaining_quota_kg'], 50.0);
         final double takenKg = (totalKg - remainingKg).clamp(0.0, totalKg);
         final double progress = totalKg > 0 ? (takenKg / totalKg).clamp(0.0, 1.0) : 0.0;
-        final double priceKg = (pool['price_per_kg'] as num?)?.toDouble() ?? 0.0;
-        final String harvestDate = pool['target_harvest_date'] ?? pool['est_harvest_date'] ?? '15 Nov 2026';
+        final double priceKg = _toDouble(pool['price_per_kg']);
+        final String harvestDate = (pool['target_harvest_date'] ?? pool['est_harvest_date'] ?? '15 Nov 2026').toString();
         final String status = pool['status']?.toString() ?? 'open';
         final bool isSpilled = status == 'spilled_over';
 
@@ -1232,8 +1251,7 @@ class _MitraStoreCatalogScreenState extends State<MitraStoreCatalogScreen>
             final farmer = (h['farmer_name'] ?? 'Petani Mitra').toString();
             final village = (h['village_name'] ?? 'Sumenep').toString();
             final status = (h['status_tanam'] ?? 'SIAP_PANEN').toString();
-            final weight = (num.tryParse('${h['estimasi_berat_kg'] ?? 0}') ?? 0)
-                .toStringAsFixed(0);
+            final weight = _toDouble(h['estimasi_berat_kg']).toStringAsFixed(0);
             return CustomSoftCard(
               margin: const EdgeInsets.only(bottom: 10),
               padding: const EdgeInsets.all(13),
@@ -1291,47 +1309,55 @@ class _MitraStoreCatalogScreenState extends State<MitraStoreCatalogScreen>
                   Row(
                     mainAxisAlignment: MainAxisAlignment.end,
                     children: [
-                      OutlinedButton.icon(
-                        onPressed: () async {
-                          try {
-                            final conv = await ChatService().openDirectConversation(
-                              targetUserId: h['farmer_id']?.toString(),
-                              targetRole: 'petani',
-                              title: 'DM — $farmer',
-                            );
-                            if (!mounted) return;
-                            await Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (_) => ChatRoomScreen(conversation: conv),
-                              ),
-                            );
-                          } catch (_) {}
-                        },
-                        icon: const Icon(LucideIcons.messageSquare, size: 13),
-                        label: Text(
-                          'DM Petani',
-                          style: GoogleFonts.plusJakartaSans(
-                            fontSize: 11,
-                            fontWeight: FontWeight.w700,
+                      Flexible(
+                        child: OutlinedButton.icon(
+                          onPressed: () async {
+                            try {
+                              final conv = await ChatService().openDirectConversation(
+                                targetUserId: h['farmer_id']?.toString(),
+                                targetRole: 'petani',
+                                title: 'DM — $farmer',
+                              );
+                              if (!mounted) return;
+                              await Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (_) => ChatRoomScreen(conversation: conv),
+                                ),
+                              );
+                            } catch (_) {}
+                          },
+                          icon: const Icon(LucideIcons.messageSquare, size: 13),
+                          label: Text(
+                            'DM Petani',
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: GoogleFonts.plusJakartaSans(
+                              fontSize: 11,
+                              fontWeight: FontWeight.w700,
+                            ),
                           ),
                         ),
                       ),
                       const SizedBox(width: 8),
-                      ElevatedButton.icon(
-                        onPressed: () => _showSendOfferModal(h),
-                        icon: const Icon(LucideIcons.badgeDollarSign, size: 14),
-                        label: Text(
-                          'Kirim Tawaran Transparan',
-                          style: GoogleFonts.plusJakartaSans(
-                            fontSize: 11.5,
-                            fontWeight: FontWeight.w700,
+                      Flexible(
+                        child: ElevatedButton.icon(
+                          onPressed: () => _showSendOfferModal(h),
+                          icon: const Icon(LucideIcons.badgeDollarSign, size: 14),
+                          label: Text(
+                            'Tawarkan Harga',
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: GoogleFonts.plusJakartaSans(
+                              fontSize: 11.5,
+                              fontWeight: FontWeight.w700,
+                            ),
                           ),
-                        ),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: AppColors.primary,
-                          foregroundColor: Colors.white,
-                          elevation: 0,
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: AppColors.primary,
+                            foregroundColor: Colors.white,
+                            elevation: 0,
+                          ),
                         ),
                       ),
                     ],
@@ -1352,11 +1378,11 @@ class _MitraStoreCatalogScreenState extends State<MitraStoreCatalogScreen>
         const SizedBox(height: 8),
         ..._purchaseOffers.map((offer) {
           final status = (offer['status'] ?? 'OFFER_SENT').toString();
-          final netPrice =
-              num.tryParse('${offer['harga_tawar_bersih_per_kg'] ?? 0}') ?? 0;
-          final weight = num.tryParse(
-                  '${offer['berat_timbang_riil_kg'] ?? offer['estimasi_berat_kg'] ?? 0}') ??
-              0;
+          final netPrice = _toDouble(offer['harga_tawar_bersih_per_kg']);
+          final weight = _toDouble(
+            offer['berat_timbang_riil_kg'] ?? offer['estimasi_berat_kg'],
+          );
+          final totalNilai = _toDouble(offer['total_nilai_kontrak']);
           return CustomSoftCard(
             margin: const EdgeInsets.only(bottom: 10),
             padding: const EdgeInsets.all(13),
@@ -1393,7 +1419,7 @@ class _MitraStoreCatalogScreenState extends State<MitraStoreCatalogScreen>
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  'Harga Bersih: Rp ${_currencyFormat.format(netPrice)}/kg • Total: Rp ${_currencyFormat.format(num.tryParse('${offer['total_nilai_kontrak'] ?? 0}') ?? 0)}',
+                  'Harga Bersih: Rp ${_currencyFormat.format(netPrice)}/kg • Total: Rp ${_currencyFormat.format(totalNilai)}',
                   style: GoogleFonts.plusJakartaSans(
                     fontSize: 11.5,
                     fontWeight: FontWeight.w700,

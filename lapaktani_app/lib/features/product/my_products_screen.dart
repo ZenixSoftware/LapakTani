@@ -385,6 +385,7 @@ class _MyProductsScreenState extends State<MyProductsScreen> {
         ],
       ),
       floatingActionButton: FloatingActionButton(
+        heroTag: 'fab_seller_my_products',
         onPressed: () async {
           final result = await Navigator.push<bool>(
             context,

@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:lucide_icons/lucide_icons.dart';
@@ -5,11 +6,24 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../core/services/api_service.dart';
 import '../../core/services/region_service.dart';
+import '../../core/services/user_session.dart';
 import '../../core/theme/app_colors.dart';
-import '../home/home_dashboard_screen.dart';
+import '../navigation/role_based_app_shell.dart';
+import 'auth_repository.dart';
 
 class StoreRegistrationScreen extends StatefulWidget {
-  const StoreRegistrationScreen({super.key});
+  final String? initialName;
+  final String? initialEmail;
+  final String? initialPhone;
+  final String? initialPassword;
+
+  const StoreRegistrationScreen({
+    super.key,
+    this.initialName,
+    this.initialEmail,
+    this.initialPhone,
+    this.initialPassword,
+  });
 
   @override
   State<StoreRegistrationScreen> createState() =>
@@ -23,7 +37,11 @@ class _StoreRegistrationScreenState extends State<StoreRegistrationScreen> {
   int _step = 0; // 0: Personal & Wilayah, 1: Syarat Toko
   bool _isLoading = true;
   bool _isSubmitting = false;
+  bool _hasExistingToken = false;
 
+  final _fullNameCtrl = TextEditingController();
+  final _emailCtrl = TextEditingController();
+  final _passwordCtrl = TextEditingController();
   final _nikCtrl = TextEditingController(text: '3529172207880003');
   final _phoneCtrl = TextEditingController(text: '081357902468');
   final _addressCtrl = TextEditingController(
@@ -103,11 +121,26 @@ class _StoreRegistrationScreenState extends State<StoreRegistrationScreen> {
   @override
   void initState() {
     super.initState();
+    if (widget.initialName != null && widget.initialName!.trim().isNotEmpty) {
+      _fullNameCtrl.text = widget.initialName!.trim();
+    }
+    if (widget.initialEmail != null && widget.initialEmail!.trim().isNotEmpty) {
+      _emailCtrl.text = widget.initialEmail!.trim();
+    }
+    if (widget.initialPassword != null && widget.initialPassword!.isNotEmpty) {
+      _passwordCtrl.text = widget.initialPassword!;
+    }
+    if (widget.initialPhone != null && widget.initialPhone!.trim().isNotEmpty) {
+      _phoneCtrl.text = widget.initialPhone!.trim();
+    }
     _loadInitialData();
   }
 
   @override
   void dispose() {
+    _fullNameCtrl.dispose();
+    _emailCtrl.dispose();
+    _passwordCtrl.dispose();
     _nikCtrl.dispose();
     _phoneCtrl.dispose();
     _addressCtrl.dispose();
@@ -131,48 +164,55 @@ class _StoreRegistrationScreenState extends State<StoreRegistrationScreen> {
 
     String? savedVillageName;
 
-    // 1. Load backend application & store quota village list
-    try {
-      final res = await _apiService.getMyStoreApplication();
-      final data = res['data'];
-      if (data is Map) {
-        final rawVillages = data['villages'];
-        if (rawVillages is List && rawVillages.isNotEmpty) {
-          _backendQuotaVillages = rawVillages
-              .whereType<Map>()
-              .map((e) => Map<String, dynamic>.from(e))
-              .toList();
+    final existingToken = await _apiService.getToken();
+    _hasExistingToken = existingToken != null && existingToken.trim().isNotEmpty;
+
+    // 1. Load existing store application (only if authenticated) & village store quota list
+    if (_hasExistingToken) {
+      try {
+        final res = await _apiService.getMyStoreApplication();
+        final data = res['data'];
+        if (data is Map) {
+          final rawVillages = data['villages'];
+          if (rawVillages is List && rawVillages.isNotEmpty) {
+            _backendQuotaVillages = rawVillages
+                .whereType<Map>()
+                .map((e) => Map<String, dynamic>.from(e))
+                .toList();
+          }
+          final app = data['application'];
+          if (app is Map) {
+            _existingStatus = app['status']?.toString();
+            if (app['nama_toko'] != null) {
+              _storeNameCtrl.text = app['nama_toko'].toString();
+            }
+            if (app['nik'] != null) _nikCtrl.text = app['nik'].toString();
+            if (app['no_hp'] != null) _phoneCtrl.text = app['no_hp'].toString();
+            if (app['alamat_lengkap'] != null) {
+              _addressCtrl.text = app['alamat_lengkap'].toString();
+            }
+            if (app['postal_code'] != null) {
+              _postalCtrl.text = app['postal_code'].toString();
+            }
+            if (app['village_name'] != null) {
+              savedVillageName = app['village_name'].toString();
+            }
+            if (app['tipe_pengelola'] != null) {
+              _selectedType = app['tipe_pengelola'].toString();
+            }
+            if (app['default_min_wholesale_kg'] != null) {
+              _minWholesaleCtrl.text =
+                  app['default_min_wholesale_kg'].toString();
+            }
+            if (app['store_discount_banner'] != null) {
+              _bannerCtrl.text = app['store_discount_banner'].toString();
+            }
+          }
         }
-        final app = data['application'];
-        if (app is Map) {
-          _existingStatus = app['status']?.toString();
-          if (app['nama_toko'] != null) {
-            _storeNameCtrl.text = app['nama_toko'].toString();
-          }
-          if (app['nik'] != null) _nikCtrl.text = app['nik'].toString();
-          if (app['no_hp'] != null) _phoneCtrl.text = app['no_hp'].toString();
-          if (app['alamat_lengkap'] != null) {
-            _addressCtrl.text = app['alamat_lengkap'].toString();
-          }
-          if (app['postal_code'] != null) {
-            _postalCtrl.text = app['postal_code'].toString();
-          }
-          if (app['village_name'] != null) {
-            savedVillageName = app['village_name'].toString();
-          }
-          if (app['tipe_pengelola'] != null) {
-            _selectedType = app['tipe_pengelola'].toString();
-          }
-          if (app['default_min_wholesale_kg'] != null) {
-            _minWholesaleCtrl.text =
-                app['default_min_wholesale_kg'].toString();
-          }
-          if (app['store_discount_banner'] != null) {
-            _bannerCtrl.text = app['store_discount_banner'].toString();
-          }
-        }
-      }
-    } catch (_) {
+      } catch (_) {}
+    }
+
+    if (_backendQuotaVillages.isEmpty) {
       try {
         final vRes = await _apiService.getStoreVillages();
         if (vRes['villages'] is List) {
@@ -394,7 +434,72 @@ class _StoreRegistrationScreenState extends State<StoreRegistrationScreen> {
     }
 
     setState(() => _isSubmitting = true);
+    bool registeredJustNow = false;
     try {
+      // Auto-register / login unauthenticated applicants before submitting /store/apply
+      var token = await _apiService.getToken();
+      if (token == null || token.trim().isEmpty) {
+        final fullName = _fullNameCtrl.text.trim();
+        final email = _emailCtrl.text.trim();
+        final password = _passwordCtrl.text;
+
+        if (fullName.isEmpty || email.isEmpty || password.length < 6) {
+          setState(() {
+            _isSubmitting = false;
+            _step = 0;
+          });
+          if (!mounted) return;
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text(
+                'Lengkapi Nama Lengkap, Email, dan Kata Sandi (min. 6 karakter) di Tahap 1 untuk membuat akun.',
+              ),
+              backgroundColor: AppColors.warning,
+            ),
+          );
+          return;
+        }
+
+        var authResp = await ApiService.post('/auth/register', {
+          'full_name': fullName,
+          'email': email,
+          'password': password,
+          'role': 'pembeli',
+        });
+        Map<String, dynamic> authBody = authResp.body.isNotEmpty
+            ? Map<String, dynamic>.from(jsonDecode(authResp.body) as Map)
+            : <String, dynamic>{};
+
+        if (authResp.statusCode == 400 || authResp.statusCode == 409) {
+          authResp = await ApiService.post('/auth/login', {
+            'email': email,
+            'password': password,
+          });
+          authBody = authResp.body.isNotEmpty
+              ? Map<String, dynamic>.from(jsonDecode(authResp.body) as Map)
+              : <String, dynamic>{};
+        }
+
+        final newToken = authBody['token']?.toString();
+        if (authResp.statusCode < 200 ||
+            authResp.statusCode >= 300 ||
+            newToken == null ||
+            newToken.isEmpty) {
+          final authMsg = authBody['message']?.toString() ??
+              'Gagal membuat atau masuk akun sebelum mengajukan toko.';
+          throw Exception(authMsg);
+        }
+
+        await _apiService.saveToken(newToken);
+        if (authBody['user'] is Map) {
+          final userMap = Map<String, dynamic>.from(authBody['user'] as Map);
+          await _apiService.saveUser(userMap);
+          UserSession().setUser(User.fromJson(userMap));
+        }
+        registeredJustNow = true;
+        _hasExistingToken = true;
+      }
+
       final matched = _matchedBackendVillage;
       final provId = int.tryParse(_selectedProvince?.id ?? '35') ?? 35;
       final regId = int.tryParse(_selectedRegency?.id ?? '3529') ?? 3529;
@@ -445,9 +550,9 @@ class _StoreRegistrationScreenState extends State<StoreRegistrationScreen> {
         ),
       );
 
-      if (freezeAsBuyer) {
+      if (freezeAsBuyer || registeredJustNow) {
         Navigator.of(context).pushAndRemoveUntil(
-          MaterialPageRoute(builder: (_) => const HomeDashboardScreen()),
+          MaterialPageRoute(builder: (_) => const RoleBasedAppShell()),
           (route) => false,
         );
       } else {
@@ -598,6 +703,64 @@ class _StoreRegistrationScreenState extends State<StoreRegistrationScreen> {
               color: AppColors.textPrimary,
             ),
           ),
+          if (!_hasExistingToken) ...[
+            const SizedBox(height: 10),
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: AppColors.surfaceSoft,
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: AppColors.surfaceSoftBorder),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Data Akun Pendaftar Baru',
+                    style: GoogleFonts.plusJakartaSans(
+                      fontSize: 12.5,
+                      fontWeight: FontWeight.w800,
+                      color: AppColors.primaryDark,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    'Akun Pembeli akan dibuat otomatis agar Anda dapat mengajukan pembukaan toko atau menangguhkannya.',
+                    style: GoogleFonts.plusJakartaSans(
+                      fontSize: 11,
+                      color: AppColors.textSecondary,
+                    ),
+                  ),
+                  const SizedBox(height: 10),
+                  TextField(
+                    controller: _fullNameCtrl,
+                    decoration: const InputDecoration(
+                      labelText: 'Nama Lengkap Pemilik',
+                      border: OutlineInputBorder(),
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  TextField(
+                    controller: _emailCtrl,
+                    keyboardType: TextInputType.emailAddress,
+                    decoration: const InputDecoration(
+                      labelText: 'Email Aktif',
+                      border: OutlineInputBorder(),
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  TextField(
+                    controller: _passwordCtrl,
+                    obscureText: true,
+                    decoration: const InputDecoration(
+                      labelText: 'Kata Sandi (Min. 6 Karakter)',
+                      border: OutlineInputBorder(),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
           const SizedBox(height: 12),
           TextField(
             controller: _nikCtrl,

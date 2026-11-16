@@ -185,6 +185,7 @@ class _EducationFeedScreenState extends State<EducationFeedScreen> {
     return Scaffold(
       backgroundColor: AppColors.background,
       floatingActionButton: FloatingActionButton.extended(
+        heroTag: 'fab_education_feed',
         onPressed: _openCreatePostSheet,
         backgroundColor: AppColors.primary,
         foregroundColor: Colors.white,
@@ -774,35 +775,43 @@ class _EducationFeedScreenState extends State<EducationFeedScreen> {
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     // Reading time & BPP
-                    Row(
-                      children: [
-                        const Icon(LucideIcons.clock, size: 12, color: Color(0xFF94A3B8)),
-                        const SizedBox(width: 4),
-                        Text(
-                          '${article.readDurationMinutes} mnt baca',
-                          style: GoogleFonts.inter(
-                            fontSize: 10.5,
-                            color: const Color(0xFF94A3B8),
-                          ),
-                        ),
-                        if (article.bppOffice != null) ...[
-                          const SizedBox(width: 6),
-                          const Text('•', style: TextStyle(color: Color(0xFFCBD5E1), fontSize: 10)),
-                          const SizedBox(width: 6),
+                    Expanded(
+                      child: Row(
+                        children: [
+                          const Icon(LucideIcons.clock, size: 12, color: Color(0xFF94A3B8)),
+                          const SizedBox(width: 4),
                           Text(
-                            article.bppOffice!,
+                            '${article.readDurationMinutes} mnt',
                             style: GoogleFonts.inter(
                               fontSize: 10.5,
-                              color: AppColors.primary,
-                              fontWeight: FontWeight.w600,
+                              color: const Color(0xFF94A3B8),
                             ),
                           ),
+                          if (article.bppOffice != null) ...[
+                            const SizedBox(width: 4),
+                            const Text('•', style: TextStyle(color: Color(0xFFCBD5E1), fontSize: 10)),
+                            const SizedBox(width: 4),
+                            Flexible(
+                              child: Text(
+                                article.bppOffice!,
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: GoogleFonts.inter(
+                                  fontSize: 10.5,
+                                  color: AppColors.primary,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                            ),
+                          ],
                         ],
-                      ],
+                      ),
                     ),
+                    const SizedBox(width: 6),
 
                     // Interactive Action Buttons
                     Row(
+                      mainAxisSize: MainAxisSize.min,
                       children: [
                         // Interactive Like / Upvote Button with toggleable counter
                         Material(
@@ -811,7 +820,7 @@ class _EducationFeedScreenState extends State<EducationFeedScreen> {
                             onTap: () => _toggleLike(article),
                             borderRadius: BorderRadius.circular(16),
                             child: Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                              padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 4),
                               decoration: BoxDecoration(
                                 color: isLiked ? AppColors.errorSoft : AppColors.background,
                                 borderRadius: BorderRadius.circular(16),
@@ -842,7 +851,7 @@ class _EducationFeedScreenState extends State<EducationFeedScreen> {
                             ),
                           ),
                         ),
-                        const SizedBox(width: 8),
+                        const SizedBox(width: 6),
 
                         // Interactive Comment Button opening DiscussionCommentSheet
                         Material(
@@ -851,7 +860,7 @@ class _EducationFeedScreenState extends State<EducationFeedScreen> {
                             onTap: () => _openDiscussionCommentSheet(article),
                             borderRadius: BorderRadius.circular(16),
                             child: Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                              padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 4),
                               decoration: BoxDecoration(
                                 color: AppColors.surfaceSoft,
                                 borderRadius: BorderRadius.circular(16),
@@ -891,7 +900,7 @@ class _EducationFeedScreenState extends State<EducationFeedScreen> {
                             ),
                           ),
                         ),
-                        const SizedBox(width: 6),
+                        const SizedBox(width: 5),
 
                         // Direct Message (DM) Author / Penyuluh
                         Material(
@@ -901,7 +910,7 @@ class _EducationFeedScreenState extends State<EducationFeedScreen> {
                             borderRadius: BorderRadius.circular(16),
                             child: Container(
                               padding: const EdgeInsets.symmetric(
-                                horizontal: 8,
+                                horizontal: 7,
                                 vertical: 4,
                               ),
                               decoration: BoxDecoration(

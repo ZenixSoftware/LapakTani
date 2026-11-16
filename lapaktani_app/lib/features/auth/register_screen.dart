@@ -794,7 +794,12 @@ class _RegisterScreenState extends State<RegisterScreen> {
                       onPressed: () {
                         Navigator.of(context).push(
                           MaterialPageRoute(
-                            builder: (_) => const StoreRegistrationScreen(),
+                            builder: (_) => StoreRegistrationScreen(
+                              initialName: _nameController.text.trim(),
+                              initialEmail: _emailController.text.trim(),
+                              initialPhone: _phoneController.text.trim(),
+                              initialPassword: _passwordController.text,
+                            ),
                           ),
                         );
                       },

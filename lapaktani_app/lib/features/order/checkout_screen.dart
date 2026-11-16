@@ -260,8 +260,12 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
       // Rely exclusively on server response data
       final serverOrderId = (backendResult['order_id'] ?? backendResult['id'] ?? '').toString();
       final serverInvoiceNumber = (backendResult['invoice_number'] ?? '').toString();
-      final serverTotalAmount = (backendResult['total_amount'] as num?)?.toInt() ?? _totalBilling;
-      final serverShippingFee = (backendResult['shipping_fee'] as num?)?.toInt() ?? _shippingCost;
+      final serverTotalAmount =
+          double.tryParse('${backendResult['total_amount'] ?? ''}')?.round() ??
+              _totalBilling;
+      final serverShippingFee =
+          double.tryParse('${backendResult['shipping_fee'] ?? ''}')?.round() ??
+              _shippingCost;
       final serverDeliveryAddress = (backendResult['delivery_address'] ?? _deliveryAddress).toString();
       final serverPaymentMethod = (backendResult['payment_method'] ?? _selectedPaymentMethod).toString();
       final serverPaymentStatus = (backendResult['payment_status'] ?? '').toString().toUpperCase();

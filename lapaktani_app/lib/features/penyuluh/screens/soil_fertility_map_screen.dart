@@ -559,6 +559,7 @@ class _SoilFertilityMapScreenState extends State<SoilFertilityMapScreen> {
               ),
             ),
       floatingActionButton: FloatingActionButton.extended(
+        heroTag: 'fab_soil_fertility_map',
         onPressed: () async {
           final refreshed = await Navigator.push<bool>(
             context,

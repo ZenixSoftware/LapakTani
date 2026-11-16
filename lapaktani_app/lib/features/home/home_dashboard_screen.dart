@@ -817,12 +817,16 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen> {
                       final String variety = pool['variety'] ?? 'Varietas Unggul';
                       final String grade = pool['grade'] ?? 'Grade A Super';
                       final String mitraName = pool['mitra_name'] ?? 'Mitra Tani Makmur';
-                      final double totalKg = (pool['total_quota_kg'] as num?)?.toDouble() ?? 100.0;
-                      final double remainingKg = (pool['remaining_quota_kg'] as num?)?.toDouble() ?? 50.0;
+                      final double totalKg =
+                          double.tryParse('${pool['total_quota_kg'] ?? ''}') ?? 100.0;
+                      final double remainingKg =
+                          double.tryParse('${pool['remaining_quota_kg'] ?? ''}') ?? 50.0;
                       final double takenKg = (totalKg - remainingKg).clamp(0.0, totalKg);
                       final double progress = totalKg > 0 ? (takenKg / totalKg).clamp(0.0, 1.0) : 0.0;
-                      final double priceKg = (pool['price_per_kg'] as num?)?.toDouble() ?? 0.0;
-                      final double minOrder = (pool['min_order_kg'] as num?)?.toDouble() ?? 50.0;
+                      final double priceKg =
+                          double.tryParse('${pool['price_per_kg'] ?? ''}') ?? 0.0;
+                      final double minOrder =
+                          double.tryParse('${pool['min_order_kg'] ?? ''}') ?? 50.0;
                       final String harvestDate = pool['target_harvest_date'] ?? pool['est_harvest_date'] ?? '15 Nov 2026';
                       final String rawImg = pool['image_url']?.toString() ?? '';
                       final String imageUrl = _resolveImageUrl(rawImg);

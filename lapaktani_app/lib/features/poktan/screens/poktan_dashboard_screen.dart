@@ -66,7 +66,8 @@ class _PoktanDashboardScreenState extends State<PoktanDashboardScreen>
 
     setState(() {
       _poktanName = membersData['poktan_name'] ?? 'Mitra Tani Makmur';
-      _totalLandAreaHa = (membersData['total_land_area_ha'] as num?)?.toDouble() ?? 11.10;
+      _totalLandAreaHa =
+          double.tryParse('${membersData['total_land_area_ha'] ?? ''}') ?? 11.10;
       _members = (membersData['members'] as List<PoktanMemberModel>?) ?? [];
       _b2bOrders = orders;
       _harvestPools = pools;
@@ -505,8 +506,10 @@ class _PoktanDashboardScreenState extends State<PoktanDashboardScreen>
           )
         else
           ..._harvestPools.map((pool) {
-            final double totalKg = (pool['total_quota_kg'] as num?)?.toDouble() ?? 0.0;
-            final double remainingKg = (pool['remaining_quota_kg'] as num?)?.toDouble() ?? 0.0;
+            final double totalKg =
+                double.tryParse('${pool['total_quota_kg'] ?? ''}') ?? 0.0;
+            final double remainingKg =
+                double.tryParse('${pool['remaining_quota_kg'] ?? ''}') ?? 0.0;
             final double takenKg = (totalKg - remainingKg).clamp(0.0, totalKg);
             final double progress = totalKg > 0 ? (takenKg / totalKg).clamp(0.0, 1.0) : 0.0;
             final String status = pool['status']?.toString() ?? 'open';
@@ -1156,6 +1159,7 @@ class _PoktanDashboardScreenState extends State<PoktanDashboardScreen>
         ],
       ),
       floatingActionButton: FloatingActionButton.extended(
+        heroTag: 'fab_poktan_dashboard',
         onPressed: _showCreateHarvestPoolSheet,
         backgroundColor: AppColors.primary,
         elevation: 4,
