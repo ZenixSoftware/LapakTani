@@ -1,3 +1,14 @@
+/**
+ * ============================================================================
+ * LAPAKTANI MOBILE APP - [US-10] BUYER HOME DISCOVERY & CATEGORY FILTERING
+ * ============================================================================
+ * Module       : Features / Buyer Discovery & Category Feed
+ * User Story   : [US-10] Beranda Pembeli, Filter Kategori & Search Komoditas
+ * Author       : Moch. Ilham Abdul Aziz (MochIlham05 - 3125522014)
+ * Architecture : Flutter State Management, Real-time Category Filtering, Cart Badge
+ * ============================================================================
+ */
+
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';

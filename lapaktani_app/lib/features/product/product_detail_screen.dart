@@ -1,3 +1,14 @@
+/**
+ * ============================================================================
+ * LAPAKTANI MOBILE APP - [US-11] PRODUCT DETAIL & SPECIFICATION SCREEN
+ * ============================================================================
+ * Module       : Features / Product Specifications
+ * User Story   : [US-11] Detail Spesifikasi Hasil Tani, Grade, Stok & Soil Telemetry
+ * Author       : Moch. Ilham Abdul Aziz (MochIlham05 - 3125522014)
+ * Architecture : Flutter Interactive UI, Real-time Stock Lock Inspection, Soil Telemetry
+ * ============================================================================
+ */
+
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:lucide_icons/lucide_icons.dart';
