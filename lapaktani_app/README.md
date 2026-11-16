@@ -4,17 +4,17 @@ Aplikasi mobile platform agribisnis digital terintegrasi LapakTani berbasis Flut
 
 ---
 
-## Konfigurasi API Base URL untuk Kolaborator Tim
+## Konfigurasi API Base URL & API Key untuk Kolaborator Tim
 
-URL API backend bersifat dinamis dan dapat dikonfigurasi menggunakan flag `--dart-define=API_BASE_URL=...` tanpa perlu mengubah kode sumber `api_service.dart`:
+URL API backend dan API Key bersifat dinamis dan dapat dikonfigurasi menggunakan flag `--dart-define=API_BASE_URL=...` dan `--dart-define=API_KEY=...` tanpa perlu mengubah kode sumber `app_config.dart` atau `api_service.dart`:
 
-### 1. Default Run (Cloud Ngrok / Testing Device Fisik)
-Menggunakan endpoint Ngrok bawaan:
+### 1. Default Run (Cloudflare Tunnel Permanen / Production)
+Menggunakan endpoint Cloudflare Tunnel bawaan (`https://api-lapaktani.velosixraptor.my.id/api`) beserta `X-API-Key` anti-spoofing bawaan:
 ```bash
 flutter run
 ```
 
-### 2. Collaborator Run (Localhost / XAMPP / Web / Desktop)
+### 2. Collaborator Run (Localhost / XAMPP / Laragon / Web / Desktop)
 Bagi kolaborator yang menjalankan backend secara lokal (misalnya di port 3000):
 ```bash
 flutter run --dart-define=API_BASE_URL=http://localhost:3000/api
@@ -24,6 +24,11 @@ flutter run --dart-define=API_BASE_URL=http://localhost:3000/api
 Jika menggunakan Android Emulator resmi Google (koneksi ke host localhost):
 ```bash
 flutter run --dart-define=API_BASE_URL=http://10.0.2.2:3000/api
+```
+
+### 4. Override API Key Kustom (Opsional)
+```bash
+flutter run --dart-define=API_BASE_URL=https://api-lapaktani.velosixraptor.my.id/api --dart-define=API_KEY=your_custom_api_key
 ```
 
 ---

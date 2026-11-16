@@ -1,6 +1,23 @@
+/**
+ * ============================================================================
+ * LAPAKTANI BACKEND - [US-14, US-15, US-16] ORDER & ATOMIC STOCK ENGINE
+ * ============================================================================
+ * Module       : Controllers / Orders & Transactions
+ * User Stories : [US-14] Checkout Transaksi & Atomic Stock Locking
+ *                [US-15] Pemotongan Stok Otomatis Saat Settlement
+ *                [US-16] Notifikasi Pesanan Masuk & Pelacakan Logistik
+ * Author       : Moch. Ilham Abdul Aziz (MochIlham05 - 3125522014)
+ * Architecture : MySQL2 Transactions, Row-Level Locking (FOR UPDATE),
+ *                AES-256 Payload Encryption, JobQueue Background Dispatch
+ * ============================================================================
+ */
+
 const crypto = require('crypto');
 const { v4: uuidv4 } = require('uuid');
 const pool = require('../config/db');
+const redisClient = require('../config/redis');
+const { encryptJsonPayload } = require('../utils/encryption');
+const { notifyTransactionEvent } = require('../utils/notificationService');
 
 const PAYMENT_GATEWAY_SERVER_KEY = process.env.PAYMENT_GATEWAY_SERVER_KEY || process.env.MIDTRANS_SERVER_KEY || '';
 
@@ -160,10 +177,21 @@ const checkoutOrder = async (req, res) => {
     }
 
     // 2. Query and lock rows in explicit ascending order
-    const [productRows] = await connection.query(
-      'SELECT id, stock_kg, COALESCE(price_per_kg, price, 0) AS price, title, image_url, farmer_id FROM products WHERE id IN (?) ORDER BY id ASC FOR UPDATE',
-      [sortedProductIds]
-    );
+    let productRows;
+    try {
+      [productRows] = await connection.query(
+        `SELECT id, stock_kg, COALESCE(price_per_kg, price, 0) AS price,
+                discount_percent, discount_price, is_wholesale_enabled, min_wholesale_qty, wholesale_price,
+                title, image_url, farmer_id
+         FROM products WHERE id IN (?) ORDER BY id ASC FOR UPDATE`,
+        [sortedProductIds]
+      );
+    } catch (_) {
+      [productRows] = await connection.query(
+        'SELECT id, stock_kg, COALESCE(price_per_kg, price, 0) AS price, title, image_url, farmer_id FROM products WHERE id IN (?) ORDER BY id ASC FOR UPDATE',
+        [sortedProductIds]
+      );
+    }
 
     const productMap = new Map();
     for (const p of productRows) {
@@ -201,12 +229,45 @@ const checkoutOrder = async (req, res) => {
       }
     }
 
-    // Build validated order items and calculate subtotal
+    // Build validated order items and calculate subtotal using seller-configured Retail / Discount / Partai B2B tier
+    let discountSaved = 0;
+    let anyPartaiB2B = false;
+    let appliedUnitPrice = null;
+
     for (const item of items) {
       const pid = String(item.product_id || item.productId || item.id);
       const product = productMap.get(pid);
       const quantity = Math.max(1, parseInt(item.quantity || item.qty || 1, 10));
-      const pricePerUnit = Number(item.price_per_unit || item.price || product.price || 0);
+      const basePrice = Number(product.price || 0);
+      const wholesaleEnabled =
+        product.is_wholesale_enabled === undefined || product.is_wholesale_enabled === null
+          ? true
+          : Boolean(Number(product.is_wholesale_enabled));
+      const minWholesaleQty = Math.max(2, parseInt(product.min_wholesale_qty || 30, 10));
+      const wholesalePrice = Number(product.wholesale_price || Math.round(basePrice * 0.85));
+      const discountPct = Number(product.discount_percent || 0);
+      const discountPrice = Number(product.discount_price || 0);
+
+      let pricePerUnit = basePrice;
+      let itemTier = 'RETAIL';
+
+      if (wholesaleEnabled && quantity >= minWholesaleQty && wholesalePrice > 0) {
+        pricePerUnit = wholesalePrice;
+        itemTier = 'PARTAI_B2B';
+        anyPartaiB2B = true;
+      } else if (discountPct > 0 && discountPrice > 0 && discountPrice < basePrice) {
+        pricePerUnit = discountPrice;
+      } else if (basePrice <= 0 && item.price_per_unit) {
+        pricePerUnit = Number(item.price_per_unit);
+      }
+
+      if (basePrice > pricePerUnit) {
+        discountSaved += (basePrice - pricePerUnit) * quantity;
+      }
+      if (appliedUnitPrice === null) {
+        appliedUnitPrice = pricePerUnit;
+      }
+
       const subtotal = pricePerUnit * quantity;
       itemsSubtotal += subtotal;
 
@@ -216,11 +277,24 @@ const checkoutOrder = async (req, res) => {
         grade_id: item.grade_id || item.gradeId || null,
         quantity: quantity,
         price_per_unit: pricePerUnit,
+        base_price: basePrice,
+        order_tier: itemTier,
         subtotal: subtotal,
         image_url: product.image_url,
         farmer_id: product.farmer_id
       });
     }
+
+    const orderTier = anyPartaiB2B ? 'PARTAI_B2B' : 'RETAIL';
+    const wholesaleAgreementAccepted =
+      req.body.wholesale_agreement_accepted === true ||
+      Number(req.body.wholesale_agreement_accepted) === 1 ||
+      anyPartaiB2B
+        ? 1
+        : 0;
+    const wholesaleAgreementNote = req.body.wholesale_agreement_note
+      ? String(req.body.wholesale_agreement_note).trim()
+      : (anyPartaiB2B ? 'Pembelian Partai (B2B) mengikuti minimum kuantitas dan harga grosir penjual.' : null);
 
     const totalAmount = itemsSubtotal + numericShippingFee;
 
@@ -279,12 +353,12 @@ const checkoutOrder = async (req, res) => {
       }
     }
 
-    // 6. Insert record into orders table (dual-schema alignment + US-14 payment gateway support)
+    // 6. Insert record into orders table (dual-schema alignment + tiered pricing + US-14 payment gateway support)
     try {
       await connection.query(
         `INSERT INTO orders
-         (id, user_id, buyer_id, invoice_number, order_code, total_amount, total_payment, payment_method, payment_status, order_status, delivery_address, shipping_address, shipping_fee, payment_channel, payment_reference, payment_expired_at, created_at, updated_at)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW(), NOW())`,
+         (id, user_id, buyer_id, invoice_number, order_code, total_amount, total_payment, payment_method, payment_status, order_status, delivery_address, shipping_address, shipping_fee, payment_channel, payment_reference, payment_expired_at, order_tier, applied_unit_price, discount_saved, wholesale_agreement_accepted, wholesale_agreement_note, created_at, updated_at)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW(), NOW())`,
         [
           orderId,
           userId,
@@ -301,7 +375,12 @@ const checkoutOrder = async (req, res) => {
           numericShippingFee,
           isSimulator ? 'LapakPay Simulator' : (payment_method || null),
           isSimulator ? invoiceNumber : null,
-          isSimulator ? null : new Date(Date.now() + 24 * 60 * 60 * 1000)
+          isSimulator ? null : new Date(Date.now() + 24 * 60 * 60 * 1000),
+          orderTier,
+          appliedUnitPrice,
+          discountSaved,
+          wholesaleAgreementAccepted,
+          wholesaleAgreementNote
         ]
       );
     } catch (_) {
@@ -361,8 +440,125 @@ const checkoutOrder = async (req, res) => {
 
     // 9. Commit transaction
     await connection.commit();
+    await redisClient.delCache('lapaktani_catalog').catch(() => {});
+
+    const escrowSeal = encryptJsonPayload({
+      order_id: orderId,
+      invoice_number: invoiceNumber,
+      buyer_id: userId,
+      total_amount: totalAmount,
+      order_tier: orderTier,
+      timestamp: new Date().toISOString()
+    });
 
     console.log(`[ORDER] Checkout success: ${orderId} (${invoiceNumber}) [${payment_method}] Status: ${initialPaymentStatus}`);
+
+    let resolvedSellerTarget = validatedOrderItems[0]?.farmer_id || null;
+
+    // 10. Unified Order Chat & Poktan Admin Notification Hook (non-blocking post-commit)
+    try {
+      const [adminRows] = await pool.query(
+        `SELECT id, full_name FROM users
+         WHERE id != ? AND (role = 'admin' OR role_id = 3)
+         ORDER BY CASE WHEN email = 'admin@lapaktani.id' THEN 0 WHEN email = 'made@poktan.lapaktani.id' THEN 1 ELSE 2 END
+         LIMIT 1`,
+        [userId]
+      );
+      const poktanAdminId = adminRows.length > 0 ? adminRows[0].id : validatedOrderItems[0]?.farmer_id;
+      resolvedSellerTarget = poktanAdminId || resolvedSellerTarget;
+
+      if (poktanAdminId && poktanAdminId !== userId) {
+        const itemsSummary = validatedOrderItems
+          .map((i) => `${i.title} (${i.quantity} kg)`)
+          .join(', ');
+
+        let convId = null;
+        const [existingOrderConvs] = await pool.query(
+          `SELECT cc.id FROM chat_conversations cc
+           JOIN chat_participants cp1 ON cc.id = cp1.conversation_id AND cp1.user_id = ?
+           JOIN chat_participants cp2 ON cc.id = cp2.conversation_id AND cp2.user_id = ?
+           WHERE cc.type = 'ORDER'
+           ORDER BY cc.updated_at DESC
+           LIMIT 1`,
+          [userId, poktanAdminId]
+        );
+
+        if (existingOrderConvs.length > 0) {
+          convId = existingOrderConvs[0].id;
+          await pool.query(
+            `UPDATE chat_conversations SET order_id = ?, title = ?, updated_at = NOW() WHERE id = ?`,
+            [orderId, `Pesanan #${invoiceNumber}`, convId]
+          );
+        } else {
+          convId = `conv-ord-${uuidv4().slice(0, 12)}`;
+          await pool.query(
+            `INSERT INTO chat_conversations (id, type, order_id, title) VALUES (?, 'ORDER', ?, ?)`,
+            [convId, orderId, `Pesanan #${invoiceNumber}`]
+          );
+          await pool.query(
+            `INSERT IGNORE INTO chat_participants (conversation_id, user_id) VALUES (?, ?), (?, ?)`,
+            [convId, userId, convId, poktanAdminId]
+          );
+        }
+
+        const tierLabel = orderTier === 'PARTAI_B2B' ? 'Partai B2B' : 'Retail';
+        const agreeSnippet =
+          orderTier === 'PARTAI_B2B' && wholesaleAgreementNote
+            ? ` • Nota B2B: ${wholesaleAgreementNote}`
+            : '';
+
+        await pool.query(
+          `INSERT INTO chat_messages (id, conversation_id, sender_id, message_type, body, metadata_json)
+           VALUES (?, ?, ?, 'ORDER_CARD', ?, ?)`,
+          [
+            `msg-${uuidv4().slice(0, 12)}`,
+            convId,
+            userId,
+            `Pesanan Baru #${invoiceNumber} [${tierLabel}] — ${itemsSummary} @ Rp ${Number(appliedUnitPrice || 0).toLocaleString('id-ID')}/kg (Total Rp ${Number(totalAmount).toLocaleString('id-ID')}${discountSaved > 0 ? `, Hemat Rp ${Number(discountSaved).toLocaleString('id-ID')}` : ''})${agreeSnippet}`,
+            JSON.stringify({
+              order_id: orderId,
+              invoice_number: invoiceNumber,
+              items_summary: itemsSummary,
+              order_tier: orderTier,
+              applied_unit_price: appliedUnitPrice,
+              discount_saved: discountSaved,
+              wholesale_agreement_accepted: Boolean(wholesaleAgreementAccepted),
+              wholesale_agreement_note: wholesaleAgreementNote,
+              total_amount: totalAmount,
+              shipping_fee: numericShippingFee,
+              delivery_address: cleanAddress,
+              status: initialOrderStatus,
+              escrow_encrypted_seal: escrowSeal
+            })
+          ]
+        );
+
+        await pool.query(
+          `INSERT INTO notifications (id, user_id, title, message, type, reference_id, is_read)
+           VALUES (?, ?, ?, ?, 'new_order', ?, 0)`,
+          [
+            `ntf-${uuidv4().slice(0, 12)}`,
+            poktanAdminId,
+            `Pesanan Baru ${invoiceNumber}`,
+            `${itemsSummary} senilai Rp ${Number(totalAmount).toLocaleString('id-ID')}. Alamat: ${cleanAddress}`,
+            orderId
+          ]
+        );
+      }
+    } catch (chatHookErr) {
+      console.warn('[ORDER] Order chat hook notice:', chatHookErr.message);
+    }
+
+    notifyTransactionEvent({
+      eventType: isSimulator ? 'ORDER_PAID' : 'ORDER_CREATED',
+      orderId,
+      invoiceNumber,
+      buyerId: userId,
+      sellerId: resolvedSellerTarget,
+      totalAmount,
+      status: initialOrderStatus,
+      message: `Pesanan ${invoiceNumber} senilai Rp ${Number(totalAmount).toLocaleString('id-ID')} berstatus ${initialOrderStatus}.`,
+    }).catch(() => {});
 
     return res.status(201).json({
       success: true,
@@ -376,6 +572,11 @@ const checkoutOrder = async (req, res) => {
         total_amount: totalAmount,
         shipping_fee: numericShippingFee,
         items_subtotal: itemsSubtotal,
+        order_tier: orderTier,
+        applied_unit_price: appliedUnitPrice,
+        discount_saved: discountSaved,
+        wholesale_agreement_accepted: Boolean(wholesaleAgreementAccepted),
+        wholesale_agreement_note: wholesaleAgreementNote,
         payment_method: payment_method,
         payment_status: initialPaymentStatus,
         order_status: initialOrderStatus,
@@ -383,6 +584,7 @@ const checkoutOrder = async (req, res) => {
         courier_service: courier_service,
         wallet_balance_before: userWalletBalance,
         remaining_wallet_balance: remainingBalance,
+        escrow_seal: escrowSeal,
         payment_details: paymentDetails,
         items: validatedOrderItems,
         created_at: new Date().toISOString()
@@ -445,7 +647,7 @@ const handlePaymentWebhook = async (req, res) => {
     await connection.beginTransaction();
 
     const [orderRows] = await connection.query(
-      'SELECT id, invoice_number, total_amount, payment_status, order_status FROM orders WHERE id = ? OR invoice_number = ? LIMIT 1 FOR UPDATE',
+      'SELECT id, user_id, buyer_id, invoice_number, total_amount, payment_status, order_status FROM orders WHERE id = ? OR invoice_number = ? LIMIT 1 FOR UPDATE',
       [orderId, orderId]
     );
 
@@ -550,6 +752,20 @@ const handlePaymentWebhook = async (req, res) => {
     }
 
     await connection.commit();
+
+    if (newOrderStatus === 'CANCELLED') {
+      await redisClient.delCache('lapaktani_catalog').catch(() => {});
+    }
+
+    notifyTransactionEvent({
+      eventType: newPaymentStatus === 'PAID' ? 'ORDER_PAID' : (newOrderStatus === 'CANCELLED' ? 'ORDER_CANCELLED' : 'ORDER_PAYMENT_UPDATE'),
+      orderId: order.id,
+      invoiceNumber: order.invoice_number,
+      buyerId: order.buyer_id || order.user_id || null,
+      totalAmount: order.total_amount,
+      status: newOrderStatus,
+      message: `Pembayaran pesanan ${order.invoice_number || order.id} diperbarui: ${newPaymentStatus} (${newOrderStatus}).`,
+    }).catch(() => {});
 
     console.log(`[WEBHOOK] Order ${order.id} status successfully updated: ${newPaymentStatus} (${newOrderStatus})`);
 
@@ -872,6 +1088,12 @@ const getFarmerOrders = async (req, res) => {
   }
 
   try {
+    const isPoktanAdmin = String(req.user?.role || '').toLowerCase() === 'admin' || Number(req.user?.role_id) === 3 || Boolean(req.user?.is_chairman);
+    const whereClause = isPoktanAdmin
+      ? '1=1'
+      : '(p.farmer_id = ? OR p.farmer_id = (SELECT user_id FROM farmer_profiles WHERE user_id = ? LIMIT 1))';
+    const queryParams = isPoktanAdmin ? [] : [userId, userId];
+
     const [orderRows] = await pool.query(
       `SELECT DISTINCT 
         o.id,
@@ -890,9 +1112,9 @@ const getFarmerOrders = async (req, res) => {
       JOIN order_items oi ON o.id = oi.order_id
       JOIN products p ON (oi.product_id = p.id OR CAST(oi.product_id AS CHAR) = CAST(p.id AS CHAR))
       LEFT JOIN users u ON (o.user_id = u.id OR o.buyer_id = u.id)
-      WHERE (p.farmer_id = ? OR p.farmer_id = (SELECT user_id FROM farmer_profiles WHERE user_id = ? LIMIT 1))
+      WHERE ${whereClause}
       ORDER BY o.created_at DESC`,
-      [userId, userId]
+      queryParams
     );
 
     if (orderRows.length === 0) {
@@ -1028,6 +1250,26 @@ const updateOrderStatus = async (req, res) => {
       'UPDATE orders SET order_status = ?, updated_at = NOW() WHERE (id = ? OR invoice_number = ?)',
       [requestedStatus, order.id, order.id]
     );
+
+    const txEventType =
+      requestedStatus === 'SHIPPED' || requestedStatus === 'IN_TRANSIT'
+        ? 'ORDER_SHIPPED'
+        : requestedStatus === 'COMPLETED'
+          ? 'ORDER_COMPLETED'
+          : requestedStatus === 'CANCELLED'
+            ? 'ORDER_CANCELLED'
+            : 'ORDER_STATUS_UPDATED';
+
+    notifyTransactionEvent({
+      eventType: txEventType,
+      orderId: order.id,
+      invoiceNumber: order.invoice_number,
+      buyerId: order.buyer_id || order.user_id || null,
+      sellerId: userId,
+      totalAmount: order.total_amount,
+      status: requestedStatus,
+      message: `Status pesanan ${order.invoice_number || order.id} berubah menjadi ${requestedStatus}.`,
+    }).catch(() => {});
 
     console.log(`[ORDER] Order ${order.id} status transitioned from ${order.order_status} to ${requestedStatus} by user: ${userId}`);
 

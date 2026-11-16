@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:lucide_icons/lucide_icons.dart';
+import '../../../core/theme/app_colors.dart';
 import '../community_repository.dart';
 import '../models/education_article.dart';
+import '../widgets/discussion_comment_sheet.dart';
 import '../widgets/penyuluh_official_badge.dart';
 
 class EducationDetailScreen extends StatefulWidget {
@@ -69,6 +71,25 @@ class _EducationDetailScreenState extends State<EducationDetailScreen> {
           onPressed: () => Navigator.of(context).pop(),
         ),
         actions: [
+          IconButton(
+            icon: const Icon(LucideIcons.messageSquare, color: Color(0xFF64748B), size: 19),
+            tooltip: 'Komentar Diskusi',
+            onPressed: () {
+              showModalBottomSheet<void>(
+                context: context,
+                isScrollControlled: true,
+                backgroundColor: Colors.transparent,
+                builder: (ctx) => DiscussionCommentSheet(
+                  article: _article,
+                  onCommentAdded: (newCount) {
+                    setState(() {
+                      _article = _article.copyWith(commentsCount: newCount);
+                    });
+                  },
+                ),
+              );
+            },
+          ),
           IconButton(
             icon: Icon(
               _isLiked ? LucideIcons.heart : LucideIcons.heart,
@@ -324,7 +345,7 @@ class _EducationDetailScreenState extends State<EducationDetailScreen> {
       children: [
         Row(
           children: [
-            const Icon(LucideIcons.listOrdered, size: 18, color: Color(0xFF03AC0E)),
+            const Icon(LucideIcons.listOrdered, size: 18, color: AppColors.primary),
             const SizedBox(width: 6),
             Text(
               'Langkah Praktis Budidaya',
@@ -380,10 +401,10 @@ class _EducationDetailScreenState extends State<EducationDetailScreen> {
                       height: 20,
                       margin: const EdgeInsets.only(top: 2),
                       decoration: BoxDecoration(
-                        color: isDone ? const Color(0xFF03AC0E) : Colors.white,
+                        color: isDone ? AppColors.primary : Colors.white,
                         shape: BoxShape.circle,
                         border: Border.all(
-                          color: isDone ? const Color(0xFF03AC0E) : const Color(0xFFCBD5E1),
+                          color: isDone ? AppColors.primary : const Color(0xFFCBD5E1),
                         ),
                       ),
                       child: isDone
@@ -516,7 +537,7 @@ class _EducationDetailScreenState extends State<EducationDetailScreen> {
                   );
                 },
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFF03AC0E),
+                  backgroundColor: AppColors.primary,
                   foregroundColor: Colors.white,
                   padding: const EdgeInsets.symmetric(vertical: 12),
                   shape: RoundedRectangleBorder(

@@ -1,3 +1,14 @@
+/**
+ * ============================================================================
+ * LAPAKTANI MOBILE APP - [US-09] MITRA STORE COMMODITY CATALOG & INVENTORY
+ * ============================================================================
+ * Module       : Features / Mitra Store & Poktan Catalog
+ * User Story   : [US-09] CRUD Stok/Harga Toko (Retail, Diskon, Partai/Grosir)
+ * Author       : Moch. Ilham Abdul Aziz (MochIlham05 - 3125522014)
+ * Architecture : Flutter Multi-Tab View, Wholesale Tier Calculation, Dynamic Quota
+ * ============================================================================
+ */
+
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
@@ -6,6 +17,10 @@ import '../../../core/services/api_service.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/widgets/custom_soft_card.dart';
 import '../../buyer/screens/wholesale_detail_screen.dart';
+import '../../chat/screens/chat_list_screen.dart';
+import '../../chat/screens/chat_room_screen.dart';
+import '../../chat/services/chat_service.dart';
+import '../../product/add_product_screen.dart';
 import '../../store/screens/store_profile_screen.dart';
 import '../widgets/create_wholesale_pool_sheet.dart';
 
@@ -25,15 +40,31 @@ class _MitraStoreCatalogScreenState extends State<MitraStoreCatalogScreen>
   late TabController _tabController;
   bool _isLoading = true;
   bool _isStoreOpen = true;
-  final String _storeName = 'Mitra Tani Makmur';
+  String _storeName = 'Koperasi Tani Sumber Lestari';
+  int _defaultMinWholesaleKg = 30;
+  String _storeBanner = 'Promo Panen Raya Hemat s/d 15% & Harga Partai B2B';
 
   List<dynamic> _retailProducts = [];
   List<Map<String, dynamic>> _harvestPools = [];
+  List<Map<String, dynamic>> _nearbyHarvests = [];
+  List<Map<String, dynamic>> _purchaseOffers = [];
+
+  double _toDouble(dynamic v, [double fallback = 0.0]) => v == null
+      ? fallback
+      : (v is num ? v.toDouble() : double.tryParse(v.toString()) ?? fallback);
+
+  int _toInt(dynamic v, [int fallback = 0]) => v == null
+      ? fallback
+      : (v is int
+          ? v
+          : (v is num
+              ? v.toInt()
+              : double.tryParse(v.toString())?.round() ?? fallback));
 
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 2, vsync: this);
+    _tabController = TabController(length: 3, vsync: this);
     _loadCatalog();
   }
 
@@ -46,8 +77,44 @@ class _MitraStoreCatalogScreenState extends State<MitraStoreCatalogScreen>
   Future<void> _loadCatalog() async {
     setState(() => _isLoading = true);
     try {
-      final products = await _apiService.getProducts();
-      final pools = await _apiService.getB2BHarvestPools();
+      final results = await Future.wait([
+        _apiService.getProducts(),
+        _apiService.getB2BHarvestPools(),
+        _apiService
+            .getNearbyHarvests()
+            .catchError((_) => <Map<String, dynamic>>[]),
+        _apiService
+            .getStorePurchaseOffers()
+            .catchError((_) => <Map<String, dynamic>>[]),
+        _apiService
+            .getMyStoreApplication()
+            .catchError((_) => <String, dynamic>{}),
+      ]);
+
+      final products = results[0] as List<dynamic>;
+      final pools = results[1] as List<Map<String, dynamic>>;
+      final nearby = results[2] as List<Map<String, dynamic>>;
+      final offers = results[3] as List<Map<String, dynamic>>;
+      final storeRes = results[4] as Map<String, dynamic>;
+
+      final storeApp = storeRes['data'] is Map ? storeRes['data']['application'] : null;
+      if (storeApp is Map) {
+        if (storeApp['nama_toko'] != null) {
+          _storeName = storeApp['nama_toko'].toString();
+        }
+        if (storeApp['default_min_wholesale_kg'] != null) {
+          _defaultMinWholesaleKg =
+              _toInt(storeApp['default_min_wholesale_kg'], 30);
+        }
+        if (storeApp['store_discount_banner'] != null) {
+          _storeBanner = storeApp['store_discount_banner'].toString();
+        }
+        if (storeApp['is_store_open'] != null) {
+          _isStoreOpen =
+              storeApp['is_store_open'] == 1 ||
+              storeApp['is_store_open'] == true;
+        }
+      }
 
       if (!mounted) return;
       setState(() {
@@ -58,6 +125,11 @@ class _MitraStoreCatalogScreenState extends State<MitraStoreCatalogScreen>
                   'id': 'prod-01',
                   'title': 'Tomat Merah Segar Lembang 1 Kg',
                   'price_per_kg': 12000,
+                  'discount_percent': 10,
+                  'discount_price': 10800,
+                  'is_wholesale_enabled': true,
+                  'min_wholesale_qty': 30,
+                  'wholesale_price': 10200,
                   'stock_kg': 150,
                   'image_url': 'uploads/products/tomat.jpg',
                   'isActive': true,
@@ -66,20 +138,19 @@ class _MitraStoreCatalogScreenState extends State<MitraStoreCatalogScreen>
                   'id': 'prod-02',
                   'title': 'Cabai Rawit Merah Super 1 Kg',
                   'price_per_kg': 35000,
+                  'discount_percent': 10,
+                  'discount_price': 31500,
+                  'is_wholesale_enabled': true,
+                  'min_wholesale_qty': 25,
+                  'wholesale_price': 29750,
                   'stock_kg': 85,
                   'image_url': 'uploads/products/cabai.jpg',
                   'isActive': true,
                 },
-                {
-                  'id': 'prod-03',
-                  'title': 'Kentang Dieng Super Grade A',
-                  'price_per_kg': 16000,
-                  'stock_kg': 200,
-                  'image_url': 'uploads/products/kentang.jpg',
-                  'isActive': true,
-                },
               ];
         _harvestPools = pools;
+        _nearbyHarvests = nearby;
+        _purchaseOffers = offers;
         _isLoading = false;
       });
     } catch (_) {
@@ -124,7 +195,7 @@ class _MitraStoreCatalogScreenState extends State<MitraStoreCatalogScreen>
           ElevatedButton(
             onPressed: () => Navigator.pop(ctx, true),
             style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFF006E04),
+              backgroundColor: AppColors.primary,
               foregroundColor: Colors.white,
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
             ),
@@ -144,7 +215,7 @@ class _MitraStoreCatalogScreenState extends State<MitraStoreCatalogScreen>
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(res['message'] ?? 'Sisa kuota berhasil dialihkan ke stok retail!'),
-            backgroundColor: const Color(0xFF006E04),
+            backgroundColor: AppColors.primary,
             behavior: SnackBarBehavior.floating,
           ),
         );
@@ -192,7 +263,10 @@ class _MitraStoreCatalogScreenState extends State<MitraStoreCatalogScreen>
             ListTile(
               onTap: () {
                 Navigator.pop(ctx);
-                _showCreateRetailProductSheet();
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (_) => const AddProductScreen()),
+                ).then((_) => _loadCatalog());
               },
               leading: Container(
                 padding: const EdgeInsets.all(10),
@@ -200,14 +274,38 @@ class _MitraStoreCatalogScreenState extends State<MitraStoreCatalogScreen>
                   color: const Color(0xFFDCFCE7),
                   borderRadius: BorderRadius.circular(12),
                 ),
-                child: const Icon(LucideIcons.shoppingBag, color: Color(0xFF006E04)),
+                child: const Icon(LucideIcons.shoppingBag, color: AppColors.primary),
               ),
               title: Text(
-                'Tambah Produk Retail (Eceran)',
+                'Tambah Produk (Retail, Diskon & Partai B2B)',
                 style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w700, fontSize: 14),
               ),
               subtitle: Text(
-                'Jual sayur/buah segar per kg langsung ke konsumen rumah tangga.',
+                'Atur harga normal, promo diskon %, batas minimal Partai (kg) & harga grosir.',
+                style: GoogleFonts.plusJakartaSans(fontSize: 11.5, color: const Color(0xFF64748B)),
+              ),
+              trailing: const Icon(LucideIcons.chevronRight, size: 18),
+            ),
+            const Divider(height: 16),
+            ListTile(
+              onTap: () {
+                Navigator.pop(ctx);
+                _showWalkInPurchaseModal();
+              },
+              leading: Container(
+                padding: const EdgeInsets.all(10),
+                decoration: BoxDecoration(
+                  color: AppColors.infoSoft,
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: const Icon(LucideIcons.scale, color: AppColors.info),
+              ),
+              title: Text(
+                'Input Beli Petani Tradisional (Walk-in)',
+                style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w700, fontSize: 14),
+              ),
+              subtitle: Text(
+                'Catat pembelian hasil panen petani langsung di toko tanpa aplikasi.',
                 style: GoogleFonts.plusJakartaSans(fontSize: 11.5, color: const Color(0xFF64748B)),
               ),
               trailing: const Icon(LucideIcons.chevronRight, size: 18),
@@ -247,131 +345,118 @@ class _MitraStoreCatalogScreenState extends State<MitraStoreCatalogScreen>
     );
   }
 
-  void _showCreateRetailProductSheet() {
-    final titleController = TextEditingController(text: 'Wortel Manis Brastagi Super');
-    final priceController = TextEditingController(text: '14000');
-    final stockController = TextEditingController(text: '100');
+  void _showStoreSettingsDialog() {
+    final nameCtrl = TextEditingController(text: _storeName);
+    final minCtrl =
+        TextEditingController(text: _defaultMinWholesaleKg.toString());
+    final bannerCtrl = TextEditingController(text: _storeBanner);
+    bool isOpen = _isStoreOpen;
+    bool saving = false;
 
-    showModalBottomSheet(
+    showDialog<void>(
       context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-      builder: (ctx) => Container(
-        padding: EdgeInsets.only(
-          left: 20,
-          right: 20,
-          top: 20,
-          bottom: MediaQuery.of(ctx).viewInsets.bottom + 24,
-        ),
-        decoration: const BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-        ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      builder: (ctx) => StatefulBuilder(
+        builder: (ctx, setDlgState) => AlertDialog(
+          title: Text(
+            'Pengaturan Toko & Partai Default',
+            style: GoogleFonts.plusJakartaSans(
+              fontWeight: FontWeight.w700,
+              fontSize: 16,
+            ),
+          ),
+          content: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
               children: [
-                Text(
-                  'Tambah Produk Retail',
-                  style: GoogleFonts.plusJakartaSans(
-                    fontSize: 17,
-                    fontWeight: FontWeight.w700,
+                TextField(
+                  controller: nameCtrl,
+                  decoration: const InputDecoration(
+                    labelText: 'Nama Toko / Koperasi',
+                    border: OutlineInputBorder(),
                   ),
                 ),
-                IconButton(
-                  icon: const Icon(LucideIcons.x, size: 20),
-                  onPressed: () => Navigator.pop(ctx),
+                const SizedBox(height: 10),
+                TextField(
+                  controller: minCtrl,
+                  keyboardType: TextInputType.number,
+                  decoration: const InputDecoration(
+                    labelText: 'Minimal Pembelian Partai Default (kg)',
+                    border: OutlineInputBorder(),
+                  ),
+                ),
+                const SizedBox(height: 10),
+                TextField(
+                  controller: bannerCtrl,
+                  maxLines: 2,
+                  decoration: const InputDecoration(
+                    labelText: 'Banner Promo Toko',
+                    border: OutlineInputBorder(),
+                  ),
+                ),
+                const SizedBox(height: 6),
+                SwitchListTile(
+                  contentPadding: EdgeInsets.zero,
+                  value: isOpen,
+                  activeThumbColor: AppColors.primary,
+                  title: const Text('Status Toko Buka'),
+                  onChanged: (v) => setDlgState(() => isOpen = v),
                 ),
               ],
             ),
-            const SizedBox(height: 14),
-            Text('Nama Produk & Kemasan', style: GoogleFonts.plusJakartaSans(fontSize: 12, fontWeight: FontWeight.w600)),
-            const SizedBox(height: 6),
-            TextField(
-              controller: titleController,
-              decoration: InputDecoration(
-                contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-                border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
-              ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(ctx),
+              child: const Text('Batal'),
             ),
-            const SizedBox(height: 12),
-            Row(
-              children: [
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text('Harga Eceran (Rp/kg)', style: GoogleFonts.plusJakartaSans(fontSize: 12, fontWeight: FontWeight.w600)),
-                      const SizedBox(height: 6),
-                      TextField(
-                        controller: priceController,
-                        keyboardType: TextInputType.number,
-                        decoration: InputDecoration(
-                          prefixText: 'Rp ',
-                          contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-                          border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text('Stok Awal (kg)', style: GoogleFonts.plusJakartaSans(fontSize: 12, fontWeight: FontWeight.w600)),
-                      const SizedBox(height: 6),
-                      TextField(
-                        controller: stockController,
-                        keyboardType: TextInputType.number,
-                        decoration: InputDecoration(
-                          suffixText: 'kg',
-                          contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-                          border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 18),
-            SizedBox(
-              width: double.infinity,
-              height: 48,
-              child: ElevatedButton(
-                onPressed: () {
-                  final newProd = {
-                    'id': 'prod-${DateTime.now().millisecondsSinceEpoch}',
-                    'title': titleController.text.trim(),
-                    'price_per_kg': double.tryParse(priceController.text) ?? 14000,
-                    'stock_kg': double.tryParse(stockController.text) ?? 100,
-                    'image_url': 'uploads/products/tomat.jpg',
-                    'isActive': true,
-                  };
-                  setState(() {
-                    _retailProducts.insert(0, newProd);
-                  });
-                  Navigator.pop(ctx);
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text('Produk retail berhasil ditambahkan ke etalase toko!'),
-                      backgroundColor: Color(0xFF006E04),
-                      behavior: SnackBarBehavior.floating,
-                    ),
-                  );
-                },
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFF006E04),
-                  foregroundColor: Colors.white,
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                ),
-                child: Text('Simpan ke Etalase', style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w700)),
+            ElevatedButton(
+              onPressed: saving
+                  ? null
+                  : () async {
+                      setDlgState(() => saving = true);
+                      try {
+                        await _apiService.updateStoreSettings({
+                          'nama_toko': nameCtrl.text.trim(),
+                          'default_min_wholesale_kg':
+                              int.tryParse(minCtrl.text.trim()) ?? 30,
+                          'store_discount_banner': bannerCtrl.text.trim(),
+                          'is_store_open': isOpen,
+                        });
+                        if (mounted) {
+                          setState(() {
+                            _storeName = nameCtrl.text.trim();
+                            _defaultMinWholesaleKg =
+                                int.tryParse(minCtrl.text.trim()) ?? 30;
+                            _storeBanner = bannerCtrl.text.trim();
+                            _isStoreOpen = isOpen;
+                          });
+                        }
+                        if (ctx.mounted) Navigator.pop(ctx);
+                        if (mounted) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              content: Text('Pengaturan toko berhasil disimpan!'),
+                              backgroundColor: AppColors.primary,
+                            ),
+                          );
+                        }
+                      } catch (e) {
+                        setDlgState(() => saving = false);
+                        if (ctx.mounted) {
+                          ScaffoldMessenger.of(ctx).showSnackBar(
+                            SnackBar(
+                              content: Text('Gagal menyimpan: $e'),
+                              backgroundColor: AppColors.error,
+                            ),
+                          );
+                        }
+                      }
+                    },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.primary,
+                foregroundColor: Colors.white,
               ),
+              child: Text(saving ? 'Menyimpan...' : 'Simpan'),
             ),
           ],
         ),
@@ -381,75 +466,217 @@ class _MitraStoreCatalogScreenState extends State<MitraStoreCatalogScreen>
 
   void _showEditStockModal(Map<String, dynamic> item) {
     final stockController = TextEditingController(
-      text: ((item['stock_kg'] ?? item['stock'] ?? 0) as num).toStringAsFixed(0),
+      text: _toDouble(item['stock_kg'] ?? item['stock']).toStringAsFixed(0),
     );
     final priceController = TextEditingController(
-      text: ((item['price_per_kg'] ?? item['price'] ?? 0) as num).toStringAsFixed(0),
+      text: _toDouble(item['price_per_kg'] ?? item['price']).toStringAsFixed(0),
     );
+    final discountPctCtrl = TextEditingController(
+      text: _toDouble(item['discount_percent']).toStringAsFixed(0),
+    );
+    final minWholesaleCtrl = TextEditingController(
+      text: '${_toInt(item['min_wholesale_qty'], _defaultMinWholesaleKg)}',
+    );
+    final wholesalePriceCtrl = TextEditingController(
+      text: item['wholesale_price'] != null
+          ? '${_toInt(item['wholesale_price'])}'
+          : '',
+    );
+    bool wholesaleEnabled = item['is_wholesale_enabled'] != false &&
+        item['is_wholesale_enabled'] != 0;
+    bool saving = false;
 
-    showDialog(
+    showDialog<void>(
       context: context,
-      builder: (ctx) => AlertDialog(
-        title: Text(
-          'Ubah Stok & Harga',
-          style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w700, fontSize: 16),
-        ),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(item['title'] ?? 'Produk', style: GoogleFonts.plusJakartaSans(fontSize: 13, fontWeight: FontWeight.w600)),
-            const SizedBox(height: 14),
-            Text('Harga per kg (Rp)', style: GoogleFonts.plusJakartaSans(fontSize: 12, fontWeight: FontWeight.w600)),
-            const SizedBox(height: 6),
-            TextField(
-              controller: priceController,
-              keyboardType: TextInputType.number,
-              decoration: InputDecoration(
-                contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+      builder: (ctx) => StatefulBuilder(
+        builder: (ctx, setDlgState) => AlertDialog(
+          title: Text(
+            'Atur Harga Retail, Diskon & Partai',
+            style: GoogleFonts.plusJakartaSans(
+              fontWeight: FontWeight.w700,
+              fontSize: 15.5,
+            ),
+          ),
+          content: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  item['title']?.toString() ?? 'Produk',
+                  style: GoogleFonts.plusJakartaSans(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+                const SizedBox(height: 12),
+                TextField(
+                  controller: priceController,
+                  keyboardType: TextInputType.number,
+                  decoration: const InputDecoration(
+                    labelText: 'Harga Retail Normal (Rp/kg)',
+                    border: OutlineInputBorder(),
+                  ),
+                ),
+                const SizedBox(height: 10),
+                Row(
+                  children: [
+                    Expanded(
+                      child: TextField(
+                        controller: discountPctCtrl,
+                        keyboardType: TextInputType.number,
+                        decoration: const InputDecoration(
+                          labelText: 'Diskon Promo (%)',
+                          border: OutlineInputBorder(),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: TextField(
+                        controller: stockController,
+                        keyboardType: TextInputType.number,
+                        decoration: const InputDecoration(
+                          labelText: 'Stok (kg)',
+                          border: OutlineInputBorder(),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 8),
+                SwitchListTile(
+                  contentPadding: EdgeInsets.zero,
+                  value: wholesaleEnabled,
+                  activeThumbColor: AppColors.primary,
+                  title: Text(
+                    'Aktifkan Pembelian Partai (B2B)',
+                    style: GoogleFonts.plusJakartaSans(
+                      fontSize: 12.5,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                  onChanged: (v) => setDlgState(() => wholesaleEnabled = v),
+                ),
+                if (wholesaleEnabled) ...[
+                  const SizedBox(height: 6),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: TextField(
+                          controller: minWholesaleCtrl,
+                          keyboardType: TextInputType.number,
+                          decoration: const InputDecoration(
+                            labelText: 'Min. Partai (kg)',
+                            border: OutlineInputBorder(),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: TextField(
+                          controller: wholesalePriceCtrl,
+                          keyboardType: TextInputType.number,
+                          decoration: const InputDecoration(
+                            labelText: 'Harga Partai (Rp/kg)',
+                            border: OutlineInputBorder(),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ],
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(ctx),
+              child: Text(
+                'Batal',
+                style: GoogleFonts.plusJakartaSans(
+                  color: const Color(0xFF64748B),
+                ),
               ),
             ),
-            const SizedBox(height: 12),
-            Text('Stok Tersedia (kg)', style: GoogleFonts.plusJakartaSans(fontSize: 12, fontWeight: FontWeight.w600)),
-            const SizedBox(height: 6),
-            TextField(
-              controller: stockController,
-              keyboardType: TextInputType.number,
-              decoration: InputDecoration(
-                contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+            ElevatedButton(
+              onPressed: saving
+                  ? null
+                  : () async {
+                      final newPrice = double.tryParse(priceController.text) ??
+                          _toDouble(item['price_per_kg']);
+                      final newStock = double.tryParse(stockController.text) ??
+                          _toDouble(item['stock_kg']);
+                      final newDiscPct =
+                          double.tryParse(discountPctCtrl.text.trim()) ?? 0;
+                      final newMinWholesale =
+                          int.tryParse(minWholesaleCtrl.text.trim()) ?? 30;
+                      final newWholesalePrice =
+                          double.tryParse(wholesalePriceCtrl.text.trim()) ??
+                              (newPrice * 0.85).roundToDouble();
+
+                      setDlgState(() => saving = true);
+                      try {
+                        final id = item['id']?.toString() ?? '';
+                        if (id.isNotEmpty && !id.startsWith('prod-0')) {
+                          await _apiService.updateProductPricing(id, {
+                            'price_per_kg': newPrice,
+                            'stock_kg': newStock,
+                            'discount_percent': newDiscPct,
+                            'is_wholesale_enabled': wholesaleEnabled,
+                            'min_wholesale_qty': newMinWholesale,
+                            'wholesale_price': newWholesalePrice,
+                          });
+                        }
+                        if (mounted) {
+                          setState(() {
+                            item['price_per_kg'] = newPrice;
+                            item['price'] = newPrice;
+                            item['stock_kg'] = newStock;
+                            item['discount_percent'] = newDiscPct;
+                            item['discount_price'] = newDiscPct > 0
+                                ? (newPrice * (1 - newDiscPct / 100)).round()
+                                : null;
+                            item['is_wholesale_enabled'] = wholesaleEnabled;
+                            item['min_wholesale_qty'] = newMinWholesale;
+                            item['wholesale_price'] = newWholesalePrice;
+                          });
+                        }
+                        if (ctx.mounted) Navigator.pop(ctx);
+                        if (mounted) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              content: Text(
+                                'Harga retail, diskon & partai berhasil disimpan!',
+                              ),
+                              backgroundColor: AppColors.primary,
+                              behavior: SnackBarBehavior.floating,
+                            ),
+                          );
+                        }
+                      } catch (e) {
+                        setDlgState(() => saving = false);
+                        if (ctx.mounted) {
+                          ScaffoldMessenger.of(ctx).showSnackBar(
+                            SnackBar(
+                              content: Text('Gagal update harga: $e'),
+                              backgroundColor: AppColors.error,
+                            ),
+                          );
+                        }
+                      }
+                    },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.primary,
+                foregroundColor: Colors.white,
+              ),
+              child: Text(
+                saving ? 'Menyimpan...' : 'Simpan Harga',
+                style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w700),
               ),
             ),
           ],
         ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx),
-            child: Text('Batal', style: GoogleFonts.plusJakartaSans(color: const Color(0xFF64748B))),
-          ),
-          ElevatedButton(
-            onPressed: () {
-              setState(() {
-                item['price_per_kg'] = double.tryParse(priceController.text) ?? item['price_per_kg'];
-                item['stock_kg'] = double.tryParse(stockController.text) ?? item['stock_kg'];
-              });
-              Navigator.pop(ctx);
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content: Text('Katalog berhasil diperbarui!'),
-                  backgroundColor: Color(0xFF006E04),
-                  behavior: SnackBarBehavior.floating,
-                ),
-              );
-            },
-            style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFF006E04),
-              foregroundColor: Colors.white,
-            ),
-            child: Text('Simpan', style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w700)),
-          ),
-        ],
       ),
     );
   }
@@ -468,6 +695,23 @@ class _MitraStoreCatalogScreenState extends State<MitraStoreCatalogScreen>
           style: GoogleFonts.plusJakartaSans(fontSize: 16.5, fontWeight: FontWeight.w700),
         ),
         actions: [
+          IconButton(
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (_) => const ChatListScreen(initialTab: 'ORDER'),
+                ),
+              );
+            },
+            icon: const Icon(LucideIcons.messageSquare, size: 19, color: AppColors.primary),
+            tooltip: 'Chat Pembeli',
+          ),
+          IconButton(
+            onPressed: _showStoreSettingsDialog,
+            icon: const Icon(LucideIcons.settings, size: 19, color: AppColors.primary),
+            tooltip: 'Pengaturan Toko & Min. Partai',
+          ),
           TextButton.icon(
             onPressed: () {
               Navigator.push(
@@ -477,13 +721,13 @@ class _MitraStoreCatalogScreenState extends State<MitraStoreCatalogScreen>
                 ),
               );
             },
-            icon: const Icon(LucideIcons.externalLink, size: 14, color: Color(0xFF006E04)),
+            icon: const Icon(LucideIcons.externalLink, size: 14, color: AppColors.primary),
             label: Text(
               'Lihat Toko',
               style: GoogleFonts.plusJakartaSans(
                 fontSize: 12,
                 fontWeight: FontWeight.w700,
-                color: const Color(0xFF006E04),
+                color: AppColors.primary,
               ),
             ),
           ),
@@ -491,8 +735,9 @@ class _MitraStoreCatalogScreenState extends State<MitraStoreCatalogScreen>
         ],
       ),
       floatingActionButton: FloatingActionButton.extended(
+        heroTag: 'fab_mitra_store_catalog',
         onPressed: _showAddProductOptionSheet,
-        backgroundColor: const Color(0xFF006E04),
+        backgroundColor: AppColors.primary,
         foregroundColor: Colors.white,
         elevation: 3,
         icon: const Icon(LucideIcons.plus, size: 20),
@@ -520,7 +765,7 @@ class _MitraStoreCatalogScreenState extends State<MitraStoreCatalogScreen>
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: const Center(
-                    child: Icon(LucideIcons.store, color: Color(0xFF006E04), size: 26),
+                    child: Icon(LucideIcons.store, color: AppColors.primary, size: 26),
                   ),
                 ),
                 const SizedBox(width: 12),
@@ -543,7 +788,7 @@ class _MitraStoreCatalogScreenState extends State<MitraStoreCatalogScreen>
                             ),
                           ),
                           const SizedBox(width: 4),
-                          const Icon(LucideIcons.badgeCheck, size: 16, color: Color(0xFF006E04)),
+                          const Icon(LucideIcons.badgeCheck, size: 16, color: AppColors.primary),
                         ],
                       ),
                       const SizedBox(height: 2),
@@ -570,7 +815,7 @@ class _MitraStoreCatalogScreenState extends State<MitraStoreCatalogScreen>
                     ),
                     Switch(
                       value: _isStoreOpen,
-                      activeThumbColor: const Color(0xFF006E04),
+                      activeThumbColor: AppColors.primary,
                       materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
                       onChanged: (val) {
                         setState(() => _isStoreOpen = val);
@@ -594,15 +839,16 @@ class _MitraStoreCatalogScreenState extends State<MitraStoreCatalogScreen>
             color: Colors.white,
             child: TabBar(
               controller: _tabController,
-              indicatorColor: const Color(0xFF006E04),
+              indicatorColor: AppColors.primary,
               indicatorWeight: 3,
-              labelColor: const Color(0xFF006E04),
+              labelColor: AppColors.primary,
               unselectedLabelColor: const Color(0xFF64748B),
               labelStyle: GoogleFonts.plusJakartaSans(fontSize: 13.5, fontWeight: FontWeight.w700),
               unselectedLabelStyle: GoogleFonts.plusJakartaSans(fontSize: 13.5, fontWeight: FontWeight.w500),
               tabs: const [
-                Tab(text: 'Produk Retail'),
-                Tab(text: 'Penawaran Partai (B2B)'),
+                Tab(text: 'Katalog & Harga'),
+                Tab(text: 'Bursa Partai'),
+                Tab(text: 'Serapan & Walk-in'),
               ],
             ),
           ),
@@ -616,6 +862,7 @@ class _MitraStoreCatalogScreenState extends State<MitraStoreCatalogScreen>
                     children: [
                       _buildRetailCatalogView(),
                       _buildWholesalePoolsView(),
+                      _buildHarvestAbsorptionView(),
                     ],
                   ),
           ),
@@ -641,8 +888,16 @@ class _MitraStoreCatalogScreenState extends State<MitraStoreCatalogScreen>
       itemBuilder: (context, index) {
         final item = _retailProducts[index];
         final String title = item['title']?.toString() ?? 'Komoditas Segar';
-        final num price = (item['price_per_kg'] as num?) ?? (item['price'] as num?) ?? 0;
-        final num stock = (item['stock_kg'] as num?) ?? (item['stock'] as num?) ?? 0;
+        final double price = _toDouble(item['price_per_kg'] ?? item['price']);
+        final double stock = _toDouble(item['stock_kg'] ?? item['stock']);
+        final double discPct = _toDouble(item['discount_percent']);
+        final double rawDiscPrice = _toDouble(item['discount_price']);
+        final double effectiveRetailPrice =
+            (rawDiscPrice > 0 && rawDiscPrice < price) ? rawDiscPrice : price;
+        final double wholesalePrice =
+            _toDouble(item['wholesale_price'], (price * 0.85).roundToDouble());
+        final int minWholesaleQty =
+            _toInt(item['min_wholesale_qty'], _defaultMinWholesaleKg);
         final String rawImg = item['image_url']?.toString() ?? '';
         final String imageUrl = _resolveImageUrl(rawImg);
         final bool isActive = item['isActive'] ?? true;
@@ -688,19 +943,48 @@ class _MitraStoreCatalogScreenState extends State<MitraStoreCatalogScreen>
                       overflow: TextOverflow.ellipsis,
                     ),
                     const SizedBox(height: 4),
-                    Text(
-                      'Rp ${_currencyFormat.format(price)} / kg',
-                      style: GoogleFonts.plusJakartaSans(
-                        fontSize: 13,
-                        fontWeight: FontWeight.w800,
-                        color: const Color(0xFF006E04),
-                      ),
+                    Row(
+                      children: [
+                        Flexible(
+                          child: Text(
+                            'Rp ${_currencyFormat.format(effectiveRetailPrice)} / kg',
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: GoogleFonts.plusJakartaSans(
+                              fontSize: 13,
+                              fontWeight: FontWeight.w800,
+                              color: AppColors.primary,
+                            ),
+                          ),
+                        ),
+                        if (discPct > 0) ...[
+                          const SizedBox(width: 6),
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
+                            decoration: BoxDecoration(
+                              color: AppColors.errorSoft,
+                              borderRadius: BorderRadius.circular(4),
+                            ),
+                            child: Text(
+                              '-${discPct.toStringAsFixed(0)}%',
+                              style: GoogleFonts.plusJakartaSans(
+                                fontSize: 9.5,
+                                fontWeight: FontWeight.w800,
+                                color: AppColors.error,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ],
                     ),
                     const SizedBox(height: 2),
                     Text(
-                      'Stok: ${stock.toStringAsFixed(0)} kg',
+                      'Stok: ${stock.toStringAsFixed(0)} kg'
+                      '${(item['is_wholesale_enabled'] != false && item['is_wholesale_enabled'] != 0) ? " • Partai Min. ${minWholesaleQty}kg @ Rp ${_currencyFormat.format(wholesalePrice)}" : " • Partai Nonaktif"}',
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
                       style: GoogleFonts.plusJakartaSans(
-                        fontSize: 11.5,
+                        fontSize: 10.5,
                         color: const Color(0xFF64748B),
                       ),
                     ),
@@ -712,7 +996,7 @@ class _MitraStoreCatalogScreenState extends State<MitraStoreCatalogScreen>
                 children: [
                   Switch(
                     value: isActive,
-                    activeThumbColor: const Color(0xFF006E04),
+                    activeThumbColor: AppColors.primary,
                     materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
                     onChanged: (val) {
                       setState(() => item['isActive'] = val);
@@ -724,14 +1008,14 @@ class _MitraStoreCatalogScreenState extends State<MitraStoreCatalogScreen>
                       padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
                       child: Row(
                         children: [
-                          const Icon(LucideIcons.edit2, size: 12, color: Color(0xFF006E04)),
+                          const Icon(LucideIcons.edit2, size: 12, color: AppColors.primary),
                           const SizedBox(width: 4),
                           Text(
                             'Edit',
                             style: GoogleFonts.plusJakartaSans(
                               fontSize: 11.5,
                               fontWeight: FontWeight.w700,
-                              color: const Color(0xFF006E04),
+                              color: AppColors.primary,
                             ),
                           ),
                         ],
@@ -763,13 +1047,13 @@ class _MitraStoreCatalogScreenState extends State<MitraStoreCatalogScreen>
       separatorBuilder: (context, index) => const SizedBox(height: 12),
       itemBuilder: (context, index) {
         final pool = _harvestPools[index];
-        final String commodity = pool['commodity_name'] ?? 'Komoditas Partai';
-        final double totalKg = (pool['total_quota_kg'] as num?)?.toDouble() ?? 100.0;
-        final double remainingKg = (pool['remaining_quota_kg'] as num?)?.toDouble() ?? 50.0;
+        final String commodity = pool['commodity_name']?.toString() ?? 'Komoditas Partai';
+        final double totalKg = _toDouble(pool['total_quota_kg'], 100.0);
+        final double remainingKg = _toDouble(pool['remaining_quota_kg'], 50.0);
         final double takenKg = (totalKg - remainingKg).clamp(0.0, totalKg);
         final double progress = totalKg > 0 ? (takenKg / totalKg).clamp(0.0, 1.0) : 0.0;
-        final double priceKg = (pool['price_per_kg'] as num?)?.toDouble() ?? 0.0;
-        final String harvestDate = pool['target_harvest_date'] ?? pool['est_harvest_date'] ?? '15 Nov 2026';
+        final double priceKg = _toDouble(pool['price_per_kg']);
+        final String harvestDate = (pool['target_harvest_date'] ?? pool['est_harvest_date'] ?? '15 Nov 2026').toString();
         final String status = pool['status']?.toString() ?? 'open';
         final bool isSpilled = status == 'spilled_over';
 
@@ -849,7 +1133,7 @@ class _MitraStoreCatalogScreenState extends State<MitraStoreCatalogScreen>
                   value: progress,
                   minHeight: 6,
                   backgroundColor: const Color(0xFFE2E8F0),
-                  valueColor: const AlwaysStoppedAnimation<Color>(Color(0xFF006E04)),
+                  valueColor: const AlwaysStoppedAnimation<Color>(AppColors.primary),
                 ),
               ),
               const SizedBox(height: 12),
@@ -896,6 +1180,660 @@ class _MitraStoreCatalogScreenState extends State<MitraStoreCatalogScreen>
           ),
         );
       },
+    );
+  }
+
+  Widget _buildHarvestAbsorptionView() {
+    return ListView(
+      padding: const EdgeInsets.fromLTRB(16, 14, 16, 90),
+      children: [
+        CustomSoftCard(
+          backgroundColor: AppColors.surfaceSoft,
+          border: Border.all(color: AppColors.surfaceSoftBorder),
+          padding: const EdgeInsets.all(14),
+          child: Row(
+            children: [
+              const Icon(LucideIcons.scale, color: AppColors.primary, size: 24),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Serap Panen & Petani Tradisional',
+                      style: GoogleFonts.plusJakartaSans(
+                        fontSize: 13.5,
+                        fontWeight: FontWeight.w800,
+                        color: AppColors.primaryDark,
+                      ),
+                    ),
+                    Text(
+                      'Kirim tawaran transparan ke petani sekitar atau input pembelian walk-in.',
+                      style: GoogleFonts.plusJakartaSans(
+                        fontSize: 11,
+                        color: AppColors.textSecondary,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              ElevatedButton(
+                onPressed: _showWalkInPurchaseModal,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColors.accent,
+                  foregroundColor: Colors.white,
+                  elevation: 0,
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                ),
+                child: Text(
+                  '+ Walk-in',
+                  style: GoogleFonts.plusJakartaSans(
+                    fontSize: 11.5,
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: 16),
+        Text(
+          'Siaran Panen Petani Sekitar (${_nearbyHarvests.length})',
+          style: GoogleFonts.plusJakartaSans(
+            fontSize: 14,
+            fontWeight: FontWeight.w800,
+            color: AppColors.textPrimary,
+          ),
+        ),
+        const SizedBox(height: 8),
+        if (_nearbyHarvests.isEmpty)
+          CustomSoftCard(
+            child: Text(
+              'Belum ada siaran Hampir Panen / Siap Panen dari petani sekitar.',
+              style: GoogleFonts.plusJakartaSans(
+                fontSize: 12,
+                color: AppColors.textMuted,
+              ),
+            ),
+          )
+        else
+          ..._nearbyHarvests.map((h) {
+            final kom = (h['komoditas'] ?? 'Komoditas').toString();
+            final farmer = (h['farmer_name'] ?? 'Petani Mitra').toString();
+            final village = (h['village_name'] ?? 'Sumenep').toString();
+            final status = (h['status_tanam'] ?? 'SIAP_PANEN').toString();
+            final weight = _toDouble(h['estimasi_berat_kg']).toStringAsFixed(0);
+            return CustomSoftCard(
+              margin: const EdgeInsets.only(bottom: 10),
+              padding: const EdgeInsets.all(13),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Expanded(
+                        child: Text(
+                          '$kom • $weight kg',
+                          style: GoogleFonts.plusJakartaSans(
+                            fontSize: 13.5,
+                            fontWeight: FontWeight.w800,
+                            color: AppColors.textPrimary,
+                          ),
+                        ),
+                      ),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
+                        decoration: BoxDecoration(
+                          color: AppColors.surfaceMint,
+                          borderRadius: BorderRadius.circular(6),
+                        ),
+                        child: Text(
+                          status,
+                          style: GoogleFonts.plusJakartaSans(
+                            fontSize: 9.5,
+                            fontWeight: FontWeight.w800,
+                            color: AppColors.primary,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    '$farmer • Desa $village',
+                    style: GoogleFonts.plusJakartaSans(
+                      fontSize: 11.5,
+                      color: AppColors.textSecondary,
+                    ),
+                  ),
+                  if (h['catatan'] != null) ...[
+                    const SizedBox(height: 4),
+                    Text(
+                      h['catatan'].toString(),
+                      style: GoogleFonts.plusJakartaSans(
+                        fontSize: 11,
+                        color: AppColors.textMuted,
+                      ),
+                    ),
+                  ],
+                  const SizedBox(height: 8),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.end,
+                    children: [
+                      Flexible(
+                        child: OutlinedButton.icon(
+                          onPressed: () async {
+                            try {
+                              final conv = await ChatService().openDirectConversation(
+                                targetUserId: h['farmer_id']?.toString(),
+                                targetRole: 'petani',
+                                title: 'DM — $farmer',
+                              );
+                              if (!mounted) return;
+                              await Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (_) => ChatRoomScreen(conversation: conv),
+                                ),
+                              );
+                            } catch (_) {}
+                          },
+                          icon: const Icon(LucideIcons.messageSquare, size: 13),
+                          label: Text(
+                            'DM Petani',
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: GoogleFonts.plusJakartaSans(
+                              fontSize: 11,
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Flexible(
+                        child: ElevatedButton.icon(
+                          onPressed: () => _showSendOfferModal(h),
+                          icon: const Icon(LucideIcons.badgeDollarSign, size: 14),
+                          label: Text(
+                            'Tawarkan Harga',
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: GoogleFonts.plusJakartaSans(
+                              fontSize: 11.5,
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: AppColors.primary,
+                            foregroundColor: Colors.white,
+                            elevation: 0,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            );
+          }),
+        const SizedBox(height: 12),
+        Text(
+          'Kontrak & Riwayat Penyerapan (${_purchaseOffers.length})',
+          style: GoogleFonts.plusJakartaSans(
+            fontSize: 14,
+            fontWeight: FontWeight.w800,
+            color: AppColors.textPrimary,
+          ),
+        ),
+        const SizedBox(height: 8),
+        ..._purchaseOffers.map((offer) {
+          final status = (offer['status'] ?? 'OFFER_SENT').toString();
+          final netPrice = _toDouble(offer['harga_tawar_bersih_per_kg']);
+          final weight = _toDouble(
+            offer['berat_timbang_riil_kg'] ?? offer['estimasi_berat_kg'],
+          );
+          final totalNilai = _toDouble(offer['total_nilai_kontrak']);
+          return CustomSoftCard(
+            margin: const EdgeInsets.only(bottom: 10),
+            padding: const EdgeInsets.all(13),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Expanded(
+                      child: Text(
+                        '${offer['komoditas'] ?? 'Komoditas'} • ${weight.toStringAsFixed(0)} kg',
+                        style: GoogleFonts.plusJakartaSans(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w800,
+                        ),
+                      ),
+                    ),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
+                      decoration: BoxDecoration(
+                        color: AppColors.warningSoft,
+                        borderRadius: BorderRadius.circular(6),
+                      ),
+                      child: Text(
+                        status,
+                        style: GoogleFonts.plusJakartaSans(
+                          fontSize: 9.5,
+                          fontWeight: FontWeight.w800,
+                          color: AppColors.warning,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  'Harga Bersih: Rp ${_currencyFormat.format(netPrice)}/kg • Total: Rp ${_currencyFormat.format(totalNilai)}',
+                  style: GoogleFonts.plusJakartaSans(
+                    fontSize: 11.5,
+                    fontWeight: FontWeight.w700,
+                    color: AppColors.primaryDark,
+                  ),
+                ),
+                if (offer['rincian_biaya_catatan'] != null) ...[
+                  const SizedBox(height: 3),
+                  Text(
+                    offer['rincian_biaya_catatan'].toString(),
+                    style: GoogleFonts.plusJakartaSans(
+                      fontSize: 10.5,
+                      color: AppColors.textMuted,
+                    ),
+                  ),
+                ],
+                if (status == 'ACCEPTED_CONTRACT') ...[
+                  const SizedBox(height: 8),
+                  Align(
+                    alignment: Alignment.centerRight,
+                    child: ElevatedButton.icon(
+                      onPressed: () => _showWeighAndPayModal(offer),
+                      icon: const Icon(LucideIcons.scale, size: 14),
+                      label: Text(
+                        'Timbang Ulang & Bayar',
+                        style: GoogleFonts.plusJakartaSans(
+                          fontSize: 11.5,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppColors.primary,
+                        foregroundColor: Colors.white,
+                      ),
+                    ),
+                  ),
+                ],
+              ],
+            ),
+          );
+        }),
+      ],
+    );
+  }
+
+  void _showSendOfferModal(Map<String, dynamic> harvest) {
+    final weightCtrl = TextEditingController(
+      text: ((num.tryParse('${harvest['estimasi_berat_kg'] ?? 100}') ?? 100))
+          .toStringAsFixed(0),
+    );
+    final marketCtrl = TextEditingController(text: '28000');
+    final transportCtrl = TextEditingController(text: '1200');
+    final opsCtrl = TextEditingController(text: '800');
+    final noteCtrl = TextEditingController(
+      text: 'Acuan harga pasar harian Sumenep dikurangi ongkos angkut & karung.',
+    );
+    bool sending = false;
+
+    showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.white,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (ctx) => StatefulBuilder(
+        builder: (ctx, setModalState) {
+          final m = double.tryParse(marketCtrl.text) ?? 0;
+          final t = double.tryParse(transportCtrl.text) ?? 0;
+          final o = double.tryParse(opsCtrl.text) ?? 0;
+          final net = (m - t - o).clamp(0, double.infinity);
+
+          return Padding(
+            padding: EdgeInsets.only(
+              left: 20,
+              right: 20,
+              top: 20,
+              bottom: MediaQuery.of(ctx).viewInsets.bottom + 20,
+            ),
+            child: SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Tawaran Harga Transparan (${harvest['komoditas']})',
+                    style: GoogleFonts.plusJakartaSans(
+                      fontSize: 15,
+                      fontWeight: FontWeight.w800,
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: TextField(
+                          controller: weightCtrl,
+                          keyboardType: TextInputType.number,
+                          decoration: const InputDecoration(
+                            labelText: 'Estimasi Berat (kg)',
+                            border: OutlineInputBorder(),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: TextField(
+                          controller: marketCtrl,
+                          keyboardType: TextInputType.number,
+                          onChanged: (_) => setModalState(() {}),
+                          decoration: const InputDecoration(
+                            labelText: 'Harga Pasar (Rp/kg)',
+                            border: OutlineInputBorder(),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 10),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: TextField(
+                          controller: transportCtrl,
+                          keyboardType: TextInputType.number,
+                          onChanged: (_) => setModalState(() {}),
+                          decoration: const InputDecoration(
+                            labelText: 'Potong Transport/kg',
+                            border: OutlineInputBorder(),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: TextField(
+                          controller: opsCtrl,
+                          keyboardType: TextInputType.number,
+                          onChanged: (_) => setModalState(() {}),
+                          decoration: const InputDecoration(
+                            labelText: 'Potong Ops Lain/kg',
+                            border: OutlineInputBorder(),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 10),
+                  Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.all(10),
+                    decoration: BoxDecoration(
+                      color: AppColors.surfaceSoft,
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: Text(
+                      'Harga Bersih Diterima Petani: Rp ${_currencyFormat.format(net)} / kg',
+                      style: GoogleFonts.plusJakartaSans(
+                        fontSize: 12.5,
+                        fontWeight: FontWeight.w800,
+                        color: AppColors.primaryDark,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 10),
+                  TextField(
+                    controller: noteCtrl,
+                    maxLines: 2,
+                    decoration: const InputDecoration(
+                      labelText: 'Rincian Catatan Biaya',
+                      border: OutlineInputBorder(),
+                    ),
+                  ),
+                  const SizedBox(height: 14),
+                  SizedBox(
+                    width: double.infinity,
+                    height: 46,
+                    child: ElevatedButton(
+                      onPressed: sending
+                          ? null
+                          : () async {
+                              setModalState(() => sending = true);
+                              try {
+                                await _apiService.createHarvestPurchaseOffer({
+                                  'harvest_report_id': harvest['id'],
+                                  'farmer_id': harvest['farmer_id'],
+                                  'komoditas': harvest['komoditas'],
+                                  'estimasi_berat_kg':
+                                      double.tryParse(weightCtrl.text) ?? 100,
+                                  'harga_acuan_pasar_per_kg': m,
+                                  'biaya_transport_per_kg': t,
+                                  'biaya_operasional_lain_per_kg': o,
+                                  'rincian_biaya_catatan': noteCtrl.text.trim(),
+                                  'mode': 'OFFER_SENT',
+                                });
+                                if (ctx.mounted) Navigator.pop(ctx);
+                                _loadCatalog();
+                              } catch (e) {
+                                setModalState(() => sending = false);
+                                if (ctx.mounted) {
+                                  ScaffoldMessenger.of(ctx).showSnackBar(
+                                    SnackBar(
+                                      content: Text('Gagal: $e'),
+                                      backgroundColor: AppColors.error,
+                                    ),
+                                  );
+                                }
+                              }
+                            },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppColors.primary,
+                        foregroundColor: Colors.white,
+                      ),
+                      child: Text(
+                        sending ? 'Mengirim...' : 'Kirim Tawaran ke Petani',
+                        style: GoogleFonts.plusJakartaSans(
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          );
+        },
+      ),
+    );
+  }
+
+  void _showWalkInPurchaseModal() {
+    final nameCtrl = TextEditingController();
+    final komCtrl = TextEditingController(text: 'Bawang Merah');
+    final weightCtrl = TextEditingController(text: '120');
+    final priceCtrl = TextEditingController(text: '25000');
+    bool saving = false;
+
+    showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.white,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (ctx) => StatefulBuilder(
+        builder: (ctx, setModalState) => Padding(
+          padding: EdgeInsets.only(
+            left: 20,
+            right: 20,
+            top: 20,
+            bottom: MediaQuery.of(ctx).viewInsets.bottom + 20,
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'Pembelian Petani Tradisional (Walk-in)',
+                style: GoogleFonts.plusJakartaSans(
+                  fontSize: 15,
+                  fontWeight: FontWeight.w800,
+                ),
+              ),
+              const SizedBox(height: 12),
+              TextField(
+                controller: nameCtrl,
+                decoration: const InputDecoration(
+                  labelText: 'Nama Petani Walk-in',
+                  hintText: 'Contoh: Pak Matrawi (Desa Dungkek)',
+                  border: OutlineInputBorder(),
+                ),
+              ),
+              const SizedBox(height: 10),
+              Row(
+                children: [
+                  Expanded(
+                    child: TextField(
+                      controller: komCtrl,
+                      decoration: const InputDecoration(
+                        labelText: 'Komoditas',
+                        border: OutlineInputBorder(),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: TextField(
+                      controller: weightCtrl,
+                      keyboardType: TextInputType.number,
+                      decoration: const InputDecoration(
+                        labelText: 'Berat Riil (kg)',
+                        border: OutlineInputBorder(),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 10),
+              TextField(
+                controller: priceCtrl,
+                keyboardType: TextInputType.number,
+                decoration: const InputDecoration(
+                  labelText: 'Harga Beli Sepakat (Rp/kg)',
+                  border: OutlineInputBorder(),
+                ),
+              ),
+              const SizedBox(height: 14),
+              SizedBox(
+                width: double.infinity,
+                height: 46,
+                child: ElevatedButton(
+                  onPressed: saving
+                      ? null
+                      : () async {
+                          if (nameCtrl.text.trim().isEmpty) return;
+                          setModalState(() => saving = true);
+                          try {
+                            await _apiService.createHarvestPurchaseOffer({
+                              'nama_petani_walkin': nameCtrl.text.trim(),
+                              'komoditas': komCtrl.text.trim(),
+                              'estimasi_berat_kg':
+                                  double.tryParse(weightCtrl.text) ?? 50,
+                              'harga_acuan_pasar_per_kg':
+                                  double.tryParse(priceCtrl.text) ?? 20000,
+                              'mode': 'TRADITIONAL_WALKIN',
+                              'add_to_catalog_stock': true,
+                            });
+                            if (ctx.mounted) Navigator.pop(ctx);
+                            _loadCatalog();
+                          } catch (_) {
+                            setModalState(() => saving = false);
+                          }
+                        },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.primary,
+                    foregroundColor: Colors.white,
+                  ),
+                  child: Text(
+                    saving ? 'Menyimpan...' : 'Catat & Tambah ke Stok Toko',
+                    style: GoogleFonts.plusJakartaSans(
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  void _showWeighAndPayModal(Map<String, dynamic> offer) {
+    final weightCtrl = TextEditingController(
+      text: ((num.tryParse('${offer['estimasi_berat_kg'] ?? 100}') ?? 100))
+          .toStringAsFixed(0),
+    );
+    bool saving = false;
+
+    showDialog<void>(
+      context: context,
+      builder: (ctx) => StatefulBuilder(
+        builder: (ctx, setDlgState) => AlertDialog(
+          title: const Text('Konfirmasi Timbang Ulang & Bayar'),
+          content: TextField(
+            controller: weightCtrl,
+            keyboardType: TextInputType.number,
+            decoration: const InputDecoration(
+              labelText: 'Berat Timbangan Riil di Lokasi (kg)',
+              border: OutlineInputBorder(),
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(ctx),
+              child: const Text('Batal'),
+            ),
+            ElevatedButton(
+              onPressed: saving
+                  ? null
+                  : () async {
+                      final w = double.tryParse(weightCtrl.text) ?? 0;
+                      if (w <= 0) return;
+                      setDlgState(() => saving = true);
+                      try {
+                        await _apiService.weighAndPayHarvestOffer(
+                          offer['id'].toString(),
+                          w,
+                        );
+                        if (ctx.mounted) Navigator.pop(ctx);
+                        _loadCatalog();
+                      } catch (_) {
+                        setDlgState(() => saving = false);
+                      }
+                    },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.primary,
+                foregroundColor: Colors.white,
+              ),
+              child: Text(saving ? 'Memproses...' : 'Selesaikan Bayar'),
+            ),
+          ],
+        ),
+      ),
     );
   }
 }

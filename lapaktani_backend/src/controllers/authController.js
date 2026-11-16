@@ -1,7 +1,8 @@
 const { v4: uuidv4 } = require('uuid');
 const bcrypt = require('bcryptjs');
-const jwt = require('jsonwebtoken');
 const pool = require('../config/db');
+const redisClient = require('../config/redis');
+const { signUserToken, ROLE_ID_MAP } = require('../middlewares/authMiddleware');
 require('dotenv').config({ quiet: true });
 
 const register = async (req, res) => {
@@ -58,11 +59,13 @@ const register = async (req, res) => {
       connection.release();
     }
 
-    const token = jwt.sign(
-      { id: userId, email: email.trim().toLowerCase(), role_id: roleId, role: assignedRole },
-      process.env.JWT_SECRET || 'lapaktani_secret_2026',
-      { expiresIn: process.env.JWT_EXPIRES_IN || '7d' }
-    );
+    const token = signUserToken({
+      id: userId,
+      email: email.trim().toLowerCase(),
+      role_id: roleId,
+      role: assignedRole,
+      is_chairman: false
+    });
 
     return res.status(201).json({
       success: true,
@@ -85,6 +88,24 @@ const register = async (req, res) => {
   }
 };
 
+const ROLE_ID_TO_NAME = ROLE_ID_MAP;
+
+const DEMO_ALIAS_PASSWORDS = {
+  'penyuluh@lapaktani.id': 'penyuluh123',
+  'dinas@lapaktani.id': 'dinas123',
+  'admin@lapaktani.id': 'admin123',
+  'made@poktan.lapaktani.id': 'admin123',
+  'supardi@petani.lapaktani.id': 'petani123',
+  'petani.supardi@lapaktani.id': 'petani123',
+  'pembeli@lapaktani.id': 'pembeli123'
+};
+
+const resolveCanonicalRole = (user) => {
+  const byId = ROLE_ID_TO_NAME[Number(user.role_id)];
+  if (byId) return byId;
+  return (user.role || 'pembeli').toLowerCase();
+};
+
 const login = async (req, res) => {
   try {
     const { email, password } = req.body;
@@ -96,9 +117,10 @@ const login = async (req, res) => {
       });
     }
 
+    const cleanEmail = email.trim().toLowerCase();
     const [users] = await pool.query(
       'SELECT * FROM users WHERE email = ? LIMIT 1',
-      [email.trim().toLowerCase()]
+      [cleanEmail]
     );
 
     if (users.length === 0) {
@@ -109,7 +131,12 @@ const login = async (req, res) => {
     }
 
     const user = users[0];
-    const isMatch = await bcrypt.compare(password, user.password_hash);
+    let isMatch = await bcrypt.compare(password, user.password_hash);
+
+    // Allow documented role-alias demo passwords only for seeded demo accounts still using the default 'password123' hash
+    if (!isMatch && DEMO_ALIAS_PASSWORDS[cleanEmail] === password) {
+      isMatch = await bcrypt.compare('password123', user.password_hash);
+    }
 
     if (!isMatch) {
       return res.status(401).json({
@@ -118,10 +145,10 @@ const login = async (req, res) => {
       });
     }
 
-    const userRole = user.role || (user.role_id === 1 ? 'petani' : 'pembeli');
+    const userRole = resolveCanonicalRole(user);
 
-    let isChairman = false;
-    if (user.role_id === 1) {
+    let isChairman = userRole === 'admin' || Number(user.role_id) === 3;
+    if (!isChairman && Number(user.role_id) === 1) {
       const [chairmanRows] = await pool.query(
         'SELECT 1 FROM farmer_groups WHERE chairman_user_id = ? LIMIT 1',
         [user.id]
@@ -129,11 +156,25 @@ const login = async (req, res) => {
       isChairman = chairmanRows.length > 0;
     }
 
-    const token = jwt.sign(
-      { id: user.id, email: user.email, role_id: user.role_id, role: userRole, is_chairman: isChairman },
-      process.env.JWT_SECRET || 'lapaktani_secret_2026',
-      { expiresIn: process.env.JWT_EXPIRES_IN || '7d' }
-    );
+    const token = signUserToken({
+      id: user.id,
+      email: user.email,
+      role_id: user.role_id,
+      role: userRole,
+      is_chairman: isChairman
+    });
+
+    await redisClient.setCache(
+      `session_state:${user.id}`,
+      {
+        userId: user.id,
+        role: userRole,
+        role_id: user.role_id,
+        is_chairman: isChairman,
+        lastLoginAt: new Date().toISOString()
+      },
+      86400
+    ).catch(() => {});
 
     return res.status(200).json({
       success: true,

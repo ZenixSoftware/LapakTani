@@ -1,6 +1,98 @@
+/**
+ * ============================================================================
+ * LAPAKTANI BACKEND - [US-07, US-08, US-09] PRODUCT & QUALITY GRADING ENGINE
+ * ============================================================================
+ * Module       : Controllers / Product & Mitra Catalog
+ * User Stories : [US-07] Penambahan Komoditas & Varietas Pertanian
+ *                [US-08] Multi-Tier Quality Grading (Grade A, B, Standard)
+ *                [US-09] CRUD Stok/Harga Toko (Retail, Diskon, Partai/Grosir)
+ * Author       : Moch. Ilham Abdul Aziz (MochIlham05 - 3125522014)
+ * Architecture : Express.js 5.x, MySQL2 Connection Pool, Redis L2 Catalog Cache
+ * ============================================================================
+ */
+
 const { v4: uuidv4 } = require('uuid');
 const pool = require('../config/db');
 const redisClient = require('../config/redis');
+
+function formatProductPricing(row) {
+  const basePrice = Number(row.price_per_kg || row.price || 0);
+  const discountPercent = Number(row.discount_percent || 0);
+  const rawDiscountPrice = row.discount_price !== null && row.discount_price !== undefined ? Number(row.discount_price) : null;
+  const effectiveDiscountPrice =
+    discountPercent > 0
+      ? (rawDiscountPrice && rawDiscountPrice > 0 && rawDiscountPrice < basePrice
+          ? rawDiscountPrice
+          : Math.round(basePrice * (1 - discountPercent / 100)))
+      : (rawDiscountPrice && rawDiscountPrice > 0 && rawDiscountPrice < basePrice ? rawDiscountPrice : null);
+  const minWholesaleQty = Math.max(2, parseInt(row.min_wholesale_qty || 30, 10));
+  const isWholesaleEnabled =
+    row.is_wholesale_enabled === undefined || row.is_wholesale_enabled === null
+      ? true
+      : Boolean(Number(row.is_wholesale_enabled));
+  const wholesalePrice =
+    row.wholesale_price !== null && row.wholesale_price !== undefined && Number(row.wholesale_price) > 0
+      ? Number(row.wholesale_price)
+      : Math.round(basePrice * 0.85);
+
+  return {
+    ...row,
+    price: basePrice,
+    price_per_kg: basePrice,
+    base_price: basePrice,
+    discount_percent: discountPercent,
+    discount_price: effectiveDiscountPrice,
+    effective_retail_price: effectiveDiscountPrice || basePrice,
+    is_wholesale_enabled: isWholesaleEnabled,
+    min_wholesale_qty: minWholesaleQty,
+    wholesale_price: wholesalePrice,
+    store_village_id: row.store_village_id ? Number(row.store_village_id) : 101,
+    in_cart_count: Number(row.in_cart_count || 0),
+    in_cart_users_count: Number(row.in_cart_users_count || 0),
+    in_cart_qty: Number(row.in_cart_qty || 0),
+    in_cart_total_qty: Number(row.in_cart_total_qty || 0),
+  };
+}
+
+function normalizePricingInput(basePrice, body = {}) {
+  const rawDiscPct = body.discount_percent !== undefined ? parseFloat(body.discount_percent) : 0;
+  const rawDiscPrice =
+    body.discount_price !== undefined && body.discount_price !== null && String(body.discount_price).trim() !== ''
+      ? parseFloat(body.discount_price)
+      : null;
+
+  let discountPercent = !isNaN(rawDiscPct) && rawDiscPct > 0 && rawDiscPct < 95 ? Number(rawDiscPct.toFixed(2)) : 0;
+  let discountPrice = rawDiscPrice && !isNaN(rawDiscPrice) && rawDiscPrice > 0 && rawDiscPrice < basePrice ? rawDiscPrice : null;
+
+  if (discountPercent > 0 && discountPrice === null) {
+    discountPrice = Math.round(basePrice * (1 - discountPercent / 100));
+  } else if (discountPrice !== null && discountPercent === 0 && basePrice > 0) {
+    discountPercent = Number((((basePrice - discountPrice) / basePrice) * 100).toFixed(2));
+  }
+
+  const rawEnabled = body.is_wholesale_enabled;
+  const isWholesaleEnabled =
+    rawEnabled === false || rawEnabled === 0 || String(rawEnabled).toLowerCase() === 'false' || String(rawEnabled) === '0'
+      ? 0
+      : 1;
+
+  const parsedMinQty = parseInt(body.min_wholesale_qty || 30, 10);
+  const minWholesaleQty = !isNaN(parsedMinQty) && parsedMinQty >= 2 ? parsedMinQty : 30;
+
+  const parsedWholesale =
+    body.wholesale_price !== undefined && body.wholesale_price !== null && String(body.wholesale_price).trim() !== ''
+      ? parseFloat(body.wholesale_price)
+      : Math.round(basePrice * 0.85);
+  const wholesalePrice = !isNaN(parsedWholesale) && parsedWholesale > 0 ? parsedWholesale : Math.round(basePrice * 0.85);
+
+  return {
+    discount_percent: discountPercent,
+    discount_price: discountPrice,
+    is_wholesale_enabled: isWholesaleEnabled,
+    min_wholesale_qty: minWholesaleQty,
+    wholesale_price: wholesalePrice,
+  };
+}
 
 /**
  * Public catalog
@@ -18,16 +110,17 @@ const getProducts = async (req, res) => {
       }
     }
 
-    if (!sanitizedSearch && redisClient.isOpen) {
+    if (!sanitizedSearch) {
       try {
-        const cachedCatalog = await redisClient.get('lapaktani_catalog');
-        if (cachedCatalog) {
-          const parsedData = JSON.parse(cachedCatalog);
+        const cached = await redisClient.getCache('lapaktani_catalog');
+        if (cached && cached.hit && Array.isArray(cached.value)) {
+          res.setHeader('X-Redis-Cache', 'HIT');
           return res.status(200).json({
             success: true,
             source: 'redis_cache',
-            count: parsedData.length,
-            data: parsedData
+            cache_backend: cached.backend,
+            count: cached.value.length,
+            data: cached.value
           });
         }
       } catch (redisErr) {
@@ -35,31 +128,45 @@ const getProducts = async (req, res) => {
       }
     }
 
-    let query = `
+    const whereClause = sanitizedSearch.length > 0
+      ? ` WHERE (p.title LIKE ? OR c.specific_name LIKE ? OR pg.grade_label LIKE ? OR fg.group_name LIKE ? OR v.name LIKE ?)`
+      : '';
+    const params = sanitizedSearch.length > 0
+      ? Array(5).fill(`%${sanitizedSearch}%`)
+      : [];
+
+    const primaryQuery = `
       SELECT 
         p.id, 
         p.title, 
         p.price_per_kg, 
+        p.price,
+        p.discount_percent,
+        p.discount_price,
+        p.is_wholesale_enabled,
+        p.min_wholesale_qty,
+        p.wholesale_price,
+        p.store_village_id,
         p.stock_kg, 
         p.image_url, 
         p.unit_id,
-        cu.unit_name,
-        cu.description as unit_description,
-        c.specific_name as category, 
-        pg.grade_label as grade, 
-        fg.group_name as poktan_name, 
-        v.name as village_name,
+        COALESCE(cu.unit_name, 'Kg') AS unit_name,
+        cu.description AS unit_description,
+        COALESCE(c.specific_name, 'Komoditas') AS category, 
+        COALESCE(pg.grade_label, 'Reguler') AS grade, 
+        COALESCE(fg.group_name, 'Mitra Tani') AS poktan_name, 
+        COALESCE(v.name, 'Sumenep') AS village_name,
         COALESCE(cart_stats.in_cart_count, 0) AS in_cart_count,
         COALESCE(cart_stats.in_cart_count, 0) AS in_cart_users_count,
         COALESCE(cart_stats.in_cart_qty, 0) AS in_cart_qty,
         COALESCE(cart_stats.in_cart_qty, 0) AS in_cart_total_qty
       FROM products p 
-      JOIN commodities c ON p.commodity_id = c.id 
-      JOIN product_grades pg ON p.grade_id = pg.id 
+      LEFT JOIN commodities c ON p.commodity_id = c.id 
+      LEFT JOIN product_grades pg ON p.grade_id = pg.id 
       LEFT JOIN commodity_units cu ON p.unit_id = cu.id
-      JOIN farmer_profiles fp ON p.farmer_id = fp.user_id 
-      JOIN farmer_groups fg ON fp.farmer_group_id = fg.id 
-      JOIN villages v ON fg.village_id = v.id
+      LEFT JOIN farmer_profiles fp ON p.farmer_id = fp.user_id 
+      LEFT JOIN farmer_groups fg ON fp.farmer_group_id = fg.id 
+      LEFT JOIN villages v ON fg.village_id = v.id
       LEFT JOIN (
         SELECT 
           product_id,
@@ -68,33 +175,58 @@ const getProducts = async (req, res) => {
         FROM cart_items
         GROUP BY product_id
       ) cart_stats ON p.id = cart_stats.product_id
+      ${whereClause}
+      ORDER BY p.id DESC LIMIT 50
     `;
-    const params = [];
 
-    if (sanitizedSearch.length > 0) {
-      query += ` WHERE (p.title LIKE ? OR c.specific_name LIKE ? OR pg.grade_label LIKE ? OR fg.group_name LIKE ? OR v.name LIKE ?)`;
-      const searchPattern = `%${sanitizedSearch}%`;
-      params.push(searchPattern, searchPattern, searchPattern, searchPattern, searchPattern);
+    let rows;
+    try {
+      [rows] = await pool.query(primaryQuery, params);
+    } catch (queryErr) {
+      if (queryErr.code === 'ER_BAD_FIELD_ERROR' || queryErr.code === 'ER_NO_SUCH_TABLE') {
+        console.warn('[PRODUCTS] Primary query schema mismatch, using fallback:', queryErr.code, queryErr.sqlMessage || queryErr.message);
+        const fallbackQuery = `
+          SELECT 
+            p.id, 
+            p.title, 
+            p.price_per_kg, 
+            p.stock_kg, 
+            p.image_url, 
+            'Kg' AS unit_name,
+            COALESCE(c.specific_name, 'Komoditas') AS category, 
+            COALESCE(pg.grade_label, 'Reguler') AS grade, 
+            COALESCE(fg.group_name, 'Mitra Tani') AS poktan_name, 
+            COALESCE(v.name, 'Sumenep') AS village_name,
+            0 AS in_cart_count,
+            0 AS in_cart_users_count,
+            0 AS in_cart_qty,
+            0 AS in_cart_total_qty
+          FROM products p 
+          LEFT JOIN commodities c ON p.commodity_id = c.id 
+          LEFT JOIN product_grades pg ON p.grade_id = pg.id 
+          LEFT JOIN farmer_profiles fp ON p.farmer_id = fp.user_id 
+          LEFT JOIN farmer_groups fg ON fp.farmer_group_id = fg.id 
+          LEFT JOIN villages v ON fg.village_id = v.id
+          ${whereClause}
+          ORDER BY p.id DESC LIMIT 50
+        `;
+        [rows] = await pool.query(fallbackQuery, params);
+      } else {
+        throw queryErr;
+      }
     }
 
-    query += ` ORDER BY p.id DESC LIMIT 50`;
+    const formattedRows = rows.map(formatProductPricing);
 
-    const [rows] = await pool.query(query, params);
-
-    const formattedRows = rows.map(row => ({
-      ...row,
-      in_cart_count: Number(row.in_cart_count || 0),
-      in_cart_users_count: Number(row.in_cart_users_count || 0),
-      in_cart_qty: Number(row.in_cart_qty || 0),
-      in_cart_total_qty: Number(row.in_cart_total_qty || 0)
-    }));
-
-    if (!sanitizedSearch && redisClient.isOpen) {
+    if (!sanitizedSearch) {
       try {
-        await redisClient.setEx('lapaktani_catalog', 3600, JSON.stringify(formattedRows));
+        await redisClient.setCache('lapaktani_catalog', formattedRows, 3600);
+        res.setHeader('X-Redis-Cache', 'MISS');
       } catch (redisErr) {
         console.warn('[REDIS] Cache set warning:', redisErr.message);
       }
+    } else {
+      res.setHeader('X-Redis-Cache', 'BYPASS');
     }
 
     return res.status(200).json({
@@ -104,10 +236,11 @@ const getProducts = async (req, res) => {
       data: formattedRows
     });
   } catch (error) {
-    console.error('[PRODUCTS] Error fetching catalog:', error.message);
+    console.error('[getProducts Error]', error.code, error.message, error.sqlMessage || '');
     return res.status(500).json({
       success: false,
-      message: 'Gagal mengambil katalog produk.'
+      message: 'Gagal mengambil katalog produk.',
+      error_code: error.code || 'DB_ERROR'
     });
   }
 };
@@ -131,6 +264,13 @@ const getFarmerProducts = async (req, res) => {
         p.id, 
         p.title, 
         p.price_per_kg, 
+        p.price,
+        p.discount_percent,
+        p.discount_price,
+        p.is_wholesale_enabled,
+        p.min_wholesale_qty,
+        p.wholesale_price,
+        p.store_village_id,
         p.stock_kg, 
         p.image_url, 
         p.description,
@@ -166,13 +306,7 @@ const getFarmerProducts = async (req, res) => {
 
     const [rows] = await pool.query(query, [farmerId]);
 
-    const formattedRows = rows.map(row => ({
-      ...row,
-      in_cart_count: Number(row.in_cart_count || 0),
-      in_cart_users_count: Number(row.in_cart_users_count || 0),
-      in_cart_qty: Number(row.in_cart_qty || 0),
-      in_cart_total_qty: Number(row.in_cart_total_qty || 0)
-    }));
+    const formattedRows = rows.map(formatProductPricing);
 
     return res.status(200).json({
       success: true,
@@ -202,7 +336,21 @@ const createProduct = async (req, res) => {
       });
     }
 
-    const { title, price_per_kg, stock_kg, commodity_id, grade_id, unit_id, description, image_url, image_urls } = req.body;
+    const {
+      title,
+      price_per_kg,
+      price,
+      stock_kg,
+      commodity_id,
+      grade_id,
+      unit_id,
+      description,
+      image_url,
+      image_urls,
+      store_village_id
+    } = req.body;
+
+    const effectiveRawPrice = price_per_kg !== undefined && price_per_kg !== null ? price_per_kg : price;
 
     if (!title || String(title).trim().length === 0) {
       return res.status(400).json({
@@ -211,7 +359,7 @@ const createProduct = async (req, res) => {
       });
     }
 
-    if (price_per_kg === undefined || price_per_kg === null || String(price_per_kg).trim() === '') {
+    if (effectiveRawPrice === undefined || effectiveRawPrice === null || String(effectiveRawPrice).trim() === '') {
       return res.status(400).json({
         success: false,
         message: 'Harga per kg wajib diisi.'
@@ -225,8 +373,10 @@ const createProduct = async (req, res) => {
       });
     }
 
-    const numericPrice = parseFloat(price_per_kg);
+    const numericPrice = parseFloat(effectiveRawPrice);
     const numericStock = parseFloat(stock_kg);
+    const pricing = normalizePricingInput(numericPrice, req.body);
+    const villageId = store_village_id ? parseInt(store_village_id, 10) : 101;
 
     if (isNaN(numericPrice) || numericPrice < 0 || isNaN(numericStock) || numericStock < 0) {
       return res.status(400).json({
@@ -294,8 +444,8 @@ const createProduct = async (req, res) => {
 
     await pool.query(
       `INSERT INTO products 
-       (id, farmer_id, commodity_id, grade_id, unit_id, title, description, price_per_kg, stock_kg, price, stock, image_url, created_at)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())`,
+       (id, farmer_id, commodity_id, grade_id, unit_id, title, description, price_per_kg, stock_kg, price, stock, image_url, discount_percent, discount_price, is_wholesale_enabled, min_wholesale_qty, wholesale_price, store_village_id, created_at)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())`,
       [
         productId,
         farmerId,
@@ -308,7 +458,13 @@ const createProduct = async (req, res) => {
         numericStock,
         numericPrice,
         Math.floor(numericStock),
-        primaryImageUrl
+        primaryImageUrl,
+        pricing.discount_percent,
+        pricing.discount_price,
+        pricing.is_wholesale_enabled,
+        pricing.min_wholesale_qty,
+        pricing.wholesale_price,
+        villageId
       ]
     );
 
@@ -324,18 +480,12 @@ const createProduct = async (req, res) => {
       }
     }
 
-    if (redisClient.isOpen) {
-      try {
-        await redisClient.del('lapaktani_catalog');
-      } catch (redisErr) {
-        console.warn('[REDIS] Invalidation warning:', redisErr.message);
-      }
-    }
+    await redisClient.delCache('lapaktani_catalog');
 
     return res.status(201).json({
       success: true,
       message: 'Produk berhasil ditambahkan ke katalog.',
-      data: {
+      data: formatProductPricing({
         id: productId,
         farmer_id: farmerId,
         commodity_id: resolvedCommodityId,
@@ -343,10 +493,13 @@ const createProduct = async (req, res) => {
         unit_id: selectedUnitId,
         title: title.trim(),
         price_per_kg: numericPrice,
+        price: numericPrice,
         stock_kg: numericStock,
         image_url: primaryImageUrl,
-        image_urls: formattedImageUrls
-      }
+        image_urls: formattedImageUrls,
+        ...pricing,
+        store_village_id: villageId
+      })
     });
 
   } catch (error) {
@@ -387,13 +540,7 @@ const deleteProduct = async (req, res) => {
 
     await pool.query('DELETE FROM products WHERE id = ? AND farmer_id = ?', [id, farmerId]);
 
-    if (redisClient.isOpen) {
-      try {
-        await redisClient.del('lapaktani_catalog');
-      } catch (redisErr) {
-        console.warn('[REDIS] Invalidation warning:', redisErr.message);
-      }
-    }
+    await redisClient.delCache('lapaktani_catalog');
 
     return res.status(200).json({
       success: true,
@@ -414,6 +561,7 @@ const deleteProduct = async (req, res) => {
 const updateProduct = async (req, res) => {
   try {
     const farmerId = req.user ? req.user.id : null;
+    const userRole = String(req.user?.role || '').toLowerCase();
     const { id } = req.params;
 
     if (!farmerId) {
@@ -423,11 +571,30 @@ const updateProduct = async (req, res) => {
       });
     }
 
-    const { title, price_per_kg, stock_kg, commodity_id, grade_id, unit_id, description, image_url, image_urls } = req.body;
+    const {
+      title,
+      price_per_kg,
+      price,
+      stock_kg,
+      commodity_id,
+      grade_id,
+      unit_id,
+      description,
+      image_url,
+      image_urls,
+      discount_percent,
+      discount_price,
+      is_wholesale_enabled,
+      min_wholesale_qty,
+      wholesale_price
+    } = req.body;
 
+    const isAdminStore = userRole === 'admin' || Number(req.user?.role_id) === 3;
     const [existing] = await pool.query(
-      'SELECT id FROM products WHERE id = ? AND farmer_id = ? LIMIT 1',
-      [id, farmerId]
+      isAdminStore
+        ? 'SELECT * FROM products WHERE id = ? LIMIT 1'
+        : 'SELECT * FROM products WHERE id = ? AND farmer_id = ? LIMIT 1',
+      isAdminStore ? [id] : [id, farmerId]
     );
 
     if (existing.length === 0) {
@@ -436,6 +603,7 @@ const updateProduct = async (req, res) => {
         message: 'Produk tidak ditemukan atau bukan milik Anda.'
       });
     }
+    const currentProduct = existing[0];
 
     const updates = [];
     const params = [];
@@ -460,21 +628,57 @@ const updateProduct = async (req, res) => {
       updates.push('title = ?');
       params.push(String(title).trim());
     }
-    if (price_per_kg !== undefined && price_per_kg !== null) {
-      const numPrice = parseFloat(price_per_kg);
+
+    const effectiveRawPrice = price_per_kg !== undefined && price_per_kg !== null ? price_per_kg : price;
+    let resolvedBasePrice = Number(currentProduct.price_per_kg || currentProduct.price || 0);
+    if (effectiveRawPrice !== undefined && effectiveRawPrice !== null) {
+      const numPrice = parseFloat(effectiveRawPrice);
       if (isNaN(numPrice) || numPrice < 0) {
         return res.status(400).json({ success: false, message: 'Harga per kg harus angka positif.' });
       }
-      updates.push('price_per_kg = ?');
-      params.push(numPrice);
+      resolvedBasePrice = numPrice;
+      updates.push('price_per_kg = ?', 'price = ?');
+      params.push(numPrice, numPrice);
     }
+
+    const hasPricingChange =
+      discount_percent !== undefined ||
+      discount_price !== undefined ||
+      is_wholesale_enabled !== undefined ||
+      min_wholesale_qty !== undefined ||
+      wholesale_price !== undefined;
+
+    if (hasPricingChange) {
+      const pricing = normalizePricingInput(resolvedBasePrice, {
+        discount_percent: discount_percent !== undefined ? discount_percent : currentProduct.discount_percent,
+        discount_price: discount_price !== undefined ? discount_price : (discount_percent !== undefined ? null : currentProduct.discount_price),
+        is_wholesale_enabled: is_wholesale_enabled !== undefined ? is_wholesale_enabled : currentProduct.is_wholesale_enabled,
+        min_wholesale_qty: min_wholesale_qty !== undefined ? min_wholesale_qty : currentProduct.min_wholesale_qty,
+        wholesale_price: wholesale_price !== undefined ? wholesale_price : currentProduct.wholesale_price
+      });
+      updates.push(
+        'discount_percent = ?',
+        'discount_price = ?',
+        'is_wholesale_enabled = ?',
+        'min_wholesale_qty = ?',
+        'wholesale_price = ?'
+      );
+      params.push(
+        pricing.discount_percent,
+        pricing.discount_price,
+        pricing.is_wholesale_enabled,
+        pricing.min_wholesale_qty,
+        pricing.wholesale_price
+      );
+    }
+
     if (stock_kg !== undefined && stock_kg !== null) {
       const numStock = parseFloat(stock_kg);
       if (isNaN(numStock) || numStock < 0) {
         return res.status(400).json({ success: false, message: 'Stok kg harus angka positif.' });
       }
-      updates.push('stock_kg = ?');
-      params.push(numStock);
+      updates.push('stock_kg = ?', 'stock = ?');
+      params.push(numStock, Math.floor(numStock));
     }
     if (commodity_id !== undefined && commodity_id !== null) {
       updates.push('commodity_id = ?');
@@ -498,21 +702,18 @@ const updateProduct = async (req, res) => {
     }
 
     if (updates.length > 0) {
-      params.push(id, farmerId);
-      await pool.query(`UPDATE products SET ${updates.join(', ')} WHERE id = ? AND farmer_id = ?`, params);
+      params.push(id);
+      await pool.query(`UPDATE products SET ${updates.join(', ')} WHERE id = ?`, params);
     }
 
-    if (redisClient.isOpen) {
-      try {
-        await redisClient.del('lapaktani_catalog');
-      } catch (redisErr) {
-        console.warn('[REDIS] Invalidation warning:', redisErr.message);
-      }
-    }
+    const [reloaded] = await pool.query('SELECT * FROM products WHERE id = ? LIMIT 1', [id]);
+
+    await redisClient.delCache('lapaktani_catalog');
 
     return res.status(200).json({
       success: true,
-      message: 'Produk berhasil diperbarui.'
+      message: 'Produk dan pengaturan harga berhasil diperbarui.',
+      data: reloaded[0] ? formatProductPricing(reloaded[0]) : null
     });
   } catch (error) {
     console.error('[PRODUCTS] Error updating product:', error.message);
@@ -561,13 +762,7 @@ const deductStock = async (req, res) => {
     await connection.query('UPDATE products SET stock_kg = ? WHERE id = ?', [newStock, id]);
     await connection.commit();
 
-    if (redisClient.isOpen) {
-      try {
-        await redisClient.del('lapaktani_catalog');
-      } catch (redisErr) {
-        console.warn('[REDIS] Invalidation warning:', redisErr.message);
-      }
-    }
+    await redisClient.delCache('lapaktani_catalog');
 
     return res.status(200).json({
       success: true,
@@ -621,13 +816,7 @@ const restoreStock = async (req, res) => {
     await connection.query('UPDATE products SET stock_kg = ? WHERE id = ?', [newStock, id]);
     await connection.commit();
 
-    if (redisClient.isOpen) {
-      try {
-        await redisClient.del('lapaktani_catalog');
-      } catch (redisErr) {
-        console.warn('[REDIS] Invalidation warning:', redisErr.message);
-      }
-    }
+    await redisClient.delCache('lapaktani_catalog');
 
     return res.status(200).json({
       success: true,
@@ -725,8 +914,13 @@ const getSoilTelemetry = async (req, res) => {
       fertilityLabel = 'Kritis';
     }
 
+    const temperatureCelsius = Number(baseData?.temperature_celsius ?? 27.8);
+    const conductivity = Number(
+      baseData?.conductivity ?? Math.round((nitrogen + phosphorus + potassium) * 3.1)
+    );
+
     const telemetryData = {
-      product_id: productId,
+      product_id: targetId,
       farm_id: baseData?.farm_id || 'farm-cikahuripan',
       blok_name: 'Blok A-3',
       fertility_score: fertilityScore,
@@ -745,6 +939,8 @@ const getSoilTelemetry = async (req, res) => {
       moisture_percentage: moisture,
       moisture_status: moisture >= 60 && moisture <= 75 ? 'Stabil / Cukup' : 'Perlu Irigasi',
       moisture_ideal_range: '60 – 75%',
+      temperature_celsius: temperatureCelsius,
+      conductivity,
       measured_by: baseData?.measured_by || 'Sensor NPK 8-in-1',
       validator: 'PPL Wilayah Binaan (Dinas Pertanian Kab. Bandung Barat)',
       poktan_name: baseData?.poktan_name || 'Poktan Tani Makmur',
@@ -781,6 +977,7 @@ const saveSoilTelemetry = async (req, res) => {
     potassium_mg_kg,
     moisture_percentage,
     temperature_celsius,
+    conductivity,
     fertility_index,
     measured_by
   } = req.body;
@@ -810,7 +1007,9 @@ const saveSoilTelemetry = async (req, res) => {
       message: 'Data telemetri tanah lahan berhasil dicatat.',
       data: {
         id,
-        farm_id: farm_id || 'farm-01'
+        farm_id: farm_id || 'farm-01',
+        temperature_celsius: Number(temperature_celsius || 21.5),
+        conductivity: Number(conductivity || 1200)
       }
     });
   } catch (error) {

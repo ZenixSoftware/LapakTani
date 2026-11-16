@@ -112,7 +112,7 @@ class _WholesaleDetailScreenState extends State<WholesaleDetailScreen> {
               );
             },
             style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFF006E04),
+              backgroundColor: AppColors.primary,
               foregroundColor: Colors.white,
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
             ),
@@ -130,10 +130,14 @@ class _WholesaleDetailScreenState extends State<WholesaleDetailScreen> {
   void _showOrderQuotaSheet() {
     if (!_ensureAuthenticated()) return;
 
-    final double totalQuota = (_poolData['total_quota_kg'] as num?)?.toDouble() ?? 100.0;
-    final double remaining = (_poolData['remaining_quota_kg'] as num?)?.toDouble() ?? 50.0;
-    final double minOrder = (_poolData['min_order_kg'] as num?)?.toDouble() ?? 50.0;
-    final double pricePerKg = (_poolData['price_per_kg'] as num?)?.toDouble() ?? 0.0;
+    final double totalQuota =
+        double.tryParse('${_poolData['total_quota_kg'] ?? ''}') ?? 100.0;
+    final double remaining =
+        double.tryParse('${_poolData['remaining_quota_kg'] ?? ''}') ?? 50.0;
+    final double minOrder =
+        double.tryParse('${_poolData['min_order_kg'] ?? ''}') ?? 50.0;
+    final double pricePerKg =
+        double.tryParse('${_poolData['price_per_kg'] ?? ''}') ?? 0.0;
 
     double selectedQty = minOrder.clamp(1.0, remaining);
     final qtyController = TextEditingController(text: selectedQty.toStringAsFixed(0));
@@ -185,7 +189,7 @@ class _WholesaleDetailScreenState extends State<WholesaleDetailScreen> {
                     style: GoogleFonts.plusJakartaSans(
                       fontSize: 14,
                       fontWeight: FontWeight.w600,
-                      color: const Color(0xFF006E04),
+                      color: AppColors.primary,
                     ),
                   ),
                   const SizedBox(height: 14),
@@ -242,7 +246,7 @@ class _WholesaleDetailScreenState extends State<WholesaleDetailScreen> {
                               }
                             : null,
                         icon: const Icon(LucideIcons.minusCircle),
-                        color: const Color(0xFF006E04),
+                        color: AppColors.primary,
                       ),
                       Expanded(
                         child: TextField(
@@ -274,7 +278,7 @@ class _WholesaleDetailScreenState extends State<WholesaleDetailScreen> {
                               }
                             : null,
                         icon: const Icon(LucideIcons.plusCircle),
-                        color: const Color(0xFF006E04),
+                        color: AppColors.primary,
                       ),
                     ],
                   ),
@@ -295,7 +299,7 @@ class _WholesaleDetailScreenState extends State<WholesaleDetailScreen> {
                         ),
                         Text(
                           'Rp ${_currencyFormat.format(totalAmount)}',
-                          style: GoogleFonts.plusJakartaSans(fontSize: 16, fontWeight: FontWeight.w800, color: const Color(0xFF006E04)),
+                          style: GoogleFonts.plusJakartaSans(fontSize: 16, fontWeight: FontWeight.w800, color: AppColors.primary),
                         ),
                       ],
                     ),
@@ -330,12 +334,14 @@ class _WholesaleDetailScreenState extends State<WholesaleDetailScreen> {
                           messenger.showSnackBar(
                             SnackBar(
                               content: Text('Berhasil mengambil kuota ${qty.toStringAsFixed(0)} kg! Kontrak borongan dicatat.'),
-                              backgroundColor: const Color(0xFF006E04),
+                              backgroundColor: AppColors.primary,
                               behavior: SnackBarBehavior.floating,
                             ),
                           );
                           setState(() {
-                            final double curRem = (_poolData['remaining_quota_kg'] as num?)?.toDouble() ?? remaining;
+                            final double curRem = double.tryParse(
+                                    '${_poolData['remaining_quota_kg'] ?? ''}') ??
+                                remaining;
                             _poolData['remaining_quota_kg'] = (curRem - qty).clamp(0.0, totalQuota);
                           });
                         } else {
@@ -349,7 +355,7 @@ class _WholesaleDetailScreenState extends State<WholesaleDetailScreen> {
                         }
                       },
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFF006E04),
+                        backgroundColor: AppColors.primary,
                         foregroundColor: Colors.white,
                         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                       ),
@@ -374,12 +380,16 @@ class _WholesaleDetailScreenState extends State<WholesaleDetailScreen> {
     final String variety = _poolData['variety'] ?? 'Varietas Unggul';
     final String grade = _poolData['grade'] ?? 'Grade A Super';
     final String mitraName = _poolData['mitra_name'] ?? 'Mitra Tani Makmur';
-    final double totalKg = (_poolData['total_quota_kg'] as num?)?.toDouble() ?? 100.0;
-    final double remainingKg = (_poolData['remaining_quota_kg'] as num?)?.toDouble() ?? 50.0;
+    final double totalKg =
+        double.tryParse('${_poolData['total_quota_kg'] ?? ''}') ?? 100.0;
+    final double remainingKg =
+        double.tryParse('${_poolData['remaining_quota_kg'] ?? ''}') ?? 50.0;
     final double takenKg = (totalKg - remainingKg).clamp(0.0, totalKg);
     final double progress = totalKg > 0 ? (takenKg / totalKg).clamp(0.0, 1.0) : 0.0;
-    final double priceKg = (_poolData['price_per_kg'] as num?)?.toDouble() ?? 0.0;
-    final double minOrder = (_poolData['min_order_kg'] as num?)?.toDouble() ?? 50.0;
+    final double priceKg =
+        double.tryParse('${_poolData['price_per_kg'] ?? ''}') ?? 0.0;
+    final double minOrder =
+        double.tryParse('${_poolData['min_order_kg'] ?? ''}') ?? 50.0;
     final String harvestDate = _poolData['target_harvest_date'] ?? _poolData['est_harvest_date'] ?? '15 Nov 2026';
     final String packagingSop = _poolData['packaging_sop'] ?? 'Krat Plastik & Cold Storage (10-12°C)';
 
@@ -530,7 +540,7 @@ class _WholesaleDetailScreenState extends State<WholesaleDetailScreen> {
                         style: GoogleFonts.plusJakartaSans(
                           fontSize: 24,
                           fontWeight: FontWeight.w800,
-                          color: const Color(0xFF006E04),
+                          color: AppColors.primary,
                         ),
                       ),
                       Text(
@@ -625,7 +635,7 @@ class _WholesaleDetailScreenState extends State<WholesaleDetailScreen> {
                             value: progress,
                             minHeight: 10,
                             backgroundColor: const Color(0xFFE2E8F0),
-                            valueColor: const AlwaysStoppedAnimation<Color>(Color(0xFF006E04)),
+                            valueColor: const AlwaysStoppedAnimation<Color>(AppColors.primary),
                           ),
                         ),
                         const SizedBox(height: 14),
@@ -633,7 +643,7 @@ class _WholesaleDetailScreenState extends State<WholesaleDetailScreen> {
                         const SizedBox(height: 12),
                         Row(
                           children: [
-                            const Icon(LucideIcons.calendar, size: 16, color: Color(0xFF006E04)),
+                            const Icon(LucideIcons.calendar, size: 16, color: AppColors.primary),
                             const SizedBox(width: 6),
                             Text(
                               'Target Panen Serentak: $harvestDate',
@@ -664,7 +674,7 @@ class _WholesaleDetailScreenState extends State<WholesaleDetailScreen> {
                             shape: BoxShape.circle,
                           ),
                           child: const Center(
-                            child: Icon(LucideIcons.store, color: Color(0xFF006E04), size: 24),
+                            child: Icon(LucideIcons.store, color: AppColors.primary, size: 24),
                           ),
                         ),
                         const SizedBox(width: 12),
@@ -687,7 +697,7 @@ class _WholesaleDetailScreenState extends State<WholesaleDetailScreen> {
                                     ),
                                   ),
                                   const SizedBox(width: 4),
-                                  const Icon(LucideIcons.badgeCheck, size: 16, color: Color(0xFF006E04)),
+                                  const Icon(LucideIcons.badgeCheck, size: 16, color: AppColors.primary),
                                 ],
                               ),
                               const SizedBox(height: 2),
@@ -711,7 +721,7 @@ class _WholesaleDetailScreenState extends State<WholesaleDetailScreen> {
                             );
                           },
                           style: OutlinedButton.styleFrom(
-                            side: const BorderSide(color: Color(0xFF006E04)),
+                            side: const BorderSide(color: AppColors.primary),
                             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                           ),
@@ -720,7 +730,7 @@ class _WholesaleDetailScreenState extends State<WholesaleDetailScreen> {
                             style: GoogleFonts.plusJakartaSans(
                               fontSize: 11.5,
                               fontWeight: FontWeight.w700,
-                              color: const Color(0xFF006E04),
+                              color: AppColors.primary,
                             ),
                           ),
                         ),
@@ -765,7 +775,7 @@ class _WholesaleDetailScreenState extends State<WholesaleDetailScreen> {
                     child: Row(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const Icon(LucideIcons.shieldCheck, color: Color(0xFF006E04), size: 22),
+                        const Icon(LucideIcons.shieldCheck, color: AppColors.primary, size: 22),
                         const SizedBox(width: 10),
                         Expanded(
                           child: Column(
@@ -828,7 +838,7 @@ class _WholesaleDetailScreenState extends State<WholesaleDetailScreen> {
                       style: GoogleFonts.plusJakartaSans(
                         fontSize: 17,
                         fontWeight: FontWeight.w800,
-                        color: const Color(0xFF006E04),
+                        color: AppColors.primary,
                       ),
                     ),
                   ],
@@ -845,7 +855,7 @@ class _WholesaleDetailScreenState extends State<WholesaleDetailScreen> {
                   ),
                 ),
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFF006E04),
+                  backgroundColor: AppColors.primary,
                   foregroundColor: Colors.white,
                   disabledBackgroundColor: const Color(0xFFCBD5E1),
                   disabledForegroundColor: const Color(0xFF64748B),
@@ -867,7 +877,7 @@ class _WholesaleDetailScreenState extends State<WholesaleDetailScreen> {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(icon, size: 15, color: const Color(0xFF006E04)),
+          Icon(icon, size: 15, color: AppColors.primary),
           const SizedBox(width: 8),
           SizedBox(
             width: 100,

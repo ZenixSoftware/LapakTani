@@ -1,11 +1,21 @@
+/**
+ * ============================================================================
+ * LAPAKTANI MOBILE APP - [US-11] PRODUCT DETAIL & SPECIFICATION SCREEN
+ * ============================================================================
+ * Module       : Features / Product Specifications
+ * User Story   : [US-11] Detail Spesifikasi Hasil Tani, Grade, Stok & Soil Telemetry
+ * Author       : Moch. Ilham Abdul Aziz (MochIlham05 - 3125522014)
+ * Architecture : Flutter Interactive UI, Real-time Stock Lock Inspection, Soil Telemetry
+ * ============================================================================
+ */
+
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 import '../../core/services/api_service.dart';
+import '../../core/theme/app_colors.dart';
 import '../cart/cart_screen.dart';
-import '../orders/models/order_model.dart';
-import '../orders/services/order_service.dart';
-import '../orders/screens/order_tracking_screen.dart';
+import '../order/checkout_screen.dart';
 import 'services/stock_service.dart';
 import 'widgets/soil_telemetry_card.dart';
 
@@ -26,6 +36,91 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
   bool _isFollowingShop = false;
   bool _isDescriptionExpanded = false;
   int _cartItemCount = 4;
+  int _selectedQtyKg = 1;
+
+  int get _basePrice {
+    final raw = _data['base_price'] ?? _data['price_per_kg'] ?? _data['price'] ?? 12000;
+    return (num.tryParse(raw.toString()) ?? 12000).round();
+  }
+
+  double get _discountPct =>
+      (num.tryParse('${_data['discount_percent'] ?? 0}') ?? 0).toDouble();
+
+  int? get _discountPrice {
+    final raw = num.tryParse('${_data['discount_price'] ?? ''}');
+    if (raw != null && raw > 0 && raw < _basePrice) return raw.round();
+    if (_discountPct > 0 && _discountPct < 95) {
+      return (_basePrice * (1 - _discountPct / 100)).round();
+    }
+    return null;
+  }
+
+  bool get _isWholesaleEnabled =>
+      _data['is_wholesale_enabled'] != false &&
+      _data['is_wholesale_enabled'] != 0;
+
+  int get _minWholesaleQty {
+    final v = int.tryParse('${_data['min_wholesale_qty'] ?? 30}') ?? 30;
+    return v >= 2 ? v : 30;
+  }
+
+  int get _wholesalePrice {
+    final raw = num.tryParse('${_data['wholesale_price'] ?? ''}');
+    if (raw != null && raw > 0) return raw.round();
+    return (_basePrice * 0.85).round();
+  }
+
+  bool get _isPartaiActive =>
+      _isWholesaleEnabled &&
+      _selectedQtyKg >= _minWholesaleQty &&
+      _wholesalePrice > 0;
+
+  int get _activeUnitPrice {
+    if (_isPartaiActive) return _wholesalePrice;
+    return _discountPrice ?? _basePrice;
+  }
+
+  Future<void> _setQty(int nextQty) async {
+    final maxStock = _currentStock > 0 ? _currentStock : 9999;
+    final clamped = nextQty.clamp(1, maxStock);
+    final wasPartai = _isPartaiActive;
+    final willBePartai = _isWholesaleEnabled && clamped >= _minWholesaleQty;
+
+    if (!wasPartai && willBePartai) {
+      final bool? confirm = await showDialog<bool>(
+        context: context,
+        builder: (ctx) => AlertDialog(
+          title: Text(
+            'Konfirmasi Pembelian Partai (B2B)',
+            style: GoogleFonts.inter(fontWeight: FontWeight.w800, fontSize: 16),
+          ),
+          content: Text(
+            'Kuantitas Anda ($clamped kg) mencapai batas minimal Partai ($_minWholesaleQty kg).\n\nHarga satuan otomatis beralih dari ${_formatRupiah(_discountPrice ?? _basePrice)}/kg menjadi harga Partai ${_formatRupiah(_wholesalePrice)}/kg (Total ${_formatRupiah(_wholesalePrice * clamped)}).',
+            style: GoogleFonts.inter(fontSize: 13),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(ctx, false),
+              child: const Text('Tetap Retail'),
+            ),
+            ElevatedButton(
+              onPressed: () => Navigator.pop(ctx, true),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.primary,
+                foregroundColor: Colors.white,
+              ),
+              child: const Text('Aktifkan Partai (B2B)'),
+            ),
+          ],
+        ),
+      );
+      if (confirm != true) return;
+    }
+
+    if (mounted) {
+      setState(() => _selectedQtyKg = clamped);
+    }
+  }
 
   @override
   void initState() {
@@ -122,7 +217,10 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
     }
 
     try {
-      final success = await ApiService().addToCart(productId: _productId, quantity: 1);
+      final success = await ApiService().addToCart(
+        productId: _productId,
+        quantity: _selectedQtyKg,
+      );
       if (success) {
         setState(() {
           _cartItemCount++;
@@ -134,7 +232,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
               'Ditambahkan ke keranjang',
               style: GoogleFonts.inter(fontSize: 12),
             ),
-            backgroundColor: const Color(0xFF03AC0E),
+            backgroundColor: AppColors.primary,
             behavior: SnackBarBehavior.floating,
             duration: const Duration(seconds: 2),
           ),
@@ -248,11 +346,13 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                           ),
                           const SizedBox(height: 4),
                           Text(
-                            _formatRupiah(_data['price_per_kg'] ?? _data['price'] ?? 15000),
+                            '${_formatRupiah(_activeUnitPrice)} / kg × $_selectedQtyKg kg${_isPartaiActive ? " (PARTAI B2B)" : ""}',
                             style: GoogleFonts.inter(
-                              fontSize: 14,
+                              fontSize: 13.5,
                               fontWeight: FontWeight.w800,
-                              color: const Color(0xFFE11D48),
+                              color: _isPartaiActive
+                                  ? AppColors.primary
+                                  : const Color(0xFFE11D48),
                             ),
                           ),
                         ],
@@ -265,69 +365,47 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                   width: double.infinity,
                   height: 46,
                   child: ElevatedButton(
-                    onPressed: () async {
+                    onPressed: () {
                       Navigator.pop(ctx);
                       final title = _data['title']?.toString() ?? 'Produk Tani Segar';
-                      final priceNum = _data['price_per_kg'] ?? _data['price'] ?? 15000;
-                      final price = priceNum is num ? priceNum.toInt() : 15000;
                       final image = _data['image_url']?.toString() ?? '';
-                      final grade = _data['grade']?.toString() ?? 'Grade A';
-
-                      final newOrder = await OrderService().createNewOrder(
-                        buyerName: 'Ibu Ratna Dewi',
-                        buyerAddress: 'Jl. Maribaya No. 42, Lembang, Kab. Bandung Barat',
-                        buyerPhone: '0813-2940-1182',
-                        items: [
-                          OrderItem(
-                            id: 'item-${DateTime.now().millisecondsSinceEpoch}',
-                            productId: _productId,
-                            title: title,
-                            qty: 1,
-                            unit: 'kg',
-                            price: price,
-                            imageUrl: image,
-                            grade: grade,
-                          ),
-                        ],
-                        totalPrice: price,
-                        shippingFee: 8000,
-                        paymentMethod: 'LapakPay (Saldo Terpotong)',
+                      final poktan = _data['poktan_name']?.toString() ?? 'Toko Mitra Tani';
+                      final location = _data['village_name']?.toString() ?? 'Sumenep';
+                      final item = CartItemModel(
+                        id: 'direct-${_productId.isEmpty ? "item" : _productId}',
+                        productId: _productId.isEmpty ? 'prod-tomat-lembang-001' : _productId,
+                        title: title,
+                        price: _activeUnitPrice,
+                        originalPrice: _basePrice,
+                        unit: '$_selectedQtyKg kg',
+                        imageUrl: image,
+                        farmerId: _data['farmer_id']?.toString() ?? 'usr-admin-05',
+                        farmerName: poktan,
+                        originLocation: location,
+                        badgeText: _isPartaiActive
+                            ? 'PARTAI_B2B (Min. $_minWholesaleQty kg)'
+                            : 'RETAIL',
+                        quantity: _selectedQtyKg,
                       );
-
-                      if (!mounted) return;
-                      ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(
-                            content: Text('Pesanan ${newOrder.id} berhasil dibuat.'),
-                            backgroundColor: const Color(0xFF03AC0E),
-                            behavior: SnackBarBehavior.floating,
-                            action: SnackBarAction(
-                              label: 'Lacak Logistik',
-                              textColor: Colors.white,
-                              onPressed: () {
-                                Navigator.push(
-                                  context,
-                                  MaterialPageRoute(
-                                    builder: (_) => OrderTrackingScreen(orderId: newOrder.id),
-                                  ),
-                                );
-                              },
-                            ),
-                          ),
-                        );
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => CheckoutScreen(cartItems: [item]),
+                        ),
+                      );
                     },
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFF03AC0E),
+                      backgroundColor: AppColors.primary,
                       foregroundColor: Colors.white,
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(12),
                       ),
                     ),
                     child: Text(
-                      'Lanjut ke Pembayaran',
-                      style: GoogleFonts.inter(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w700,
-                      ),
+                      _isPartaiActive
+                          ? 'Lanjut Checkout Partai (${_formatRupiah(_activeUnitPrice * _selectedQtyKg)})'
+                          : 'Lanjut ke Checkout (${_formatRupiah(_activeUnitPrice * _selectedQtyKg)})',
+                      style: GoogleFonts.inter(fontWeight: FontWeight.w700),
                     ),
                   ),
                 ),
@@ -363,10 +441,11 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
   @override
   Widget build(BuildContext context) {
     final title = _data['title']?.toString() ?? 'Tomat Merah Segar Organik (Petik Subuh Lembang)';
-    final rawPrice = _data['price_per_kg'] ?? _data['price'] ?? 12000;
-    final priceStr = _formatRupiah(rawPrice);
-    final num numericPrice = num.tryParse(rawPrice.toString()) ?? 12000;
-    final strikethroughPriceStr = _formatRupiah((numericPrice * 1.25).round());
+    final priceStr = _formatRupiah(_activeUnitPrice);
+    final strikethroughPriceStr =
+        (_isPartaiActive || _discountPrice != null)
+            ? _formatRupiah(_basePrice)
+            : '';
     final unit = _data['unit_name']?.toString() ?? _data['unit']?.toString() ?? '/kg';
     final location = _data['village_name']?.toString() ?? _data['location']?.toString() ?? 'Lembang, Bandung Barat';
     final poktan = _data['poktan_name']?.toString() ??
@@ -680,7 +759,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
 
   Widget _buildFreshnessStripBanner() {
     return Container(
-      color: const Color(0xFF03AC0E),
+      color: AppColors.primary,
       padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
       child: Row(
         children: [
@@ -779,30 +858,138 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                   color: const Color(0xFF64748B),
                 ),
               ),
-              const SizedBox(width: 8),
-              Text(
-                strikethroughPriceStr,
-                style: GoogleFonts.inter(
-                  fontSize: 12,
-                  decoration: TextDecoration.lineThrough,
-                  color: const Color(0xFF94A3B8),
-                ),
-              ),
-              const SizedBox(width: 6),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1.5),
-                decoration: BoxDecoration(
-                  color: const Color(0xFFFFE4E6),
-                  borderRadius: BorderRadius.circular(4),
-                ),
-                child: Text(
-                  '-20%',
+              if (strikethroughPriceStr.isNotEmpty) ...[
+                const SizedBox(width: 8),
+                Text(
+                  strikethroughPriceStr,
                   style: GoogleFonts.inter(
-                    fontSize: 9.5,
-                    fontWeight: FontWeight.w800,
-                    color: const Color(0xFFE11D48),
+                    fontSize: 12,
+                    decoration: TextDecoration.lineThrough,
+                    color: const Color(0xFF94A3B8),
                   ),
                 ),
+                const SizedBox(width: 6),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1.5),
+                  decoration: BoxDecoration(
+                    color: _isPartaiActive
+                        ? AppColors.surfaceMint
+                        : const Color(0xFFFFE4E6),
+                    borderRadius: BorderRadius.circular(4),
+                  ),
+                  child: Text(
+                    _isPartaiActive
+                        ? 'PARTAI B2B'
+                        : '-${_discountPct.toStringAsFixed(0)}%',
+                    style: GoogleFonts.inter(
+                      fontSize: 9.5,
+                      fontWeight: FontWeight.w800,
+                      color: _isPartaiActive
+                          ? AppColors.primary
+                          : const Color(0xFFE11D48),
+                    ),
+                  ),
+                ),
+              ],
+            ],
+          ),
+          if (_isWholesaleEnabled) ...[
+            const SizedBox(height: 8),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+              decoration: BoxDecoration(
+                color: _isPartaiActive ? AppColors.surfaceSoft : AppColors.warningSoft,
+                borderRadius: BorderRadius.circular(10),
+                border: Border.all(
+                  color: _isPartaiActive
+                      ? AppColors.surfaceSoftBorder
+                      : AppColors.accent.withValues(alpha: 0.45),
+                ),
+              ),
+              child: Row(
+                children: [
+                  Icon(
+                    _isPartaiActive ? LucideIcons.checkCircle2 : LucideIcons.layers,
+                    size: 16,
+                    color: _isPartaiActive ? AppColors.primary : AppColors.warning,
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      _isPartaiActive
+                          ? 'Mode Partai (B2B) Aktif! Anda mendapat harga grosir ${_formatRupiah(_wholesalePrice)}/kg (Min. $_minWholesaleQty kg).'
+                          : 'Beli min. $_minWholesaleQty kg untuk Harga Partai ${_formatRupiah(_wholesalePrice)}/kg.',
+                      style: GoogleFonts.inter(
+                        fontSize: 11,
+                        fontWeight: FontWeight.w700,
+                        color: AppColors.primaryDark,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+          const SizedBox(height: 10),
+          Row(
+            children: [
+              Text(
+                'Jumlah (kg):',
+                style: GoogleFonts.inter(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w700,
+                  color: AppColors.textPrimary,
+                ),
+              ),
+              const SizedBox(width: 8),
+              IconButton(
+                onPressed: _selectedQtyKg > 1 ? () => _setQty(_selectedQtyKg - 1) : null,
+                icon: const Icon(LucideIcons.minusCircle, size: 20),
+                color: AppColors.primary,
+                constraints: const BoxConstraints(),
+                padding: EdgeInsets.zero,
+              ),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 10),
+                child: Text(
+                  '$_selectedQtyKg kg',
+                  style: GoogleFonts.inter(
+                    fontSize: 13.5,
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+              ),
+              IconButton(
+                onPressed: () => _setQty(_selectedQtyKg + 1),
+                icon: const Icon(LucideIcons.plusCircle, size: 20),
+                color: AppColors.primary,
+                constraints: const BoxConstraints(),
+                padding: EdgeInsets.zero,
+              ),
+              const Spacer(),
+              Wrap(
+                spacing: 6,
+                children: [
+                  ActionChip(
+                    label: Text('1kg', style: GoogleFonts.inter(fontSize: 10)),
+                    onPressed: () => _setQty(1),
+                    visualDensity: VisualDensity.compact,
+                  ),
+                  if (_isWholesaleEnabled)
+                    ActionChip(
+                      label: Text(
+                        'Partai ${_minWholesaleQty}kg',
+                        style: GoogleFonts.inter(
+                          fontSize: 10,
+                          fontWeight: FontWeight.w700,
+                          color: AppColors.primaryDark,
+                        ),
+                      ),
+                      backgroundColor: AppColors.surfaceSoft,
+                      onPressed: () => _setQty(_minWholesaleQty),
+                      visualDensity: VisualDensity.compact,
+                    ),
+                ],
               ),
             ],
           ),
@@ -845,7 +1032,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                         Container(
                           padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                           decoration: BoxDecoration(
-                            color: const Color(0xFF03AC0E),
+                            color: AppColors.primary,
                             borderRadius: BorderRadius.circular(4),
                           ),
                           child: Row(
@@ -884,7 +1071,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                                       ? const Color(0xFFEF4444)
                                       : isLow
                                           ? const Color(0xFFF59E0B)
-                                          : const Color(0xFF03AC0E),
+                                          : AppColors.primary,
                                   width: 0.8,
                                 ),
                               ),
@@ -1064,7 +1251,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
             ),
             child: Row(
               children: [
-                const Icon(LucideIcons.truck, size: 16, color: Color(0xFF03AC0E)),
+                const Icon(LucideIcons.truck, size: 16, color: AppColors.primary),
                 const SizedBox(width: 8),
                 Expanded(
                   child: RichText(
@@ -1103,7 +1290,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                   width: 16,
                   height: 16,
                   decoration: const BoxDecoration(
-                    color: Color(0xFF03AC0E),
+                    color: AppColors.primary,
                     shape: BoxShape.circle,
                   ),
                   child: const Icon(LucideIcons.check, size: 10, color: Colors.white),
@@ -1212,7 +1399,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                   style: GoogleFonts.inter(
                     fontSize: 11.5,
                     fontWeight: FontWeight.w700,
-                    color: const Color(0xFF03AC0E),
+                    color: AppColors.primary,
                   ),
                 ),
               ),
@@ -1378,7 +1565,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                 ),
                 child: const Icon(
                   LucideIcons.store,
-                  color: Color(0xFF03AC0E),
+                  color: AppColors.primary,
                   size: 22,
                 ),
               ),
@@ -1392,7 +1579,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                         Container(
                           padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1.5),
                           decoration: BoxDecoration(
-                            color: const Color(0xFF03AC0E),
+                            color: AppColors.primary,
                             borderRadius: BorderRadius.circular(3),
                           ),
                           child: Text(
@@ -1448,7 +1635,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                   );
                 },
                 style: OutlinedButton.styleFrom(
-                  side: const BorderSide(color: Color(0xFF03AC0E)),
+                  side: const BorderSide(color: AppColors.primary),
                   padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(8),
@@ -1459,7 +1646,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                   style: GoogleFonts.inter(
                     fontSize: 11,
                     fontWeight: FontWeight.w700,
-                    color: const Color(0xFF03AC0E),
+                    color: AppColors.primary,
                   ),
                 ),
               ),
@@ -1561,7 +1748,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
               style: GoogleFonts.inter(
                 fontSize: 11.5,
                 fontWeight: FontWeight.w700,
-                color: const Color(0xFF03AC0E),
+                color: AppColors.primary,
               ),
             ),
           ),
@@ -1575,7 +1762,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
             ),
             child: Row(
               children: [
-                const Icon(LucideIcons.shieldCheck, size: 16, color: Color(0xFF03AC0E)),
+                const Icon(LucideIcons.shieldCheck, size: 16, color: AppColors.primary),
                 const SizedBox(width: 8),
                 Expanded(
                   child: RichText(
@@ -1624,7 +1811,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                   style: GoogleFonts.inter(
                     fontSize: 10.5,
                     fontWeight: FontWeight.w600,
-                    color: const Color(0xFF03AC0E),
+                    color: AppColors.primary,
                   ),
                 ),
               ),
@@ -1658,7 +1845,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
             style: GoogleFonts.inter(
               fontSize: 11.5,
               fontWeight: isGreen ? FontWeight.w700 : FontWeight.w600,
-              color: isGreen ? const Color(0xFF03AC0E) : const Color(0xFF0F172A),
+              color: isGreen ? AppColors.primary : const Color(0xFF0F172A),
             ),
           ),
         ],
@@ -1719,7 +1906,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                   style: GoogleFonts.inter(
                     fontSize: 11.5,
                     fontWeight: FontWeight.w700,
-                    color: const Color(0xFF03AC0E),
+                    color: AppColors.primary,
                   ),
                 ),
               ),
@@ -1918,7 +2105,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                           child: OutlinedButton(
                             onPressed: _handleBuyNow,
                             style: OutlinedButton.styleFrom(
-                              side: const BorderSide(color: Color(0xFF03AC0E), width: 1.2),
+                              side: const BorderSide(color: AppColors.primary, width: 1.2),
                               shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(10),
                               ),
@@ -1932,7 +2119,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                                   style: GoogleFonts.inter(
                                     fontSize: 12,
                                     fontWeight: FontWeight.w700,
-                                    color: const Color(0xFF03AC0E),
+                                    color: AppColors.primary,
                                   ),
                                 ),
                                 Text(
@@ -1954,7 +2141,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                           child: ElevatedButton(
                             onPressed: _handleAddToCart,
                             style: ElevatedButton.styleFrom(
-                              backgroundColor: const Color(0xFF03AC0E),
+                              backgroundColor: AppColors.primary,
                               foregroundColor: Colors.white,
                               elevation: 1,
                               shape: RoundedRectangleBorder(

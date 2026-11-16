@@ -8,6 +8,7 @@ import '../../core/theme/app_colors.dart';
 import '../../core/widgets/lapaktani_logo.dart';
 import '../../core/widgets/lapaktani_text_field.dart';
 import 'register_screen.dart';
+import 'store_registration_screen.dart';
 import '../navigation/role_based_app_shell.dart';
 import 'auth_repository.dart';
 
@@ -86,6 +87,40 @@ class _LoginScreenState extends State<LoginScreen> {
     } finally {
       if (mounted) setState(() => _isLoading = false);
     }
+  }
+
+  void _fillDemoCredentials(String email, String password) {
+    _emailController.text = email;
+    _passwordController.text = password;
+    _handleEmailLogin();
+  }
+
+  Widget _buildDemoRoleChip(
+    String label,
+    String email,
+    String password,
+    Color color,
+  ) {
+    return InkWell(
+      onTap: _isLoading ? null : () => _fillDemoCredentials(email, password),
+      borderRadius: BorderRadius.circular(10),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
+        decoration: BoxDecoration(
+          color: color.withValues(alpha: 0.08),
+          borderRadius: BorderRadius.circular(10),
+          border: Border.all(color: color.withValues(alpha: 0.3)),
+        ),
+        child: Text(
+          label,
+          style: TextStyle(
+            fontSize: 11.5,
+            fontWeight: FontWeight.w700,
+            color: color,
+          ),
+        ),
+      ),
+    );
   }
 
   Future<void> _handleGoogleLogin() async {
@@ -357,7 +392,62 @@ class _LoginScreenState extends State<LoginScreen> {
                                 ),
                               ),
                             ),
-                            const SizedBox(height: 22),
+                            const SizedBox(height: 18),
+                            Container(
+                              padding: const EdgeInsets.all(12),
+                              decoration: BoxDecoration(
+                                color: AppColors.surfaceSoft,
+                                borderRadius: BorderRadius.circular(14),
+                                border: Border.all(
+                                  color: AppColors.surfaceSoftBorder,
+                                ),
+                              ),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  const Text(
+                                    'Masuk Cepat Demo Multi-Role (1 APK)',
+                                    style: TextStyle(
+                                      fontSize: 11.5,
+                                      fontWeight: FontWeight.w800,
+                                      color: AppColors.primaryDark,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 8),
+                                  Wrap(
+                                    spacing: 6,
+                                    runSpacing: 6,
+                                    children: [
+                                      _buildDemoRoleChip(
+                                        'Petani',
+                                        'supardi@petani.lapaktani.id',
+                                        'petani123',
+                                        AppColors.primary,
+                                      ),
+                                      _buildDemoRoleChip(
+                                        'Penyuluh BPP',
+                                        'penyuluh@lapaktani.id',
+                                        'penyuluh123',
+                                        AppColors.info,
+                                      ),
+                                      _buildDemoRoleChip(
+                                        'Admin Toko',
+                                        'admin@lapaktani.id',
+                                        'admin123',
+                                        AppColors.warning,
+                                      ),
+                                      _buildDemoRoleChip(
+                                        'Pembeli',
+                                        'pembeli@lapaktani.id',
+                                        'pembeli123',
+                                        const Color(0xFF0D9488),
+                                      ),
+                                    ],
+                                  ),
+                                ],
+                              ),
+                            ),
+                            const SizedBox(height: 18),
                             Row(
                               children: [
                                 const Expanded(
@@ -539,6 +629,29 @@ class _LoginScreenState extends State<LoginScreen> {
                           ),
                         ),
                       ],
+                    ),
+                    const SizedBox(height: 10),
+                    TextButton.icon(
+                      onPressed: () {
+                        Navigator.of(context).push(
+                          MaterialPageRoute(
+                            builder: (_) => const StoreRegistrationScreen(),
+                          ),
+                        );
+                      },
+                      icon: const Icon(
+                        LucideIcons.store,
+                        size: 16,
+                        color: AppColors.primaryDark,
+                      ),
+                      label: const Text(
+                        'Buka Toko Desa (2 Tahap / Tangguhkan Draft)',
+                        style: TextStyle(
+                          fontSize: 12.5,
+                          fontWeight: FontWeight.w700,
+                          color: AppColors.primaryDark,
+                        ),
+                      ),
                     ),
                   ],
                 ),

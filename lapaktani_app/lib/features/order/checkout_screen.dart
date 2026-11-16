@@ -1,8 +1,23 @@
+/**
+ * ============================================================================
+ * LAPAKTANI MOBILE APP - [US-14, US-16] CHECKOUT & PAYMENT INSTRUCTION FLOW
+ * ============================================================================
+ * Module       : Features / Orders & Checkout Flow
+ * User Stories : [US-14] Checkout Pemesanan Komoditas & Invoice Snapshot
+ *                [US-16] Pemilihan Metode Pembayaran & Pelacakan Logistik
+ * Author       : Moch. Ilham Abdul Aziz (MochIlham05 - 3125522014)
+ * Architecture : Flutter Interactive Checkout, Multi-Channel Payment Integration
+ * ============================================================================
+ */
+
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 import '../../core/services/api_service.dart';
+import '../../core/theme/app_colors.dart';
 import '../cart/cart_screen.dart';
+import '../chat/screens/chat_room_screen.dart';
+import '../chat/services/chat_service.dart';
 import 'order_success_screen.dart';
 import 'payment_method_selection_screen.dart';
 import 'payment_instruction_screen.dart';
@@ -22,8 +37,8 @@ class CheckoutScreen extends StatefulWidget {
 }
 
 class _CheckoutScreenState extends State<CheckoutScreen> {
-  static const Color _tokopediaGreen = Color(0xFF03AC0E);
-  static const Color _bgCanvas = Color(0xFFF4F5F7);
+  static const Color _tokopediaGreen = AppColors.primary;
+  static const Color _bgCanvas = AppColors.background;
 
   String _recipientName = 'Budi Santoso';
   String _recipientPhone = '081234567890';
@@ -36,8 +51,22 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
   bool _useCoins = true;
   bool _isSubmitting = false;
   late bool _protectionActive;
+  bool _wholesaleAgreementAccepted = true;
+  final TextEditingController _wholesaleNoteCtrl = TextEditingController(
+    text: 'Pembeli & Admin Toko menyepakati kuantitas Partai (B2B), harga grosir per kg, serta protokol kirim segar.',
+  );
 
   late List<CartItemModel> _items;
+
+  bool get _isPartaiCheckout => _items.any(
+        (i) => i.badgeText.toUpperCase().contains('PARTAI') || i.quantity >= 25,
+      );
+
+  @override
+  void dispose() {
+    _wholesaleNoteCtrl.dispose();
+    super.dispose();
+  }
 
   @override
   void initState() {
@@ -215,12 +244,25 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
       }).toList();
 
       // Backend Checkout API with MySQL ACID transaction & payment gateway support
+      if (_isPartaiCheckout && !_wholesaleAgreementAccepted) {
+        setState(() => _isSubmitting = false);
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Harap setujui Nota Kesepakatan Pembelian Partai (B2B).'),
+            backgroundColor: AppColors.error,
+          ),
+        );
+        return;
+      }
+
       final backendResult = await ApiService().createCheckoutOrder(
         items: checkoutPayload,
         deliveryAddress: _deliveryAddress,
         shippingFee: _shippingCost,
         courierService: _selectedLogisticsIndex == 0 ? 'Kurir Pendingin Mitra' : 'Kargo Agribisnis Dingin',
         paymentMethod: _selectedPaymentCode,
+        wholesaleAgreementAccepted: _isPartaiCheckout ? _wholesaleAgreementAccepted : null,
+        wholesaleAgreementNote: _isPartaiCheckout ? _wholesaleNoteCtrl.text.trim() : null,
       );
 
       if (backendResult == null) {
@@ -230,8 +272,12 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
       // Rely exclusively on server response data
       final serverOrderId = (backendResult['order_id'] ?? backendResult['id'] ?? '').toString();
       final serverInvoiceNumber = (backendResult['invoice_number'] ?? '').toString();
-      final serverTotalAmount = (backendResult['total_amount'] as num?)?.toInt() ?? _totalBilling;
-      final serverShippingFee = (backendResult['shipping_fee'] as num?)?.toInt() ?? _shippingCost;
+      final serverTotalAmount =
+          double.tryParse('${backendResult['total_amount'] ?? ''}')?.round() ??
+              _totalBilling;
+      final serverShippingFee =
+          double.tryParse('${backendResult['shipping_fee'] ?? ''}')?.round() ??
+              _shippingCost;
       final serverDeliveryAddress = (backendResult['delivery_address'] ?? _deliveryAddress).toString();
       final serverPaymentMethod = (backendResult['payment_method'] ?? _selectedPaymentMethod).toString();
       final serverPaymentStatus = (backendResult['payment_status'] ?? '').toString().toUpperCase();
@@ -777,17 +823,57 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                   ),
                 ],
               ),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
-                decoration: BoxDecoration(
-                  color: const Color(0xFFECFDF5),
-                  borderRadius: BorderRadius.circular(10),
-                  border: Border.all(color: const Color(0xFFA7F3D0)),
-                ),
-                child: Text(
-                  'Petani Langsung',
-                  style: GoogleFonts.inter(fontSize: 9.5, fontWeight: FontWeight.w700, color: const Color(0xFF065F46)),
-                ),
+              Row(
+                children: [
+                  OutlinedButton.icon(
+                    onPressed: () async {
+                      try {
+                        final firstPid =
+                            _items.isNotEmpty ? _items.first.productId : 'CHECKOUT';
+                        final conv = await ChatService().openDirectConversation(
+                          targetRole: 'admin',
+                          orderId: 'PRE-$firstPid',
+                          title: 'Chat Penjual • $_recipientName',
+                          initialMessage:
+                              'Halo Admin Toko, saya ingin menanyakan detail pesanan sebelum pembayaran.',
+                        );
+                        if (!mounted) return;
+                        await Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => ChatRoomScreen(conversation: conv),
+                          ),
+                        );
+                      } catch (e) {
+                        if (!mounted) return;
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text('Gagal membuka chat penjual: $e'),
+                            backgroundColor: AppColors.error,
+                          ),
+                        );
+                      }
+                    },
+                    icon: const Icon(LucideIcons.messageSquare, size: 12),
+                    label: Text(
+                      'Chat Penjual',
+                      style: GoogleFonts.inter(
+                        fontSize: 10,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: _tokopediaGreen,
+                      side: const BorderSide(color: Color(0xFFA7F3D0)),
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                      minimumSize: Size.zero,
+                      tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                    ),
+                  ),
+                ],
               ),
             ],
           ),
@@ -1550,6 +1636,67 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
           ],
           const SizedBox(height: 6),
           _buildBreakdownRow('Biaya Jasa Aplikasi', _formatRupiah(_serviceFee)),
+          if (_isPartaiCheckout) ...[
+            const SizedBox(height: 12),
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: AppColors.surfaceSoft,
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: AppColors.surfaceSoftBorder),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      const Icon(LucideIcons.fileCheck2, size: 16, color: AppColors.primary),
+                      const SizedBox(width: 6),
+                      Expanded(
+                        child: Text(
+                          'Nota Kesepakatan Pembelian Partai (B2B)',
+                          style: GoogleFonts.inter(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w800,
+                            color: AppColors.primaryDark,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 8),
+                  TextField(
+                    controller: _wholesaleNoteCtrl,
+                    maxLines: 2,
+                    style: GoogleFonts.inter(fontSize: 11.5),
+                    decoration: const InputDecoration(
+                      isDense: true,
+                      filled: true,
+                      fillColor: Colors.white,
+                      border: OutlineInputBorder(),
+                      labelText: 'Catatan Kesepakatan Partai',
+                    ),
+                  ),
+                  CheckboxListTile(
+                    contentPadding: EdgeInsets.zero,
+                    dense: true,
+                    activeColor: AppColors.primary,
+                    value: _wholesaleAgreementAccepted,
+                    onChanged: (v) => setState(
+                      () => _wholesaleAgreementAccepted = v ?? true,
+                    ),
+                    title: Text(
+                      'Saya menyetujui ketentuan transaksi Partai (B2B) dengan harga grosir penjual.',
+                      style: GoogleFonts.inter(
+                        fontSize: 11,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
           const SizedBox(height: 10),
           const Divider(height: 1, color: Color(0xFFE2E8F0)),
           const SizedBox(height: 10),

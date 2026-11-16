@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:lucide_icons/lucide_icons.dart';
+import '../../core/theme/app_colors.dart';
 import '../product/my_products_screen.dart';
 import '../poktan/screens/poktan_dashboard_screen.dart';
 import '../poktan/screens/farmer_tasks_screen.dart';
@@ -118,7 +119,7 @@ class _SellerMainNavScreenState extends State<SellerMainNavScreen> {
     String? badgeText,
   }) {
     final bool isSelected = _currentIndex == index;
-    final Color itemColor = isSelected ? const Color(0xFF03AC0E) : const Color(0xFF64748B);
+    final Color itemColor = isSelected ? AppColors.primary : AppColors.textMuted;
 
     return Expanded(
       child: Material(

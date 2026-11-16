@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:lucide_icons/lucide_icons.dart';
+import '../../../core/theme/app_colors.dart';
 
 enum PenyuluhBadgeSize {
   small,
@@ -43,16 +44,16 @@ class PenyuluhOfficialBadge extends StatelessWidget {
                       width: 40,
                       height: 40,
                       decoration: BoxDecoration(
-                        color: const Color(0xFFE8F5E9),
+                        color: AppColors.surfaceSoft,
                         borderRadius: BorderRadius.circular(10),
                         border: Border.all(
-                          color: const Color(0xFFA5D6A7),
+                          color: AppColors.surfaceSoftBorder,
                           width: 1,
                         ),
                       ),
                       child: const Icon(
                         LucideIcons.badgeCheck,
-                        color: Color(0xFF15803D),
+                        color: AppColors.primary,
                         size: 22,
                       ),
                     ),
@@ -75,7 +76,7 @@ class PenyuluhOfficialBadge extends StatelessWidget {
                             style: GoogleFonts.inter(
                               fontSize: 12,
                               fontWeight: FontWeight.w600,
-                              color: const Color(0xFF15803D),
+                              color: AppColors.primary,
                             ),
                           ),
                         ],
@@ -87,9 +88,9 @@ class PenyuluhOfficialBadge extends StatelessWidget {
                 Container(
                   padding: const EdgeInsets.all(12),
                   decoration: BoxDecoration(
-                    color: const Color(0xFFF8FAFC),
+                    color: AppColors.background,
                     borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: const Color(0xFFE2E8F0)),
+                    border: Border.all(color: AppColors.outline),
                   ),
                   child: Column(
                     children: [
@@ -98,13 +99,13 @@ class PenyuluhOfficialBadge extends StatelessWidget {
                         label: 'Instansi:',
                         value: bppAffiliation ?? 'Balai Penyuluhan Pertanian (BPP)',
                       ),
-                      const Divider(height: 16, color: Color(0xFFE2E8F0)),
+                      const Divider(height: 16, color: AppColors.outline),
                       _buildInfoRow(
                         icon: LucideIcons.shieldCheck,
                         label: 'Validasi:',
                         value: 'Kementerian Pertanian RI',
                       ),
-                      const Divider(height: 16, color: Color(0xFFE2E8F0)),
+                      const Divider(height: 16, color: AppColors.outline),
                       _buildInfoRow(
                         icon: LucideIcons.bookOpen,
                         label: 'Wewenang:',
@@ -118,7 +119,7 @@ class PenyuluhOfficialBadge extends StatelessWidget {
                   'Badge ini menandakan materi edukasi disusun oleh penyuluh pertanian bersertifikasi resmi yang bertugas mendampingi petani.',
                   style: GoogleFonts.inter(
                     fontSize: 11.5,
-                    color: const Color(0xFF475569),
+                    color: AppColors.textMuted,
                     height: 1.45,
                   ),
                 ),
@@ -128,11 +129,11 @@ class PenyuluhOfficialBadge extends StatelessWidget {
                   child: ElevatedButton(
                     onPressed: () => Navigator.of(ctx).pop(),
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFF03AC0E),
+                      backgroundColor: AppColors.primary,
                       foregroundColor: Colors.white,
                       padding: const EdgeInsets.symmetric(vertical: 12),
                       shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(10),
+                        borderRadius: BorderRadius.circular(12),
                       ),
                       elevation: 0,
                     ),
@@ -219,10 +220,10 @@ class PenyuluhOfficialBadge extends StatelessWidget {
     final badgeContent = Container(
       padding: padding,
       decoration: BoxDecoration(
-        color: const Color(0xFFE8F5E9),
+        color: AppColors.surfaceSoft,
         borderRadius: BorderRadius.circular(borderRadius),
         border: Border.all(
-          color: const Color(0xFFA5D6A7),
+          color: AppColors.surfaceSoftBorder,
           width: 1,
         ),
       ),
@@ -231,7 +232,7 @@ class PenyuluhOfficialBadge extends StatelessWidget {
         children: [
           Icon(
             LucideIcons.badgeCheck,
-            color: const Color(0xFF15803D),
+            color: AppColors.primary,
             size: iconSize,
           ),
           const SizedBox(width: 4),
@@ -242,7 +243,7 @@ class PenyuluhOfficialBadge extends StatelessWidget {
             style: GoogleFonts.inter(
               fontSize: fontSize,
               fontWeight: FontWeight.w700,
-              color: const Color(0xFF14532D),
+              color: AppColors.primaryDark,
               letterSpacing: 0.1,
             ),
           ),

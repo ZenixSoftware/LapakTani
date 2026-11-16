@@ -3,7 +3,11 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 import '../../core/services/api_service.dart';
 import '../../core/services/user_session.dart';
+import '../../core/theme/app_colors.dart';
 import '../auth/auth_repository.dart';
+import '../chat/screens/chat_list_screen.dart';
+import '../chat/screens/chat_room_screen.dart';
+import '../chat/services/chat_service.dart';
 import '../navigation/role_based_app_shell.dart';
 import '../orders/models/order_model.dart';
 import '../orders/models/notification_model.dart';
@@ -138,7 +142,7 @@ class _SellerDashboardScreenState extends State<SellerDashboardScreen> {
                           style: GoogleFonts.plusJakartaSans(
                             fontSize: 11,
                             fontWeight: FontWeight.w700,
-                            color: const Color(0xFF03AC0E),
+                            color: AppColors.primary,
                           ),
                         ),
                       ),
@@ -255,7 +259,7 @@ class _SellerDashboardScreenState extends State<SellerDashboardScreen> {
                                                   width: 7,
                                                   height: 7,
                                                   decoration: const BoxDecoration(
-                                                    color: Color(0xFF03AC0E),
+                                                    color: AppColors.primary,
                                                     shape: BoxShape.circle,
                                                   ),
                                                 ),
@@ -325,7 +329,7 @@ class _SellerDashboardScreenState extends State<SellerDashboardScreen> {
                                         }
                                       },
                                       style: ElevatedButton.styleFrom(
-                                        backgroundColor: const Color(0xFF03AC0E),
+                                        backgroundColor: AppColors.primary,
                                         foregroundColor: Colors.white,
                                         elevation: 0,
                                         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
@@ -520,6 +524,16 @@ class _SellerDashboardScreenState extends State<SellerDashboardScreen> {
             },
           ),
           IconButton(
+            icon: const Icon(LucideIcons.messageSquare, color: AppColors.primary, size: 20),
+            tooltip: 'Pesan & DM Pembeli',
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => const ChatListScreen()),
+              );
+            },
+          ),
+          IconButton(
             icon: const Icon(LucideIcons.settings, color: Color(0xFF64748B), size: 20),
             onPressed: () {
               ScaffoldMessenger.of(context).showSnackBar(
@@ -632,7 +646,7 @@ class _SellerDashboardScreenState extends State<SellerDashboardScreen> {
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1),
                       decoration: BoxDecoration(
-                        color: const Color(0xFF03AC0E),
+                        color: AppColors.primary,
                         borderRadius: BorderRadius.circular(10),
                       ),
                       child: Text(
@@ -671,7 +685,7 @@ class _SellerDashboardScreenState extends State<SellerDashboardScreen> {
                 child: Switch(
                   value: _isStoreOpen,
                   activeThumbColor: Colors.white,
-                  activeTrackColor: const Color(0xFF03AC0E),
+                  activeTrackColor: AppColors.primary,
                   inactiveThumbColor: Colors.white,
                   inactiveTrackColor: const Color(0xFFCBD5E1),
                   onChanged: (val) {
@@ -744,7 +758,7 @@ class _SellerDashboardScreenState extends State<SellerDashboardScreen> {
                 child: Container(
                   padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
                   decoration: BoxDecoration(
-                    color: const Color(0xFF03AC0E),
+                    color: AppColors.primary,
                     borderRadius: BorderRadius.circular(20),
                   ),
                   child: Row(
@@ -1071,13 +1085,13 @@ class _SellerDashboardScreenState extends State<SellerDashboardScreen> {
                           messenger.showSnackBar(
                             SnackBar(
                               content: Text('Pesanan ${order.id} siap dijemput kurir logistik.'),
-                              backgroundColor: const Color(0xFF03AC0E),
+                              backgroundColor: AppColors.primary,
                               behavior: SnackBarBehavior.floating,
                             ),
                           );
                         },
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFF03AC0E),
+                    backgroundColor: AppColors.primary,
                     foregroundColor: Colors.white,
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
                   ),
@@ -1170,7 +1184,7 @@ class _SellerDashboardScreenState extends State<SellerDashboardScreen> {
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
                         Text('Nomor Resi', style: GoogleFonts.plusJakartaSans(fontSize: 11, color: const Color(0xFF64748B))),
-                        Text(order.trackingNumber, style: GoogleFonts.plusJakartaSans(fontSize: 11.5, fontWeight: FontWeight.w700, color: const Color(0xFF03AC0E))),
+                        Text(order.trackingNumber, style: GoogleFonts.plusJakartaSans(fontSize: 11.5, fontWeight: FontWeight.w700, color: AppColors.primary)),
                       ],
                     ),
                   ],
@@ -1217,14 +1231,14 @@ class _SellerDashboardScreenState extends State<SellerDashboardScreen> {
                   ScaffoldMessenger.of(context).showSnackBar(
                     SnackBar(
                       content: Text('Pesanan ${order.id} telah diserahkan ke kurir logistik.'),
-                      backgroundColor: const Color(0xFF03AC0E),
+                      backgroundColor: AppColors.primary,
                       behavior: SnackBarBehavior.floating,
                     ),
                   );
                 }
               },
               style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFF03AC0E),
+                backgroundColor: AppColors.primary,
                 foregroundColor: Colors.white,
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
               ),
@@ -1239,7 +1253,32 @@ class _SellerDashboardScreenState extends State<SellerDashboardScreen> {
     );
   }
 
-  void _showOrderChatModal(OrderModel order) {
+  Future<void> _showOrderChatModal(OrderModel order) async {
+    try {
+      final conv = await ChatService().openDirectConversation(
+        targetUserId: order.buyerId,
+        targetRole: 'pembeli',
+        targetName: order.buyerName,
+        orderId: order.id,
+        title: 'Pesanan #${order.id} • ${order.buyerName}',
+        initialMessage:
+            'Halo ${order.buyerName}, Admin Poktan siap membantu terkait pesanan #${order.id}.',
+        messageType: 'ORDER_CARD',
+        metadata: {
+          'order_id': order.id,
+          'total_amount': order.totalPrice + order.shippingFee,
+        },
+      );
+      if (!mounted) return;
+      Navigator.push(
+        context,
+        MaterialPageRoute(builder: (_) => ChatRoomScreen(conversation: conv)),
+      );
+      return;
+    } catch (_) {
+      if (!mounted) return;
+    }
+
     showModalBottomSheet(
       context: context,
       backgroundColor: Colors.white,
@@ -1291,21 +1330,23 @@ class _SellerDashboardScreenState extends State<SellerDashboardScreen> {
                       color: Color(0xFFE8F8EC),
                       shape: BoxShape.circle,
                     ),
-                    child: const Icon(LucideIcons.phone, color: Color(0xFF03AC0E), size: 20),
+                    child: const Icon(LucideIcons.phone, color: AppColors.primary, size: 20),
                   ),
                   title: Text(order.buyerPhone, style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w700, fontSize: 13.5)),
                   subtitle: Text('Telepon Pembeli', style: GoogleFonts.plusJakartaSans(fontSize: 11, color: const Color(0xFF64748B))),
                   trailing: OutlinedButton(
                     onPressed: () {
                       Navigator.pop(ctx);
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
-                          content: Text('Menghubungkan telepon ke ${order.buyerName}...'),
-                          backgroundColor: const Color(0xFF03AC0E),
-                        ),
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (_) => const ChatListScreen()),
                       );
                     },
-                    child: const Text('Hubungi'),
+                    style: OutlinedButton.styleFrom(
+                      minimumSize: const Size(0, 36),
+                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                    ),
+                    child: const Text('Buka Pesan'),
                   ),
                 ),
               ],
@@ -1670,7 +1711,7 @@ class _SellerDashboardScreenState extends State<SellerDashboardScreen> {
                             width: 6,
                             height: 6,
                             decoration: const BoxDecoration(
-                              color: Color(0xFF03AC0E),
+                              color: AppColors.primary,
                               shape: BoxShape.circle,
                             ),
                           ),
@@ -1742,48 +1783,61 @@ class _SellerDashboardScreenState extends State<SellerDashboardScreen> {
                 ),
               ),
               const SizedBox(width: 8),
-              Row(
-                children: [
-                  OutlinedButton(
-                    onPressed: () => _showOrderChatModal(order),
-                    style: OutlinedButton.styleFrom(
-                      side: const BorderSide(color: Color(0xFFE2E8F0)),
-                      backgroundColor: const Color(0xFFF8F9FF),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-                    ),
-                    child: Text(
-                      'Chat',
-                      style: GoogleFonts.plusJakartaSans(
-                        fontSize: 12,
-                        fontWeight: FontWeight.w700,
-                        color: const Color(0xFF334155),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 8),
-                  ElevatedButton(
-                    onPressed: onPrimaryPressed,
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFF03AC0E),
-                      foregroundColor: Colors.white,
-                      elevation: 1,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-                    ),
-                    child: Text(
-                      primaryText,
-                      style: GoogleFonts.plusJakartaSans(
-                        fontSize: 12,
-                        fontWeight: FontWeight.w700,
+              Flexible(
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Flexible(
+                      child: OutlinedButton(
+                        onPressed: () => _showOrderChatModal(order),
+                        style: OutlinedButton.styleFrom(
+                          side: const BorderSide(color: Color(0xFFE2E8F0)),
+                          backgroundColor: const Color(0xFFF8F9FF),
+                          minimumSize: const Size(0, 38),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                        ),
+                        child: Text(
+                          'Chat',
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: GoogleFonts.plusJakartaSans(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w700,
+                            color: const Color(0xFF334155),
+                          ),
+                        ),
                       ),
                     ),
-                  ),
-                ],
+                    const SizedBox(width: 8),
+                    Flexible(
+                      child: ElevatedButton(
+                        onPressed: onPrimaryPressed,
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: AppColors.primary,
+                          foregroundColor: Colors.white,
+                          elevation: 1,
+                          minimumSize: const Size(0, 38),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                        ),
+                        child: Text(
+                          primaryText,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: GoogleFonts.plusJakartaSans(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
               ),
             ],
           ),

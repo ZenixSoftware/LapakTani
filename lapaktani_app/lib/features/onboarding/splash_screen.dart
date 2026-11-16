@@ -1,3 +1,16 @@
+/**
+ * ============================================================================
+ * LAPAKTANI MOBILE APP - [US-03] SPLASH SCREEN ARCHITECTURE
+ * ============================================================================
+ * Module       : Presentation / Onboarding
+ * User Story   : [US-03] Splash Screen & Interactive Onboarding
+ * Author       : Moch. Ilham Abdul Aziz (MochIlham05 - 3125522014)
+ * Framework    : Flutter 3.x / Dart 3.x
+ * Description  : Initial bootstrap lifecycle verification, session auth inspection,
+ *                and animated gateway directing users to Onboarding or Shell.
+ * ============================================================================
+ */
+
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';

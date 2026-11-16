@@ -166,28 +166,22 @@ class CommunityRepository {
       'read_duration_minutes': article.readDurationMinutes,
     };
 
-    final response = await ApiService.post('/education/articles', payload);
+    try {
+      final response = await ApiService.post('/education/articles', payload);
 
-    if (response.statusCode == 200 || response.statusCode == 201) {
-      final Map<String, dynamic> body =
-          jsonDecode(response.body) as Map<String, dynamic>;
-      if (body['success'] == true && body['data'] is Map<String, dynamic>) {
-        final createdArticle =
-            EducationArticle.fromJson(body['data'] as Map<String, dynamic>);
-        _memoryArticles.insert(0, createdArticle);
-        await _persistArticles();
-        return createdArticle;
-      }
-    } else {
-      String errorMsg = 'Gagal menyimpan artikel ke server.';
-      try {
+      if (response.statusCode == 200 || response.statusCode == 201) {
         final Map<String, dynamic> body =
             jsonDecode(response.body) as Map<String, dynamic>;
-        if (body['message'] != null) {
-          errorMsg = body['message'].toString();
+        if (body['success'] == true && body['data'] is Map<String, dynamic>) {
+          final createdArticle =
+              EducationArticle.fromJson(body['data'] as Map<String, dynamic>);
+          _memoryArticles.insert(0, createdArticle);
+          await _persistArticles();
+          return createdArticle;
         }
-      } catch (_) {}
-      throw Exception(errorMsg);
+      }
+    } catch (_) {
+      // Offline fallback: continue to local persistence below
     }
 
     _memoryArticles.insert(0, article);
@@ -196,12 +190,67 @@ class CommunityRepository {
   }
 
   Future<void> toggleLike(String articleId) async {
+    await toggleArticleLike(articleId, true);
+  }
+
+  Future<int> toggleArticleLike(String articleId, bool isLiked) async {
     await _ensureInitialized();
     final index = _memoryArticles.indexWhere((a) => a.id == articleId);
     if (index >= 0) {
       final existing = _memoryArticles[index];
+      final newCount = isLiked
+          ? existing.likesCount + 1
+          : (existing.likesCount > 0 ? existing.likesCount - 1 : 0);
+      _memoryArticles[index] = existing.copyWith(likesCount: newCount);
+      await _persistArticles();
+      return newCount;
+    }
+    return 0;
+  }
+
+  static const String _commentsStoragePrefix = 'local_discussion_comments_v1_';
+  final Map<String, List<Map<String, dynamic>>> _memoryComments = {};
+
+  Future<List<Map<String, dynamic>>> getComments(String articleId) async {
+    await _ensureInitialized();
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final raw = prefs.getString('$_commentsStoragePrefix$articleId');
+      if (raw != null && raw.isNotEmpty) {
+        final List<dynamic> list = jsonDecode(raw) as List<dynamic>;
+        final result = list.map((e) => Map<String, dynamic>.from(e as Map)).toList();
+        _memoryComments[articleId] = result;
+        return result;
+      }
+    } catch (_) {}
+
+    if (_memoryComments.containsKey(articleId)) {
+      return List<Map<String, dynamic>>.from(_memoryComments[articleId]!);
+    }
+
+    return [];
+  }
+
+  Future<void> addComment(String articleId, Map<String, dynamic> comment) async {
+    await _ensureInitialized();
+    final list = await getComments(articleId);
+    list.add(comment);
+    _memoryComments[articleId] = list;
+
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString(
+        '$_commentsStoragePrefix$articleId',
+        jsonEncode(list),
+      );
+    } catch (_) {}
+
+    // Update comments_count in article
+    final index = _memoryArticles.indexWhere((a) => a.id == articleId);
+    if (index >= 0) {
+      final existing = _memoryArticles[index];
       _memoryArticles[index] = existing.copyWith(
-        likesCount: existing.likesCount + 1,
+        commentsCount: existing.commentsCount + 1,
       );
       await _persistArticles();
     }

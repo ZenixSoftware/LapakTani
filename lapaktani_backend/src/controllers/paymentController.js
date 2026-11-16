@@ -1,6 +1,21 @@
+/**
+ * ============================================================================
+ * LAPAKTANI BACKEND - [US-14, US-15] MIDTRANS PAYMENT GATEWAY & WEBHOOK
+ * ============================================================================
+ * Module       : Controllers / Payment Gateway & Webhook Reconciliation
+ * User Stories : [US-14] Integrasi Midtrans Core API (VA & QRIS Payment)
+ *                [US-15] Webhook Notification & Status Reconciliation (Atomic)
+ * Author       : Moch. Ilham Abdul Aziz (MochIlham05 - 3125522014)
+ * Architecture : SHA-512 Signature Hash Verification, Idempotency Guard,
+ *                Automatic Transaction Status Transition (settlement, expire, cancel)
+ * ============================================================================
+ */
+
 const crypto = require('crypto');
 const midtransClient = require('midtrans-client');
 const pool = require('../config/db');
+const redisClient = require('../config/redis');
+const { notifyTransactionEvent } = require('../utils/notificationService');
 
 // Initialize Midtrans CoreApi Client
 const coreApi = new midtransClient.CoreApi({
@@ -168,7 +183,7 @@ const handleMidtransWebhook = async (req, res) => {
     await connection.beginTransaction();
 
     const [orderRows] = await connection.query(
-      'SELECT id, invoice_number, total_amount, payment_status, order_status FROM orders WHERE id = ? OR invoice_number = ? LIMIT 1 FOR UPDATE',
+      'SELECT id, user_id, buyer_id, invoice_number, total_amount, payment_status, order_status FROM orders WHERE id = ? OR invoice_number = ? LIMIT 1 FOR UPDATE',
       [orderId, orderId]
     );
 
@@ -253,6 +268,20 @@ const handleMidtransWebhook = async (req, res) => {
 
     await connection.commit();
     console.log(`[MIDTRANS-WEBHOOK] Order ${order.id} updated successfully: Payment=${newPaymentStatus}, Order=${newOrderStatus}`);
+
+    if (newOrderStatus === 'CANCELLED') {
+      await redisClient.delCache('lapaktani_catalog').catch(() => {});
+    }
+
+    notifyTransactionEvent({
+      eventType: newPaymentStatus === 'PAID' ? 'ORDER_PAID' : (newOrderStatus === 'CANCELLED' ? 'ORDER_CANCELLED' : 'ORDER_PAYMENT_UPDATE'),
+      orderId: order.id,
+      invoiceNumber: order.invoice_number,
+      buyerId: order.buyer_id || order.user_id || null,
+      totalAmount: order.total_amount,
+      status: newOrderStatus,
+      message: `Midtrans Callback ${order.invoice_number || order.id}: Pembayaran ${newPaymentStatus} (Status: ${newOrderStatus}).`,
+    }).catch(() => {});
 
     return res.status(200).json({
       success: true,

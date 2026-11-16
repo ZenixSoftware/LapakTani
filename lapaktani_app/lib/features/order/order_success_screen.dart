@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:lucide_icons/lucide_icons.dart';
+import '../../core/theme/app_colors.dart';
 import '../home/home_dashboard_screen.dart';
 import 'order_history_screen.dart';
 
@@ -29,9 +30,9 @@ class OrderSuccessScreen extends StatelessWidget {
     this.createdAt,
   });
 
-  static const Color _tokopediaGreen = Color(0xFF03AC0E);
-  static const Color _forestDark = Color(0xFF0F172A);
-  static const Color _bgCanvas = Color(0xFFF8F9FA);
+  static const Color _tokopediaGreen = AppColors.primary;
+  static const Color _forestDark = AppColors.textPrimary;
+  static const Color _bgCanvas = AppColors.background;
 
   String _formatRupiah(num amount) {
     return 'Rp ${amount.toInt().toString().replaceAllMapped(RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'), (m) => '${m[1]}.')}';

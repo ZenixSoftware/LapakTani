@@ -19,12 +19,15 @@ skills-lock.json
 AGENTS.md
 security_reports/
 .idea/
-.vscode/
+.vscode/*
+!.vscode/settings.json
 
 # Environment and Secrets (All Projects)
 .env
 .env.*
+lapaktani_app/.env
 !.env.example
+!lapaktani_app/.env.example
 *.env
 ngrok
 ngrok.exe
@@ -68,3 +71,22 @@ app.*.map.json
 # Runtime Uploads & Cache
 lapaktani_backend/public/uploads/
 uploads/
+
+# Academic & Personal Documents & Local Reference Temp
+*.docx
+*.doc
+*.pdf
+*31255220*
+append_evaluation*.py
+temp/
+temp_*
+temp_*.py
+_temp_*
+test_*.js
+scripts/run_flutter_dev.ps1
+
+# Database Dumps (keep migrations/*.sql tracked)
+lapaktani_backend/database/*.sql
+database/*.sql
+*dump*.sql
+*backup*.sql

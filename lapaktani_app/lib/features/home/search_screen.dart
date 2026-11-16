@@ -4,6 +4,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:lapaktani_app/core/services/api_service.dart';
+import 'package:lapaktani_app/core/theme/app_colors.dart';
 import 'package:lapaktani_app/features/product/product_detail_screen.dart';
 
 class SearchScreen extends StatefulWidget {
@@ -538,7 +539,7 @@ class _SearchScreenState extends State<SearchScreen> {
               const Icon(
                 LucideIcons.trendingUp,
                 size: 15,
-                color: Color(0xFF03AC0E),
+                color: AppColors.primary,
               ),
               const SizedBox(width: 6),
               Text(
@@ -646,7 +647,7 @@ class _SearchScreenState extends State<SearchScreen> {
           mainAxisSize: MainAxisSize.min,
           children: [
             const CircularProgressIndicator(
-              color: Color(0xFF03AC0E),
+              color: AppColors.primary,
               strokeWidth: 2.5,
             ),
             const SizedBox(height: 12),
@@ -708,7 +709,7 @@ class _SearchScreenState extends State<SearchScreen> {
                   _onSearchChanged('');
                 },
                 style: OutlinedButton.styleFrom(
-                  side: const BorderSide(color: Color(0xFF03AC0E)),
+                  side: const BorderSide(color: AppColors.primary),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(8),
                   ),
@@ -718,7 +719,7 @@ class _SearchScreenState extends State<SearchScreen> {
                   style: GoogleFonts.inter(
                     fontSize: 12,
                     fontWeight: FontWeight.w700,
-                    color: const Color(0xFF03AC0E),
+                    color: AppColors.primary,
                   ),
                 ),
               ),
@@ -914,14 +915,14 @@ class _SearchScreenState extends State<SearchScreen> {
                   ScaffoldMessenger.of(context).showSnackBar(
                     const SnackBar(
                       content: Text('Ditambahkan ke keranjang'),
-                      backgroundColor: Color(0xFF03AC0E),
+                      backgroundColor: AppColors.primary,
                       behavior: SnackBarBehavior.floating,
                       duration: Duration(seconds: 1),
                     ),
                   );
                 },
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFF03AC0E),
+                  backgroundColor: AppColors.primary,
                   foregroundColor: Colors.white,
                   elevation: 0,
                   padding: EdgeInsets.zero,

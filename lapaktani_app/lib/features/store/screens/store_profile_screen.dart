@@ -479,8 +479,12 @@ class _StoreProfileScreenState extends State<StoreProfileScreen>
       itemBuilder: (context, index) {
         final product = _retailProducts[index];
         final String title = product['title']?.toString() ?? 'Komoditas Segar';
-        final num price = (product['price_per_kg'] as num?) ?? (product['price'] as num?) ?? 0;
-        final num stock = (product['stock_kg'] as num?) ?? (product['stock'] as num?) ?? 0;
+        final double price = double.tryParse(
+                '${product['price_per_kg'] ?? product['price'] ?? ''}') ??
+            0.0;
+        final double stock = double.tryParse(
+                '${product['stock_kg'] ?? product['stock'] ?? ''}') ??
+            0.0;
         final String grade = product['grade']?.toString() ?? 'Grade A';
         final String rawImg = product['image_url']?.toString() ?? '';
         final String imageUrl = _resolveImageUrl(rawImg);
@@ -613,12 +617,16 @@ class _StoreProfileScreenState extends State<StoreProfileScreen>
       itemBuilder: (context, index) {
         final pool = _wholesalePools[index];
         final String commodity = pool['commodity_name'] ?? 'Komoditas Partai';
-        final double totalKg = (pool['total_quota_kg'] as num?)?.toDouble() ?? 100.0;
-        final double remainingKg = (pool['remaining_quota_kg'] as num?)?.toDouble() ?? 50.0;
+        final double totalKg =
+            double.tryParse('${pool['total_quota_kg'] ?? ''}') ?? 100.0;
+        final double remainingKg =
+            double.tryParse('${pool['remaining_quota_kg'] ?? ''}') ?? 50.0;
         final double takenKg = (totalKg - remainingKg).clamp(0.0, totalKg);
         final double progress = totalKg > 0 ? (takenKg / totalKg).clamp(0.0, 1.0) : 0.0;
-        final double priceKg = (pool['price_per_kg'] as num?)?.toDouble() ?? 0.0;
-        final double minOrder = (pool['min_order_kg'] as num?)?.toDouble() ?? 50.0;
+        final double priceKg =
+            double.tryParse('${pool['price_per_kg'] ?? ''}') ?? 0.0;
+        final double minOrder =
+            double.tryParse('${pool['min_order_kg'] ?? ''}') ?? 50.0;
         final String harvestDate = pool['target_harvest_date'] ?? pool['est_harvest_date'] ?? '15 Nov 2026';
         final String grade = pool['grade'] ?? 'Grade A Super';
         final String rawImg = pool['image_url']?.toString() ?? '';

@@ -13,7 +13,7 @@ class ApiService {
   factory ApiService() => _instance;
   ApiService._internal();
 
-  static const String baseUrl = AppConfig.baseUrl;
+  static String get baseUrl => AppConfig.baseUrl;
   static const String tokenKey = 'jwt_token';
   static const String userKey = 'auth_user';
 
@@ -100,9 +100,11 @@ class ApiService {
   Future<Map<String, String>> _buildHeaders({
     Map<String, String>? extraHeaders,
   }) async {
+    await AppConfig.ensureLoaded();
     final headers = <String, String>{
       'Content-Type': 'application/json',
       'Accept': 'application/json',
+      'X-API-Key': AppConfig.apiKey,
     };
     final token = await getToken();
     if (token != null && token.trim().isNotEmpty) {
@@ -233,6 +235,8 @@ class ApiService {
     required int shippingFee,
     required String courierService,
     String paymentMethod = 'LAPAKPAY_SIMULATOR',
+    bool? wholesaleAgreementAccepted,
+    String? wholesaleAgreementNote,
   }) async {
     final response = await _post('/orders/checkout', {
       'items': items,
@@ -240,6 +244,10 @@ class ApiService {
       'shipping_fee': shippingFee,
       'courier_service': courierService,
       'payment_method': paymentMethod,
+      'wholesale_agreement_accepted': ?wholesaleAgreementAccepted,
+      if (wholesaleAgreementNote != null &&
+          wholesaleAgreementNote.trim().isNotEmpty)
+        'wholesale_agreement_note': wholesaleAgreementNote.trim(),
     });
 
     final decoded = jsonDecode(response.body);
@@ -650,12 +658,14 @@ class ApiService {
     final url = Uri.parse('$baseUrl$normalizedPath');
 
     try {
+      await AppConfig.ensureLoaded();
       final request = http.MultipartRequest('POST', url);
       final token = await getToken();
-      if (token != null && token.isNotEmpty) {
-        request.headers['Authorization'] = 'Bearer $token';
+      if (token != null && token.trim().isNotEmpty) {
+        request.headers['Authorization'] = 'Bearer ${token.trim()}';
       }
       request.headers['Accept'] = 'application/json';
+      request.headers['X-API-Key'] = AppConfig.apiKey;
 
       final mimeType = lookupMimeType(imageFile.path) ?? 'image/jpeg';
       final mimeSplit = mimeType.split('/');
@@ -692,6 +702,429 @@ class ApiService {
     } catch (e) {
       rethrow;
     }
+  }
+
+  /// Ambil daftar titik monitoring lahan Sumenep & telemetri 8-in-1
+  Future<List<Map<String, dynamic>>> getMonitoringLahan({
+    String kategori = 'all',
+    String komoditas = '',
+  }) async {
+    final queryParams = <String>[];
+    if (kategori != 'all' && kategori.isNotEmpty) {
+      queryParams.add('kategori=${Uri.encodeQueryComponent(kategori)}');
+    }
+    if (komoditas.trim().isNotEmpty) {
+      queryParams.add('komoditas=${Uri.encodeQueryComponent(komoditas.trim())}');
+    }
+    final qs = queryParams.isEmpty ? '' : '?${queryParams.join('&')}';
+
+    final response = await _fetchGet('/soil/monitoring-lahan$qs');
+    if (response.statusCode >= 200 && response.statusCode < 300) {
+      final decoded = jsonDecode(response.body);
+      if (decoded is Map<String, dynamic> && decoded['data'] is List) {
+        return List<Map<String, dynamic>>.from(decoded['data'] as List);
+      }
+    }
+    return <Map<String, dynamic>>[];
+  }
+
+  /// Ambil statistik ringkasan & titik kritis Sumenep dari Model_Monitoring_Lahan
+  Future<Map<String, dynamic>> getMonitoringSummary() async {
+    final response = await _fetchGet('/soil/monitoring-summary');
+    if (response.statusCode >= 200 && response.statusCode < 300) {
+      final decoded = jsonDecode(response.body);
+      if (decoded is Map<String, dynamic> && decoded['data'] is Map) {
+        return Map<String, dynamic>.from(decoded['data'] as Map);
+      }
+    }
+    return <String, dynamic>{};
+  }
+
+  /// Simpan data monitoring lahan + telemetri 8-in-1 (+ opsional 3 foto lapangan)
+  Future<Map<String, dynamic>> saveMonitoringLahan(
+    Map<String, dynamic> payload, {
+    Map<String, String>? filePaths,
+  }) async {
+    final validFiles = <String, File>{};
+    if (filePaths != null) {
+      filePaths.forEach((field, path) {
+        if (path.trim().isNotEmpty) {
+          final file = File(path.trim());
+          if (file.existsSync()) {
+            validFiles[field] = file;
+          }
+        }
+      });
+    }
+
+    if (validFiles.isEmpty) {
+      final response = await _post('/soil/monitoring-lahan', payload);
+      final dynamic decoded = jsonDecode(response.body);
+      if (response.statusCode >= 200 && response.statusCode < 300) {
+        return decoded is Map<String, dynamic>
+            ? decoded
+            : {'success': true, 'data': decoded};
+      }
+      final msg = decoded is Map && decoded['message'] != null
+          ? decoded['message'].toString()
+          : 'Gagal menyimpan data monitoring lahan (${response.statusCode})';
+      throw Exception(msg);
+    }
+
+    await AppConfig.ensureLoaded();
+    final url = Uri.parse('$baseUrl/soil/monitoring-lahan');
+    final request = http.MultipartRequest('POST', url);
+    final token = await getToken();
+    if (token != null && token.trim().isNotEmpty) {
+      request.headers['Authorization'] = 'Bearer ${token.trim()}';
+    }
+    request.headers['Accept'] = 'application/json';
+    request.headers['X-API-Key'] = AppConfig.apiKey;
+
+    payload.forEach((key, value) {
+      if (value != null) {
+        request.fields[key] = value.toString();
+      }
+    });
+
+    for (final entry in validFiles.entries) {
+      final mimeType = lookupMimeType(entry.value.path) ?? 'image/jpeg';
+      final parts = mimeType.split('/');
+      request.files.add(
+        await http.MultipartFile.fromPath(
+          entry.key,
+          entry.value.path,
+          contentType: MediaType(parts[0], parts.length > 1 ? parts[1] : 'jpeg'),
+        ),
+      );
+    }
+
+    final streamed = await request.send().timeout(const Duration(seconds: 30));
+    final response = await http.Response.fromStream(streamed);
+    final dynamic decoded = jsonDecode(response.body);
+    if (response.statusCode >= 200 && response.statusCode < 300) {
+      return decoded is Map<String, dynamic>
+          ? decoded
+          : {'success': true, 'data': decoded};
+    }
+    final msg = decoded is Map && decoded['message'] != null
+        ? decoded['message'].toString()
+        : 'Gagal menyimpan data monitoring lahan (${response.statusCode})';
+    throw Exception(msg);
+  }
+
+  Map<String, dynamic> _decodeResponseMap(
+    http.Response response,
+    String fallbackError,
+  ) {
+    final dynamic decoded = response.body.isNotEmpty ? jsonDecode(response.body) : {};
+    if (response.statusCode >= 200 && response.statusCode < 300) {
+      if (decoded is Map<String, dynamic>) {
+        return decoded;
+      }
+      return {'success': true, 'data': decoded};
+    }
+    final msg = decoded is Map && decoded['message'] != null
+        ? decoded['message'].toString()
+        : '$fallbackError (${response.statusCode})';
+    throw Exception(msg);
+  }
+
+  /// Ambil laporan keputusan RAG & arahan dari Penyuluh BPP Sumenep
+  Future<List<Map<String, dynamic>>> getDecisionReports({
+    String? role,
+    String? desa,
+    String? status,
+  }) async {
+    final queryParams = <String>[];
+    if (role != null && role.trim().isNotEmpty) {
+      queryParams.add('role=${Uri.encodeQueryComponent(role.trim())}');
+    }
+    if (desa != null && desa.trim().isNotEmpty) {
+      queryParams.add('desa=${Uri.encodeQueryComponent(desa.trim())}');
+    }
+    if (status != null && status.trim().isNotEmpty) {
+      queryParams.add('status=${Uri.encodeQueryComponent(status.trim())}');
+    }
+    final qs = queryParams.isEmpty ? '' : '?${queryParams.join('&')}';
+    final response = await _fetchGet('/penyuluh/decision-reports$qs');
+    if (response.statusCode >= 200 && response.statusCode < 300) {
+      final decoded = jsonDecode(response.body);
+      if (decoded is Map<String, dynamic> && decoded['data'] is List) {
+        return (decoded['data'] as List)
+            .whereType<Map>()
+            .map((e) => Map<String, dynamic>.from(e))
+            .toList();
+      }
+    }
+    return <Map<String, dynamic>>[];
+  }
+
+  /// Tandai keputusan / arahan Penyuluh sudah dibaca atau ditindaklanjuti
+  Future<Map<String, dynamic>?> acknowledgeDecisionReport(
+    String reportId, {
+    String status = 'ACKNOWLEDGED',
+    String? notes,
+  }) async {
+    final response = await _put('/penyuluh/decision-reports/$reportId/status', {
+      'status': status,
+      if (notes != null && notes.trim().isNotEmpty) 'dinas_notes': notes.trim(),
+    });
+    final parsed = _decodeResponseMap(response, 'Gagal memperbarui status arahan');
+    final data = parsed['data'];
+    return data is Map ? Map<String, dynamic>.from(data) : parsed;
+  }
+
+  /// Kirim laporan harian kondisi lahan dari Petani ke Penyuluh Desa
+  Future<Map<String, dynamic>> submitFarmerDailyLog(
+    Map<String, dynamic> payload,
+  ) async {
+    final response = await _post('/petani/daily-log', payload);
+    return _decodeResponseMap(response, 'Gagal mengirim laporan harian petani');
+  }
+
+  /// Ambil riwayat laporan harian petani
+  Future<List<Map<String, dynamic>>> getFarmerDailyLogs({
+    String? desa,
+    String? userId,
+  }) async {
+    final queryParams = <String>[];
+    if (desa != null && desa.trim().isNotEmpty) {
+      queryParams.add('desa=${Uri.encodeQueryComponent(desa.trim())}');
+    }
+    if (userId != null && userId.trim().isNotEmpty) {
+      queryParams.add('user_id=${Uri.encodeQueryComponent(userId.trim())}');
+    }
+    final qs = queryParams.isEmpty ? '' : '?${queryParams.join('&')}';
+    final response = await _fetchGet('/petani/daily-log$qs');
+    if (response.statusCode >= 200 && response.statusCode < 300) {
+      final decoded = jsonDecode(response.body);
+      if (decoded is Map<String, dynamic> && decoded['data'] is List) {
+        return (decoded['data'] as List)
+            .whereType<Map>()
+            .map((e) => Map<String, dynamic>.from(e))
+            .toList();
+      }
+    }
+    return <Map<String, dynamic>>[];
+  }
+
+  /// Ambil daftar calon petani menunggu verifikasi Penyuluh (US-06)
+  Future<List<Map<String, dynamic>>> getPendingFarmers() async {
+    final response = await _fetchGet('/penyuluh/pending-farmers');
+    if (response.statusCode >= 200 && response.statusCode < 300) {
+      final decoded = jsonDecode(response.body);
+      if (decoded is Map<String, dynamic> && decoded['data'] is List) {
+        return (decoded['data'] as List)
+            .whereType<Map>()
+            .map((e) => Map<String, dynamic>.from(e))
+            .toList();
+      }
+    }
+    return <Map<String, dynamic>>[];
+  }
+
+  /// Verifikasi atau tolak akun petani oleh Penyuluh BPP (US-06)
+  Future<Map<String, dynamic>> verifyFarmerAccount(
+    String farmerId, {
+    String status = 'verified',
+    String? notes,
+  }) async {
+    final response = await _put('/penyuluh/verify-farmer/$farmerId', {
+      'status': status,
+      if (notes != null && notes.trim().isNotEmpty) 'notes': notes.trim(),
+    });
+    return _decodeResponseMap(response, 'Gagal memverifikasi akun petani');
+  }
+
+  List<Map<String, dynamic>> _extractDataList(http.Response response) {
+    if (response.statusCode >= 200 && response.statusCode < 300) {
+      final decoded = jsonDecode(response.body);
+      if (decoded is Map && decoded['data'] is List) {
+        return (decoded['data'] as List)
+            .whereType<Map>()
+            .map((e) => Map<String, dynamic>.from(e))
+            .toList();
+      }
+    }
+    return <Map<String, dynamic>>[];
+  }
+
+  // ============================================================================
+  // Store 2-Step Registration, Store Settings, Harvest Absorption & Forums
+  // ============================================================================
+
+  Future<Map<String, dynamic>> getMyStoreApplication() async {
+    final response = await _fetchGet('/store/my-application');
+    return _decodeResponseMap(response, 'Gagal memuat status pengajuan toko');
+  }
+
+  Future<Map<String, dynamic>> getStoreVillages() async {
+    try {
+      final response = await _fetchGet('/store/villages');
+      if (response.statusCode >= 200 && response.statusCode < 300) {
+        return _decodeResponseMap(response, 'Gagal memuat daftar desa Sumenep');
+      }
+    } catch (_) {}
+    final fallbackRes = await _fetchGet('/regions/sumenep');
+    return _decodeResponseMap(fallbackRes, 'Gagal memuat daftar desa Sumenep');
+  }
+
+  Future<Map<String, dynamic>> submitStoreApplication(
+    Map<String, dynamic> payload,
+  ) async {
+    final response = await _post('/store/apply', payload);
+    return _decodeResponseMap(
+      response,
+      'Gagal mengirim pengajuan pembukaan toko',
+    );
+  }
+
+  Future<Map<String, dynamic>> updateStoreSettings(
+    Map<String, dynamic> payload,
+  ) async {
+    final response = await _put('/store/settings', payload);
+    return _decodeResponseMap(response, 'Gagal memperbarui pengaturan toko');
+  }
+
+  Future<Map<String, dynamic>> updateProductPricing(
+    String productId,
+    Map<String, dynamic> payload,
+  ) async {
+    final response = await _put('/products/$productId', payload);
+    return _decodeResponseMap(response, 'Gagal memperbarui harga produk');
+  }
+
+  Future<List<Map<String, dynamic>>> getNearbyHarvests() async {
+    final response = await _fetchGet('/store/nearby-harvests');
+    return _extractDataList(response);
+  }
+
+  Future<List<Map<String, dynamic>>> getStorePurchaseOffers() async {
+    final response = await _fetchGet('/store/purchase-offers');
+    return _extractDataList(response);
+  }
+
+  Future<Map<String, dynamic>> createHarvestPurchaseOffer(
+    Map<String, dynamic> payload,
+  ) async {
+    final response = await _post('/store/purchase-offers', payload);
+    return _decodeResponseMap(response, 'Gagal mengirim penawaran panen');
+  }
+
+  Future<Map<String, dynamic>> weighAndPayHarvestOffer(
+    String offerId,
+    double realWeightKg, {
+    String? notes,
+  }) async {
+    final response = await _put('/store/purchase-offers/$offerId/weigh-and-pay', {
+      'berat_timbang_riil_kg': realWeightKg,
+      if (notes != null && notes.trim().isNotEmpty) 'notes': notes.trim(),
+    });
+    return _decodeResponseMap(response, 'Gagal menyelesaikan timbang ulang');
+  }
+
+  Future<List<Map<String, dynamic>>> getFarmerHarvestReports() async {
+    final response = await _fetchGet('/petani/harvest-reports');
+    return _extractDataList(response);
+  }
+
+  Future<Map<String, dynamic>> submitFarmerHarvestReport(
+    Map<String, dynamic> payload,
+  ) async {
+    final response = await _post('/petani/harvest-reports', payload);
+    return _decodeResponseMap(response, 'Gagal mengirim siaran panen');
+  }
+
+  Future<List<Map<String, dynamic>>> getFarmerPurchaseOffers() async {
+    final response = await _fetchGet('/petani/purchase-offers');
+    return _extractDataList(response);
+  }
+
+  Future<Map<String, dynamic>> respondToPurchaseOffer(
+    String offerId,
+    String status,
+  ) async {
+    final response = await _put('/petani/purchase-offers/$offerId/respond', {
+      'status': status,
+    });
+    return _decodeResponseMap(response, 'Gagal merespon tawaran panen');
+  }
+
+  Future<Map<String, dynamic>> getStoreApplicationsForPpl() async {
+    final response = await _fetchGet('/penyuluh/store-applications');
+    return _decodeResponseMap(response, 'Gagal memuat antrean pembukaan toko');
+  }
+
+  Future<Map<String, dynamic>> verifyStoreApplicationByPpl(
+    String id,
+    String status, {
+    String? reason,
+  }) async {
+    final response = await _put('/penyuluh/store-applications/$id/verify', {
+      'status': status,
+      if (reason != null && reason.trim().isNotEmpty)
+        'rejection_reason': reason.trim(),
+    });
+    return _decodeResponseMap(response, 'Gagal memverifikasi pengajuan toko');
+  }
+
+  Future<Map<String, dynamic>> updateVillageStoreQuota(
+    Map<String, dynamic> payload,
+  ) async {
+    final response = await _put('/penyuluh/village-store-quota', payload);
+    return _decodeResponseMap(response, 'Gagal memperbarui kuota toko desa');
+  }
+
+  Future<List<Map<String, dynamic>>> getVillageForumPosts({int? villageId}) async {
+    final qs = villageId != null ? '?village_id=$villageId' : '';
+    final response = await _fetchGet('/penyuluh/village-forum$qs');
+    return _extractDataList(response);
+  }
+
+  Future<Map<String, dynamic>> createVillageForumPost(
+    Map<String, dynamic> payload,
+  ) async {
+    final response = await _post('/penyuluh/village-forum', payload);
+    return _decodeResponseMap(response, 'Gagal mengirim pesan forum desa');
+  }
+
+  Future<List<Map<String, dynamic>>> getInterPplForumPosts() async {
+    final response = await _fetchGet('/penyuluh/inter-ppl-forum');
+    return _extractDataList(response);
+  }
+
+  Future<Map<String, dynamic>> createInterPplForumPost(
+    Map<String, dynamic> payload,
+  ) async {
+    final response = await _post('/penyuluh/inter-ppl-forum', payload);
+    return _decodeResponseMap(response, 'Gagal mengirim diskusi antar-PPL');
+  }
+
+  Future<List<Map<String, dynamic>>> getFertilizerAllocations() async {
+    final response = await _fetchGet('/penyuluh/fertilizer-subsidies');
+    return _extractDataList(response);
+  }
+
+  Future<Map<String, dynamic>> proposeFertilizerAllocation(
+    Map<String, dynamic> payload,
+  ) async {
+    final response = await _post('/penyuluh/fertilizer-request', payload);
+    return _decodeResponseMap(response, 'Gagal mengajukan pupuk subsidi');
+  }
+
+  Future<Map<String, dynamic>> generatePenyuluhRagDecision(
+    Map<String, dynamic> payload,
+  ) async {
+    final response = await _post('/penyuluh/rag-decision', payload);
+    return _decodeResponseMap(response, 'Gagal menyintesis keputusan RAG');
+  }
+
+  Future<Map<String, dynamic>> dispatchPenyuluhRagDecision(
+    Map<String, dynamic> payload,
+  ) async {
+    final response = await _post('/penyuluh/dispatch-decision', payload);
+    return _decodeResponseMap(response, 'Gagal mengirim keputusan RAG');
   }
 }
 

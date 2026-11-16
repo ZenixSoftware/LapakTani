@@ -9,6 +9,7 @@ import '../../core/widgets/lapaktani_text_field.dart';
 import '../profile/complete_farmer_profile_screen.dart';
 import '../home/home_dashboard_screen.dart';
 import 'auth_repository.dart';
+import 'store_registration_screen.dart';
 
 class RegisterScreen extends StatefulWidget {
   const RegisterScreen({super.key});
@@ -84,7 +85,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   ? 'Akun berhasil dibuat. Silakan lengkapi data legalitas kebun.'
                   : 'Registrasi berhasil! Selamat datang di LapakTani.',
             ),
-            backgroundColor: const Color(0xFF03AC0E),
+            backgroundColor: AppColors.primary,
             duration: const Duration(seconds: 2),
             behavior: SnackBarBehavior.floating,
           ),
@@ -524,7 +525,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                               ),
                               focusedBorder: OutlineInputBorder(
                                 borderRadius: BorderRadius.circular(14),
-                                borderSide: const BorderSide(color: Color(0xFF03AC0E), width: 1.5),
+                                borderSide: const BorderSide(color: AppColors.primary, width: 1.5),
                               ),
                             ),
                             items: const [
@@ -786,6 +787,36 @@ class _RegisterScreenState extends State<RegisterScreen> {
                         ),
                       ),
                     ],
+                  ),
+                  const SizedBox(height: 8),
+                  Center(
+                    child: TextButton.icon(
+                      onPressed: () {
+                        Navigator.of(context).push(
+                          MaterialPageRoute(
+                            builder: (_) => StoreRegistrationScreen(
+                              initialName: _nameController.text.trim(),
+                              initialEmail: _emailController.text.trim(),
+                              initialPhone: _phoneController.text.trim(),
+                              initialPassword: _passwordController.text,
+                            ),
+                          ),
+                        );
+                      },
+                      icon: const Icon(
+                        LucideIcons.store,
+                        size: 16,
+                        color: AppColors.primary,
+                      ),
+                      label: const Text(
+                        'Daftar Pengajuan Buka Toko Desa (2 Tahap)',
+                        style: TextStyle(
+                          fontSize: 12.5,
+                          fontWeight: FontWeight.w700,
+                          color: AppColors.primary,
+                        ),
+                      ),
+                    ),
                   ),
                   const SizedBox(height: 16),
                 ],

@@ -1,8 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:lucide_icons/lucide_icons.dart';
+import '../../../core/theme/app_colors.dart';
+import '../../chat/screens/chat_list_screen.dart';
+import '../../chat/screens/chat_room_screen.dart';
+import '../../chat/services/chat_service.dart';
 import '../community_repository.dart';
 import '../models/education_article.dart';
+import '../widgets/create_post_sheet.dart';
+import '../widgets/discussion_comment_sheet.dart';
 import '../widgets/penyuluh_official_badge.dart';
 import 'create_education_post_screen.dart';
 import 'education_detail_screen.dart';
@@ -29,6 +35,8 @@ class _EducationFeedScreenState extends State<EducationFeedScreen> {
 
   bool _verifiedOnly = false;
   String _selectedCategory = 'Semua';
+
+  final Set<String> _likedArticleIds = {};
 
   final List<String> _categories = [
     'Semua',
@@ -88,12 +96,111 @@ class _EducationFeedScreenState extends State<EducationFeedScreen> {
     _loadArticles();
   }
 
+  void _toggleLike(EducationArticle article) {
+    final isLiked = _likedArticleIds.contains(article.id);
+    final newCount = isLiked
+        ? (article.likesCount > 0 ? article.likesCount - 1 : 0)
+        : article.likesCount + 1;
+
+    setState(() {
+      if (isLiked) {
+        _likedArticleIds.remove(article.id);
+      } else {
+        _likedArticleIds.add(article.id);
+      }
+      final idx = _articles.indexWhere((a) => a.id == article.id);
+      if (idx >= 0) {
+        _articles[idx] = _articles[idx].copyWith(likesCount: newCount);
+      }
+    });
+
+    _repository.toggleArticleLike(article.id, !isLiked);
+  }
+
+  void _openDiscussionCommentSheet(EducationArticle article) {
+    showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (ctx) => DiscussionCommentSheet(
+        article: article,
+        onCommentAdded: (newCount) {
+          setState(() {
+            final idx = _articles.indexWhere((a) => a.id == article.id);
+            if (idx >= 0) {
+              _articles[idx] = _articles[idx].copyWith(commentsCount: newCount);
+            }
+          });
+        },
+      ),
+    );
+  }
+
+  void _openCreatePostSheet() {
+    showModalBottomSheet<bool>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (ctx) => CreatePostSheet(
+        onPostPublished: () {
+          _loadArticles();
+        },
+      ),
+    ).then((result) {
+      if (result == true) {
+        _loadArticles();
+      }
+    });
+  }
+
+  Future<void> _openAuthorDirectChat(EducationArticle article) async {
+    try {
+      final conv = await ChatService().openDirectConversation(
+        targetName: article.authorName,
+        targetRole: article.isOfficialPenyuluh ? 'penyuluh' : 'petani',
+        title: 'Diskusi: ${article.title}',
+      );
+      if (!mounted) return;
+      Navigator.push(
+        context,
+        MaterialPageRoute(builder: (_) => ChatRoomScreen(conversation: conv)),
+      );
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Membuka daftar pesan... ($e)'),
+          backgroundColor: AppColors.primary,
+        ),
+      );
+      Navigator.push(
+        context,
+        MaterialPageRoute(builder: (_) => const ChatListScreen()),
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF8FAFC),
+      backgroundColor: AppColors.background,
+      floatingActionButton: FloatingActionButton.extended(
+        heroTag: 'fab_education_feed',
+        onPressed: _openCreatePostSheet,
+        backgroundColor: AppColors.primary,
+        foregroundColor: Colors.white,
+        elevation: 3,
+        icon: const Icon(LucideIcons.messageSquarePlus, size: 18),
+        label: Text(
+          '+ Buat Diskusi',
+          style: GoogleFonts.inter(
+            fontSize: 13,
+            fontWeight: FontWeight.w700,
+          ),
+        ),
+      ),
       appBar: AppBar(
-        backgroundColor: Colors.white,
+        backgroundColor: AppColors.surface,
         elevation: 0,
         scrolledUnderElevation: 1,
         title: Column(
@@ -104,19 +211,29 @@ class _EducationFeedScreenState extends State<EducationFeedScreen> {
               style: GoogleFonts.inter(
                 fontSize: 16.5,
                 fontWeight: FontWeight.w800,
-                color: const Color(0xFF0F172A),
+                color: AppColors.textPrimary,
               ),
             ),
             Text(
               'Materi budidaya resmi BPP & Penyuluh',
               style: GoogleFonts.inter(
                 fontSize: 11,
-                color: const Color(0xFF64748B),
+                color: AppColors.textMuted,
               ),
             ),
           ],
         ),
         actions: [
+          IconButton(
+            icon: const Icon(LucideIcons.messageCircle, color: AppColors.primary),
+            tooltip: 'Pesan & DM',
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => const ChatListScreen()),
+              );
+            },
+          ),
           Padding(
             padding: const EdgeInsets.only(right: 12),
             child: ElevatedButton.icon(
@@ -139,12 +256,12 @@ class _EducationFeedScreenState extends State<EducationFeedScreen> {
                 ),
               ),
               style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFF03AC0E),
+                backgroundColor: AppColors.primary,
                 foregroundColor: Colors.white,
                 padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
                 minimumSize: const Size(0, 32),
                 shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(8),
+                  borderRadius: BorderRadius.circular(10),
                 ),
                 elevation: 0,
               ),
@@ -154,7 +271,7 @@ class _EducationFeedScreenState extends State<EducationFeedScreen> {
       ),
       body: RefreshIndicator(
         onRefresh: _loadArticles,
-        color: const Color(0xFF03AC0E),
+        color: AppColors.primary,
         child: Column(
           children: [
             _buildSearchAndFilters(),
@@ -191,7 +308,7 @@ class _EducationFeedScreenState extends State<EducationFeedScreen> {
                     onSubmitted: (_) => _loadArticles(),
                     style: GoogleFonts.inter(
                       fontSize: 12.5,
-                      color: const Color(0xFF0F172A),
+                      color: AppColors.textPrimary,
                     ),
                     decoration: InputDecoration(
                       hintText: 'Cari tips budidaya, jagung, tomat, penyuluh...',
@@ -264,13 +381,13 @@ class _EducationFeedScreenState extends State<EducationFeedScreen> {
                     padding: const EdgeInsets.symmetric(vertical: 7),
                     decoration: BoxDecoration(
                       color: _verifiedOnly
-                          ? const Color(0xFF03AC0E)
-                          : const Color(0xFFE8F5E9),
+                          ? AppColors.primary
+                          : AppColors.surfaceMint,
                       borderRadius: BorderRadius.circular(8),
                       border: Border.all(
                         color: _verifiedOnly
-                            ? const Color(0xFF03AC0E)
-                            : const Color(0xFFA5D6A7),
+                            ? AppColors.primary
+                            : AppColors.surfaceSoftBorder,
                         width: 1,
                       ),
                     ),
@@ -280,7 +397,7 @@ class _EducationFeedScreenState extends State<EducationFeedScreen> {
                         Icon(
                           LucideIcons.badgeCheck,
                           size: 14,
-                          color: _verifiedOnly ? Colors.white : const Color(0xFF15803D),
+                          color: _verifiedOnly ? Colors.white : AppColors.primary,
                         ),
                         const SizedBox(width: 5),
                         Text(
@@ -290,7 +407,7 @@ class _EducationFeedScreenState extends State<EducationFeedScreen> {
                             fontWeight: FontWeight.w700,
                             color: _verifiedOnly
                                 ? Colors.white
-                                : const Color(0xFF14532D),
+                                : AppColors.primaryDark,
                           ),
                         ),
                       ],
@@ -319,16 +436,16 @@ class _EducationFeedScreenState extends State<EducationFeedScreen> {
                   },
                   borderRadius: BorderRadius.circular(16),
                   child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
                     decoration: BoxDecoration(
                       color: isSelected
-                          ? const Color(0xFF1E293B)
-                          : const Color(0xFFF1F5F9),
+                          ? AppColors.primary
+                          : AppColors.surface,
                       borderRadius: BorderRadius.circular(16),
                       border: Border.all(
                         color: isSelected
-                            ? const Color(0xFF1E293B)
-                            : const Color(0xFFE2E8F0),
+                            ? AppColors.primary
+                            : AppColors.outline,
                       ),
                     ),
                     alignment: Alignment.center,
@@ -337,7 +454,7 @@ class _EducationFeedScreenState extends State<EducationFeedScreen> {
                       style: GoogleFonts.inter(
                         fontSize: 11,
                         fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
-                        color: isSelected ? Colors.white : const Color(0xFF475569),
+                        color: isSelected ? Colors.white : AppColors.textMuted,
                       ),
                     ),
                   ),
@@ -353,7 +470,7 @@ class _EducationFeedScreenState extends State<EducationFeedScreen> {
   Widget _buildFeedBody() {
     if (_isLoading) {
       return const Center(
-        child: CircularProgressIndicator(color: Color(0xFF03AC0E)),
+        child: CircularProgressIndicator(color: AppColors.primary),
       );
     }
 
@@ -364,14 +481,14 @@ class _EducationFeedScreenState extends State<EducationFeedScreen> {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              const Icon(LucideIcons.alertCircle, size: 40, color: Color(0xFFEF4444)),
+              const Icon(LucideIcons.alertCircle, size: 40, color: AppColors.error),
               const SizedBox(height: 10),
               Text(
                 'Terjadi Kendala',
                 style: GoogleFonts.inter(
                   fontSize: 15,
                   fontWeight: FontWeight.w700,
-                  color: const Color(0xFF0F172A),
+                  color: AppColors.textPrimary,
                 ),
               ),
               const SizedBox(height: 4),
@@ -384,7 +501,7 @@ class _EducationFeedScreenState extends State<EducationFeedScreen> {
               ElevatedButton(
                 onPressed: _loadArticles,
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFF03AC0E),
+                  backgroundColor: AppColors.primary,
                   foregroundColor: Colors.white,
                 ),
                 child: const Text('Coba Lagi'),
@@ -421,7 +538,7 @@ class _EducationFeedScreenState extends State<EducationFeedScreen> {
                 style: GoogleFonts.inter(
                   fontSize: 15,
                   fontWeight: FontWeight.w700,
-                  color: const Color(0xFF0F172A),
+                  color: AppColors.textPrimary,
                 ),
               ),
               const SizedBox(height: 4),
@@ -432,7 +549,7 @@ class _EducationFeedScreenState extends State<EducationFeedScreen> {
                 textAlign: TextAlign.center,
                 style: GoogleFonts.inter(
                   fontSize: 12,
-                  color: const Color(0xFF64748B),
+                  color: AppColors.textMuted,
                 ),
               ),
               const SizedBox(height: 16),
@@ -463,23 +580,18 @@ class _EducationFeedScreenState extends State<EducationFeedScreen> {
   }
 
   Widget _buildArticleCard(EducationArticle article) {
+    final bool isLiked = _likedArticleIds.contains(article.id);
     return Container(
       decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(14),
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(16),
         border: Border.all(
           color: article.isOfficialPenyuluh
-              ? const Color(0xFFBBF7D0)
-              : const Color(0xFFE2E8F0),
+              ? AppColors.surfaceSoftBorder
+              : AppColors.outline,
           width: article.isOfficialPenyuluh ? 1.2 : 1,
         ),
-        boxShadow: const [
-          BoxShadow(
-            color: Color(0x05000000),
-            blurRadius: 4,
-            offset: Offset(0, 1),
-          ),
-        ],
+        boxShadow: AppColors.softShadow,
       ),
       child: Material(
         color: Colors.transparent,
@@ -491,7 +603,7 @@ class _EducationFeedScreenState extends State<EducationFeedScreen> {
               ),
             );
           },
-          borderRadius: BorderRadius.circular(14),
+          borderRadius: BorderRadius.circular(16),
           child: Padding(
             padding: const EdgeInsets.all(14),
             child: Column(
@@ -505,8 +617,8 @@ class _EducationFeedScreenState extends State<EducationFeedScreen> {
                       height: 32,
                       decoration: BoxDecoration(
                         color: article.isOfficialPenyuluh
-                            ? const Color(0xFF14532D)
-                            : const Color(0xFF475569),
+                            ? AppColors.primary
+                            : AppColors.textMuted,
                         shape: BoxShape.circle,
                       ),
                       child: Center(
@@ -535,7 +647,7 @@ class _EducationFeedScreenState extends State<EducationFeedScreen> {
                                   style: GoogleFonts.inter(
                                     fontSize: 12.5,
                                     fontWeight: FontWeight.w700,
-                                    color: const Color(0xFF0F172A),
+                                    color: AppColors.textPrimary,
                                   ),
                                   overflow: TextOverflow.ellipsis,
                                 ),
@@ -553,7 +665,7 @@ class _EducationFeedScreenState extends State<EducationFeedScreen> {
                             article.authorRole,
                             style: GoogleFonts.inter(
                               fontSize: 10.5,
-                              color: const Color(0xFF64748B),
+                              color: AppColors.textMuted,
                             ),
                           ),
                         ],
@@ -613,7 +725,7 @@ class _EducationFeedScreenState extends State<EducationFeedScreen> {
                               vertical: 3,
                             ),
                             decoration: BoxDecoration(
-                              color: const Color(0xFF03AC0E),
+                              color: AppColors.primary,
                               borderRadius: BorderRadius.circular(6),
                             ),
                             child: Text(
@@ -637,7 +749,7 @@ class _EducationFeedScreenState extends State<EducationFeedScreen> {
                   style: GoogleFonts.inter(
                     fontSize: 14,
                     fontWeight: FontWeight.w700,
-                    color: const Color(0xFF0F172A),
+                    color: AppColors.textPrimary,
                     height: 1.35,
                   ),
                 ),
@@ -655,47 +767,180 @@ class _EducationFeedScreenState extends State<EducationFeedScreen> {
                   ),
                 ),
                 const SizedBox(height: 10),
+                const Divider(height: 1, color: Color(0xFFF1F5F9)),
+                const SizedBox(height: 8),
 
-                // Meta footer
+                // Meta footer & interactive actions
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Row(
-                      children: [
-                        const Icon(LucideIcons.clock, size: 12, color: Color(0xFF94A3B8)),
-                        const SizedBox(width: 4),
-                        Text(
-                          '${article.readDurationMinutes} mnt baca',
-                          style: GoogleFonts.inter(
-                            fontSize: 10.5,
-                            color: const Color(0xFF94A3B8),
-                          ),
-                        ),
-                        if (article.bppOffice != null) ...[
-                          const SizedBox(width: 8),
-                          Text('•', style: TextStyle(color: Color(0xFFCBD5E1))),
-                          const SizedBox(width: 8),
+                    // Reading time & BPP
+                    Expanded(
+                      child: Row(
+                        children: [
+                          const Icon(LucideIcons.clock, size: 12, color: Color(0xFF94A3B8)),
+                          const SizedBox(width: 4),
                           Text(
-                            article.bppOffice!,
+                            '${article.readDurationMinutes} mnt',
                             style: GoogleFonts.inter(
                               fontSize: 10.5,
-                              color: const Color(0xFF15803D),
-                              fontWeight: FontWeight.w600,
+                              color: const Color(0xFF94A3B8),
                             ),
                           ),
+                          if (article.bppOffice != null) ...[
+                            const SizedBox(width: 4),
+                            const Text('•', style: TextStyle(color: Color(0xFFCBD5E1), fontSize: 10)),
+                            const SizedBox(width: 4),
+                            Flexible(
+                              child: Text(
+                                article.bppOffice!,
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: GoogleFonts.inter(
+                                  fontSize: 10.5,
+                                  color: AppColors.primary,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                            ),
+                          ],
                         ],
-                      ],
+                      ),
                     ),
+                    const SizedBox(width: 6),
+
+                    // Interactive Action Buttons
                     Row(
+                      mainAxisSize: MainAxisSize.min,
                       children: [
-                        const Icon(LucideIcons.heart, size: 12, color: Color(0xFFDC2626)),
-                        const SizedBox(width: 3),
-                        Text(
-                          '${article.likesCount}',
-                          style: GoogleFonts.inter(
-                            fontSize: 11,
-                            fontWeight: FontWeight.w600,
-                            color: const Color(0xFF64748B),
+                        // Interactive Like / Upvote Button with toggleable counter
+                        Material(
+                          color: Colors.transparent,
+                          child: InkWell(
+                            onTap: () => _toggleLike(article),
+                            borderRadius: BorderRadius.circular(16),
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 4),
+                              decoration: BoxDecoration(
+                                color: isLiked ? AppColors.errorSoft : AppColors.background,
+                                borderRadius: BorderRadius.circular(16),
+                                border: Border.all(
+                                  color: isLiked ? AppColors.errorBorder : AppColors.outline,
+                                  width: 0.8,
+                                ),
+                              ),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Icon(
+                                    LucideIcons.heart,
+                                    size: 13,
+                                    color: isLiked ? AppColors.error : AppColors.textMuted,
+                                  ),
+                                  const SizedBox(width: 4),
+                                  Text(
+                                    '${article.likesCount}',
+                                    style: GoogleFonts.inter(
+                                      fontSize: 11,
+                                      fontWeight: isLiked ? FontWeight.w700 : FontWeight.w600,
+                                      color: isLiked ? AppColors.error : AppColors.textSecondary,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 6),
+
+                        // Interactive Comment Button opening DiscussionCommentSheet
+                        Material(
+                          color: Colors.transparent,
+                          child: InkWell(
+                            onTap: () => _openDiscussionCommentSheet(article),
+                            borderRadius: BorderRadius.circular(16),
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 4),
+                              decoration: BoxDecoration(
+                                color: AppColors.surfaceSoft,
+                                borderRadius: BorderRadius.circular(16),
+                                border: Border.all(
+                                  color: AppColors.surfaceSoftBorder,
+                                  width: 0.8,
+                                ),
+                              ),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  const Icon(
+                                    LucideIcons.messageSquare,
+                                    size: 13,
+                                    color: AppColors.primary,
+                                  ),
+                                  const SizedBox(width: 4),
+                                  Text(
+                                    '${article.commentsCount}',
+                                    style: GoogleFonts.inter(
+                                      fontSize: 11,
+                                      fontWeight: FontWeight.w600,
+                                      color: AppColors.primary,
+                                    ),
+                                  ),
+                                  const SizedBox(width: 3),
+                                  Text(
+                                    'Komentar',
+                                    style: GoogleFonts.inter(
+                                      fontSize: 10,
+                                      color: AppColors.primaryDark,
+                                      fontWeight: FontWeight.w500,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 5),
+
+                        // Direct Message (DM) Author / Penyuluh
+                        Material(
+                          color: Colors.transparent,
+                          child: InkWell(
+                            onTap: () => _openAuthorDirectChat(article),
+                            borderRadius: BorderRadius.circular(16),
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 7,
+                                vertical: 4,
+                              ),
+                              decoration: BoxDecoration(
+                                color: AppColors.infoSoft,
+                                borderRadius: BorderRadius.circular(16),
+                                border: Border.all(
+                                  color: AppColors.info.withValues(alpha: 0.35),
+                                  width: 0.8,
+                                ),
+                              ),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  const Icon(
+                                    LucideIcons.send,
+                                    size: 12,
+                                    color: AppColors.info,
+                                  ),
+                                  const SizedBox(width: 4),
+                                  Text(
+                                    'DM',
+                                    style: GoogleFonts.inter(
+                                      fontSize: 10,
+                                      color: AppColors.info,
+                                      fontWeight: FontWeight.w700,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
                           ),
                         ),
                       ],

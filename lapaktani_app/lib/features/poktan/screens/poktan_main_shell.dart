@@ -5,6 +5,7 @@ import 'package:lapaktani_app/core/services/user_session.dart';
 import 'package:lapaktani_app/core/theme/app_colors.dart';
 import 'package:lapaktani_app/core/widgets/custom_soft_card.dart';
 import 'package:lapaktani_app/features/auth/auth_repository.dart';
+import 'package:lapaktani_app/features/chat/screens/chat_list_screen.dart';
 import 'package:lapaktani_app/features/navigation/role_based_app_shell.dart';
 import 'package:lapaktani_app/features/poktan/models/poktan_member_model.dart';
 import 'package:lapaktani_app/features/poktan/screens/mitra_store_catalog_screen.dart';
@@ -231,6 +232,16 @@ class _PoktanMembersTabState extends State<PoktanMembersTab> {
         ),
         actions: [
           IconButton(
+            icon: const Icon(LucideIcons.messageSquare, color: AppColors.primary, size: 20),
+            tooltip: 'Pesan & DM',
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => const ChatListScreen()),
+              );
+            },
+          ),
+          IconButton(
             icon: const Icon(LucideIcons.refreshCw, color: Color(0xFF475569), size: 20),
             tooltip: 'Segarkan',
             onPressed: _loadMembers,
@@ -255,14 +266,14 @@ class _PoktanMembersTabState extends State<PoktanMembersTab> {
                     padding: const EdgeInsets.all(16),
                     decoration: BoxDecoration(
                       gradient: const LinearGradient(
-                        colors: [Color(0xFF006E04), Color(0xFF03AC0E)],
+                        colors: [AppColors.primary, AppColors.secondary],
                         begin: Alignment.topLeft,
                         end: Alignment.bottomRight,
                       ),
                       borderRadius: BorderRadius.circular(16),
                       boxShadow: const [
                         BoxShadow(
-                          color: Color(0x20006E04),
+                          color: Color(0x20166534),
                           blurRadius: 10,
                           offset: Offset(0, 4),
                         ),

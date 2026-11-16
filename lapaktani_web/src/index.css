@@ -4,8 +4,8 @@
 
 @layer base {
   body {
-    background-color: #f6f8f6;
-    font-family: 'Plus Jakarta Sans', sans-serif;
+    background-color: #f8faf9;
+    font-family: 'Plus Jakarta Sans', 'Inter', sans-serif;
     color: #131f18;
   }
 }
@@ -22,4 +22,133 @@
 
 .polygon-glow {
   filter: drop-shadow(0 0 8px rgba(3, 172, 14, 0.6));
+}
+
+/* ============================================
+   SmartAgri x LapakTani Fresh Commercial GIS
+   ============================================ */
+.custom-div-icon,
+.custom-cluster-icon {
+  background: transparent !important;
+  border: none !important;
+}
+
+.lapaktani-leaflet-map .leaflet-popup-content-wrapper {
+  background: #ffffff !important;
+  color: #131f18 !important;
+  border: 1px solid #e2e8f0 !important;
+  border-radius: 14px !important;
+  font-family: 'Plus Jakarta Sans', 'Inter', sans-serif;
+  box-shadow: 0 12px 28px rgba(13, 81, 54, 0.16) !important;
+  padding: 0 !important;
+  overflow: hidden;
+}
+
+.lapaktani-leaflet-map .leaflet-popup-content {
+  margin: 0 !important;
+  line-height: 1.5;
+  background: #ffffff !important;
+}
+
+.lapaktani-leaflet-map .leaflet-popup-tip {
+  background: #ffffff !important;
+  border: 1px solid #e2e8f0 !important;
+}
+
+.lapaktani-leaflet-map a.leaflet-popup-close-button {
+  color: #cbd5e1 !important;
+  padding: 8px 10px 0 0 !important;
+  font-size: 16px !important;
+  z-index: 30;
+}
+
+.lapaktani-leaflet-map a.leaflet-popup-close-button:hover {
+  color: #ffffff !important;
+}
+
+.custom-marker-pin {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  border-radius: 50% 50% 50% 0;
+  transform: rotate(-45deg);
+  box-shadow: 0 3px 8px rgba(13, 81, 54, 0.28);
+  border: 2.5px solid #ffffff;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+  cursor: pointer;
+}
+
+.custom-marker-pin:hover,
+.custom-marker-pin.pin-selected {
+  transform: rotate(-45deg) scale(1.22);
+  box-shadow: 0 6px 16px rgba(13, 81, 54, 0.42);
+}
+
+.custom-marker-pin .pin-inner-icon {
+  transform: rotate(45deg);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.custom-marker-pin .dot-center {
+  width: 9px;
+  height: 9px;
+  background: #ffffff;
+  border-radius: 50%;
+  transform: rotate(45deg);
+}
+
+/* Category & Status Colors aligned to LapakTani Fresh Commercial */
+.pin-default-green { background: #166534 !important; width: 30px !important; height: 30px !important; }
+.pin-padi { background: #16a34a !important; }
+.pin-jagung { background: #d97706 !important; }
+.pin-cabai { background: #dc2626 !important; }
+.pin-tembakau { background: #0d9488 !important; }
+.pin-traktor { background: #ea580c !important; }
+.pin-sapi { background: #854d0e !important; }
+.pin-poktan { background: #7c3aed !important; }
+.pin-irigasi { background: #0284c7 !important; }
+.pin-pompa { background: #0891b2 !important; }
+.pin-listrik { background: #f59e0b !important; }
+.pin-kritis { background: #e11d48 !important; }
+
+/* Cluster Bubbles */
+.cluster-bubble {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  color: #ffffff;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-weight: 800;
+  font-size: 12px;
+  border: 2.5px solid #ffffff;
+  cursor: pointer;
+  box-shadow: 0 4px 12px rgba(13, 81, 54, 0.28);
+  transition: transform 0.15s ease;
+}
+
+.cluster-bubble:hover {
+  transform: scale(1.1);
+}
+
+.cluster-small {
+  width: 34px;
+  height: 34px;
+  background: #22c55e;
+}
+
+.cluster-medium {
+  width: 40px;
+  height: 40px;
+  background: #166534;
+}
+
+.cluster-large {
+  width: 46px;
+  height: 46px;
+  background: #0d5136;
 }
