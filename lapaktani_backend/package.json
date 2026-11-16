@@ -6,6 +6,8 @@
   "scripts": {
     "start": "node server.js",
     "dev": "node --watch server.js",
+    "test": "node tests/us01_middleware_architecture.test.js && node tests/us02_database_schema.test.js && node tests/us17_community_and_chat.test.js && node tests/us24_poktan_consolidation.test.js",
+    "test:rizky": "node tests/us01_middleware_architecture.test.js && node tests/us02_database_schema.test.js && node tests/us17_community_and_chat.test.js && node tests/us24_poktan_consolidation.test.js",
     "test:load": "node tests/load_test_autocannon.js"
   },
   "keywords": [],
