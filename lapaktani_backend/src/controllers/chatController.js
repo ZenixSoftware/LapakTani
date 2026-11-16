@@ -1,3 +1,10 @@
+/**
+ * [US-17] Direct Messaging & Chat Conversations Controller
+ * Lead Backend & Database Architect: Rafael Rizky (Rafariz19)
+ * 
+ * Manages real-time DM, contacts directory, message exchange, unread tracking,
+ * and role-separated communication channels (Petani, Penyuluh, Poktan, Pembeli).
+ */
 const { v4: uuidv4 } = require('uuid');
 const pool = require('../config/db');
 
