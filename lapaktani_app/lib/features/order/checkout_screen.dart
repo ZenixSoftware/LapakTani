@@ -1,3 +1,15 @@
+/**
+ * ============================================================================
+ * LAPAKTANI MOBILE APP - [US-14, US-16] CHECKOUT & PAYMENT INSTRUCTION FLOW
+ * ============================================================================
+ * Module       : Features / Orders & Checkout Flow
+ * User Stories : [US-14] Checkout Pemesanan Komoditas & Invoice Snapshot
+ *                [US-16] Pemilihan Metode Pembayaran & Pelacakan Logistik
+ * Author       : Moch. Ilham Abdul Aziz (MochIlham05 - 3125522014)
+ * Architecture : Flutter Interactive Checkout, Multi-Channel Payment Integration
+ * ============================================================================
+ */
+
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:lucide_icons/lucide_icons.dart';

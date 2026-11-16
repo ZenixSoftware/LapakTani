@@ -1,3 +1,17 @@
+/**
+ * ============================================================================
+ * LAPAKTANI BACKEND - [US-14, US-15, US-16] ORDER & ATOMIC STOCK ENGINE
+ * ============================================================================
+ * Module       : Controllers / Orders & Transactions
+ * User Stories : [US-14] Checkout Transaksi & Atomic Stock Locking
+ *                [US-15] Pemotongan Stok Otomatis Saat Settlement
+ *                [US-16] Notifikasi Pesanan Masuk & Pelacakan Logistik
+ * Author       : Moch. Ilham Abdul Aziz (MochIlham05 - 3125522014)
+ * Architecture : MySQL2 Transactions, Row-Level Locking (FOR UPDATE),
+ *                AES-256 Payload Encryption, JobQueue Background Dispatch
+ * ============================================================================
+ */
+
 const crypto = require('crypto');
 const { v4: uuidv4 } = require('uuid');
 const pool = require('../config/db');

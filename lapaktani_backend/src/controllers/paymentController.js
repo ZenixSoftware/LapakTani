@@ -1,3 +1,16 @@
+/**
+ * ============================================================================
+ * LAPAKTANI BACKEND - [US-14, US-15] MIDTRANS PAYMENT GATEWAY & WEBHOOK
+ * ============================================================================
+ * Module       : Controllers / Payment Gateway & Webhook Reconciliation
+ * User Stories : [US-14] Integrasi Midtrans Core API (VA & QRIS Payment)
+ *                [US-15] Webhook Notification & Status Reconciliation (Atomic)
+ * Author       : Moch. Ilham Abdul Aziz (MochIlham05 - 3125522014)
+ * Architecture : SHA-512 Signature Hash Verification, Idempotency Guard,
+ *                Automatic Transaction Status Transition (settlement, expire, cancel)
+ * ============================================================================
+ */
+
 const crypto = require('crypto');
 const midtransClient = require('midtrans-client');
 const pool = require('../config/db');
