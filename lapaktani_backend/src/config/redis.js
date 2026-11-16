@@ -1,3 +1,10 @@
+/**
+ * [US-01] L2 Distributed Cache (Redis) with Resilient In-Memory Buffer Fallback
+ * Lead Backend & Database Architect: Rafael Rizky (Rafariz19)
+ * 
+ * Implements high-throughput L2 caching with TTL auto-expiration,
+ * connection resiliency fallback, and detailed cache performance stats.
+ */
 const { createClient } = require('redis');
 require('dotenv').config({ quiet: true });
 

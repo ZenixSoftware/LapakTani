@@ -1,3 +1,10 @@
+/**
+ * [US-01] HTTP Response Compression Middleware (Native Zlib Gzip/Deflate)
+ * Lead Backend & Database Architect: Rafael Rizky (Rafariz19)
+ * 
+ * Compresses JSON/text responses using gzip or deflate when requested via Accept-Encoding,
+ * while computing compressed byte metrics and setting X-Response-Compressed headers.
+ */
 const zlib = require('zlib');
 
 const stats = {

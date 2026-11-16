@@ -1,4 +1,7 @@
 /**
+ * [US-01] L1 In-Memory Node Cache with Per-Key TTL & Telemetry
+ * Lead Backend & Database Architect: Rafael Rizky (Rafariz19)
+ * 
  * Material 4: L1 In-Memory Node Cache with per-key TTL, hit/miss tracking,
  * and Express X-Node-Cache: HIT | MISS header instrumentation.
  */

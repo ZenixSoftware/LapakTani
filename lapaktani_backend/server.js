@@ -1,3 +1,14 @@
+/**
+ * LapakTani Main Backend Express Server
+ * Monorepo Backend & Middleware Architecture [US-01]
+ * Lead Backend & Database Architect: Rafael Rizky (Rafariz19)
+ * 
+ * Features:
+ * - Express 5 REST API Gateway with CORS, Request Logging & Error Handling
+ * - Dual-layer caching: L1 (NodeCache in-memory) & L2 (Redis with resilient fallback)
+ * - Native zlib HTTP response compression (gzip/deflate)
+ * - Database Connection Pool (MySQL2) with automatic table verification & migrations
+ */
 const path = require('path');
 const express = require('express');
 const cors = require('cors');
@@ -12,6 +23,7 @@ const penyuluhRoutes = require('./src/routes/penyuluh');
 const masterRoutes = require('./src/routes/master');
 const uploadRoutes = require('./src/routes/upload');
 const educationRoutes = require('./src/routes/education');
+const communityRoutes = require('./src/routes/community');
 const cartRoutes = require('./src/routes/cart');
 const orderRoutes = require('./src/routes/orders');
 const soilRoutes = require('./src/routes/soil');
@@ -257,6 +269,7 @@ app.use('/api/penyuluh', penyuluhRoutes);
 app.use('/api/master', masterRoutes);
 app.use('/api/upload', uploadRoutes);
 app.use('/api/education', educationRoutes);
+app.use('/api/community', communityRoutes);
 app.use('/api/cart', cartRoutes);
 app.use('/api/orders', orderRateLimiter, orderRoutes);
 app.use('/api/soil', soilRoutes);
