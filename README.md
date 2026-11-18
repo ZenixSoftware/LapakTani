@@ -149,7 +149,15 @@ cp .env.example .env
 # 5. Jalankan server pengembangan
 npm run dev
 ```
-*Backend akan aktif di `http://localhost:3000` dengan endpoint health check di `http://localhost:3000/api/health`.*
+*Backend akan aktif di `http://localhost:3000` (endpoint publik Cloudflare Tunnel: `https://api-lapaktani.velosixraptor.my.id/api`) dengan health check di `/api/health`.*
+
+#### Setup Web Portal (`lapaktani_web`)
+```bash
+cd lapaktani_web
+npm install
+npm run dev
+```
+*Web Portal (Penyuluh BPP, Dinas Pertanian & Super Admin) dapat diakses secara lokal di `http://localhost:5173` dan melalui domain publik utama **`https://lapaktani.velosixraptor.my.id`**.*
 
 ---
 

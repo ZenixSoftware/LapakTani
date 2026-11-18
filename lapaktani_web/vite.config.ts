@@ -7,6 +7,7 @@ export default defineConfig({
   server: {
     host: true,
     allowedHosts: [
+      'lapaktani.velosixraptor.my.id',
       'ppl-lapaktani.velosixraptor.my.id',
       '.velosixraptor.my.id',
       'localhost',
@@ -15,6 +16,7 @@ export default defineConfig({
   preview: {
     host: true,
     allowedHosts: [
+      'lapaktani.velosixraptor.my.id',
       'ppl-lapaktani.velosixraptor.my.id',
       '.velosixraptor.my.id',
       'localhost',

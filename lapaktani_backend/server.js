@@ -60,8 +60,32 @@ const PORT = process.env.PORT || 3000;
 
 registerServerLossHandlers({ pool, redisClient });
 
+const ENV_CORS_ORIGINS = String(process.env.CORS_ALLOWED_ORIGINS || '')
+  .split(',')
+  .map((o) => o.trim().replace(/\/+$/, '').toLowerCase())
+  .filter(Boolean);
+
+const CORS_ALLOWED_ORIGINS = new Set([
+  'https://lapaktani.velosixraptor.my.id',
+  'https://ppl-lapaktani.velosixraptor.my.id',
+  'http://localhost:5173',
+  'http://127.0.0.1:5173',
+  ...ENV_CORS_ORIGINS,
+]);
+
 app.use(cors({
-  origin: true,
+  origin: (origin, callback) => {
+    if (!origin) return callback(null, true);
+    const cleanOrigin = String(origin).replace(/\/+$/, '').toLowerCase();
+    if (
+      CORS_ALLOWED_ORIGINS.has(cleanOrigin) ||
+      /^https:\/\/([a-z0-9-]+\.)*velosixraptor\.my\.id$/i.test(cleanOrigin) ||
+      /^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/i.test(cleanOrigin)
+    ) {
+      return callback(null, true);
+    }
+    return callback(new Error(`Origin ${origin} tidak diizinkan oleh kebijakan CORS LapakTani.`));
+  },
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization', 'X-API-Key', 'x-api-key', 'Accept', 'X-Request-Id', 'X-RateLimit-Test-Limit', 'Accept-Encoding'],

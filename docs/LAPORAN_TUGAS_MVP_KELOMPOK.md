@@ -5,7 +5,7 @@
 **Repository & Branch Aktif**: `ZenixSoftware/LapakTani` — Branch `valo-Branch`  
 **Domain Produksi Cloudflare Tunnel**:
 - Backend REST API: `https://api-lapaktani.velosixraptor.my.id/api`
-- Web Portal Penyuluh (PPL) & Dinas Pertanian: `https://ppl-lapaktani.velosixraptor.my.id`
+- Web Portal Penyuluh (PPL), Dinas Pertanian & Super Admin: `https://lapaktani.velosixraptor.my.id` *(alias lama: `https://ppl-lapaktani.velosixraptor.my.id`)*
 
 **Anggota Kelompok**:
 1. **M. Davana Yudista Firdausy** *(Lead Full-Stack, Security, DevOps & Flutter/Backend Architect)*
@@ -117,7 +117,7 @@ Berdasarkan pembagian kartu Trello resmi (`UbzpfVZu - lapaktani.json`) dan integ
 | **`[US-26]`** | Telemetri Kualitas Tanah Smart Agri (pH & NPK 8-in-1 + Pemetaan Lahan) | `src/routes/soil.js`, `src/controllers/productController.js` (`getSoilTelemetry`, `saveSoilTelemetry`), `src/controllers/penyuluhController.js` (`getMonitoringLahan`, `getMonitoringSummary`, `saveMonitoringLahan`, `generateRagDecision`, `dispatchRagDecision`) | `src/components/SmartAgriDashboard.tsx`, `src/components/SumenepLandMonitoring.tsx`, `src/components/SensorDataTable.tsx`, `src/components/AiDecisionSupport.tsx`, `src/components/AiPolicyBrief.tsx`, `src/components/PlotInspectorModal.tsx` | `lib/features/product/widgets/soil_telemetry_card.dart`, `lib/features/petani/screens/petani_land_monitoring_screen.dart`, `lib/features/penyuluh/screens/ppl_soil_checkup_screen.dart`, `lib/features/penyuluh/screens/soil_fertility_map_screen.dart` |
 
 ### B. Kontribusi Tambahan Terkait Infrastruktur, DevOps & User Story Lintas Tim (Trello)
-- **`[US-01]` & Arsitektur Dasar**: Konfigurasi monorepo Flutter (`lapaktani_app/lib/core/services/api_service.dart`, `app_config.dart`, `app_colors.dart`, `custom_soft_card.dart`), Migrasi ke Cloudflare Tunnel (`api-lapaktani.velosixraptor.my.id` & `ppl-lapaktani.velosixraptor.my.id`), perbaikan `vite.config` `allowedHosts`, serta implementasi 9 materi wajib backend di `server.js`.
+- **`[US-01]` & Arsitektur Dasar**: Konfigurasi monorepo Flutter (`lapaktani_app/lib/core/services/api_service.dart`, `app_config.dart`, `app_colors.dart`, `custom_soft_card.dart`), Migrasi ke Cloudflare Tunnel (`api-lapaktani.velosixraptor.my.id` & `lapaktani.velosixraptor.my.id`), perbaikan `vite.config` `allowedHosts`, serta implementasi 9 materi wajib backend di `server.js`.
 - **`[US-07]` Penambahan Komoditas Panen & Grade Mutu**: `src/controllers/productController.js` (`createProduct`, `normalizePricingInput` Retail/Diskon/Partai B2B), `add_product_screen.dart`, `edit_product_screen.dart`, dan perbaikan *null-safe DECIMAL string-to-num parsing* di 6 layar Flutter.
 - **`[US-17]` Forum Diskusi Komunitas & Unified 6-Role Chat**: `src/routes/chat.js`, `src/controllers/chatController.js`, `community_repository.dart`, `discussion_comment_sheet.dart`, `chat_room_screen.dart`, `WebDirectMessageDrawer.tsx`.
 - **`[US-20]` Load/Stress Testing**: `lapaktani_backend/tests/load_test_autocannon.js` (`npm run test:load`) + middleware `rateLimiter.js` & `compressionMiddleware.js`.
