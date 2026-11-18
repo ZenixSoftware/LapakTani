@@ -141,6 +141,11 @@ class _WholesaleDetailScreenState extends State<WholesaleDetailScreen> {
 
     double selectedQty = minOrder.clamp(1.0, remaining);
     final qtyController = TextEditingController(text: selectedQty.toStringAsFixed(0));
+    String fulfillmentMethod = 'DIANTAR_PENJUAL';
+    bool payEscrowNow = true;
+    final bool isB2BLot = _poolData['product_id'] != null ||
+        _poolData['catalog_channel']?.toString() == 'B2B_BID_LOT' ||
+        _poolData['is_b2b_lot'] == true;
 
     showModalBottomSheet(
       context: context,
@@ -282,7 +287,50 @@ class _WholesaleDetailScreenState extends State<WholesaleDetailScreen> {
                       ),
                     ],
                   ),
-                  const SizedBox(height: 16),
+                  const SizedBox(height: 14),
+                  DropdownButtonFormField<String>(
+                    initialValue: fulfillmentMethod,
+                    decoration: const InputDecoration(
+                      labelText: 'Metode Serah Terima B2B',
+                      border: OutlineInputBorder(),
+                    ),
+                    items: const [
+                      DropdownMenuItem(
+                        value: 'DIANTAR_PENJUAL',
+                        child: Text('Diantar Penjual (Armada Koperasi)'),
+                      ),
+                      DropdownMenuItem(
+                        value: 'DIAMBIL_SENDIRI',
+                        child: Text('Diambil Sendiri di Gudang / Kebun'),
+                      ),
+                    ],
+                    onChanged: (v) {
+                      if (v != null) {
+                        setModalState(() => fulfillmentMethod = v);
+                      }
+                    },
+                  ),
+                  if (isB2BLot) ...[
+                    const SizedBox(height: 8),
+                    SwitchListTile(
+                      contentPadding: EdgeInsets.zero,
+                      value: payEscrowNow,
+                      activeThumbColor: AppColors.primary,
+                      title: Text(
+                        'Bayar Escrow Sekarang (PAID_ESCROW)',
+                        style: GoogleFonts.plusJakartaSans(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                      subtitle: Text(
+                        'Membuka identitas petani sumber panen secara penuh setelah dana masuk escrow.',
+                        style: GoogleFonts.plusJakartaSans(fontSize: 10.5),
+                      ),
+                      onChanged: (v) => setModalState(() => payEscrowNow = v),
+                    ),
+                  ],
+                  const SizedBox(height: 12),
                   Container(
                     padding: const EdgeInsets.all(12),
                     decoration: BoxDecoration(
@@ -324,6 +372,54 @@ class _WholesaleDetailScreenState extends State<WholesaleDetailScreen> {
                         }
 
                         Navigator.pop(ctx);
+                        if (isB2BLot) {
+                          try {
+                            final productId = (_poolData['product_id'] ?? _poolData['id'] ?? '').toString();
+                            final res = await _apiService.placeB2BLotBid(
+                              productId,
+                              bidQtyKg: qty,
+                              bidPricePerKg: pricePerKg,
+                              fulfillmentMethod: fulfillmentMethod,
+                              payImmediately: payEscrowNow,
+                            );
+                            if (!mounted) return;
+                            final bidData = res['data'] is Map
+                                ? Map<String, dynamic>.from(res['data'] as Map)
+                                : <String, dynamic>{};
+                            messenger.showSnackBar(
+                              SnackBar(
+                                content: Text(
+                                  res['message']?.toString() ??
+                                      'Tawaran B2B (${qty.toStringAsFixed(0)} kg) tercatat!',
+                                ),
+                                backgroundColor: AppColors.primary,
+                                behavior: SnackBarBehavior.floating,
+                              ),
+                            );
+                            setState(() {
+                              final double curRem = double.tryParse(
+                                      '${_poolData['remaining_quota_kg'] ?? ''}') ??
+                                  remaining;
+                              _poolData['remaining_quota_kg'] = (curRem - qty).clamp(0.0, totalQuota);
+                              if (bidData['source_farmer_name'] != null) {
+                                _poolData['source_farmer_name'] = bidData['source_farmer_name'];
+                                _poolData['source_farmer_village'] = bidData['source_farmer_village'];
+                                _poolData['source_harvest_date_label'] = bidData['source_harvest_date_label'];
+                              }
+                            });
+                          } catch (e) {
+                            if (!mounted) return;
+                            messenger.showSnackBar(
+                              SnackBar(
+                                content: Text('Gagal: $e'),
+                                backgroundColor: const Color(0xFFEF4444),
+                                behavior: SnackBarBehavior.floating,
+                              ),
+                            );
+                          }
+                          return;
+                        }
+
                         final success = await _apiService.takeB2BQuota(
                           poolId: (_poolData['id'] ?? '').toString(),
                           quantityKg: qty,
@@ -795,6 +891,68 @@ class _WholesaleDetailScreenState extends State<WholesaleDetailScreen> {
                                 style: GoogleFonts.plusJakartaSans(
                                   fontSize: 11.5,
                                   color: const Color(0xFF15803D),
+                                  height: 1.35,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+
+                  // 6B. Ketertelusuran Sumber Petani (Post-Escrow Unmasking)
+                  Container(
+                    padding: const EdgeInsets.all(14),
+                    decoration: BoxDecoration(
+                      color: (_poolData['source_farmer_name'] != null &&
+                              _poolData['source_farmer_name'].toString().isNotEmpty)
+                          ? const Color(0xFFFEF3C7)
+                          : const Color(0xFFF8FAFC),
+                      borderRadius: BorderRadius.circular(14),
+                      border: Border.all(
+                        color: (_poolData['source_farmer_name'] != null &&
+                                _poolData['source_farmer_name'].toString().isNotEmpty)
+                            ? const Color(0xFFF59E0B)
+                            : const Color(0xFFE2E8F0),
+                      ),
+                    ),
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Icon(
+                          (_poolData['source_farmer_name'] != null &&
+                                  _poolData['source_farmer_name'].toString().isNotEmpty)
+                              ? LucideIcons.sprout
+                              : LucideIcons.eyeOff,
+                          color: AppColors.warning,
+                          size: 20,
+                        ),
+                        const SizedBox(width: 10),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                'Ketertelusuran Sumber Asli Panen',
+                                style: GoogleFonts.plusJakartaSans(
+                                  fontSize: 12.5,
+                                  fontWeight: FontWeight.w800,
+                                  color: const Color(0xFF0F172A),
+                                ),
+                              ),
+                              const SizedBox(height: 2),
+                              Text(
+                                (_poolData['source_farmer_name'] != null &&
+                                        _poolData['source_farmer_name']
+                                            .toString()
+                                            .isNotEmpty)
+                                    ? 'Petani Asal: ${_poolData['source_farmer_name']} • ${_poolData['source_farmer_village'] ?? 'Sumenep'} • Panen ${_poolData['source_harvest_date_label'] ?? '-'}'
+                                    : 'Nama petani sumber desa disembunyikan untuk mencegah bypass, dan dibuka otomatis setelah status PAID_ESCROW.',
+                                style: GoogleFonts.plusJakartaSans(
+                                  fontSize: 11.5,
+                                  color: const Color(0xFF475569),
                                   height: 1.35,
                                 ),
                               ),

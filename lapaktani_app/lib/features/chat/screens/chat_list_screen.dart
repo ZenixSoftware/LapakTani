@@ -118,8 +118,8 @@ class _ChatListScreenState extends State<ChatListScreen> {
   @override
   Widget build(BuildContext context) {
     final orderSubtitle = _canAccessOrderChat
-        ? 'Direct Message 5-Role & Chat Penjualan Order'
-        : 'Direct Message 5-Role Komunitas & Koordinasi Desa';
+        ? 'Direct Message 6-Role & Chat Penjualan Order'
+        : 'Direct Message 6-Role Komunitas & Koordinasi Desa';
 
     return Scaffold(
       backgroundColor: AppColors.background,

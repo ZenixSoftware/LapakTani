@@ -11,6 +11,7 @@ router.get('/daily-log', requireRole('petani', 'admin', 'penyuluh', 'dinas'), pe
 
 router.get('/harvest-reports', requireRole('petani', 'penyuluh', 'admin'), agroController.getFarmerHarvestReports);
 router.post('/harvest-reports', requireRole('petani', 'penyuluh', 'admin'), agroController.createFarmerHarvestReport);
+router.post('/harvest-reports/:id/declare-harvested', requireRole('petani', 'penyuluh', 'admin'), agroController.declareHarvestedAndAllocateProRata);
 
 router.get('/purchase-offers', requireRole('petani', 'admin', 'penyuluh'), agroController.getFarmerPurchaseOffers);
 router.put('/purchase-offers/:id/respond', requireRole('petani'), agroController.respondToPurchaseOffer);

@@ -1326,6 +1326,7 @@ class _PetaniSimpleScreenState extends State<PetaniSimpleScreen> {
     String statusTanam = 'HAMPIR_PANEN';
     final komCtrl = TextEditingController(text: 'Bawang Merah Sumenep');
     final beratCtrl = TextEditingController(text: '350');
+    final luasCtrl = TextEditingController(text: '0.8');
     final catatanCtrl = TextEditingController();
     bool sending = false;
 
@@ -1406,6 +1407,18 @@ class _PetaniSimpleScreenState extends State<PetaniSimpleScreen> {
                         ),
                       ),
                     ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: TextField(
+                        controller: luasCtrl,
+                        keyboardType:
+                            const TextInputType.numberWithOptions(decimal: true),
+                        decoration: const InputDecoration(
+                          labelText: 'Luas (Ha)',
+                          border: OutlineInputBorder(),
+                        ),
+                      ),
+                    ),
                   ],
                 ),
                 const SizedBox(height: 10),
@@ -1433,6 +1446,8 @@ class _PetaniSimpleScreenState extends State<PetaniSimpleScreen> {
                                 'status_tanam': statusTanam,
                                 'estimasi_berat_kg':
                                     double.tryParse(beratCtrl.text) ?? 100,
+                                'luas_lahan_ha':
+                                    double.tryParse(luasCtrl.text.trim()) ?? 0.5,
                                 'catatan': catatanCtrl.text.trim(),
                               });
                               if (ctx.mounted) Navigator.pop(ctx);
@@ -1619,7 +1634,14 @@ class _PetaniSimpleScreenState extends State<PetaniSimpleScreen> {
           ),
           if (_harvestReports.isNotEmpty) ...[
             const SizedBox(height: 8),
-            ..._harvestReports.take(2).map((hr) {
+            ..._harvestReports.take(3).map((hr) {
+              final hrStatus = (hr['status_tanam'] ?? '').toString();
+              final bool isSudahPanen = hrStatus == 'SUDAH_PANEN';
+              final bool isDeficit =
+                  hr['is_deficit'] == true || hr['is_deficit'] == 1;
+              final luasHa = hr['luas_lahan_ha'] ?? 0.5;
+              final realisasiKg = hr['realisasi_panen_kg'];
+
               return Container(
                 width: double.infinity,
                 margin: const EdgeInsets.only(top: 6),
@@ -1627,19 +1649,265 @@ class _PetaniSimpleScreenState extends State<PetaniSimpleScreen> {
                 decoration: BoxDecoration(
                   color: AppColors.background,
                   borderRadius: BorderRadius.circular(10),
-                  border: Border.all(color: AppColors.outline),
-                ),
-                child: Text(
-                  '${hr['status_tanam']} • ${hr['komoditas']} (${hr['estimasi_berat_kg']} kg) — ${hr['catatan'] ?? ''}',
-                  style: GoogleFonts.plusJakartaSans(
-                    fontSize: 11.5,
-                    color: AppColors.textPrimary,
+                  border: Border.all(
+                    color: isDeficit
+                        ? AppColors.accent
+                        : isSudahPanen
+                            ? AppColors.primary
+                            : AppColors.outline,
                   ),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      '$hrStatus • ${hr['komoditas']} (Est. ${hr['estimasi_berat_kg']} kg • $luasHa Ha)',
+                      style: GoogleFonts.plusJakartaSans(
+                        fontSize: 11.5,
+                        fontWeight: FontWeight.w700,
+                        color: AppColors.textPrimary,
+                      ),
+                    ),
+                    if ((hr['catatan'] ?? '').toString().trim().isNotEmpty)
+                      Padding(
+                        padding: const EdgeInsets.only(top: 2),
+                        child: Text(
+                          hr['catatan'].toString(),
+                          style: GoogleFonts.plusJakartaSans(
+                            fontSize: 11,
+                            color: AppColors.textSecondary,
+                          ),
+                        ),
+                      ),
+                    if (isSudahPanen && realisasiKg != null)
+                      Padding(
+                        padding: const EdgeInsets.only(top: 4),
+                        child: Text(
+                          isDeficit
+                              ? 'Realisasi Panen: $realisasiKg kg (Defisit — Alokasi Pro-Rata Otomatis Aktif)'
+                              : 'Realisasi Panen: $realisasiKg kg (Memenuhi seluruh kontrak)',
+                          style: GoogleFonts.plusJakartaSans(
+                            fontSize: 11,
+                            fontWeight: FontWeight.w700,
+                            color: isDeficit
+                                ? AppColors.warning
+                                : AppColors.primaryDark,
+                          ),
+                        ),
+                      ),
+                    if (!isSudahPanen && hr['id'] != null) ...[
+                      const SizedBox(height: 6),
+                      Align(
+                        alignment: Alignment.centerRight,
+                        child: OutlinedButton.icon(
+                          onPressed: () => _showDeclareHarvestedModal(hr),
+                          icon: const Icon(LucideIcons.scale, size: 13),
+                          label: Text(
+                            'Umumkan Sudah Panen (Input Realisasi kg)',
+                            style: GoogleFonts.plusJakartaSans(
+                              fontSize: 11,
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                          style: OutlinedButton.styleFrom(
+                            foregroundColor: AppColors.primary,
+                            side: const BorderSide(color: AppColors.primary),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 10,
+                              vertical: 6,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ],
                 ),
               );
             }),
           ],
         ],
+      ),
+    );
+  }
+
+  void _showDeclareHarvestedModal(Map<String, dynamic> report) {
+    final estKg = report['estimasi_berat_kg']?.toString() ?? '300';
+    final realCtrl = TextEditingController(text: estKg);
+    final noteCtrl = TextEditingController();
+    bool submitting = false;
+
+    showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.white,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (ctx) => StatefulBuilder(
+        builder: (ctx, setModalState) => Padding(
+          padding: EdgeInsets.only(
+            left: 20,
+            right: 20,
+            top: 20,
+            bottom: MediaQuery.of(ctx).viewInsets.bottom + 20,
+          ),
+          child: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Umumkan Sudah Panen (${report['komoditas']})',
+                  style: GoogleFonts.plusJakartaSans(
+                    fontSize: 15.5,
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  'Jika realisasi panen (kg) lebih kecil dari total kontrak toko, sistem otomatis membagikan kuota secara adil (Pro-Rata).',
+                  style: GoogleFonts.plusJakartaSans(
+                    fontSize: 11.5,
+                    color: AppColors.textSecondary,
+                  ),
+                ),
+                const SizedBox(height: 12),
+                TextField(
+                  controller: realCtrl,
+                  keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                  decoration: const InputDecoration(
+                    labelText: 'Realisasi Hasil Panen (kg)',
+                    border: OutlineInputBorder(),
+                  ),
+                ),
+                const SizedBox(height: 10),
+                TextField(
+                  controller: noteCtrl,
+                  decoration: const InputDecoration(
+                    labelText: 'Catatan Panen (Opsional)',
+                    hintText: 'Contoh: Cuaca kemarau menyebabkan susut timbangan 20%',
+                    border: OutlineInputBorder(),
+                  ),
+                ),
+                const SizedBox(height: 14),
+                SizedBox(
+                  width: double.infinity,
+                  height: 46,
+                  child: ElevatedButton(
+                    onPressed: submitting
+                        ? null
+                        : () async {
+                            final kg = double.tryParse(realCtrl.text.trim()) ?? 0;
+                            if (kg <= 0) return;
+                            setModalState(() => submitting = true);
+                            try {
+                              final res = await _apiService.declareFarmerHarvested(
+                                report['id'].toString(),
+                                realisasiPanenKg: kg,
+                                catatan: noteCtrl.text.trim(),
+                              );
+                              if (ctx.mounted) Navigator.pop(ctx);
+                              await _loadFarmerData();
+                              if (!mounted) return;
+                              final data = res['data'] is Map
+                                  ? Map<String, dynamic>.from(res['data'] as Map)
+                                  : <String, dynamic>{};
+                              final allocations = data['allocations'] is List
+                                  ? List<Map<String, dynamic>>.from(
+                                      (data['allocations'] as List).map(
+                                        (e) => Map<String, dynamic>.from(e as Map),
+                                      ),
+                                    )
+                                  : <Map<String, dynamic>>[];
+                              final bool deficit = data['is_deficit'] == true;
+                              await showDialog<void>(
+                                context: context,
+                                builder: (dCtx) => AlertDialog(
+                                  title: Text(
+                                    deficit
+                                        ? 'Panen Tercatat · Mode Pro-Rata Aktif'
+                                        : 'Panen Tercatat Lengkap',
+                                    style: GoogleFonts.plusJakartaSans(
+                                      fontSize: 15,
+                                      fontWeight: FontWeight.w800,
+                                    ),
+                                  ),
+                                  content: SingleChildScrollView(
+                                    child: Column(
+                                      mainAxisSize: MainAxisSize.min,
+                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      children: [
+                                        Text(
+                                          res['message']?.toString() ??
+                                              'Realisasi panen berhasil diumumkan.',
+                                          style: GoogleFonts.plusJakartaSans(fontSize: 12.5),
+                                        ),
+                                        if (allocations.isNotEmpty) ...[
+                                          const SizedBox(height: 10),
+                                          Text(
+                                            'Rincian Pembagian Kontrak Offtaker:',
+                                            style: GoogleFonts.plusJakartaSans(
+                                              fontSize: 12,
+                                              fontWeight: FontWeight.w800,
+                                            ),
+                                          ),
+                                          const SizedBox(height: 6),
+                                          ...allocations.map((a) {
+                                            final pct = ((double.tryParse(
+                                                            '${a['share_ratio'] ?? 0}') ??
+                                                        0) *
+                                                    100)
+                                                .toStringAsFixed(1);
+                                            return Padding(
+                                              padding: const EdgeInsets.only(bottom: 4),
+                                              child: Text(
+                                                '• ${a['store_name'] ?? 'Toko'}: ${a['allocated_pro_rata_kg']} kg (dari ${a['requested_kg']} kg · $pct%)',
+                                                style: GoogleFonts.plusJakartaSans(
+                                                  fontSize: 11.5,
+                                                  fontWeight: FontWeight.w600,
+                                                  color: AppColors.primaryDark,
+                                                ),
+                                              ),
+                                            );
+                                          }),
+                                        ],
+                                      ],
+                                    ),
+                                  ),
+                                  actions: [
+                                    TextButton(
+                                      onPressed: () => Navigator.pop(dCtx),
+                                      child: const Text('Tutup'),
+                                    ),
+                                  ],
+                                ),
+                              );
+                            } catch (e) {
+                              setModalState(() => submitting = false);
+                              if (ctx.mounted) {
+                                ScaffoldMessenger.of(ctx).showSnackBar(
+                                  SnackBar(
+                                    content: Text('Gagal: $e'),
+                                    backgroundColor: AppColors.error,
+                                  ),
+                                );
+                              }
+                            }
+                          },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppColors.primary,
+                      foregroundColor: Colors.white,
+                    ),
+                    child: Text(
+                      submitting ? 'Menghitung...' : 'Simpan Realisasi & Hitung Pro-Rata',
+                      style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w700),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
       ),
     );
   }
@@ -1739,6 +2007,26 @@ class _PetaniSimpleScreenState extends State<PetaniSimpleScreen> {
                         color: AppColors.primaryDark,
                       ),
                     ),
+                    if (offer['allocated_pro_rata_kg'] != null) ...[
+                      const SizedBox(height: 4),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                        decoration: BoxDecoration(
+                          color: AppColors.surfaceSoft,
+                          borderRadius: BorderRadius.circular(6),
+                          border: Border.all(color: AppColors.surfaceSoftBorder),
+                        ),
+                        child: Text(
+                          'Alokasi Pro-Rata: ${offer['allocated_pro_rata_kg']} kg'
+                          '${offer['share_ratio'] != null ? ' (${((double.tryParse('${offer['share_ratio']}') ?? 0) * 100).toStringAsFixed(1)}%)' : ''}',
+                          style: GoogleFonts.plusJakartaSans(
+                            fontSize: 10.5,
+                            fontWeight: FontWeight.w800,
+                            color: AppColors.primaryDark,
+                          ),
+                        ),
+                      ),
+                    ],
                     const SizedBox(height: 8),
                     Wrap(
                       alignment: WrapAlignment.end,

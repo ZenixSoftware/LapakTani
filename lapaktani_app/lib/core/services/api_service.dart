@@ -1126,5 +1126,129 @@ class ApiService {
     final response = await _post('/penyuluh/dispatch-decision', payload);
     return _decodeResponseMap(response, 'Gagal mengirim keputusan RAG');
   }
+
+  // ============================================================================
+  // 2-TIER SUPPLY CHAIN, PRO-RATA DEFICIT, B2B OPEN BID & HYBRID REFUND
+  // ============================================================================
+
+  Future<Map<String, dynamic>> declareFarmerHarvested(
+    String reportId, {
+    required double realisasiPanenKg,
+    String? catatan,
+  }) async {
+    final response = await _post(
+      '/petani/harvest-reports/$reportId/declare-harvested',
+      {
+        'realisasi_panen_kg': realisasiPanenKg,
+        if (catatan != null && catatan.trim().isNotEmpty) 'catatan': catatan.trim(),
+      },
+    );
+    return _decodeResponseMap(response, 'Gagal mengumumkan realisasi panen');
+  }
+
+  Future<List<Map<String, dynamic>>> fetchB2BLots({
+    String? processingState,
+  }) async {
+    final qs = (processingState != null && processingState.isNotEmpty)
+        ? '?processing_state=$processingState'
+        : '';
+    final response = await _fetchGet('/b2b/lots$qs');
+    return _extractDataList(response);
+  }
+
+  Future<List<Map<String, dynamic>>> fetchB2BLotBids() async {
+    final response = await _fetchGet('/b2b/bids');
+    return _extractDataList(response);
+  }
+
+  Future<Map<String, dynamic>> placeB2BLotBid(
+    String productId, {
+    required double bidQtyKg,
+    double? bidPricePerKg,
+    String fulfillmentMethod = 'DIANTAR_PENJUAL',
+    String? deliveryAddress,
+    bool payImmediately = false,
+  }) async {
+    final response = await _post('/b2b/lots/$productId/bid', {
+      'bid_qty_kg': bidQtyKg,
+      'bid_price_per_kg': ?bidPricePerKg,
+      'fulfillment_method': fulfillmentMethod,
+      if (deliveryAddress != null && deliveryAddress.trim().isNotEmpty)
+        'delivery_address': deliveryAddress.trim(),
+      'pay_immediately': payImmediately,
+    });
+    return _decodeResponseMap(response, 'Gagal mengajukan tawaran lot B2B');
+  }
+
+  Future<Map<String, dynamic>> updateB2BLotBidStatus(
+    String bidId,
+    String status,
+  ) async {
+    final response = await _put('/b2b/bids/$bidId/status', {'status': status});
+    return _decodeResponseMap(response, 'Gagal memperbarui status tawaran B2B');
+  }
+
+  Future<Map<String, dynamic>> restockB2BBidToRetail(
+    String bidId, {
+    double? retailPricePerKg,
+    int? discountPercent,
+    String? retailTitle,
+  }) async {
+    final response = await _post('/b2b/bids/$bidId/restock-to-retail', {
+      'retail_price_per_kg': ?retailPricePerKg,
+      'discount_percent': ?discountPercent,
+      if (retailTitle != null && retailTitle.trim().isNotEmpty)
+        'retail_title': retailTitle.trim(),
+    });
+    return _decodeResponseMap(
+      response,
+      'Gagal menyinkronkan lot ke katalog retail',
+    );
+  }
+
+  Future<Map<String, dynamic>> convertProductRemainderToRetail(
+    String productId, {
+    double? retailPricePerKg,
+    int? discountPercent,
+  }) async {
+    final response = await _put('/products/$productId/convert-remainder-to-retail', {
+      'retail_price_per_kg': ?retailPricePerKg,
+      'discount_percent': ?discountPercent,
+    });
+    return _decodeResponseMap(
+      response,
+      'Gagal mengalihkan sisa stok B2B ke katalog retail',
+    );
+  }
+
+  Future<Map<String, dynamic>> cancelOrderWithRefund(
+    String orderId, {
+    String cancelledBy = 'BUYER',
+    String? reason,
+  }) async {
+    final response = await _post('/orders/$orderId/cancel-with-refund', {
+      'cancelled_by': cancelledBy,
+      if (reason != null && reason.trim().isNotEmpty) 'reason': reason.trim(),
+    });
+    return _decodeResponseMap(
+      response,
+      'Gagal membatalkan pesanan & menghitung refund',
+    );
+  }
+
+  Future<Map<String, dynamic>> cancelB2BBidWithRefund(
+    String bidId, {
+    String cancelledBy = 'BUYER',
+    String? reason,
+  }) async {
+    final response = await _post('/b2b/bids/$bidId/cancel-with-refund', {
+      'cancelled_by': cancelledBy,
+      if (reason != null && reason.trim().isNotEmpty) 'reason': reason.trim(),
+    });
+    return _decodeResponseMap(
+      response,
+      'Gagal membatalkan kontrak B2B',
+    );
+  }
 }
 

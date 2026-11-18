@@ -17,6 +17,7 @@ class User {
   final String? phone;
   final String? role;
   final int? roleId;
+  final String? adminTier;
   final bool isChairman;
   final bool isVerified;
 
@@ -27,6 +28,7 @@ class User {
     this.phone,
     this.role,
     this.roleId,
+    this.adminTier,
     this.isChairman = false,
     this.isVerified = true,
   });
@@ -51,6 +53,7 @@ class User {
       phone: json['phone']?.toString() ?? json['phone_number']?.toString(),
       role: json['role']?.toString(),
       roleId: parsedRoleId,
+      adminTier: json['admin_tier']?.toString(),
       isChairman: chairmanFlag,
       isVerified: json['is_verified'] == true || json['is_verified'] == 1,
     );
@@ -63,6 +66,7 @@ class User {
         'phone': phone,
         'role': role,
         'role_id': roleId,
+        'admin_tier': adminTier,
         'is_chairman': isChairman,
         'is_verified': isVerified,
       };

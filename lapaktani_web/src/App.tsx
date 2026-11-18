@@ -13,6 +13,7 @@ import { AiDecisionSupport } from './components/AiDecisionSupport';
 import { PenyuluhStoreAndForumHub } from './components/PenyuluhStoreAndForumHub';
 import { PlotInspectorModal } from './components/PlotInspectorModal';
 import { WebDirectMessageDrawer } from './components/WebDirectMessageDrawer';
+import { SuperAdminGovernanceHub } from './components/SuperAdminGovernanceHub';
 import { isPlotCritical } from './utils/monitoringHelpers';
 import {
   fetchPendingFarmers,
@@ -33,8 +34,15 @@ function isUserDinas(user: AuthUser | null): boolean {
   return user.role?.toLowerCase() === 'dinas' || user.role_id === 5;
 }
 
+function isUserSuperAdmin(user: AuthUser | null): boolean {
+  if (!user) return false;
+  return user.role?.toLowerCase() === 'superadmin' || user.role_id === 6;
+}
+
 export function App() {
-  const [activeTab, setActiveTab] = useState<PortalModuleTab>('dashboard');
+  const [activeTab, setActiveTab] = useState<PortalModuleTab>(() =>
+    isUserSuperAdmin(getStoredUser()) ? 'superadmin-governance' : 'dashboard'
+  );
   const [farmers, setFarmers] = useState<PendingFarmer[]>([]);
   const [selectedFarmerId, setSelectedFarmerId] = useState<string>('');
   const [plots, setPlots] = useState<LandPlotRecord[]>([]);
@@ -55,8 +63,17 @@ export function App() {
   const [isDmDrawerOpen, setIsDmDrawerOpen] = useState<boolean>(false);
 
   const isDinas = isUserDinas(currentUser);
+  const isSuperAdmin = isUserSuperAdmin(currentUser);
 
   const mobileTabs = useMemo<{ id: PortalModuleTab; label: string }[]>(() => {
+    if (isSuperAdmin) {
+      return [
+        { id: 'superadmin-governance', label: 'Tata Kelola' },
+        { id: 'dashboard', label: 'GIS' },
+        { id: 'peta-lahan', label: 'Peta' },
+        { id: 'data-sensor', label: 'Sensor' },
+      ];
+    }
     if (isDinas) {
       return [
         { id: 'dashboard', label: 'Dashboard' },
@@ -73,7 +90,7 @@ export function App() {
       { id: 'validasi', label: 'Validasi' },
       { id: 'toko-forum', label: 'Toko & Forum' },
     ];
-  }, [isDinas]);
+  }, [isDinas, isSuperAdmin]);
 
   const showToast = useCallback(
     (message: string, type: 'success' | 'error' | 'info' = 'success') => {
@@ -87,12 +104,27 @@ export function App() {
 
   // Enforce strict role separation on active tab
   useEffect(() => {
+    if (isSuperAdmin) {
+      if (
+        activeTab === 'validasi' ||
+        activeTab === 'rag-decision' ||
+        activeTab === 'toko-forum' ||
+        activeTab === 'policy-brief'
+      ) {
+        setActiveTab('superadmin-governance');
+      }
+      return;
+    }
+    if (activeTab === 'superadmin-governance') {
+      setActiveTab('dashboard');
+      return;
+    }
     if (isDinas && (activeTab === 'validasi' || activeTab === 'rag-decision' || activeTab === 'toko-forum')) {
       setActiveTab('dashboard');
     } else if (!isDinas && activeTab === 'policy-brief') {
       setActiveTab('dashboard');
     }
-  }, [isDinas, activeTab]);
+  }, [isDinas, isSuperAdmin, activeTab]);
 
   const loadMonitoringData = useCallback(
     async (quiet = false) => {
@@ -122,7 +154,7 @@ export function App() {
   const loadData = useCallback(
     async (quiet = false) => {
       const user = getStoredUser();
-      if (isUserDinas(user)) {
+      if (isUserDinas(user) || isUserSuperAdmin(user)) {
         setFarmers([]);
         setIsLoading(false);
         return;
@@ -169,12 +201,20 @@ export function App() {
     setCurrentUser(user);
     setIsLoginModalOpen(false);
     const dinasRole = isUserDinas(user);
-    setActiveTab('dashboard');
+    const superAdminRole = isUserSuperAdmin(user);
+    setActiveTab(superAdminRole ? 'superadmin-governance' : 'dashboard');
     showToast(
-      `Berhasil masuk sebagai ${user.full_name || (dinasRole ? 'Dinas Pertanian' : 'Penyuluh Pertanian')}.`,
+      `Berhasil masuk sebagai ${
+        user.full_name ||
+        (superAdminRole
+          ? 'Super Admin Pusat'
+          : dinasRole
+            ? 'Dinas Pertanian'
+            : 'Penyuluh Pertanian')
+      }.`,
       'success'
     );
-    if (!dinasRole) {
+    if (!dinasRole && !superAdminRole) {
       void loadData();
     } else {
       setFarmers([]);
@@ -218,7 +258,7 @@ export function App() {
     try {
       await Promise.all([
         loadMonitoringData(true),
-        getAuthToken() && !isDinas ? loadData(true) : Promise.resolve(),
+        getAuthToken() && !isDinas && !isSuperAdmin ? loadData(true) : Promise.resolve(),
       ]);
       showToast('Sinkronisasi Portal Sumenep berhasil diperbarui.', 'info');
     } finally {
@@ -336,6 +376,13 @@ export function App() {
               })}
             </div>
 
+            {activeTab === 'superadmin-governance' && isSuperAdmin && (
+              <SuperAdminGovernanceHub
+                currentUser={currentUser}
+                onShowToast={showToast}
+              />
+            )}
+
             {activeTab === 'dashboard' && (
               <SmartAgriDashboard
                 plots={displayedPlots}
@@ -367,7 +414,7 @@ export function App() {
               />
             )}
 
-            {activeTab === 'rag-decision' && !isDinas && (
+            {activeTab === 'rag-decision' && !isDinas && !isSuperAdmin && (
               <AiDecisionSupport
                 plots={displayedPlots}
                 onRefresh={() => void loadMonitoringData(false)}
@@ -376,11 +423,11 @@ export function App() {
               />
             )}
 
-            {activeTab === 'toko-forum' && !isDinas && (
+            {activeTab === 'toko-forum' && !isDinas && !isSuperAdmin && (
               <PenyuluhStoreAndForumHub onShowToast={showToast} />
             )}
 
-            {activeTab === 'policy-brief' && isDinas && (
+            {activeTab === 'policy-brief' && isDinas && !isSuperAdmin && (
               <AiPolicyBrief
                 plots={displayedPlots}
                 summary={summary}
@@ -390,7 +437,7 @@ export function App() {
               />
             )}
 
-            {activeTab === 'validasi' && !isDinas && (
+            {activeTab === 'validasi' && !isDinas && !isSuperAdmin && (
               <>
                 <HeroBanner
                   totalQueue={farmers.length}
@@ -425,13 +472,13 @@ export function App() {
       {/* Click-to-Inspect 8-in-1 Drawer Modal */}
       <PlotInspectorModal
         plot={inspectedPlot}
-        readOnly={isDinas}
+        readOnly={isDinas || isSuperAdmin}
         onClose={() => setInspectedPlot(null)}
         onPlotUpdated={handlePlotUpdated}
         onShowToast={showToast}
       />
 
-      {/* Web Direct Messaging (5 Roles) Slide-Over Drawer */}
+      {/* Web Direct Messaging (6 Roles) Slide-Over Drawer */}
       <WebDirectMessageDrawer
         isOpen={isDmDrawerOpen}
         onClose={() => setIsDmDrawerOpen(false)}
@@ -439,7 +486,7 @@ export function App() {
         onShowToast={showToast}
       />
 
-      {/* Web Authentication Modal (Penyuluh BPP / Dinas Pertanian) */}
+      {/* Web Authentication Modal (Penyuluh BPP / Dinas Pertanian / Super Admin) */}
       <LoginModal
         isOpen={isLoginModalOpen}
         onClose={getAuthToken() ? () => setIsLoginModalOpen(false) : undefined}

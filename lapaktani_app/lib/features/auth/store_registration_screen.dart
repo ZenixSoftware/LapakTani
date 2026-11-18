@@ -52,6 +52,7 @@ class _StoreRegistrationScreenState extends State<StoreRegistrationScreen> {
     text: 'Toko Tani Berkah Sumenep',
   );
   final _minWholesaleCtrl = TextEditingController(text: '30');
+  final _warehouseCapCtrl = TextEditingController(text: '2000');
   final _bannerCtrl = TextEditingController(
     text: 'Promo Panen Segar Hemat s/d 15% & Harga Partai B2B',
   );
@@ -60,6 +61,7 @@ class _StoreRegistrationScreenState extends State<StoreRegistrationScreen> {
   );
 
   String _selectedType = 'POKTAN';
+  String _selectedAdminTier = 'B2B_OFFTAKER';
   String? _existingStatus;
 
   // Backend quota-enabled villages list from GET /store/my-application or /store/villages
@@ -147,6 +149,7 @@ class _StoreRegistrationScreenState extends State<StoreRegistrationScreen> {
     _postalCtrl.dispose();
     _storeNameCtrl.dispose();
     _minWholesaleCtrl.dispose();
+    _warehouseCapCtrl.dispose();
     _bannerCtrl.dispose();
     _docCtrl.dispose();
     super.dispose();
@@ -513,6 +516,9 @@ class _StoreRegistrationScreenState extends State<StoreRegistrationScreen> {
       final res = await _apiService.submitStoreApplication({
         'nama_toko': _storeNameCtrl.text.trim(),
         'tipe_pengelola': _selectedType,
+        'admin_tier': _selectedAdminTier,
+        if (_selectedAdminTier == 'B2B_OFFTAKER')
+          'kapasitas_gudang_kg': int.tryParse(_warehouseCapCtrl.text.trim()) ?? 2000,
         'nik': _nikCtrl.text.trim(),
         'no_hp': _phoneCtrl.text.trim(),
         'province_id': provId,
@@ -532,9 +538,23 @@ class _StoreRegistrationScreenState extends State<StoreRegistrationScreen> {
         'mode': freezeAsBuyer ? 'FREEZE_AS_BUYER' : 'SUBMIT_TO_PPL',
       });
 
+      final upgradedToken = res['token']?.toString();
+      if (upgradedToken != null && upgradedToken.isNotEmpty) {
+        await _apiService.saveToken(upgradedToken);
+      }
+      if (res['user'] is Map) {
+        final upUserMap = Map<String, dynamic>.from(res['user'] as Map);
+        await _apiService.saveUser(upUserMap);
+        UserSession().setUser(User.fromJson(upUserMap));
+      }
+
       final prefs = await SharedPreferences.getInstance();
       await prefs.setBool('frozen_store_draft', freezeAsBuyer);
       await prefs.setString('frozen_store_name', _storeNameCtrl.text.trim());
+
+      final bool autoApprovedRetail = !freezeAsBuyer &&
+          (res['status']?.toString().toUpperCase() == 'APPROVED' ||
+              res['auto_kyc_passed'] == true);
 
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
@@ -543,14 +563,16 @@ class _StoreRegistrationScreenState extends State<StoreRegistrationScreen> {
             res['message']?.toString() ??
                 (freezeAsBuyer
                     ? 'Pengajuan dibekukan. Anda dapat belanja sebagai Pembeli!'
-                    : 'Pengajuan dikirim ke Penyuluh Desa untuk verifikasi!'),
+                    : autoApprovedRetail
+                        ? 'Auto-KYC Retail Merchant aktif! Anda langsung menjadi Admin Toko Retail.'
+                        : 'Pengajuan dikirim ke Penyuluh Desa untuk verifikasi!'),
           ),
           backgroundColor:
               freezeAsBuyer ? AppColors.warning : AppColors.primary,
         ),
       );
 
-      if (freezeAsBuyer || registeredJustNow) {
+      if (freezeAsBuyer || registeredJustNow || autoApprovedRetail) {
         Navigator.of(context).pushAndRemoveUntil(
           MaterialPageRoute(builder: (_) => const RoleBasedAppShell()),
           (route) => false,
@@ -676,7 +698,9 @@ class _StoreRegistrationScreenState extends State<StoreRegistrationScreen> {
 
   Widget _buildStepOne() {
     final matchedQuota = _matchedBackendVillage;
-    final bool isQuotaFull = matchedQuota?['is_quota_full'] == true;
+    final bool isRetailTier = _selectedAdminTier == 'RETAIL_MERCHANT';
+    final bool isQuotaFull =
+        !isRetailTier && (matchedQuota?['is_quota_full'] == true);
     final bool quotaEnabled =
         matchedQuota?['is_store_quota_enabled'] == true ||
             matchedQuota?['is_store_quota_enabled'] == 1;
@@ -702,6 +726,98 @@ class _StoreRegistrationScreenState extends State<StoreRegistrationScreen> {
               fontWeight: FontWeight.w800,
               color: AppColors.textPrimary,
             ),
+          ),
+          const SizedBox(height: 10),
+          Text(
+            'Pilih Tier Kemitraan Toko (Arsitektur 2-Lapis):',
+            style: GoogleFonts.plusJakartaSans(
+              fontSize: 12,
+              fontWeight: FontWeight.w700,
+              color: AppColors.primaryDark,
+            ),
+          ),
+          const SizedBox(height: 6),
+          Row(
+            children: [
+              Expanded(
+                child: InkWell(
+                  onTap: () => setState(() => _selectedAdminTier = 'B2B_OFFTAKER'),
+                  borderRadius: BorderRadius.circular(12),
+                  child: Container(
+                    padding: const EdgeInsets.all(10),
+                    decoration: BoxDecoration(
+                      color: !isRetailTier ? AppColors.surfaceSoft : Colors.white,
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(
+                        color: !isRetailTier ? AppColors.primary : AppColors.outline,
+                        width: !isRetailTier ? 1.8 : 1,
+                      ),
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'B2B Offtaker',
+                          style: GoogleFonts.plusJakartaSans(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w800,
+                            color: AppColors.primaryDark,
+                          ),
+                        ),
+                        const SizedBox(height: 2),
+                        Text(
+                          'Serap panen & gudang partai. Verifikasi PPL + kuota desa.',
+                          style: GoogleFonts.plusJakartaSans(
+                            fontSize: 10,
+                            color: AppColors.textSecondary,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: InkWell(
+                  onTap: () =>
+                      setState(() => _selectedAdminTier = 'RETAIL_MERCHANT'),
+                  borderRadius: BorderRadius.circular(12),
+                  child: Container(
+                    padding: const EdgeInsets.all(10),
+                    decoration: BoxDecoration(
+                      color: isRetailTier ? AppColors.warningSoft : Colors.white,
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(
+                        color: isRetailTier ? AppColors.accent : AppColors.outline,
+                        width: isRetailTier ? 1.8 : 1,
+                      ),
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Retail Auto-KYC',
+                          style: GoogleFonts.plusJakartaSans(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w800,
+                            color: AppColors.warning,
+                          ),
+                        ),
+                        const SizedBox(height: 2),
+                        Text(
+                          'Bebas kuota desa, aktif instan & beli lot B2B.',
+                          style: GoogleFonts.plusJakartaSans(
+                            fontSize: 10,
+                            color: AppColors.textSecondary,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            ],
           ),
           if (!_hasExistingToken) ...[
             const SizedBox(height: 10),
@@ -902,7 +1018,7 @@ class _StoreRegistrationScreenState extends State<StoreRegistrationScreen> {
           ),
           const SizedBox(height: 10),
 
-          // Live Store Quota Badge rendered outside dropdown to avoid overflow
+          // Live Store Quota Badge (bypassed for RETAIL_MERCHANT Auto-KYC)
           Container(
             padding: const EdgeInsets.all(10),
             decoration: BoxDecoration(
@@ -926,13 +1042,15 @@ class _StoreRegistrationScreenState extends State<StoreRegistrationScreen> {
                 const SizedBox(width: 8),
                 Expanded(
                   child: Text(
-                    matchedQuota == null
-                        ? 'Desa $villageDisplay (Kec. ${_selectedDistrict?.displayName ?? '-'}) terbuka untuk pengajuan toko desa.'
-                        : quotaEnabled
-                            ? (isQuotaFull
-                                ? 'Kuota toko Desa $villageDisplay penuh ($approvedCnt/$maxQuota). Pilih desa lain atau tangguhkan.'
-                                : 'Kuota toko Desa $villageDisplay: $approvedCnt/$maxQuota terpakai (Tersedia).')
-                            : 'Desa $villageDisplay membuka pendaftaran toko tanpa batas kuota.',
+                    isRetailTier
+                        ? 'Jalur Retail Merchant (Auto-KYC): Bebas batasan kuota desa ($villageDisplay) & toko langsung aktif.'
+                        : matchedQuota == null
+                            ? 'Desa $villageDisplay (Kec. ${_selectedDistrict?.displayName ?? '-'}) terbuka untuk pengajuan B2B Offtaker.'
+                            : quotaEnabled
+                                ? (isQuotaFull
+                                    ? 'Kuota B2B Offtaker Desa $villageDisplay penuh ($approvedCnt/$maxQuota). Pilih desa lain atau pilih tier Retail Auto-KYC.'
+                                    : 'Kuota B2B Desa $villageDisplay: $approvedCnt/$maxQuota terpakai (Tersedia).')
+                                : 'Desa $villageDisplay membuka pendaftaran toko tanpa batas kuota.',
                     style: GoogleFonts.plusJakartaSans(
                       fontSize: 11.5,
                       fontWeight: FontWeight.w600,
@@ -1052,6 +1170,17 @@ class _StoreRegistrationScreenState extends State<StoreRegistrationScreen> {
               border: OutlineInputBorder(),
             ),
           ),
+          if (_selectedAdminTier == 'B2B_OFFTAKER') ...[
+            const SizedBox(height: 10),
+            TextField(
+              controller: _warehouseCapCtrl,
+              keyboardType: TextInputType.number,
+              decoration: const InputDecoration(
+                labelText: 'Kapasitas Gudang Penyimpanan B2B (kg)',
+                border: OutlineInputBorder(),
+              ),
+            ),
+          ],
           const SizedBox(height: 10),
           TextField(
             controller: _bannerCtrl,
@@ -1078,7 +1207,9 @@ class _StoreRegistrationScreenState extends State<StoreRegistrationScreen> {
                   : () => _submitApplication(freezeAsBuyer: false),
               icon: const Icon(LucideIcons.checkCircle, size: 18),
               label: Text(
-                'Ajukan Pembukaan Toko ke Penyuluh',
+                _selectedAdminTier == 'RETAIL_MERCHANT'
+                    ? 'Aktifkan Toko Retail Instan (Auto-KYC)'
+                    : 'Ajukan Pembukaan Toko B2B ke Penyuluh',
                 style: GoogleFonts.plusJakartaSans(
                   fontSize: 13,
                   fontWeight: FontWeight.w800,

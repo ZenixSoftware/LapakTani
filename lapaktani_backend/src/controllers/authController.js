@@ -16,6 +16,15 @@ const register = async (req, res) => {
       });
     }
 
+    const requestedRole = role ? String(role).trim().toLowerCase() : 'pembeli';
+    if (['dinas', 'penyuluh', 'superadmin'].includes(requestedRole)) {
+      return res.status(403).json({
+        success: false,
+        code: 'AUTHORITY_REGISTRATION_LOCKED',
+        message: 'Pendaftaran mandiri untuk peran Dinas, Penyuluh, dan Super Admin ditutup. Akun otoritas hanya dapat diterbitkan oleh Super Admin Sistem.'
+      });
+    }
+
     const [existingUsers] = await pool.query(
       'SELECT id FROM users WHERE email = ? LIMIT 1',
       [email.trim().toLowerCase()]
@@ -91,9 +100,11 @@ const register = async (req, res) => {
 const ROLE_ID_TO_NAME = ROLE_ID_MAP;
 
 const DEMO_ALIAS_PASSWORDS = {
+  'superadmin@lapaktani.id': 'superadmin123',
   'penyuluh@lapaktani.id': 'penyuluh123',
   'dinas@lapaktani.id': 'dinas123',
   'admin@lapaktani.id': 'admin123',
+  'retail@lapaktani.id': 'admin123',
   'made@poktan.lapaktani.id': 'admin123',
   'supardi@petani.lapaktani.id': 'petani123',
   'petani.supardi@lapaktani.id': 'petani123',
@@ -131,6 +142,14 @@ const login = async (req, res) => {
     }
 
     const user = users[0];
+    if (user.is_active === 0 || user.is_active === false) {
+      return res.status(403).json({
+        success: false,
+        code: 'ACCOUNT_DEACTIVATED',
+        message: 'Akun Anda sedang dinonaktifkan oleh Super Admin Sistem.'
+      });
+    }
+
     let isMatch = await bcrypt.compare(password, user.password_hash);
 
     // Allow documented role-alias demo passwords only for seeded demo accounts still using the default 'password123' hash
@@ -147,6 +166,19 @@ const login = async (req, res) => {
 
     const userRole = resolveCanonicalRole(user);
 
+    let adminTier = user.admin_tier || null;
+    if (userRole === 'admin' && !adminTier) {
+      try {
+        const [storeRows] = await pool.query(
+          'SELECT admin_tier FROM store_applications WHERE user_id = ? LIMIT 1',
+          [user.id]
+        );
+        adminTier = storeRows[0]?.admin_tier || 'B2B_OFFTAKER';
+      } catch (_) {
+        adminTier = 'B2B_OFFTAKER';
+      }
+    }
+
     let isChairman = userRole === 'admin' || Number(user.role_id) === 3;
     if (!isChairman && Number(user.role_id) === 1) {
       const [chairmanRows] = await pool.query(
@@ -161,6 +193,7 @@ const login = async (req, res) => {
       email: user.email,
       role_id: user.role_id,
       role: userRole,
+      admin_tier: adminTier,
       is_chairman: isChairman
     });
 
@@ -170,6 +203,7 @@ const login = async (req, res) => {
         userId: user.id,
         role: userRole,
         role_id: user.role_id,
+        admin_tier: adminTier,
         is_chairman: isChairman,
         lastLoginAt: new Date().toISOString()
       },
@@ -186,6 +220,7 @@ const login = async (req, res) => {
         email: user.email,
         role_id: user.role_id,
         role: userRole,
+        admin_tier: adminTier,
         is_chairman: isChairman,
         is_verified: Boolean(user.is_verified)
       }

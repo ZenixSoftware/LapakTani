@@ -23,6 +23,7 @@ const chatRoutes = require('./src/routes/chat');
 const petaniRoutes = require('./src/routes/petani');
 const dinasRoutes = require('./src/routes/dinas');
 const storeRoutes = require('./src/routes/store');
+const superadminRoutes = require('./src/routes/superadmin');
 const {
   optionalVerifyToken,
   signUserToken,
@@ -263,6 +264,7 @@ app.use('/api/soil', soilRoutes);
 app.use('/api/payments', paymentRoutes);
 app.use('/api/poktan', poktanRoutes);
 app.use('/api/b2b-contracts', b2bRoutes);
+app.use('/api/b2b', b2bRoutes);
 app.use('/api/contracts', b2bRoutes);
 app.use('/api/pest-reports', pestReportRoutes);
 app.use('/api/pest-alerts', pestReportRoutes);
@@ -271,6 +273,7 @@ app.use('/api/chat', chatRoutes);
 app.use('/api/petani', petaniRoutes);
 app.use('/api/dinas', dinasRoutes);
 app.use('/api/store', storeRoutes);
+app.use('/api/superadmin', superadminRoutes);
 app.get('/api/regions/sumenep', agroSupplyChainController.getSumenepRegionsAndVillages);
 
 

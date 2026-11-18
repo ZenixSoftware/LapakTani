@@ -18,6 +18,7 @@ const pool = require('../config/db');
 const redisClient = require('../config/redis');
 const { encryptJsonPayload } = require('../utils/encryption');
 const { notifyTransactionEvent } = require('../utils/notificationService');
+const { calculateHybridRefundFee, recordPlatformFeeLedger } = require('../utils/refundHelper');
 
 const PAYMENT_GATEWAY_SERVER_KEY = process.env.PAYMENT_GATEWAY_SERVER_KEY || process.env.MIDTRANS_SERVER_KEY || '';
 
@@ -1294,6 +1295,123 @@ const updateOrderStatus = async (req, res) => {
   }
 };
 
+/**
+ * Cancel paid/pending order with Capped Hybrid Refund Fee
+ * Endpoint: POST /api/orders/:id/cancel-with-refund
+ */
+const cancelOrderWithRefund = async (req, res) => {
+  const userId = req.user ? req.user.id : null;
+  const { id } = req.params;
+  const { cancelled_by = 'BUYER', reason = 'Pembatalan pesanan oleh pembeli' } = req.body || {};
+
+  if (!userId) {
+    return res.status(401).json({ success: false, message: 'Akses ditolak. Token tidak valid.' });
+  }
+
+  let connection;
+  try {
+    connection = await pool.getConnection();
+    await connection.beginTransaction();
+
+    const [orders] = await connection.query(
+      'SELECT * FROM orders WHERE (id = ? OR invoice_number = ?) LIMIT 1 FOR UPDATE',
+      [id, id]
+    );
+    if (orders.length === 0) {
+      await connection.rollback();
+      return res.status(404).json({ success: false, message: 'Pesanan tidak ditemukan.' });
+    }
+
+    const order = orders[0];
+    if (String(order.order_status).toUpperCase() === 'CANCELLED') {
+      await connection.rollback();
+      return res.status(409).json({ success: false, message: 'Pesanan ini sudah dibatalkan sebelumnya.' });
+    }
+
+    const buyerId = order.buyer_id || order.user_id;
+    const isBuyer = String(buyerId) === String(userId);
+    const callerRole = String(req.user?.role || '').toLowerCase();
+    const actor = isBuyer && cancelled_by !== 'SELLER'
+      ? 'BUYER'
+      : (['admin', 'petani', 'superadmin'].includes(callerRole) && String(cancelled_by).toUpperCase() === 'SELLER'
+          ? 'SELLER'
+          : (isBuyer ? 'BUYER' : 'SELLER'));
+
+    const grossAmount = Number(order.total_amount || order.total_payment || 0);
+    const refundInfo = calculateHybridRefundFee(grossAmount, actor);
+
+    // Restore product stock
+    const [items] = await connection.query('SELECT product_id, quantity FROM order_items WHERE order_id = ?', [order.id]);
+    for (const item of items) {
+      await connection.query('UPDATE products SET stock_kg = stock_kg + ? WHERE id = ?', [
+        Number(item.quantity || 0),
+        item.product_id,
+      ]);
+    }
+
+    // Credit refunded amount back to buyer wallet if previously paid
+    if (String(order.payment_status).toUpperCase() === 'PAID' && buyerId && refundInfo.refundedAmount > 0) {
+      await connection.query(
+        'UPDATE user_profiles SET wallet_balance = COALESCE(wallet_balance, 0) + ? WHERE user_id = ? OR id = ?',
+        [refundInfo.refundedAmount, buyerId, buyerId]
+      ).catch(() => {});
+    }
+
+    await connection.query(
+      "UPDATE orders SET order_status = 'CANCELLED', payment_status = 'REFUNDED', updated_at = NOW() WHERE id = ?",
+      [order.id]
+    );
+
+    const ledgerId = await recordPlatformFeeLedger(connection, {
+      refId: order.id,
+      refType: 'ORDER',
+      userId,
+      cancelledBy: refundInfo.cancelledBy,
+      grossAmount: refundInfo.grossAmount,
+      feeCharged: refundInfo.feeCharged,
+      refundedAmount: refundInfo.refundedAmount,
+      reason,
+    });
+
+    await connection.commit();
+    await redisClient.delCache('lapaktani_catalog').catch(() => {});
+
+    notifyTransactionEvent({
+      eventType: 'ORDER_CANCELLED',
+      orderId: order.id,
+      invoiceNumber: order.invoice_number,
+      buyerId,
+      sellerId: userId,
+      totalAmount: refundInfo.refundedAmount,
+      status: 'CANCELLED',
+      message: `Pesanan ${order.invoice_number || order.id} dibatalkan (${refundInfo.cancelledBy}). Potongan biaya aplikasi: Rp ${refundInfo.feeCharged.toLocaleString('id-ID')}. Dana kembali: Rp ${refundInfo.refundedAmount.toLocaleString('id-ID')}.`,
+    }).catch(() => {});
+
+    return res.status(200).json({
+      success: true,
+      message: `Pesanan dibatalkan. Dana dikembalikan Rp ${refundInfo.refundedAmount.toLocaleString('id-ID')} (Biaya aplikasi: Rp ${refundInfo.feeCharged.toLocaleString('id-ID')}).`,
+      data: {
+        ledger_id: ledgerId,
+        order_id: order.id,
+        invoice_number: order.invoice_number,
+        order_status: 'CANCELLED',
+        payment_status: 'REFUNDED',
+        cancelled_by: refundInfo.cancelledBy,
+        gross_amount: refundInfo.grossAmount,
+        fee_charged: refundInfo.feeCharged,
+        refunded_amount: refundInfo.refundedAmount,
+        fee_formula: refundInfo.feeFormula,
+      },
+    });
+  } catch (error) {
+    if (connection) await connection.rollback().catch(() => {});
+    console.error('[ORDER] cancelOrderWithRefund error:', error.message);
+    return res.status(500).json({ success: false, message: 'Gagal memproses pembatalan dan refund pesanan.' });
+  } finally {
+    if (connection) connection.release();
+  }
+};
+
 module.exports = {
   checkoutOrder,
   handlePaymentWebhook,
@@ -1302,5 +1420,6 @@ module.exports = {
   getMyOrders,
   getFarmerOrders,
   updateOrderStatus,
-  getOrderById
+  getOrderById,
+  cancelOrderWithRefund
 };

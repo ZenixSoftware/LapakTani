@@ -6,7 +6,8 @@ const ROLE_ID_MAP = {
   2: 'penyuluh',
   3: 'admin',
   4: 'pembeli',
-  5: 'dinas'
+  5: 'dinas',
+  6: 'superadmin'
 };
 
 const ROLE_NAME_TO_ID = {
@@ -14,13 +15,14 @@ const ROLE_NAME_TO_ID = {
   penyuluh: 2,
   admin: 3,
   pembeli: 4,
-  dinas: 5
+  dinas: 5,
+  superadmin: 6
 };
 
 const getJwtSecret = () => process.env.JWT_SECRET || 'lapaktani_secret_2026';
 
 /**
- * Sign a multi-role JWT across the 5 LapakTani roles (petani, penyuluh, admin, pembeli, dinas)
+ * Sign a multi-role JWT across the 6 LapakTani roles (petani, penyuluh, admin, pembeli, dinas, superadmin)
  */
 const signUserToken = (userPayload = {}, options = {}) => {
   const normalizedRole = String(
@@ -32,6 +34,7 @@ const signUserToken = (userPayload = {}, options = {}) => {
     email: userPayload.email,
     role_id: resolvedRoleId,
     role: ROLE_ID_MAP[resolvedRoleId] || normalizedRole,
+    admin_tier: userPayload.admin_tier || null,
     is_chairman: Boolean(userPayload.is_chairman),
   };
 
@@ -113,8 +116,10 @@ const requireRole = (...allowedRoles) => {
       if (target === 'penyuluh' && userRoleId === 2) return true;
       if (target === 'admin' && (userRoleId === 3 || isChairman)) return true;
       if (target === 'dinas' && userRoleId === 5) return true;
+      if (target === 'superadmin' && (userRoleId === 6 || userRole === 'superadmin')) return true;
       if (target === 'petani' && userRoleId === 1) return true;
       if (target === 'pembeli' && userRoleId === 4) return true;
+      if ((userRoleId === 6 || userRole === 'superadmin') && ['admin', 'dinas', 'penyuluh', 'superadmin'].includes(target)) return true;
       return false;
     });
 

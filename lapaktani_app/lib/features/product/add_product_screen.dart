@@ -56,6 +56,10 @@ class _AddProductScreenState extends State<AddProductScreen> {
   String? _selectedGrade;
   String? _selectedUnitId = 'unit-kg';
   String _selectedCultivation = 'Organik Bersertifikat';
+  String _processingState = 'SIAP_PAKAI';
+  String _catalogChannel = 'RETAIL_CATALOG';
+  bool _allowSellerDelivery = true;
+  bool _allowBuyerPickup = true;
   bool _needCoolBox = true;
   bool _isLoadingMaster = true;
   bool _isSubmitting = false;
@@ -342,6 +346,14 @@ class _AddProductScreenState extends State<AddProductScreen> {
       final wholesaleVal = double.tryParse(_wholesalePriceController.text.trim()) ??
           (basePriceVal * 0.85).roundToDouble();
       request.fields['wholesale_price'] = wholesaleVal.toString();
+      request.fields['processing_state'] = _processingState;
+      request.fields['catalog_channel'] = _catalogChannel;
+      final String fulfillmentCode = (_allowSellerDelivery && !_allowBuyerPickup)
+          ? 'DELIVERY_ONLY'
+          : (!_allowSellerDelivery && _allowBuyerPickup)
+              ? 'PICKUP_ONLY'
+              : 'BOTH';
+      request.fields['fulfillment_options'] = fulfillmentCode;
       if (_descriptionController.text.trim().isNotEmpty) {
         request.fields['description'] = _descriptionController.text.trim();
       }
@@ -938,6 +950,91 @@ class _AddProductScreenState extends State<AddProductScreen> {
                                 ),
                               ],
                             ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 14),
+
+                    // Section 4B: Klasifikasi 2-Tier & Logistik Partai B2B
+                    _buildSectionContainer(
+                      title: 'Klasifikasi 2-Tier & Logistik B2B',
+                      subtitle:
+                          'Tentukan kondisi panen (Mentah/Siap Pakai), kanal etalase, dan opsi serah terima',
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          DropdownButtonFormField<String>(
+                            initialValue: _processingState,
+                            decoration: _buildInputDecoration(
+                              hintText: 'Kondisi Pasca Panen',
+                            ).copyWith(labelText: 'Kondisi Komoditas'),
+                            items: const [
+                              DropdownMenuItem(
+                                value: 'SIAP_PAKAI',
+                                child: Text('Siap Pakai / Grade Retail & Horeca'),
+                              ),
+                              DropdownMenuItem(
+                                value: 'MENTAH',
+                                child: Text('Mentah / Bahan Baku Sortir Offtaker'),
+                              ),
+                            ],
+                            onChanged: (v) {
+                              if (v != null) {
+                                setState(() => _processingState = v);
+                              }
+                            },
+                          ),
+                          const SizedBox(height: 10),
+                          DropdownButtonFormField<String>(
+                            initialValue: _catalogChannel,
+                            decoration: _buildInputDecoration(
+                              hintText: 'Kanal Penjualan',
+                            ).copyWith(labelText: 'Kanal Katalog 2-Tier'),
+                            items: const [
+                              DropdownMenuItem(
+                                value: 'RETAIL_CATALOG',
+                                child: Text('Katalog Retail / Eceran & Partai Dasar'),
+                              ),
+                              DropdownMenuItem(
+                                value: 'B2B_BID_LOT',
+                                child: Text('Lot Tender Open-Bid B2B (Eksklusif)'),
+                              ),
+                              DropdownMenuItem(
+                                value: 'BOTH',
+                                child: Text('Hibrida (Etalase Retail + Bursa Lot B2B)'),
+                              ),
+                            ],
+                            onChanged: (v) {
+                              if (v != null) {
+                                setState(() => _catalogChannel = v);
+                              }
+                            },
+                          ),
+                          const SizedBox(height: 10),
+                          Wrap(
+                            spacing: 8,
+                            runSpacing: 6,
+                            children: [
+                              FilterChip(
+                                label: const Text('Diantar Penjual'),
+                                selected: _allowSellerDelivery,
+                                selectedColor: const Color(0xFFDCFCE7),
+                                checkmarkColor: const Color(0xFF166534),
+                                onSelected: (val) {
+                                  setState(() => _allowSellerDelivery = val);
+                                },
+                              ),
+                              FilterChip(
+                                label: const Text('Diambil Sendiri'),
+                                selected: _allowBuyerPickup,
+                                selectedColor: const Color(0xFFFEF3C7),
+                                checkmarkColor: const Color(0xFFB45309),
+                                onSelected: (val) {
+                                  setState(() => _allowBuyerPickup = val);
+                                },
+                              ),
+                            ],
                           ),
                         ],
                       ),

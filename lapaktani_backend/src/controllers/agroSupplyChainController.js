@@ -5,6 +5,9 @@ const nodeCache = require('../utils/nodeCache');
 const { applyNodeCacheHeader } = nodeCache;
 const jobQueue = require('../utils/jobQueue');
 const { encryptData, decryptData, maskNik } = require('../utils/encryption');
+const { signUserToken } = require('../middlewares/authMiddleware');
+const superAdminController = require('./superAdminController');
+const b2bLotController = require('./b2bLotController');
 const {
   generateRagDecision,
   dispatchRagDecision,
@@ -447,10 +450,12 @@ const verifyStoreApplication = async (req, res) => {
         }
       }
 
-      // Promote applicant to role admin (Admin Toko)
-      await connection.query("UPDATE users SET role_id = 3, role = 'admin', is_verified = 1 WHERE id = ?", [
-        appRow.user_id,
-      ]);
+      // Promote applicant to role admin (Admin Toko) preserving tier
+      const resolvedTier = appRow.admin_tier || 'B2B_OFFTAKER';
+      await connection.query(
+        "UPDATE users SET role_id = 3, role = 'admin', admin_tier = ?, is_verified = 1 WHERE id = ?",
+        [resolvedTier, appRow.user_id]
+      );
     }
 
     await connection.query(
@@ -680,6 +685,7 @@ const createFarmerHarvestReport = async (req, res) => {
     const userSummary = await resolveUserSummary(req.user.id);
     const {
       komoditas,
+      luas_lahan_ha = 1.0,
       status_tanam = 'HAMPIR_PANEN',
       estimasi_panen_date,
       estimasi_berat_kg = 0,
@@ -709,7 +715,7 @@ const createFarmerHarvestReport = async (req, res) => {
       );
     }
 
-    const validStatuses = ['MULAI_TANAM', 'HAMPIR_PANEN', 'SIAP_PANEN', 'LAPOR_HAMA', 'MINTA_SARAN'];
+    const validStatuses = ['MULAI_TANAM', 'HAMPIR_PANEN', 'SIAP_PANEN', 'SUDAH_PANEN', 'LAPOR_HAMA', 'MINTA_SARAN'];
     const normalizedStatus = validStatuses.includes(String(status_tanam).toUpperCase())
       ? String(status_tanam).toUpperCase()
       : 'HAMPIR_PANEN';
@@ -721,8 +727,8 @@ const createFarmerHarvestReport = async (req, res) => {
 
     await pool.query(
       `INSERT INTO harvest_reports
-       (id, farmer_id, farmer_name, poktan_id, village_id, village_name, district_id, komoditas, status_tanam, estimasi_panen_date, estimasi_berat_kg, catatan, foto_url)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+       (id, farmer_id, farmer_name, poktan_id, village_id, village_name, district_id, komoditas, luas_lahan_ha, status_tanam, estimasi_panen_date, estimasi_berat_kg, catatan, foto_url)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
         reportId,
         req.user.id,
@@ -732,6 +738,7 @@ const createFarmerHarvestReport = async (req, res) => {
         villageName,
         districtId,
         String(komoditas).trim(),
+        Math.max(0.05, Number(luas_lahan_ha) || 1.0),
         normalizedStatus,
         estimasi_panen_date || null,
         Math.max(0, Number(estimasi_berat_kg) || 0),
@@ -815,6 +822,133 @@ const respondToPurchaseOffer = async (req, res) => {
   }
 };
 
+/**
+ * POST /api/petani/harvest-reports/:id/declare-harvested
+ * Automated Pro-Rata Deficit Resolution Engine when farmer declares actual harvested weight
+ */
+const declareHarvestedAndAllocateProRata = async (req, res) => {
+  let connection;
+  try {
+    const { id } = req.params;
+    const { realisasi_panen_kg, catatan } = req.body || {};
+    const actualWeight = Number(realisasi_panen_kg);
+
+    if (isNaN(actualWeight) || actualWeight <= 0) {
+      return res.status(400).json({
+        success: false,
+        message: 'Berat realisasi panen aktual (kg) wajib berupa angka positif.',
+      });
+    }
+
+    connection = await pool.getConnection();
+    await connection.beginTransaction();
+
+    const [reportRows] = await connection.query('SELECT * FROM harvest_reports WHERE id = ? LIMIT 1 FOR UPDATE', [id]);
+    if (reportRows.length === 0) {
+      await connection.rollback();
+      return res.status(404).json({ success: false, message: 'Laporan panen tidak ditemukan.' });
+    }
+    const report = reportRows[0];
+
+    const [acceptedRows] = await connection.query(
+      "SELECT * FROM harvest_purchase_offers WHERE harvest_report_id = ? AND status = 'ACCEPTED_CONTRACT' ORDER BY created_at ASC FOR UPDATE",
+      [id]
+    );
+    let offersToAllocate = acceptedRows;
+    if (offersToAllocate.length === 0) {
+      const [pendingRows] = await connection.query(
+        "SELECT * FROM harvest_purchase_offers WHERE harvest_report_id = ? AND status IN ('OFFER_SENT', 'ACCEPTED_CONTRACT') ORDER BY created_at ASC FOR UPDATE",
+        [id]
+      );
+      offersToAllocate = pendingRows;
+    }
+
+    const totalContractedKg = offersToAllocate.reduce((sum, o) => sum + Number(o.estimasi_berat_kg || 0), 0);
+    const isDeficit = totalContractedKg > 0 && actualWeight < totalContractedKg;
+
+    const allocations = [];
+    for (const offer of offersToAllocate) {
+      const contractedKg = Number(offer.estimasi_berat_kg || 0);
+      const ratio = totalContractedKg > 0 ? Number((contractedKg / totalContractedKg).toFixed(4)) : 1;
+      const allocatedKg = isDeficit
+        ? Number((actualWeight * (contractedKg / totalContractedKg)).toFixed(2))
+        : contractedKg;
+      const netPrice = Number(offer.harga_tawar_bersih_per_kg || 0);
+      const updatedTotal = Math.round(allocatedKg * netPrice);
+
+      await connection.query(
+        `UPDATE harvest_purchase_offers
+         SET allocated_pro_rata_kg = ?, share_ratio = ?, total_nilai_kontrak = ?, status = 'ACCEPTED_CONTRACT'
+         WHERE id = ?`,
+        [allocatedKg, isDeficit ? ratio : 1, updatedTotal, offer.id]
+      );
+
+      allocations.push({
+        offer_id: offer.id,
+        store_admin_id: offer.store_admin_id,
+        store_name: offer.store_name,
+        contracted_kg: contractedKg,
+        share_ratio: isDeficit ? ratio : 1,
+        allocated_pro_rata_kg: allocatedKg,
+        harga_tawar_bersih_per_kg: netPrice,
+        adjusted_total_nilai_kontrak: updatedTotal,
+      });
+    }
+
+    await connection.query(
+      `UPDATE harvest_reports
+       SET status_tanam = 'SUDAH_PANEN',
+           realisasi_panen_kg = ?,
+           is_deficit = ?,
+           catatan = COALESCE(NULLIF(?, ''), catatan)
+       WHERE id = ?`,
+      [actualWeight, isDeficit ? 1 : 0, catatan ? String(catatan).trim() : '', id]
+    );
+
+    await connection.commit();
+
+    // Notify all contracted stores with pro-rata summary
+    for (const alloc of allocations) {
+      try {
+        await pool.query(
+          `INSERT INTO notifications (id, user_id, title, message, type, reference_id, is_read)
+           VALUES (?, ?, ?, ?, 'harvest_pro_rata_ready', ?, 0)`,
+          [
+            `ntf-${uuidv4().slice(0, 12)}`,
+            alloc.store_admin_id,
+            `Panen Siap Diambil: ${report.komoditas} (${alloc.allocated_pro_rata_kg} kg)`,
+            isDeficit
+              ? `Defisit panen terdeteksi (Aktual ${actualWeight} kg dari target ${totalContractedKg} kg). Jatah Pro-Rata Anda: ${alloc.allocated_pro_rata_kg} kg.`
+              : `Panen penuh selesai (${actualWeight} kg). Jatah serapan Anda: ${alloc.allocated_pro_rata_kg} kg siap dijemput.`,
+            id,
+          ]
+        );
+      } catch (_) {}
+    }
+
+    const [updatedReport] = await pool.query('SELECT * FROM harvest_reports WHERE id = ?', [id]);
+    return res.status(200).json({
+      success: true,
+      message: isDeficit
+        ? `Panen dicatat (${actualWeight} kg — Defisit dari ${totalContractedKg} kg). Jatah Pro-Rata otomatis dihitung untuk ${allocations.length} Offtaker.`
+        : `Panen selesai dicatat (${actualWeight} kg). Seluruh ${allocations.length} kontrak siap dijemput.`,
+      data: {
+        harvest_report: updatedReport[0],
+        is_deficit: Boolean(isDeficit),
+        realisasi_panen_kg: actualWeight,
+        total_contracted_kg: totalContractedKg,
+        allocations,
+      },
+    });
+  } catch (error) {
+    if (connection) await connection.rollback().catch(() => {});
+    console.error('[HARVEST_PRORATA] Error declaring harvest:', error.message);
+    return res.status(500).json({ success: false, message: 'Gagal memproses deklarasi panen & kalkulasi pro-rata.' });
+  } finally {
+    if (connection) connection.release();
+  }
+};
+
 // ============================================================================
 // 4. STORE REGISTRATION (2-STEP + QUOTA), STORE SETTINGS & HARVEST ACQUISITION
 // ============================================================================
@@ -862,12 +996,15 @@ const getMyStoreApplication = async (req, res) => {
       'SELECT * FROM store_applications WHERE user_id = ? ORDER BY updated_at DESC LIMIT 1',
       [req.user.id]
     );
+    const [uRows] = await pool.query('SELECT role, role_id, admin_tier FROM users WHERE id = ? LIMIT 1', [req.user.id]);
     const villages = await resolveVillagesWithQuota();
 
     return res.status(200).json({
       success: true,
       data: {
         application: apps[0] ? enrichStoreSecurityFields(apps[0]) : null,
+        admin_tier: apps[0]?.admin_tier || uRows[0]?.admin_tier || null,
+        user_role: uRows[0]?.role || req.user.role,
         villages,
       },
     });
@@ -882,9 +1019,11 @@ const applyForStore = async (req, res) => {
     const userId = req.user.id;
     const {
       nama_toko,
+      admin_tier,
       tipe_pengelola = 'POKTAN',
       nik,
       no_hp,
+      kapasitas_gudang_kg,
       province_id = 35,
       province_name = 'Jawa Timur',
       regency_id = 3529,
@@ -906,6 +1045,28 @@ const applyForStore = async (req, res) => {
 
     if (!nama_toko || String(nama_toko).trim().length === 0) {
       return res.status(400).json({ success: false, message: 'Nama toko wajib diisi.' });
+    }
+
+    const cleanManagerType = String(tipe_pengelola || 'POKTAN').toUpperCase();
+    const inferredRetail = ['PEDAGANG_PASAR', 'WARUNG_SEMBAKO'].includes(cleanManagerType);
+    const resolvedTier = ['RETAIL_MERCHANT', 'B2B_OFFTAKER'].includes(String(admin_tier || '').toUpperCase())
+      ? String(admin_tier).toUpperCase()
+      : (inferredRetail ? 'RETAIL_MERCHANT' : 'B2B_OFFTAKER');
+
+    const cleanNik = nik ? String(nik).trim() : '';
+    if (!isFreeze && resolvedTier === 'RETAIL_MERCHANT') {
+      if (cleanNik.length !== 16 || !/^\d{16}$/.test(cleanNik)) {
+        return res.status(400).json({
+          success: false,
+          message: 'Auto-KYC Toko Retail membutuhkan NIK 16 digit yang valid.',
+        });
+      }
+      if (!no_hp || String(no_hp).trim().length < 8) {
+        return res.status(400).json({
+          success: false,
+          message: 'Nomor HP aktif wajib diisi untuk Auto-KYC Toko Retail.',
+        });
+      }
     }
 
     const parsedProvId = parseInt(province_id, 10) || 35;
@@ -998,9 +1159,10 @@ const applyForStore = async (req, res) => {
       }
     }
 
-    if (!isFreeze && Number(village.is_store_quota_enabled) === 1) {
+    // Only B2B_OFFTAKER stores enforce village store quota limits; RETAIL_MERCHANT bypasses quota via Auto-KYC
+    if (!isFreeze && resolvedTier === 'B2B_OFFTAKER' && Number(village.is_store_quota_enabled) === 1) {
       const [cntRows] = await pool.query(
-        "SELECT COUNT(*) AS cnt FROM store_applications WHERE village_id = ? AND status = 'APPROVED' AND user_id != ?",
+        "SELECT COUNT(*) AS cnt FROM store_applications WHERE village_id = ? AND status = 'APPROVED' AND COALESCE(admin_tier, 'B2B_OFFTAKER') = 'B2B_OFFTAKER' AND user_id != ?",
         [village.id, userId]
       );
       const currentCount = Number(cntRows[0]?.cnt || 0);
@@ -1009,34 +1171,48 @@ const applyForStore = async (req, res) => {
         return res.status(409).json({
           success: false,
           code: 'VILLAGE_STORE_QUOTA_FULL',
-          message: `Kuota toko di Desa ${village.name} telah penuh (${currentCount}/${maxQuota}). Silakan pilih desa sekitar yang masih memiliki kuota tersedia.`,
+          message: `Kuota toko B2B di Desa ${village.name} telah penuh (${currentCount}/${maxQuota}). Silakan pilih desa sekitar yang masih memiliki kuota tersedia atau daftar sebagai Admin Retail (Bebas Kuota).`,
         });
       }
     }
 
-    const nextStatus = isFreeze ? 'DRAFT_FROZEN' : 'PENDING_PPL';
+    const isAutoKycRetail = !isFreeze && resolvedTier === 'RETAIL_MERCHANT';
+    const nextStatus = isFreeze
+      ? 'DRAFT_FROZEN'
+      : (isAutoKycRetail ? 'APPROVED' : 'PENDING_PPL');
+    const autoKycPassed = isAutoKycRetail ? 1 : 0;
+    const reviewedBy = isAutoKycRetail ? 'SYSTEM_AUTO_KYC' : null;
+    const parsedWarehouseCap =
+      kapasitas_gudang_kg !== undefined && Number(kapasitas_gudang_kg) > 0
+        ? parseInt(kapasitas_gudang_kg, 10)
+        : (resolvedTier === 'RETAIL_MERCHANT' ? 250 : 2000);
+
     const [existing] = await pool.query('SELECT id FROM store_applications WHERE user_id = ? LIMIT 1', [userId]);
     const appId = existing[0]?.id || `store-${uuidv4().slice(0, 10)}`;
 
-    const validTypes = ['POKTAN', 'KOPERASI', 'PENGEPUL_DESA'];
-    const resolvedType = validTypes.includes(String(tipe_pengelola).toUpperCase())
-      ? String(tipe_pengelola).toUpperCase()
-      : 'POKTAN';
+    const validTypes = ['POKTAN', 'KOPERASI', 'PENGEPUL_DESA', 'PEDAGANG_PASAR', 'WARUNG_SEMBAKO'];
+    const resolvedType = validTypes.includes(cleanManagerType)
+      ? cleanManagerType
+      : (resolvedTier === 'RETAIL_MERCHANT' ? 'WARUNG_SEMBAKO' : 'POKTAN');
 
     if (existing.length > 0) {
       await pool.query(
         `UPDATE store_applications
-         SET nama_toko = ?, tipe_pengelola = ?, nik = ?, no_hp = ?,
+         SET nama_toko = ?, admin_tier = ?, tipe_pengelola = ?, nik = ?, no_hp = ?,
+             kapasitas_gudang_kg = ?, auto_kyc_passed = ?,
              province_id = ?, regency_id = ?, district_id = ?, village_id = ?, village_name = ?,
              postal_code = ?, alamat_lengkap = ?, dokumen_syarat_url = COALESCE(?, dokumen_syarat_url),
              default_min_wholesale_kg = ?, store_discount_banner = COALESCE(?, store_discount_banner),
-             status = ?
+             status = ?, reviewed_by_ppl = COALESCE(?, reviewed_by_ppl)
          WHERE id = ?`,
         [
           String(nama_toko).trim(),
+          resolvedTier,
           resolvedType,
-          nik || null,
+          cleanNik || null,
           no_hp || null,
+          parsedWarehouseCap,
+          autoKycPassed,
           parsedProvId,
           parsedRegId,
           Number(village.district_id || parsedDistId),
@@ -1048,21 +1224,25 @@ const applyForStore = async (req, res) => {
           Math.max(1, parseInt(default_min_wholesale_kg || 30, 10)),
           store_discount_banner || null,
           nextStatus,
+          reviewedBy,
           appId,
         ]
       );
     } else {
       await pool.query(
         `INSERT INTO store_applications
-         (id, user_id, nama_toko, tipe_pengelola, nik, no_hp, province_id, regency_id, district_id, village_id, village_name, postal_code, alamat_lengkap, dokumen_syarat_url, default_min_wholesale_kg, store_discount_banner, status)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+         (id, user_id, nama_toko, admin_tier, tipe_pengelola, nik, no_hp, kapasitas_gudang_kg, auto_kyc_passed, province_id, regency_id, district_id, village_id, village_name, postal_code, alamat_lengkap, dokumen_syarat_url, default_min_wholesale_kg, store_discount_banner, status, reviewed_by_ppl)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
         [
           appId,
           userId,
           String(nama_toko).trim(),
+          resolvedTier,
           resolvedType,
-          nik || null,
+          cleanNik || null,
           no_hp || null,
+          parsedWarehouseCap,
+          autoKycPassed,
           parsedProvId,
           parsedRegId,
           Number(village.district_id || parsedDistId),
@@ -1070,12 +1250,39 @@ const applyForStore = async (req, res) => {
           village.name,
           postal_code || village.postal_code || '69472',
           alamat_lengkap || null,
-          dokumen_syarat_url || 'uploads/docs/syarat_toko.pdf',
+          dokumen_syarat_url || (resolvedTier === 'RETAIL_MERCHANT' ? 'uploads/kyc/ktp_auto_kyc.jpg' : 'uploads/docs/syarat_toko.pdf'),
           Math.max(1, parseInt(default_min_wholesale_kg || 30, 10)),
           store_discount_banner || null,
           nextStatus,
+          reviewedBy,
         ]
       );
+    }
+
+    let upgradedToken = null;
+    let upgradedUser = null;
+    if (isAutoKycRetail) {
+      await pool.query(
+        "UPDATE users SET role_id = 3, role = 'admin', admin_tier = 'RETAIL_MERCHANT', is_verified = 1 WHERE id = ?",
+        [userId]
+      );
+      const [uRows] = await pool.query(
+        'SELECT id, full_name, email, role_id, role, admin_tier, is_verified FROM users WHERE id = ? LIMIT 1',
+        [userId]
+      );
+      if (uRows[0]) {
+        upgradedUser = {
+          id: uRows[0].id,
+          full_name: uRows[0].full_name,
+          email: uRows[0].email,
+          role_id: 3,
+          role: 'admin',
+          admin_tier: 'RETAIL_MERCHANT',
+          is_chairman: true,
+          is_verified: true,
+        };
+        upgradedToken = signUserToken(upgradedUser);
+      }
     }
 
     invalidateSumenepNodeCaches();
@@ -1083,9 +1290,15 @@ const applyForStore = async (req, res) => {
     return res.status(200).json({
       success: true,
       status: nextStatus,
+      admin_tier: resolvedTier,
+      auto_kyc_passed: Boolean(autoKycPassed),
+      token: upgradedToken,
+      user: upgradedUser,
       message: isFreeze
         ? 'Pengajuan toko dibekukan (Draft). Anda tetap dapat berbelanja sebagai Pembeli dan melanjutkan pengajuan kapan saja.'
-        : `Pengajuan pembukaan toko berhasil dikirim ke Penyuluh Desa ${village.name} untuk diverifikasi.`,
+        : isAutoKycRetail
+          ? `Toko Retail '${String(nama_toko).trim()}' langsung disetujui via Auto-KYC Sistem! Anda kini aktif sebagai Admin Retail (Bebas Kuota).`
+          : `Pengajuan Toko B2B berhasil dikirim ke Penyuluh Desa ${village.name} untuk diverifikasi.`,
       data: enrichStoreSecurityFields(saved[0]),
     });
   } catch (error) {
@@ -1320,6 +1533,7 @@ module.exports = {
   createVillageForumPost,
   getFarmerHarvestReports,
   createFarmerHarvestReport,
+  declareHarvestedAndAllocateProRata,
   getFarmerPurchaseOffers,
   respondToPurchaseOffer,
   getMyStoreApplication,
@@ -1333,4 +1547,6 @@ module.exports = {
   dispatchRagDecision,
   getDecisionReports,
   getSumenepRegionsAndVillages,
+  ...superAdminController,
+  ...b2bLotController,
 };

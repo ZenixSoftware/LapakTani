@@ -22,6 +22,7 @@ router.get('/me', verifyToken, productController.getFarmerProducts);
 router.post('/', verifyToken, handleUploadField, productController.createProduct);
 router.post('/:id/deduct-stock', productController.deductStock);
 router.post('/:id/restore-stock', productController.restoreStock);
+router.put('/:id/convert-remainder-to-retail', verifyToken, productController.convertRemainderToRetail);
 router.put('/:id', verifyToken, productController.updateProduct);
 router.delete('/:id', verifyToken, productController.deleteProduct);
 

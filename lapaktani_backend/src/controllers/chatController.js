@@ -6,7 +6,8 @@ const ROLE_ID_MAP = {
   2: 'penyuluh',
   3: 'admin',
   4: 'pembeli',
-  5: 'dinas'
+  5: 'dinas',
+  6: 'superadmin'
 };
 
 function normalizeUserRow(u) {
@@ -169,8 +170,8 @@ const getContacts = async (req, res) => {
       LEFT JOIN user_profiles up ON u.id = up.user_id
       LEFT JOIN villages v ON up.village_id = v.id
       WHERE u.id != ?
-        AND (u.is_verified = 1 OR u.role_id IN (2, 3, 4, 5) OR u.role IN ('penyuluh', 'admin', 'pembeli', 'dinas'))
-        AND (u.role_id IN (1, 2, 3, 4, 5) OR u.role IN ('petani', 'penyuluh', 'admin', 'pembeli', 'dinas'))
+        AND (u.is_verified = 1 OR u.role_id IN (2, 3, 4, 5, 6) OR u.role IN ('penyuluh', 'admin', 'pembeli', 'dinas', 'superadmin'))
+        AND (u.role_id IN (1, 2, 3, 4, 5, 6) OR u.role IN ('petani', 'penyuluh', 'admin', 'pembeli', 'dinas', 'superadmin'))
     `;
     const params = [userId];
 
@@ -258,6 +259,8 @@ const openDirectConversation = async (req, res) => {
       let roleFilter = "u.role = 'penyuluh' OR u.role_id = 2";
       if (r === 'dinas' || r === 'pemerintah' || r === 'disperta') {
         roleFilter = "u.role = 'dinas' OR u.role_id = 5";
+      } else if (r === 'superadmin') {
+        roleFilter = "u.role = 'superadmin' OR u.role_id = 6";
       } else if (r === 'admin' || r === 'poktan' || r === 'ketua poktan' || r === 'toko') {
         roleFilter = "u.role = 'admin' OR u.role_id = 3";
       } else if (r === 'petani') {

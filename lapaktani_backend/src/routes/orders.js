@@ -17,6 +17,7 @@ router.post('/:id/simulate-payment', orderController.simulatePaymentWebhook);
 router.use(verifyToken);
 
 router.post('/checkout', orderController.checkoutOrder);
+router.post('/:id/cancel-with-refund', orderController.cancelOrderWithRefund);
 router.get('/farmer/orders', verifyToken, orderController.getFarmerOrders);
 router.put('/:id/status', verifyToken, orderController.updateOrderStatus);
 router.get('/my-orders', orderController.getMyOrders);

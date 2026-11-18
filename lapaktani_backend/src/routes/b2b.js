@@ -3,6 +3,7 @@ const router = express.Router();
 const jwt = require('jsonwebtoken');
 const { verifyToken } = require('../middlewares/authMiddleware');
 const b2bPoolController = require('../controllers/b2bPoolController');
+const b2bLotController = require('../controllers/b2bLotController');
 
 const optionalToken = (req, res, next) => {
   const authHeader = req.headers.authorization || req.headers.Authorization;
@@ -19,8 +20,21 @@ const optionalToken = (req, res, next) => {
 // 1. Browsing open pools (Public / Buyer & Guest accessible)
 router.get('/pools', b2bPoolController.getHarvestPools);
 
+// Two-Tier B2B Open-Bid Lots & Bids (HOTEL_B2B / RETAIL_MERCHANT <-> B2B_OFFTAKER)
+router.get('/lots', b2bLotController.getB2BLots);
+router.get('/lot-bids', verifyToken, b2bLotController.getB2BLotBids);
+router.post('/lots/:productId/bid', verifyToken, b2bLotController.placeB2BLotBid);
+router.put('/bids/:bidId/status', verifyToken, b2bLotController.updateB2BLotBidStatus);
+router.post('/bids/:bidId/restock-to-retail', verifyToken, b2bLotController.restockB2BBidToRetail);
+router.post('/bids/:bidId/cancel-with-refund', verifyToken, b2bLotController.cancelB2BBidWithRefund);
+
 // US-22: B2B Contracts & Bids Aliases
-router.get('/bids', b2bPoolController.getHarvestPools);
+router.get('/bids', (req, res, next) => {
+  if (req.baseUrl === '/api/b2b') {
+    return verifyToken(req, res, () => b2bLotController.getB2BLotBids(req, res, next));
+  }
+  return b2bPoolController.getHarvestPools(req, res, next);
+});
 router.get('/', b2bPoolController.getHarvestPools);
 router.post('/', verifyToken, b2bPoolController.createHarvestPool);
 

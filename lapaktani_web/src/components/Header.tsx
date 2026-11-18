@@ -22,6 +22,8 @@ export const Header: React.FC<HeaderProps> = ({
 }) => {
   const isDinas =
     currentUser?.role?.toLowerCase() === 'dinas' || currentUser?.role_id === 5;
+  const isSuperAdmin =
+    currentUser?.role?.toLowerCase() === 'superadmin' || currentUser?.role_id === 6;
 
   return (
     <header className="fixed top-0 left-0 right-0 h-16 bg-white/95 backdrop-blur-md z-40 border-b border-[#E2E8F0] flex items-center justify-between px-4 lg:px-8">
@@ -36,14 +38,22 @@ export const Header: React.FC<HeaderProps> = ({
             </span>
             <span
               className={`text-[10px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded ${
-                isDinas ? 'bg-amber-100 text-amber-800' : 'bg-emerald-100 text-[#166534]'
+                isSuperAdmin
+                  ? 'bg-[#0D5136] text-[#F59E0B] border border-[#F59E0B]/40'
+                  : isDinas
+                    ? 'bg-amber-100 text-amber-800'
+                    : 'bg-emerald-100 text-[#166534]'
               }`}
             >
-              {isDinas ? 'DINAS' : 'PPL'}
+              {isSuperAdmin ? 'SUPERADMIN' : isDinas ? 'DINAS' : 'PPL'}
             </span>
           </div>
           <p className="text-[11px] text-gray-500 font-medium">
-            {isDinas ? 'Portal Dinas Pertanian · Kab. Sumenep' : 'Portal Penyuluh · Kab. Sumenep'}
+            {isSuperAdmin
+              ? 'Pusat Tata Kelola 6-Role · Sumenep'
+              : isDinas
+                ? 'Portal Dinas Pertanian · Kab. Sumenep'
+                : 'Portal Penyuluh · Kab. Sumenep'}
           </p>
         </div>
       </div>
@@ -114,7 +124,13 @@ export const Header: React.FC<HeaderProps> = ({
               <span className="text-[13px] font-bold text-gray-800 leading-tight">
                 {currentUser.full_name || 'Penyuluh Pertanian'}
               </span>
-              <span className="text-[11px] text-gray-500">BPP Kab. Sumenep</span>
+              <span className="text-[11px] text-gray-500">
+                {isSuperAdmin
+                  ? 'Super Admin Pusat'
+                  : isDinas
+                    ? 'Dinas Pertanian Sumenep'
+                    : 'BPP Kab. Sumenep'}
+              </span>
             </div>
           </div>
         ) : (
@@ -123,7 +139,7 @@ export const Header: React.FC<HeaderProps> = ({
             className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-[#166534] hover:bg-[#0D5136] text-white font-bold text-[12px] shadow-sm transition-colors"
           >
             <span className="material-symbols-outlined text-[16px]">login</span>
-            <span>Masuk PPL</span>
+            <span>Masuk Portal</span>
           </button>
         )}
       </div>

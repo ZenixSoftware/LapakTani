@@ -21,7 +21,7 @@ Seluruh **9 materi teknis wajib** dari perkuliahan Workshop Pemrograman Framewor
 
 | No | Materi Wajib Dosen | Status | Modul & Baris Kode Utama | Bukti Mekanisme & Header / Endpoint Verifikasi |
 | :-: | :--- | :---: | :--- | :--- |
-| **1** | **JWT Multi-Role Auth** (`petani`, `penyuluh`, `admin`, `pembeli`, `dinas`) | VERIFIED | `lapaktani_backend/src/middlewares/authMiddleware.js` (`L4-L140`)<br>`lapaktani_backend/src/controllers/authController.js` (`L62-L189`) | `signUserToken`, `verifyRawToken`, `verifyToken`, `optionalVerifyToken`, `requireRole` mendukung 5 role (`ROLE_ID_MAP` ID 1–5) pada `POST /api/auth/login` & `/register`. |
+| **1** | **JWT Multi-Role Auth** (`petani`, `penyuluh`, `admin`, `pembeli`, `dinas`, `superadmin`) | VERIFIED | `lapaktani_backend/src/middlewares/authMiddleware.js` (`L4-L140`)<br>`lapaktani_backend/src/controllers/authController.js` (`L8-L240`) | `signUserToken`, `verifyRawToken`, `verifyToken`, `optionalVerifyToken`, `requireRole` mendukung 6 role (`ROLE_ID_MAP` ID 1–6) + `admin_tier` pada `POST /api/auth/login` & penguncian registrasi otoritas di `/register`. |
 | **2** | **Multer Multipart File Upload** | ACTIVE | `lapaktani_backend/src/middlewares/uploadMiddleware.js` (`L1-L190`)<br>`lapaktani_backend/src/routes/upload.js` (`L1-L72`)<br>`lapaktani_backend/src/controllers/uploadController.js` (`L1-L40`) | Upload `multipart/form-data` terpisah untuk foto produk (`/product-image`), KTP (`/ktp`), SK toko PDF/gambar (`/store-sk`), dan foto lahan (`/field-photo`) lengkap dengan inspeksi *magic bytes* (`JPEG`, `PNG`, `WEBP`, `%PDF`). |
 | **3** | **HTTP Response Compression** | ACTIVE | `lapaktani_backend/src/middlewares/compressionMiddleware.js` (`L1-L135`)<br>`lapaktani_backend/server.js` (`L72`) | Kompresi respons API menggunakan Node `zlib` (`gzip`/`deflate`), mengatur header `X-Response-Compressed: true`, `X-Compression-Engine: native-zlib-gzip`, `X-Original-Bytes`, dan `X-Compressed-Bytes`. |
 | **4** | **Cache in Node (L1 In-Memory TTL)** | VERIFIED | `lapaktani_backend/src/utils/nodeCache.js` (`L5-L133`)<br>`lapaktani_backend/src/controllers/agroSupplyChainController.js` (`L41-L97`, `L822-L855`)<br>`lapaktani_backend/src/controllers/masterDataController.js` (`L1-L108`) | Kelas `LapakTaniNodeCache` menyimpan data referensi wilayah Sumenep (`sumenep_regions_villages`), kuota toko desa (`sumenep_villages_quota`), serta master komoditas/grade/satuan dengan TTL & invalidasi otomatis. Mengembalikan header `X-Node-Cache: HIT \| MISS`. |
@@ -119,9 +119,31 @@ Berdasarkan pembagian kartu Trello resmi (`UbzpfVZu - lapaktani.json`) dan integ
 ### B. Kontribusi Tambahan Terkait Infrastruktur, DevOps & User Story Lintas Tim (Trello)
 - **`[US-01]` & Arsitektur Dasar**: Konfigurasi monorepo Flutter (`lapaktani_app/lib/core/services/api_service.dart`, `app_config.dart`, `app_colors.dart`, `custom_soft_card.dart`), Migrasi ke Cloudflare Tunnel (`api-lapaktani.velosixraptor.my.id` & `ppl-lapaktani.velosixraptor.my.id`), perbaikan `vite.config` `allowedHosts`, serta implementasi 9 materi wajib backend di `server.js`.
 - **`[US-07]` Penambahan Komoditas Panen & Grade Mutu**: `src/controllers/productController.js` (`createProduct`, `normalizePricingInput` Retail/Diskon/Partai B2B), `add_product_screen.dart`, `edit_product_screen.dart`, dan perbaikan *null-safe DECIMAL string-to-num parsing* di 6 layar Flutter.
-- **`[US-17]` Forum Diskusi Komunitas & Unified 5-Role Chat**: `src/routes/chat.js`, `src/controllers/chatController.js`, `community_repository.dart`, `discussion_comment_sheet.dart`, `chat_room_screen.dart`.
+- **`[US-17]` Forum Diskusi Komunitas & Unified 6-Role Chat**: `src/routes/chat.js`, `src/controllers/chatController.js`, `community_repository.dart`, `discussion_comment_sheet.dart`, `chat_room_screen.dart`, `WebDirectMessageDrawer.tsx`.
 - **`[US-20]` Load/Stress Testing**: `lapaktani_backend/tests/load_test_autocannon.js` (`npm run test:load`) + middleware `rateLimiter.js` & `compressionMiddleware.js`.
 - **`[US-21]` & `[US-27]` UAT, Rilis Multi-Role APK & Peta Kesuburan Tanah PPL**: `RoleBasedAppShell` (`lib/features/navigation/role_based_app_shell.dart`), audit seluruh `FloatingActionButton` `heroTag` unik (`5/5` FAB), serta integrasi Peta Kesuburan Tanah Sumenep & RAG Dual-Target PPL.
+
+### C. Arsitektur 6-Role Governance & Rantai Pasok 2-Tier (B2B Offtaker / Retail Auto-KYC)
+1. **6-Role RBAC & Super Admin Governance (`superadmin`, `role_id=6`)**:
+   - Registrasi mandiri untuk `dinas`, `penyuluh`, dan `superadmin` dikunci (`HTTP 403 AUTHORITY_REGISTRATION_LOCKED` pada `POST /api/auth/register`).
+   - Provisioning akun resmi Dinas/Penyuluh (`POST /api/superadmin/provision-authority`), aktivasi/nonaktif akun (`PUT /api/superadmin/authorities/:id/status`), audit & pembekuan/reaktivasi toko 2-tier (`PUT /api/superadmin/stores/:id/status`), serta pemantauan kas `platform_fee_ledger` tersedia melalui `/api/superadmin/*` dan `lapaktani_web/src/components/SuperAdminGovernanceHub.tsx`.
+2. **Two-Tier Store Onboarding (`B2B_OFFTAKER` vs `RETAIL_MERCHANT` Auto-KYC)**:
+   - `B2B_OFFTAKER` (Koperasi/Gudang Partai) melalui antrean `PENDING_PPL`, verifikasi kuota toko desa, dan pencatatan `kapasitas_gudang_kg`.
+   - `RETAIL_MERCHANT` (Pedagang Retail/Pasar) melalui jalur `Auto-KYC` (`status: APPROVED`, `auto_kyc_passed: true`), bebas batas kuota desa, dan langsung menerima peningkatan sesi JWT `admin` + `admin_tier: 'RETAIL_MERCHANT'` (`POST /api/store/apply` & `store_registration_screen.dart`).
+3. **Farmer Multi-Offtaker Contracts & Automated Pro-Rata Deficit Engine**:
+   - Petani dapat mencantumkan `luas_lahan_ha` saat menyiarkan panen, menyetujui lebih dari satu kontrak toko, lalu memanggil `POST /api/petani/harvest-reports/:id/declare-harvested` dengan `realisasi_panen_kg` riil (`petani_simple_screen.dart`).
+   - Apabila realisasi panen lebih rendah dari total volume kontrak (`is_deficit: true`), sistem menghitung `share_ratio` dan memperbarui `allocated_pro_rata_kg` masing-masing offtaker secara proporsional (terverifikasi: `300 kg` estimasi, kontrak `200 + 100 kg`, realisasi `240 kg` -> `160 kg` & `80 kg`).
+4. **B2B Open-Bid Lots (`MENTAH`/`SIAP_PAKAI`), Post-Escrow Traceability, 1-Click Restock & Remainder Switch**:
+   - Komoditas mendukung klasifikasi `processing_state` (`MENTAH` / `SIAP_PAKAI`), `catalog_channel` (`B2B_BID_LOT` / `RETAIL_CATALOG` / `BOTH`), dan `fulfillment_options` (`DELIVERY_ONLY` / `PICKUP_ONLY` / `BOTH`) pada `add_product_screen.dart`, `mitra_store_catalog_screen.dart`, dan `wholesale_detail_screen.dart`.
+   - `B2B_OFFTAKER` diblokir (`HTTP 403 B2B_OFFTAKER_CANNOT_BUY`) dari penawaran lot toko lain; identitas petani (`source_farmer_name`) disembunyikan di `GET /api/b2b/lots` & sebelum pembayaran, lalu otomatis dibuka setelah status `PAID_ESCROW`.
+   - Setelah status `COMPLETED`, `RETAIL_MERCHANT` dapat menyalin lot ke katalog toko retail melalui `POST /api/b2b/bids/:bidId/restock-to-retail` (1-Click Restock), sementara `B2B_OFFTAKER` dapat membuka sisa stok lot B2B ke etalase retail melalui `PUT /api/products/:id/convert-remainder-to-retail`.
+5. **Capped Hybrid Refund Engine & `platform_fee_ledger`**:
+   - Pembatalan sepihak oleh Pembeli dikenakan potongan biaya layanan `min(Rp 50.000, max(Rp 10.000, round(gross * 2%)))`, sedangkan pembatalan oleh Penjual mengembalikan 100% tanpa potongan (`src/utils/refundHelper.js`, `POST /api/orders/:id/cancel-with-refund`, `POST /api/b2b/bids/:bidId/cancel-with-refund`, & `buyer_orders_screen.dart`), dengan jejak tersimpan pada tabel `platform_fee_ledger`.
+
+> **Hasil Verifikasi Terbaru (`valo-Branch`)**:
+> - **Uji E2E Backend (`MySQL 8.4 + Redis 6379`)**: Seluruh 6 skenario end-to-end (RBAC 6-role + locked register `403`, 2-tier Auto-KYC vs B2B + suspend/reactivate, Pro-Rata `240 kg -> 160 + 80 kg`, B2B open-bid + blokir B2B buyer `403` + unmasking pasca-`PAID_ESCROW` + 1-Click Restock + remainder switch, Refund Hybrid `floor Rp 10rb / 2% / cap Rp 50rb`, serta `GET /api/system/mvp-compliance` -> `9/9 (100%)`) **LULUS**.
+> - **Web Portal (`lapaktani_web`)**: Build produksi `tsc -b && vite build` **LULUS (exit code 0)**.
+> - **Aplikasi Mobile (`lapaktani_app`)**: `flutter analyze` **0 isu** dan `flutter test` **LULUS (semua tes lolos)**.
 
 ---
 
@@ -135,4 +157,4 @@ Berdasarkan pembagian kartu Trello resmi (`UbzpfVZu - lapaktani.json`) dan integ
 
 ---
 
-*Disusun dan diverifikasi pada branch aktif `valo-Branch` (`2026-11-16`).*
+*Disusun dan diverifikasi pada branch aktif `valo-Branch` (`2026-11-18`).*

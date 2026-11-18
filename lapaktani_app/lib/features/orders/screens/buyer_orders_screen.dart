@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:lucide_icons/lucide_icons.dart';
+import '../../../core/services/api_service.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../chat/screens/chat_room_screen.dart';
 import '../../chat/services/chat_service.dart';
@@ -302,6 +303,118 @@ class _BuyerOrdersScreenState extends State<BuyerOrdersScreen> with SingleTicker
           },
         );
       },
+    );
+  }
+
+  Future<void> _showCancelRefundDialog(OrderModel order) async {
+    final reasonCtrl = TextEditingController(
+      text: 'Perubahan jadwal pengadaan pembeli',
+    );
+    final double gross = (order.totalPrice + order.shippingFee).toDouble();
+    final double rawPct = (gross * 0.02).roundToDouble();
+    final double feePreview = gross <= 0
+        ? 0
+        : rawPct.clamp(10000.0, 50000.0).clamp(0.0, gross);
+    final double refundPreview = (gross - feePreview).clamp(0.0, gross);
+    bool submitting = false;
+
+    await showDialog<void>(
+      context: context,
+      builder: (ctx) => StatefulBuilder(
+        builder: (ctx, setDlgState) => AlertDialog(
+          title: Text(
+            'Batalkan Pesanan (Refund Hybrid 2%)',
+            style: GoogleFonts.plusJakartaSans(
+              fontWeight: FontWeight.w800,
+              fontSize: 15,
+            ),
+          ),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'Pembatalan sepihak oleh pembeli dikenakan biaya layanan 2% (Min. Rp 10.000, Maks. Rp 50.000):',
+                style: GoogleFonts.plusJakartaSans(fontSize: 12),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                '• Nilai Pesanan: Rp ${gross.toStringAsFixed(0)}\n'
+                '• Potongan Fee Platform: Rp ${feePreview.toStringAsFixed(0)}\n'
+                '• Estimasi Dana Kembali: Rp ${refundPreview.toStringAsFixed(0)}',
+                style: GoogleFonts.plusJakartaSans(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w700,
+                  color: AppColors.primaryDark,
+                ),
+              ),
+              const SizedBox(height: 10),
+              TextField(
+                controller: reasonCtrl,
+                decoration: const InputDecoration(
+                  labelText: 'Alasan Pembatalan',
+                  border: OutlineInputBorder(),
+                ),
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: submitting ? null : () => Navigator.pop(ctx),
+              child: const Text('Kembali'),
+            ),
+            ElevatedButton(
+              onPressed: submitting
+                  ? null
+                  : () async {
+                      setDlgState(() => submitting = true);
+                      final messenger = ScaffoldMessenger.of(context);
+                      try {
+                        final res = await ApiService().cancelOrderWithRefund(
+                          order.id,
+                          cancelledBy: 'BUYER',
+                          reason: reasonCtrl.text.trim(),
+                        );
+                        await _orderService.updateOrderStatus(
+                          order.id,
+                          OrderStatus.cancelled,
+                          checkpointTitle: 'Dibatalkan Pembeli (Refund Hybrid 2%)',
+                          checkpointDesc:
+                              res['message']?.toString() ?? 'Dana dikembalikan sesuai kebijakan Hybrid 2%.',
+                        );
+                        if (ctx.mounted) Navigator.pop(ctx);
+                        if (!mounted) return;
+                        messenger.showSnackBar(
+                          SnackBar(
+                            content: Text(
+                              res['message']?.toString() ??
+                                  'Pesanan dibatalkan & refund tercatat.',
+                            ),
+                            backgroundColor: AppColors.primary,
+                          ),
+                        );
+                      } catch (e) {
+                        setDlgState(() => submitting = false);
+                        if (!mounted) return;
+                        messenger.showSnackBar(
+                          SnackBar(
+                            content: Text(
+                              e.toString().replaceFirst('Exception: ', ''),
+                            ),
+                            backgroundColor: AppColors.error,
+                          ),
+                        );
+                      }
+                    },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.error,
+                foregroundColor: Colors.white,
+              ),
+              child: Text(submitting ? 'Memproses...' : 'Konfirmasi Batalkan'),
+            ),
+          ],
+        ),
+      ),
     );
   }
 
@@ -706,6 +819,36 @@ class _BuyerOrdersScreenState extends State<BuyerOrdersScreen> with SingleTicker
                       );
                     },
                   ),
+                  if (order.status == OrderStatus.pendingPayment ||
+                      order.status == OrderStatus.needHarvest ||
+                      order.status == OrderStatus.readyToShip)
+                    OutlinedButton.icon(
+                      onPressed: () => _showCancelRefundDialog(order),
+                      icon: const Icon(
+                        LucideIcons.xCircle,
+                        size: 13,
+                        color: AppColors.error,
+                      ),
+                      label: Text(
+                        'Batalkan (Refund 2%)',
+                        style: GoogleFonts.plusJakartaSans(
+                          fontSize: 11,
+                          fontWeight: FontWeight.w700,
+                          color: AppColors.error,
+                        ),
+                      ),
+                      style: OutlinedButton.styleFrom(
+                        side: const BorderSide(color: AppColors.errorBorder),
+                        backgroundColor: AppColors.errorSoft,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 8,
+                          vertical: 6,
+                        ),
+                      ),
+                    ),
                 ],
               ),
             ],

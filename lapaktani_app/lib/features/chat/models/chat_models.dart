@@ -27,6 +27,7 @@ class ChatParticipant {
   }
 
   String get roleLabel {
+    if (role == 'superadmin' || roleId == 6) return 'Super Admin';
     if (role == 'dinas' || roleId == 5) return 'Dinas Pertanian';
     if (role == 'penyuluh' || roleId == 2) return 'Penyuluh BPP';
     if (role == 'admin' || roleId == 3) return 'Admin Toko';

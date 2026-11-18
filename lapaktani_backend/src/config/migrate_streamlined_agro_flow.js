@@ -1,3 +1,4 @@
+const bcrypt = require('bcryptjs');
 const pool = require('./db');
 
 async function addColumnIfMissing(connection, tableName, columnName, columnDefSql) {
@@ -40,25 +41,61 @@ const runStreamlinedAgroFlowMigration = async () => {
     connection = await pool.getConnection();
     console.log('[MIGRATION_AGRO_FLOW] Running streamlined 5-role agro flow migration...');
 
-    // 1. Roles confirmation
+    // 1. 6-Role Confirmation (petani, penyuluh, admin, pembeli, dinas, superadmin) + Two-Tier Admin Columns
     await connection.query(`
       INSERT INTO user_roles (id, role_name) VALUES
       (1, 'petani'),
       (2, 'penyuluh'),
       (3, 'admin'),
       (4, 'pembeli'),
-      (5, 'dinas')
+      (5, 'dinas'),
+      (6, 'superadmin')
       ON DUPLICATE KEY UPDATE role_name = VALUES(role_name);
     `);
 
     try {
       await connection.query(`
         ALTER TABLE users
-        MODIFY COLUMN role ENUM('petani', 'pembeli', 'penyuluh', 'admin', 'dinas') DEFAULT 'pembeli'
+        MODIFY COLUMN role ENUM('petani', 'pembeli', 'penyuluh', 'admin', 'dinas', 'superadmin') DEFAULT 'pembeli'
       `);
     } catch (enumErr) {
       console.warn('[MIGRATION_AGRO_FLOW] users.role enum notice:', enumErr.message);
     }
+
+    await addColumnIfMissing(connection, 'users', 'admin_tier', "ENUM('B2B_OFFTAKER','RETAIL_MERCHANT') NULL DEFAULT NULL");
+    await addColumnIfMissing(connection, 'users', 'is_active', 'TINYINT(1) NOT NULL DEFAULT 1');
+
+    const superadminHash = await bcrypt.hash('superadmin123', 10);
+    const retailAdminHash = await bcrypt.hash('admin123', 10);
+
+    await connection.query(
+      `INSERT INTO users (id, email, password_hash, role_id, full_name, role, is_verified, is_active, wallet_balance)
+       VALUES ('usr-superadmin-01', 'superadmin@lapaktani.id', ?, 6, 'Super Admin Sistem LapakTani', 'superadmin', 1, 1, 10000000.00)
+       ON DUPLICATE KEY UPDATE role_id = 6, role = 'superadmin', is_verified = 1, is_active = 1`,
+      [superadminHash]
+    );
+
+    await connection.query(
+      `INSERT IGNORE INTO user_profiles (id, user_id, full_name, verification_status, village_id, wallet_balance)
+       VALUES ('prof-superadmin-01', 'usr-superadmin-01', 'Super Admin Sistem LapakTani', 'verified', 101, 10000000.00)`
+    );
+
+    await connection.query(
+      `INSERT INTO users (id, email, password_hash, role_id, full_name, role, admin_tier, is_verified, is_active, wallet_balance)
+       VALUES ('usr-admin-retail-01', 'retail@lapaktani.id', ?, 3, 'Bu Rina (Warung Sayur & Sembako Sumenep)', 'admin', 'RETAIL_MERCHANT', 1, 1, 5000000.00)
+       ON DUPLICATE KEY UPDATE role_id = 3, role = 'admin', admin_tier = 'RETAIL_MERCHANT', is_verified = 1, is_active = 1`,
+      [retailAdminHash]
+    );
+
+    await connection.query(
+      `INSERT IGNORE INTO user_profiles (id, user_id, full_name, nik_number, phone, verification_status, village_id, wallet_balance)
+       VALUES ('prof-retail-01', 'usr-admin-retail-01', 'Bu Rina (Warung Sayur & Sembako Sumenep)', '3529014408860002', '081938475612', 'verified', 109, 5000000.00)`
+    );
+
+    await connection.query(
+      `UPDATE users SET admin_tier = 'B2B_OFFTAKER'
+       WHERE (role_id = 3 OR role = 'admin') AND admin_tier IS NULL AND LOWER(email) != 'retail@lapaktani.id'`
+    );
 
     // 2. Seed all 27 Sumenep districts & villages + extend with postal code & store quota
     await connection.query(`
@@ -202,9 +239,12 @@ const runStreamlinedAgroFlowMigration = async () => {
         id VARCHAR(50) PRIMARY KEY,
         user_id VARCHAR(50) NOT NULL,
         nama_toko VARCHAR(150) NOT NULL,
-        tipe_pengelola ENUM('POKTAN','KOPERASI','PENGEPUL_DESA') DEFAULT 'POKTAN',
+        admin_tier ENUM('B2B_OFFTAKER','RETAIL_MERCHANT') NOT NULL DEFAULT 'B2B_OFFTAKER',
+        tipe_pengelola ENUM('POKTAN','KOPERASI','PENGEPUL_DESA','PEDAGANG_PASAR','WARUNG_SEMBAKO') DEFAULT 'POKTAN',
         nik VARCHAR(32) NULL,
         no_hp VARCHAR(30) NULL,
+        kapasitas_gudang_kg INT NULL DEFAULT 1000,
+        auto_kyc_passed TINYINT(1) NOT NULL DEFAULT 0,
         province_id INT DEFAULT 35,
         regency_id INT DEFAULT 3529,
         district_id INT DEFAULT 352901,
@@ -216,23 +256,39 @@ const runStreamlinedAgroFlowMigration = async () => {
         default_min_wholesale_kg INT NOT NULL DEFAULT 30,
         store_discount_banner VARCHAR(255) NULL,
         is_store_open TINYINT(1) NOT NULL DEFAULT 1,
-        status ENUM('DRAFT_FROZEN','PENDING_PPL','APPROVED','REJECTED') DEFAULT 'PENDING_PPL',
+        status ENUM('DRAFT_FROZEN','PENDING_PPL','APPROVED','REJECTED','SUSPENDED') DEFAULT 'PENDING_PPL',
         reviewed_by_ppl VARCHAR(50) NULL,
         rejection_reason TEXT NULL,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
         INDEX idx_sa_user (user_id),
-        INDEX idx_sa_village_status (village_id, status)
+        INDEX idx_sa_village_status (village_id, status),
+        INDEX idx_sa_tier (admin_tier, status)
       ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
     `);
 
+    await addColumnIfMissing(connection, 'store_applications', 'admin_tier', "ENUM('B2B_OFFTAKER','RETAIL_MERCHANT') NOT NULL DEFAULT 'B2B_OFFTAKER'");
+    await addColumnIfMissing(connection, 'store_applications', 'kapasitas_gudang_kg', 'INT NULL DEFAULT 1000');
+    await addColumnIfMissing(connection, 'store_applications', 'auto_kyc_passed', 'TINYINT(1) NOT NULL DEFAULT 0');
+
+    try {
+      await connection.query(`
+        ALTER TABLE store_applications
+        MODIFY COLUMN tipe_pengelola ENUM('POKTAN','KOPERASI','PENGEPUL_DESA','PEDAGANG_PASAR','WARUNG_SEMBAKO') DEFAULT 'POKTAN',
+        MODIFY COLUMN status ENUM('DRAFT_FROZEN','PENDING_PPL','APPROVED','REJECTED','SUSPENDED') DEFAULT 'PENDING_PPL'
+      `);
+    } catch (_) {}
+
+    const retailAdminId = await resolveUserIdByEmail(connection, 'retail@lapaktani.id', 'usr-admin-retail-01');
+
     await connection.query(
       `INSERT IGNORE INTO store_applications
-       (id, user_id, nama_toko, tipe_pengelola, nik, no_hp, province_id, regency_id, district_id, village_id, village_name, postal_code, alamat_lengkap, dokumen_syarat_url, default_min_wholesale_kg, store_discount_banner, is_store_open, status, reviewed_by_ppl)
+       (id, user_id, nama_toko, admin_tier, tipe_pengelola, nik, no_hp, kapasitas_gudang_kg, auto_kyc_passed, province_id, regency_id, district_id, village_id, village_name, postal_code, alamat_lengkap, dokumen_syarat_url, default_min_wholesale_kg, store_discount_banner, is_store_open, status, reviewed_by_ppl)
        VALUES
-       ('store-app-01', ?, 'Koperasi Tani Sumber Lestari Sumenep', 'KOPERASI', '3529011204850001', '081234509876', 35, 3529, 352901, 101, 'Mandala', '69472', 'Jl. Raya Gapura KM 4, Desa Mandala, Kec. Gapura, Sumenep', 'uploads/docs/akta_koperasi_sumenep.pdf', 30, 'Promo Panen Raya Sumenep Hemat s/d 15% + Diskon Partai B2B', 1, 'APPROVED', ?),
-       ('store-app-02', ?, 'Unit Usaha Poktan Harapan Dungkek', 'POKTAN', '3529172207880003', '081357902468', 35, 3529, 352917, 109, 'Dungkek', '69474', 'Dusun Embung Timur, Desa Dungkek, Kec. Dungkek, Sumenep', 'uploads/docs/sk_poktan_dungkek.pdf', 25, 'Serapan Bawang Merah & Cabai Jamu Segar Dungkek', 1, 'PENDING_PPL', NULL)`,
-      [adminId, penyuluhId, buyerId]
+       ('store-app-01', ?, 'Koperasi Tani Sumber Lestari Sumenep', 'B2B_OFFTAKER', 'KOPERASI', '3529011204850001', '081234509876', 5000, 0, 35, 3529, 352901, 101, 'Mandala', '69472', 'Jl. Raya Gapura KM 4, Desa Mandala, Kec. Gapura, Sumenep', 'uploads/docs/akta_koperasi_sumenep.pdf', 30, 'Promo Panen Raya Sumenep Hemat s/d 15% + Diskon Partai B2B', 1, 'APPROVED', ?),
+       ('store-app-02', ?, 'Unit Usaha Poktan Harapan Dungkek', 'B2B_OFFTAKER', 'POKTAN', '3529172207880003', '081357902468', 3500, 0, 35, 3529, 352917, 109, 'Dungkek', '69474', 'Dusun Embung Timur, Desa Dungkek, Kec. Dungkek, Sumenep', 'uploads/docs/sk_poktan_dungkek.pdf', 25, 'Serapan Bawang Merah & Cabai Jamu Segar Dungkek', 1, 'PENDING_PPL', NULL),
+       ('store-app-03', ?, 'Warung Sayur & Sembako Bu Rina', 'RETAIL_MERCHANT', 'WARUNG_SEMBAKO', '3529014408860002', '081938475612', 400, 1, 35, 3529, 352917, 109, 'Dungkek', '69474', 'Pasar Tradisional Dungkek Kios B-12, Kab. Sumenep', 'uploads/kyc/ktp_bu_rina.jpg', 10, 'Sedia Beras, Sayur Segar & Bumbu Dapur Harian Sumenep', 1, 'APPROVED', 'SYSTEM_AUTO_KYC')`,
+      [adminId, penyuluhId, buyerId, retailAdminId]
     );
 
     // 5. Scoped Forums: Inter-PPL Forum & Private Village Forum
@@ -299,9 +355,12 @@ const runStreamlinedAgroFlowMigration = async () => {
         village_name VARCHAR(100) DEFAULT 'Dungkek',
         district_id INT NOT NULL DEFAULT 352917,
         komoditas VARCHAR(100) NOT NULL,
-        status_tanam ENUM('MULAI_TANAM','HAMPIR_PANEN','SIAP_PANEN','LAPOR_HAMA','MINTA_SARAN') DEFAULT 'HAMPIR_PANEN',
+        luas_lahan_ha DECIMAL(8,2) NOT NULL DEFAULT 1.00,
+        status_tanam ENUM('MULAI_TANAM','HAMPIR_PANEN','SIAP_PANEN','SUDAH_PANEN','LAPOR_HAMA','MINTA_SARAN') DEFAULT 'HAMPIR_PANEN',
         estimasi_panen_date DATE NULL,
         estimasi_berat_kg DECIMAL(12,2) NOT NULL DEFAULT 0,
+        realisasi_panen_kg DECIMAL(12,2) NULL,
+        is_deficit TINYINT(1) NOT NULL DEFAULT 0,
         catatan TEXT NULL,
         foto_url VARCHAR(500) NULL,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
@@ -310,12 +369,23 @@ const runStreamlinedAgroFlowMigration = async () => {
       ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
     `);
 
+    try {
+      await connection.query(`
+        ALTER TABLE harvest_reports
+        MODIFY COLUMN status_tanam ENUM('MULAI_TANAM','HAMPIR_PANEN','SIAP_PANEN','SUDAH_PANEN','LAPOR_HAMA','MINTA_SARAN') DEFAULT 'HAMPIR_PANEN'
+      `);
+    } catch (_) {}
+
+    await addColumnIfMissing(connection, 'harvest_reports', 'luas_lahan_ha', 'DECIMAL(8,2) NOT NULL DEFAULT 1.00');
+    await addColumnIfMissing(connection, 'harvest_reports', 'realisasi_panen_kg', 'DECIMAL(12,2) NULL');
+    await addColumnIfMissing(connection, 'harvest_reports', 'is_deficit', 'TINYINT(1) NOT NULL DEFAULT 0');
+
     await connection.query(
       `INSERT IGNORE INTO harvest_reports
-       (id, farmer_id, farmer_name, poktan_id, village_id, village_name, district_id, komoditas, status_tanam, estimasi_panen_date, estimasi_berat_kg, catatan)
+       (id, farmer_id, farmer_name, poktan_id, village_id, village_name, district_id, komoditas, luas_lahan_ha, status_tanam, estimasi_panen_date, estimasi_berat_kg, catatan)
        VALUES
-       ('hr-smp-01', ?, 'Pak Supardi (Poktan Harapan)', 'fg-smp-07', 109, 'Dungkek', 352917, 'Bawang Merah Sumenep Super', 'SIAP_PANEN', DATE_ADD(CURDATE(), INTERVAL 2 DAY), 450.00, 'Umbi padat, kering askip 70%, siap petik dan ditimbang oleh Admin Toko / Offtaker desa.'),
-       ('hr-smp-02', ?, 'Pak Supardi (Poktan Harapan)', 'fg-smp-07', 109, 'Dungkek', 352917, 'Cabai Rawit Lokal', 'HAMPIR_PANEN', DATE_ADD(CURDATE(), INTERVAL 7 DAY), 180.00, 'Buah mulai memerah 60%, bebas serangan lalat buah.')`,
+       ('hr-smp-01', ?, 'Pak Supardi (Poktan Harapan)', 'fg-smp-07', 109, 'Dungkek', 352917, 'Bawang Merah Sumenep Super', 1.25, 'SIAP_PANEN', DATE_ADD(CURDATE(), INTERVAL 2 DAY), 450.00, 'Umbi padat, kering askip 70%, siap petik dan ditimbang oleh Admin Toko / Offtaker desa.'),
+       ('hr-smp-02', ?, 'Pak Supardi (Poktan Harapan)', 'fg-smp-07', 109, 'Dungkek', 352917, 'Cabai Rawit Lokal', 0.60, 'HAMPIR_PANEN', DATE_ADD(CURDATE(), INTERVAL 7 DAY), 180.00, 'Buah mulai memerah 60%, bebas serangan lalat buah.')`,
       [petaniId, petaniId]
     );
 
@@ -329,6 +399,8 @@ const runStreamlinedAgroFlowMigration = async () => {
         nama_petani_walkin VARCHAR(120) NULL,
         komoditas VARCHAR(100) NOT NULL,
         estimasi_berat_kg DECIMAL(12,2) NOT NULL DEFAULT 0,
+        allocated_pro_rata_kg DECIMAL(12,2) NULL,
+        share_ratio DECIMAL(6,4) NULL,
         berat_timbang_riil_kg DECIMAL(12,2) NULL,
         harga_acuan_pasar_per_kg DECIMAL(12,2) NOT NULL DEFAULT 0,
         biaya_transport_per_kg DECIMAL(12,2) NOT NULL DEFAULT 0,
@@ -345,6 +417,9 @@ const runStreamlinedAgroFlowMigration = async () => {
       ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
     `);
 
+    await addColumnIfMissing(connection, 'harvest_purchase_offers', 'allocated_pro_rata_kg', 'DECIMAL(12,2) NULL');
+    await addColumnIfMissing(connection, 'harvest_purchase_offers', 'share_ratio', 'DECIMAL(6,4) NULL');
+
     await connection.query(
       `INSERT IGNORE INTO harvest_purchase_offers
        (id, harvest_report_id, store_admin_id, store_name, farmer_id, komoditas, estimasi_berat_kg, harga_acuan_pasar_per_kg, biaya_transport_per_kg, biaya_operasional_lain_per_kg, rincian_biaya_catatan, harga_tawar_bersih_per_kg, total_nilai_kontrak, status)
@@ -353,21 +428,33 @@ const runStreamlinedAgroFlowMigration = async () => {
       [adminId, petaniId]
     );
 
-    // 7. Seller-Configurable Retail, Discount & Wholesale Tiered Pricing columns on products & orders
+    // 7. Seller-Configurable Retail, Discount, Wholesale & 2-Tier Supply Chain columns on products & orders
     await addColumnIfMissing(connection, 'products', 'discount_percent', 'DECIMAL(5,2) NOT NULL DEFAULT 0');
     await addColumnIfMissing(connection, 'products', 'discount_price', 'DECIMAL(12,2) NULL');
     await addColumnIfMissing(connection, 'products', 'is_wholesale_enabled', 'TINYINT(1) NOT NULL DEFAULT 1');
     await addColumnIfMissing(connection, 'products', 'min_wholesale_qty', 'INT NOT NULL DEFAULT 30');
     await addColumnIfMissing(connection, 'products', 'wholesale_price', 'DECIMAL(12,2) NULL');
     await addColumnIfMissing(connection, 'products', 'store_village_id', 'INT NULL DEFAULT 101');
+    await addColumnIfMissing(connection, 'products', 'processing_state', "ENUM('MENTAH','SIAP_PAKAI') NOT NULL DEFAULT 'SIAP_PAKAI'");
+    await addColumnIfMissing(connection, 'products', 'catalog_channel', "ENUM('B2B_BID_LOT','RETAIL_CATALOG','BOTH') NOT NULL DEFAULT 'RETAIL_CATALOG'");
+    await addColumnIfMissing(connection, 'products', 'fulfillment_options', "ENUM('DELIVERY_ONLY','PICKUP_ONLY','BOTH') NOT NULL DEFAULT 'BOTH'");
+    await addColumnIfMissing(connection, 'products', 'source_farmer_id', 'VARCHAR(50) NULL');
+    await addColumnIfMissing(connection, 'products', 'source_farmer_name', 'VARCHAR(120) NULL');
+    await addColumnIfMissing(connection, 'products', 'source_farmer_phone', 'VARCHAR(40) NULL');
 
-    // Backfill default wholesale pricing where null and make sample promos rich
+    // Backfill default wholesale pricing, channel & farmer traceability
     await connection.query(`
       UPDATE products
       SET price = COALESCE(NULLIF(price, 0), price_per_kg, 15000),
           min_wholesale_qty = COALESCE(NULLIF(min_wholesale_qty, 0), 30),
           wholesale_price = COALESCE(wholesale_price, ROUND(COALESCE(NULLIF(price_per_kg, 0), price, 15000) * 0.85)),
-          store_village_id = COALESCE(store_village_id, 101)
+          store_village_id = COALESCE(store_village_id, 101),
+          processing_state = COALESCE(processing_state, 'SIAP_PAKAI'),
+          catalog_channel = COALESCE(NULLIF(catalog_channel, ''), 'BOTH'),
+          fulfillment_options = COALESCE(fulfillment_options, 'BOTH'),
+          source_farmer_id = COALESCE(source_farmer_id, farmer_id),
+          source_farmer_name = COALESCE(source_farmer_name, 'Pak Supardi (Poktan Harapan Sumenep)'),
+          source_farmer_phone = COALESCE(source_farmer_phone, '081234567890')
     `);
 
     await connection.query(`
@@ -376,6 +463,77 @@ const runStreamlinedAgroFlowMigration = async () => {
           discount_price = ROUND(COALESCE(NULLIF(price_per_kg, 0), price, 15000) * 0.90)
       WHERE discount_percent = 0 AND id IN ('prod-tomat-lembang-001', 'prod-cabai-rawit-004')
     `);
+
+    await connection.query(`
+      CREATE TABLE IF NOT EXISTS b2b_lot_bids (
+        id VARCHAR(50) PRIMARY KEY,
+        product_id VARCHAR(50) NOT NULL,
+        product_title VARCHAR(180) NULL,
+        processing_state ENUM('MENTAH','SIAP_PAKAI') NOT NULL DEFAULT 'SIAP_PAKAI',
+        seller_admin_id VARCHAR(50) NOT NULL,
+        bidder_user_id VARCHAR(50) NOT NULL,
+        bidder_name VARCHAR(120) NULL,
+        bidder_type ENUM('HOTEL_B2B','RETAIL_MERCHANT') NOT NULL DEFAULT 'HOTEL_B2B',
+        bid_qty_kg DECIMAL(12,2) NOT NULL DEFAULT 10,
+        bid_price_per_kg DECIMAL(12,2) NOT NULL DEFAULT 0,
+        total_bid_amount DECIMAL(14,2) NOT NULL DEFAULT 0,
+        fulfillment_method ENUM('DIANTAR_PENJUAL','DIAMBIL_SENDIRI') NOT NULL DEFAULT 'DIANTAR_PENJUAL',
+        delivery_address TEXT NULL,
+        status ENUM('PENDING_BID','ACCEPTED_READY_TO_PAY','PAID_ESCROW','READY_FOR_DELIVERY','READY_FOR_PICKUP','COMPLETED','CANCELLED_BY_BUYER','CANCELLED_BY_SELLER') NOT NULL DEFAULT 'PENDING_BID',
+        restocked_to_retail TINYINT(1) NOT NULL DEFAULT 0,
+        source_farmer_snapshot_json TEXT NULL,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+        INDEX idx_blb_product (product_id, status),
+        INDEX idx_blb_seller (seller_admin_id, status),
+        INDEX idx_blb_bidder (bidder_user_id, status)
+      ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+    `);
+
+    await connection.query(`
+      CREATE TABLE IF NOT EXISTS platform_fee_ledger (
+        id VARCHAR(50) PRIMARY KEY,
+        order_or_bid_id VARCHAR(60) NOT NULL,
+        ref_type ENUM('ORDER','B2B_BID') NOT NULL DEFAULT 'ORDER',
+        cancelled_by_user_id VARCHAR(50) NOT NULL,
+        cancelled_by_role ENUM('BUYER','SELLER') NOT NULL DEFAULT 'BUYER',
+        gross_amount DECIMAL(14,2) NOT NULL DEFAULT 0,
+        fee_charged DECIMAL(12,2) NOT NULL DEFAULT 0,
+        refunded_amount DECIMAL(14,2) NOT NULL DEFAULT 0,
+        reason TEXT NULL,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        INDEX idx_pfl_ref (order_or_bid_id),
+        INDEX idx_pfl_created (created_at DESC)
+      ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+    `);
+
+    const [sampleProdRows] = await connection.query('SELECT id, title, farmer_id, wholesale_price, price_per_kg FROM products LIMIT 1');
+    const sampleProdId = sampleProdRows[0]?.id || 'prod-tomat-lembang-001';
+    const sampleProdTitle = sampleProdRows[0]?.title || 'Tomat Merah Segar Lembang 1 Kg';
+    const sampleSellerId = sampleProdRows[0]?.farmer_id || adminId;
+    const samplePrice = Number(sampleProdRows[0]?.wholesale_price || sampleProdRows[0]?.price_per_kg || 12000);
+
+    await connection.query(
+      `INSERT IGNORE INTO b2b_lot_bids
+       (id, product_id, product_title, processing_state, seller_admin_id, bidder_user_id, bidder_name, bidder_type, bid_qty_kg, bid_price_per_kg, total_bid_amount, fulfillment_method, delivery_address, status, restocked_to_retail, source_farmer_snapshot_json)
+       VALUES
+       ('bid-smp-hotel-01', ?, ?, 'SIAP_PAKAI', ?, ?, 'Budi Pembeli (Hotel Sumenep)', 'HOTEL_B2B', 100.00, ?, ?, 'DIANTAR_PENJUAL', 'Jl. Trunojoyo No. 45, Kota Sumenep', 'PAID_ESCROW', 0, ?),
+       ('bid-smp-retail-01', ?, ?, 'SIAP_PAKAI', ?, ?, 'Bu Rina (Warung Sayur & Sembako Sumenep)', 'RETAIL_MERCHANT', 50.00, ?, ?, 'DIAMBIL_SENDIRI', 'Pasar Tradisional Dungkek Kios B-12', 'COMPLETED', 0, ?)`,
+      [
+        sampleProdId, sampleProdTitle, sampleSellerId, buyerId, samplePrice, samplePrice * 100,
+        JSON.stringify({ farmer_id: petaniId, farmer_name: 'Pak Supardi (Poktan Harapan Sumenep)', farmer_phone: '081234567890', village_name: 'Dungkek' }),
+        sampleProdId, sampleProdTitle, sampleSellerId, retailAdminId, samplePrice, samplePrice * 50,
+        JSON.stringify({ farmer_id: petaniId, farmer_name: 'Pak Supardi (Poktan Harapan Sumenep)', farmer_phone: '081234567890', village_name: 'Dungkek' }),
+      ]
+    );
+
+    await connection.query(
+      `INSERT IGNORE INTO platform_fee_ledger
+       (id, order_or_bid_id, ref_type, cancelled_by_user_id, cancelled_by_role, gross_amount, fee_charged, refunded_amount, reason)
+       VALUES
+       ('fee-smp-01', 'ORD-SAMPLE-CANCEL-01', 'ORDER', ?, 'BUYER', 1200000.00, 24000.00, 1176000.00, 'Contoh catatan pembatalan pembeli (2% Hybrid Capped Fee: Rp 24.000).')`,
+      [buyerId]
+    );
 
     await addColumnIfMissing(connection, 'orders', 'order_tier', "ENUM('RETAIL','PARTAI_B2B') NOT NULL DEFAULT 'RETAIL'");
     await addColumnIfMissing(connection, 'orders', 'applied_unit_price', 'DECIMAL(12,2) NULL');
@@ -457,6 +615,8 @@ const runStreamlinedAgroFlowMigration = async () => {
       'village_forum_posts',
       'harvest_reports',
       'harvest_purchase_offers',
+      'b2b_lot_bids',
+      'platform_fee_ledger',
       'chat_conversations',
       'chat_participants',
       'chat_messages',

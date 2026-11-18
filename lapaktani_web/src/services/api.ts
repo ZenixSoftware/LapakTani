@@ -57,6 +57,7 @@ export interface AuthUser {
   email: string;
   role_id: number;
   role: string;
+  admin_tier?: 'B2B_OFFTAKER' | 'RETAIL_MERCHANT' | string | null;
   is_verified?: boolean;
 }
 
@@ -841,4 +842,216 @@ export const sendWebChatMessage = async (
   }
   const result = await response.json();
   return result.data as WebChatMessage;
+};
+
+// ============================================================================
+// SUPER ADMIN GOVERNANCE (6TH ROLE)
+// ============================================================================
+export interface SuperAdminRoleCount {
+  role: string;
+  total: number;
+  active_count: number;
+}
+
+export interface SuperAdminStoreTierCount {
+  admin_tier: 'B2B_OFFTAKER' | 'RETAIL_MERCHANT' | string;
+  status: string;
+  total: number;
+}
+
+export interface PlatformFeeLedgerEntry {
+  id: string;
+  ref_type?: string;
+  order_or_bid_id?: string;
+  reference_type?: string;
+  reference_id?: string;
+  cancelled_by_role: string;
+  cancelled_by_user_id: string;
+  actor_name?: string;
+  actor_email?: string;
+  gross_amount: number | string;
+  fee_percent?: number | string;
+  fee_charged: number | string;
+  refunded_amount: number | string;
+  reason?: string | null;
+  created_at: string;
+}
+
+export interface SuperAdminOverviewResponse {
+  users_by_role: SuperAdminRoleCount[];
+  stores_by_tier_and_status: SuperAdminStoreTierCount[];
+  fee_ledger_summary: {
+    total_cancellations: number;
+    total_cancelled_gross: number;
+    total_fee_collected: number;
+    total_refunded_to_users: number;
+  };
+  recent_fee_ledger: PlatformFeeLedgerEntry[];
+  mvp_9_health: {
+    compliance_score: string;
+    compression?: Record<string, unknown>;
+    rate_limiter?: Record<string, unknown>;
+    job_queue?: Record<string, unknown>;
+    notifications?: Record<string, unknown>;
+  };
+}
+
+export interface AuthorityAccountRecord {
+  id: string;
+  email: string;
+  full_name: string;
+  role: 'dinas' | 'penyuluh' | string;
+  role_id: number;
+  is_verified: boolean;
+  is_active: boolean;
+  created_at?: string;
+  nip?: string | null;
+  bpp_unit?: string | null;
+  village_id?: number | null;
+  village_name?: string;
+  district_id?: number | null;
+  district_name?: string;
+}
+
+export interface SuperAdminStoreRecord {
+  id: string;
+  user_id: string;
+  nama_toko: string;
+  admin_tier: 'B2B_OFFTAKER' | 'RETAIL_MERCHANT' | string;
+  kapasitas_gudang_kg?: number | string | null;
+  auto_kyc_passed: boolean;
+  status: 'PENDING_PPL' | 'APPROVED' | 'REJECTED' | 'SUSPENDED' | 'DRAFT_FROZEN' | string;
+  is_store_open: boolean;
+  owner_name?: string;
+  owner_email?: string;
+  owner_is_active?: number | boolean;
+  resolved_village_name?: string;
+  village_name?: string;
+  ktp_number?: string | null;
+  nib_or_siup?: string | null;
+  rejection_reason?: string | null;
+  created_at?: string;
+  updated_at?: string;
+}
+
+export const fetchSuperAdminOverview = async (): Promise<SuperAdminOverviewResponse> => {
+  const response = await authFetch(`${API_BASE_URL}/superadmin/overview`);
+  if (!response.ok) {
+    const err = await response.json().catch(() => ({}));
+    throw new Error(err.message || `Gagal memuat ringkasan Super Admin (${response.status})`);
+  }
+  const result = await response.json();
+  return result.data as SuperAdminOverviewResponse;
+};
+
+export const fetchSuperAdminAuthorities = async (): Promise<AuthorityAccountRecord[]> => {
+  const response = await authFetch(`${API_BASE_URL}/superadmin/authorities`);
+  if (!response.ok) {
+    const err = await response.json().catch(() => ({}));
+    throw new Error(err.message || `Gagal memuat akun otoritas (${response.status})`);
+  }
+  const result = await response.json();
+  return (result.data || []) as AuthorityAccountRecord[];
+};
+
+export const provisionAuthorityAccount = async (payload: {
+  full_name: string;
+  email: string;
+  password: string;
+  role: 'dinas' | 'penyuluh';
+  village_id?: number;
+  bpp_unit?: string;
+  nip?: string;
+  phone?: string;
+}): Promise<AuthorityAccountRecord> => {
+  const response = await authFetch(`${API_BASE_URL}/superadmin/provision-authority`, {
+    method: 'POST',
+    body: JSON.stringify(payload),
+  });
+  const result = await response.json().catch(() => ({}));
+  if (!response.ok || !result.success) {
+    throw new Error(result.message || `Gagal menerbitkan akun otoritas (${response.status})`);
+  }
+  return result.data as AuthorityAccountRecord;
+};
+
+export const toggleAuthorityStatus = async (
+  id: string,
+  isActive: boolean
+): Promise<{ id: string; is_active: boolean }> => {
+  const response = await authFetch(`${API_BASE_URL}/superadmin/authorities/${id}/status`, {
+    method: 'PUT',
+    body: JSON.stringify({ is_active: isActive }),
+  });
+  const result = await response.json().catch(() => ({}));
+  if (!response.ok || !result.success) {
+    throw new Error(result.message || `Gagal mengubah status otoritas (${response.status})`);
+  }
+  return result.data as { id: string; is_active: boolean };
+};
+
+export const fetchSuperAdminStores = async (filters?: {
+  admin_tier?: string;
+  status?: string;
+}): Promise<SuperAdminStoreRecord[]> => {
+  const params = new URLSearchParams();
+  if (filters?.admin_tier) params.set('admin_tier', filters.admin_tier);
+  if (filters?.status) params.set('status', filters.status);
+  const qs = params.toString() ? `?${params.toString()}` : '';
+  const response = await authFetch(`${API_BASE_URL}/superadmin/stores${qs}`);
+  if (!response.ok) {
+    const err = await response.json().catch(() => ({}));
+    throw new Error(err.message || `Gagal memuat daftar toko (${response.status})`);
+  }
+  const result = await response.json();
+  return (result.data || []) as SuperAdminStoreRecord[];
+};
+
+export const updateSuperAdminStoreStatus = async (
+  id: string,
+  action: 'APPROVE' | 'SUSPEND' | 'REACTIVATE' | 'REJECT',
+  reason?: string
+): Promise<SuperAdminStoreRecord> => {
+  const response = await authFetch(`${API_BASE_URL}/superadmin/stores/${id}/status`, {
+    method: 'PUT',
+    body: JSON.stringify({ action, reason }),
+  });
+  const result = await response.json().catch(() => ({}));
+  if (!response.ok || !result.success) {
+    throw new Error(result.message || `Gagal memperbarui status toko (${response.status})`);
+  }
+  return result.data as SuperAdminStoreRecord;
+};
+
+export interface SumenepVillageOption {
+  id: number;
+  name: string;
+  district_id?: number;
+  district_name?: string;
+  postal_code?: string;
+}
+
+export const fetchSumenepVillages = async (): Promise<SumenepVillageOption[]> => {
+  const response = await authFetch(`${API_BASE_URL}/store/villages`);
+  if (!response.ok) {
+    return [];
+  }
+  const result = await response.json().catch(() => ({}));
+  return (result.villages || []) as SumenepVillageOption[];
+};
+
+export const fetchPlatformFeeLedger = async (): Promise<{
+  summary: { count: number; total_fees: number; total_refunded: number };
+  data: PlatformFeeLedgerEntry[];
+}> => {
+  const response = await authFetch(`${API_BASE_URL}/superadmin/fee-ledger`);
+  if (!response.ok) {
+    const err = await response.json().catch(() => ({}));
+    throw new Error(err.message || `Gagal memuat Platform Fee Ledger (${response.status})`);
+  }
+  const result = await response.json();
+  return {
+    summary: result.summary || { count: 0, total_fees: 0, total_refunded: 0 },
+    data: (result.data || []) as PlatformFeeLedgerEntry[],
+  };
 };

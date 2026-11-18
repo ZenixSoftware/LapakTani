@@ -47,6 +47,11 @@ function formatProductPricing(row) {
     min_wholesale_qty: minWholesaleQty,
     wholesale_price: wholesalePrice,
     store_village_id: row.store_village_id ? Number(row.store_village_id) : 101,
+    processing_state: row.processing_state || 'SIAP_PAKAI',
+    catalog_channel: row.catalog_channel || 'BOTH',
+    fulfillment_options: row.fulfillment_options || 'BOTH',
+    source_farmer_id: row.source_farmer_id || row.farmer_id || null,
+    source_farmer_name: row.source_farmer_name || 'Pak Supardi (Poktan Harapan Sumenep)',
     in_cart_count: Number(row.in_cart_count || 0),
     in_cart_users_count: Number(row.in_cart_users_count || 0),
     in_cart_qty: Number(row.in_cart_qty || 0),
@@ -138,6 +143,7 @@ const getProducts = async (req, res) => {
     const primaryQuery = `
       SELECT 
         p.id, 
+        p.farmer_id,
         p.title, 
         p.price_per_kg, 
         p.price,
@@ -147,6 +153,11 @@ const getProducts = async (req, res) => {
         p.min_wholesale_qty,
         p.wholesale_price,
         p.store_village_id,
+        p.processing_state,
+        p.catalog_channel,
+        p.fulfillment_options,
+        p.source_farmer_id,
+        p.source_farmer_name,
         p.stock_kg, 
         p.image_url, 
         p.unit_id,
@@ -262,6 +273,7 @@ const getFarmerProducts = async (req, res) => {
     const query = `
       SELECT 
         p.id, 
+        p.farmer_id,
         p.title, 
         p.price_per_kg, 
         p.price,
@@ -271,6 +283,11 @@ const getFarmerProducts = async (req, res) => {
         p.min_wholesale_qty,
         p.wholesale_price,
         p.store_village_id,
+        p.processing_state,
+        p.catalog_channel,
+        p.fulfillment_options,
+        p.source_farmer_id,
+        p.source_farmer_name,
         p.stock_kg, 
         p.image_url, 
         p.description,
@@ -347,8 +364,24 @@ const createProduct = async (req, res) => {
       description,
       image_url,
       image_urls,
-      store_village_id
+      store_village_id,
+      processing_state,
+      catalog_channel,
+      fulfillment_options,
+      source_farmer_id,
+      source_farmer_name,
+      source_farmer_phone
     } = req.body;
+
+    const cleanProcessingState = ['MENTAH', 'SIAP_PAKAI'].includes(String(processing_state || '').toUpperCase())
+      ? String(processing_state).toUpperCase()
+      : 'SIAP_PAKAI';
+    const cleanCatalogChannel = ['B2B_BID_LOT', 'RETAIL_CATALOG', 'BOTH'].includes(String(catalog_channel || '').toUpperCase())
+      ? String(catalog_channel).toUpperCase()
+      : 'BOTH';
+    const cleanFulfillmentOpts = ['DELIVERY_ONLY', 'PICKUP_ONLY', 'BOTH'].includes(String(fulfillment_options || '').toUpperCase())
+      ? String(fulfillment_options).toUpperCase()
+      : 'BOTH';
 
     const effectiveRawPrice = price_per_kg !== undefined && price_per_kg !== null ? price_per_kg : price;
 
@@ -444,8 +477,8 @@ const createProduct = async (req, res) => {
 
     await pool.query(
       `INSERT INTO products 
-       (id, farmer_id, commodity_id, grade_id, unit_id, title, description, price_per_kg, stock_kg, price, stock, image_url, discount_percent, discount_price, is_wholesale_enabled, min_wholesale_qty, wholesale_price, store_village_id, created_at)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())`,
+       (id, farmer_id, commodity_id, grade_id, unit_id, title, description, price_per_kg, stock_kg, price, stock, image_url, discount_percent, discount_price, is_wholesale_enabled, min_wholesale_qty, wholesale_price, store_village_id, processing_state, catalog_channel, fulfillment_options, source_farmer_id, source_farmer_name, source_farmer_phone, created_at)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())`,
       [
         productId,
         farmerId,
@@ -464,7 +497,13 @@ const createProduct = async (req, res) => {
         pricing.is_wholesale_enabled,
         pricing.min_wholesale_qty,
         pricing.wholesale_price,
-        villageId
+        villageId,
+        cleanProcessingState,
+        cleanCatalogChannel,
+        cleanFulfillmentOpts,
+        source_farmer_id || farmerId,
+        source_farmer_name || req.user.full_name || 'Mitra Tani Sumenep',
+        source_farmer_phone || '081234567890'
       ]
     );
 
@@ -498,7 +537,10 @@ const createProduct = async (req, res) => {
         image_url: primaryImageUrl,
         image_urls: formattedImageUrls,
         ...pricing,
-        store_village_id: villageId
+        store_village_id: villageId,
+        processing_state: cleanProcessingState,
+        catalog_channel: cleanCatalogChannel,
+        fulfillment_options: cleanFulfillmentOpts
       })
     });
 
@@ -1021,12 +1063,62 @@ const saveSoilTelemetry = async (req, res) => {
   }
 };
 
+const convertRemainderToRetail = async (req, res) => {
+  try {
+    const userId = req.user?.id;
+    const { id } = req.params;
+    const { retail_price_per_kg, discount_percent } = req.body || {};
+
+    const [rows] = await pool.query('SELECT * FROM products WHERE id = ? LIMIT 1', [id]);
+    if (rows.length === 0) {
+      return res.status(404).json({ success: false, message: 'Produk tidak ditemukan.' });
+    }
+    const product = rows[0];
+    const callerRole = String(req.user?.role || '').toLowerCase();
+    if (String(product.farmer_id) !== String(userId) && !['admin', 'superadmin'].includes(callerRole)) {
+      return res.status(403).json({ success: false, message: 'Tidak memiliki izin mengalihkan stok produk ini.' });
+    }
+
+    const updatedPrice =
+      retail_price_per_kg !== undefined && Number(retail_price_per_kg) > 0
+        ? Number(retail_price_per_kg)
+        : Number(product.price_per_kg || product.price || 0);
+    const discPct =
+      discount_percent !== undefined ? Math.max(0, Math.min(90, Number(discount_percent) || 0)) : Number(product.discount_percent || 0);
+    const discPrice = discPct > 0 ? Math.round(updatedPrice * (1 - discPct / 100)) : product.discount_price;
+
+    await pool.query(
+      `UPDATE products
+       SET catalog_channel = 'BOTH',
+           price_per_kg = ?,
+           price = ?,
+           discount_percent = ?,
+           discount_price = ?
+       WHERE id = ?`,
+      [updatedPrice, updatedPrice, discPct, discPrice, id]
+    );
+
+    await redisClient.delCache('lapaktani_catalog');
+    const [reloaded] = await pool.query('SELECT * FROM products WHERE id = ? LIMIT 1', [id]);
+
+    return res.status(200).json({
+      success: true,
+      message: 'Sisa kuota lot B2B berhasil dialihkan ke etalase Retail untuk pembeli rumah tangga!',
+      data: formatProductPricing(reloaded[0]),
+    });
+  } catch (error) {
+    console.error('[PRODUCTS] Error converting B2B remainder to retail:', error.message);
+    return res.status(500).json({ success: false, message: 'Gagal mengalihkan sisa stok ke retail.' });
+  }
+};
+
 module.exports = {
   getProducts,
   getFarmerProducts,
   createProduct,
   deleteProduct,
   updateProduct,
+  convertRemainderToRetail,
   deductStock,
   restoreStock,
   getSoilTelemetry,

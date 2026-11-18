@@ -22,6 +22,13 @@ const DEMO_ACCOUNTS = [
     email: 'dinas@lapaktani.id',
     password: 'dinas123',
   },
+  {
+    key: 'superadmin',
+    label: 'Super Admin',
+    sub: 'Tata Kelola 6-Role, Otoritas & Ledger',
+    email: 'superadmin@lapaktani.id',
+    password: 'superadmin123',
+  },
 ] as const;
 
 export const LoginModal: React.FC<LoginModalProps> = ({
@@ -31,7 +38,7 @@ export const LoginModal: React.FC<LoginModalProps> = ({
 }) => {
   const [email, setEmail] = useState('penyuluh@lapaktani.id');
   const [password, setPassword] = useState('penyuluh123');
-  const [selectedRoleKey, setSelectedRoleKey] = useState<'penyuluh' | 'dinas'>('penyuluh');
+  const [selectedRoleKey, setSelectedRoleKey] = useState<'penyuluh' | 'dinas' | 'superadmin'>('penyuluh');
   const [isLoading, setIsLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
@@ -78,7 +85,7 @@ export const LoginModal: React.FC<LoginModalProps> = ({
                   Portal Web Sumenep
                 </h3>
                 <p className="text-[12px] text-emerald-200">
-                  Penyuluh Pertanian BPP &amp; Dinas Pertanian
+                  Penyuluh BPP, Dinas Pertanian &amp; Super Admin
                 </p>
               </div>
             </div>
@@ -98,9 +105,9 @@ export const LoginModal: React.FC<LoginModalProps> = ({
           {/* Quick Role Switcher */}
           <div>
             <span className="block text-[11px] font-bold text-gray-500 uppercase tracking-wider mb-1.5">
-              Pilih Peran Demo Web Portal
+              Pilih Peran Demo Web Portal (6-Role Governance)
             </span>
-            <div className="grid grid-cols-2 gap-2">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
               {DEMO_ACCOUNTS.map((acc) => {
                 const active = selectedRoleKey === acc.key;
                 return (

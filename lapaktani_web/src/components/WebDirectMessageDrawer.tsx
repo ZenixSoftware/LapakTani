@@ -19,6 +19,7 @@ interface WebDirectMessageDrawerProps {
 }
 
 const ROLE_LABELS: Record<string, string> = {
+  superadmin: 'Super Admin',
   dinas: 'Dinas Pertanian',
   penyuluh: 'Penyuluh BPP',
   admin: 'Admin Toko / Koperasi',
@@ -34,6 +35,8 @@ export const WebDirectMessageDrawer: React.FC<WebDirectMessageDrawerProps> = ({
 }) => {
   const isDinas =
     currentUser?.role?.toLowerCase() === 'dinas' || currentUser?.role_id === 5;
+  const isSuperAdmin =
+    currentUser?.role?.toLowerCase() === 'superadmin' || currentUser?.role_id === 6;
 
   const [conversations, setConversations] = useState<WebChatConversation[]>([]);
   const [contacts, setContacts] = useState<WebChatParticipant[]>([]);
@@ -104,11 +107,14 @@ export const WebDirectMessageDrawer: React.FC<WebDirectMessageDrawerProps> = ({
   }, [isOpen, activeConv, loadMessages]);
 
   const roleFilteredContacts = useMemo(() => {
-    if (isDinas) {
-      return contacts.filter((c) => c.role === 'penyuluh' || c.role_id === 2);
+    if (isSuperAdmin) {
+      return contacts;
     }
-    return contacts.filter((c) => ['dinas', 'penyuluh', 'petani', 'admin'].includes(c.role));
-  }, [contacts, isDinas]);
+    if (isDinas) {
+      return contacts.filter((c) => ['penyuluh', 'superadmin'].includes(c.role) || c.role_id === 2 || c.role_id === 6);
+    }
+    return contacts.filter((c) => ['dinas', 'penyuluh', 'petani', 'admin', 'superadmin'].includes(c.role));
+  }, [contacts, isDinas, isSuperAdmin]);
 
   const handleOpenContact = async (payload: {
     target_user_id?: string;
@@ -159,12 +165,14 @@ export const WebDirectMessageDrawer: React.FC<WebDirectMessageDrawerProps> = ({
             </div>
             <div>
               <h2 className="text-[15px] font-extrabold leading-tight">
-                Pesan Langsung (DM) 5-Role Terpadu
+                Pesan Langsung (DM) 6-Role Terpadu
               </h2>
               <p className="text-[11px] text-emerald-100/90">
-                {isDinas
-                  ? 'Koordinasi langsung Dinas Pertanian ↔ Penyuluh BPP Kab. Sumenep'
-                  : 'Koordinasi langsung Penyuluh ↔ Dinas Pertanian, Petani Desa, & Admin Toko'}
+                {isSuperAdmin
+                  ? 'Komando langsung Super Admin ↔ Dinas Pertanian, Penyuluh BPP, & Admin Toko'
+                  : isDinas
+                    ? 'Koordinasi langsung Dinas Pertanian ↔ Penyuluh BPP Kab. Sumenep & Super Admin'
+                    : 'Koordinasi langsung Penyuluh ↔ Dinas Pertanian, Petani Desa, & Admin Toko'}
               </p>
             </div>
           </div>
@@ -194,7 +202,49 @@ export const WebDirectMessageDrawer: React.FC<WebDirectMessageDrawerProps> = ({
             Akses Cepat Kontak Koordinasi
           </div>
           <div className="flex flex-wrap gap-2">
-            {isDinas ? (
+            {isSuperAdmin ? (
+              <>
+                <button
+                  type="button"
+                  onClick={() =>
+                    void handleOpenContact({
+                      target_role: 'dinas',
+                      title: 'Tata Kelola Super Admin ↔ Dinas Pertanian',
+                    })
+                  }
+                  className="px-3 py-1.5 rounded-xl bg-[#F59E0B] text-white text-[11.5px] font-bold flex items-center gap-1.5 hover:bg-amber-600"
+                >
+                  <span className="material-symbols-outlined text-[15px]">account_balance</span>
+                  DM Dinas Pertanian
+                </button>
+                <button
+                  type="button"
+                  onClick={() =>
+                    void handleOpenContact({
+                      target_role: 'penyuluh',
+                      title: 'Koordinasi Super Admin ↔ Penyuluh BPP',
+                    })
+                  }
+                  className="px-3 py-1.5 rounded-xl bg-[#166534] text-white text-[11.5px] font-bold flex items-center gap-1.5 hover:bg-[#0D5136]"
+                >
+                  <span className="material-symbols-outlined text-[15px]">agriculture</span>
+                  DM Penyuluh BPP
+                </button>
+                <button
+                  type="button"
+                  onClick={() =>
+                    void handleOpenContact({
+                      target_role: 'admin',
+                      title: 'Audit Super Admin ↔ Admin Toko',
+                    })
+                  }
+                  className="px-3 py-1.5 rounded-xl bg-white border border-[#E2E8F0] text-gray-800 text-[11.5px] font-bold flex items-center gap-1.5 hover:border-[#166534]"
+                >
+                  <span className="material-symbols-outlined text-[15px]">storefront</span>
+                  DM Admin Toko
+                </button>
+              </>
+            ) : isDinas ? (
               <button
                 type="button"
                 onClick={() =>
