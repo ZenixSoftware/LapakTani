@@ -67,7 +67,7 @@ class PenyuluhOfficialBadge extends StatelessWidget {
                             style: GoogleFonts.inter(
                               fontSize: 15,
                               fontWeight: FontWeight.w700,
-                              color: const Color(0xFF0F172A),
+                              color: AppColors.neutral,
                             ),
                           ),
                           const SizedBox(height: 2),
@@ -162,7 +162,7 @@ class PenyuluhOfficialBadge extends StatelessWidget {
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Icon(icon, size: 15, color: const Color(0xFF64748B)),
+        Icon(icon, size: 15, color: AppColors.neutralMuted),
         const SizedBox(width: 8),
         SizedBox(
           width: 80,
@@ -171,7 +171,7 @@ class PenyuluhOfficialBadge extends StatelessWidget {
             style: GoogleFonts.inter(
               fontSize: 11.5,
               fontWeight: FontWeight.w500,
-              color: const Color(0xFF64748B),
+              color: AppColors.neutralMuted,
             ),
           ),
         ),
@@ -181,7 +181,7 @@ class PenyuluhOfficialBadge extends StatelessWidget {
             style: GoogleFonts.inter(
               fontSize: 11.5,
               fontWeight: FontWeight.w600,
-              color: const Color(0xFF0F172A),
+              color: AppColors.neutral,
             ),
           ),
         ),

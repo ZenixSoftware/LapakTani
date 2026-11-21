@@ -16,7 +16,8 @@ import '../../core/services/api_service.dart';
 import '../../core/theme/app_colors.dart';
 import '../cart/cart_screen.dart';
 import '../order/checkout_screen.dart';
-import 'services/stock_service.dart';
+import 'services/stock_service.dart';
+
 import 'widgets/soil_telemetry_card.dart';
 
 class ProductDetailScreen extends StatefulWidget {
@@ -173,7 +174,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
             'Komoditas tidak valid atau belum terdaftar di sistem.',
             style: GoogleFonts.inter(fontSize: 12),
           ),
-          backgroundColor: const Color(0xFFEF4444),
+          backgroundColor: AppColors.error,
           behavior: SnackBarBehavior.floating,
         ),
       );
@@ -186,7 +187,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
             'Maaf, stok komoditas ini telah habis.',
             style: GoogleFonts.inter(fontSize: 12),
           ),
-          backgroundColor: const Color(0xFFEF4444),
+          backgroundColor: AppColors.error,
           behavior: SnackBarBehavior.floating,
         ),
       );
@@ -202,7 +203,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
             'Silakan login terlebih dahulu untuk menambahkan barang ke keranjang.',
             style: GoogleFonts.inter(fontSize: 12),
           ),
-          backgroundColor: const Color(0xFFEF4444),
+          backgroundColor: AppColors.error,
           behavior: SnackBarBehavior.floating,
           action: SnackBarAction(
             label: 'LOGIN',
@@ -245,7 +246,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
               'Gagal menambahkan komoditas ke keranjang.',
               style: GoogleFonts.inter(fontSize: 12),
             ),
-            backgroundColor: const Color(0xFFEF4444),
+            backgroundColor: AppColors.error,
             behavior: SnackBarBehavior.floating,
           ),
         );
@@ -258,7 +259,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
             'Silakan login terlebih dahulu untuk menambahkan barang ke keranjang.',
             style: GoogleFonts.inter(fontSize: 12),
           ),
-          backgroundColor: const Color(0xFFEF4444),
+          backgroundColor: AppColors.error,
           behavior: SnackBarBehavior.floating,
           action: SnackBarAction(
             label: 'LOGIN',
@@ -280,7 +281,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
             'Maaf, komoditas ini sedang habis stok dan tidak dapat dipesan.',
             style: GoogleFonts.inter(fontSize: 12),
           ),
-          backgroundColor: const Color(0xFFEF4444),
+          backgroundColor: AppColors.error,
           behavior: SnackBarBehavior.floating,
         ),
       );
@@ -308,7 +309,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                       style: GoogleFonts.inter(
                         fontSize: 16,
                         fontWeight: FontWeight.w700,
-                        color: const Color(0xFF0F172A),
+                        color: AppColors.neutral,
                       ),
                     ),
                     IconButton(
@@ -325,7 +326,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                       child: Container(
                         width: 64,
                         height: 64,
-                        color: const Color(0xFFF1F5F9),
+                        color: AppColors.surfaceCanvas,
                         child: _buildNetworkImage(_data['image_url'] ?? _data['imageUrl'] ?? ''),
                       ),
                     ),
@@ -341,7 +342,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                             style: GoogleFonts.inter(
                               fontSize: 13,
                               fontWeight: FontWeight.w600,
-                              color: const Color(0xFF0F172A),
+                              color: AppColors.neutral,
                             ),
                           ),
                           const SizedBox(height: 4),
@@ -352,7 +353,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                               fontWeight: FontWeight.w800,
                               color: _isPartaiActive
                                   ? AppColors.primary
-                                  : const Color(0xFFE11D48),
+                                  : AppColors.error,
                             ),
                           ),
                         ],
@@ -420,8 +421,8 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
   Widget _buildNetworkImage(String url) {
     if (url.isEmpty) {
       return Container(
-        color: const Color(0xFFE2E8F0),
-        child: const Icon(LucideIcons.image, size: 28, color: Color(0xFF94A3B8)),
+        color: AppColors.border,
+        child: const Icon(LucideIcons.image, size: 28, color: AppColors.neutralSubtle),
       );
     }
     final resolvedUrl = url.startsWith('http')
@@ -432,8 +433,8 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
       resolvedUrl,
       fit: BoxFit.cover,
       errorBuilder: (context, error, stackTrace) => Container(
-        color: const Color(0xFFE2E8F0),
-        child: const Icon(LucideIcons.image, size: 28, color: Color(0xFF94A3B8)),
+        color: AppColors.border,
+        child: const Icon(LucideIcons.image, size: 28, color: AppColors.neutralSubtle),
       ),
     );
   }
@@ -517,7 +518,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
         color: Colors.white,
         border: Border(
           bottom: BorderSide(
-            color: Color(0xFFF1F5F9),
+            color: AppColors.surfaceCanvas,
             width: 1,
           ),
         ),
@@ -538,7 +539,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                   child: const Icon(
                     LucideIcons.arrowLeft,
                     size: 20,
-                    color: Color(0xFF1E293B),
+                    color: AppColors.neutral,
                   ),
                 ),
               ),
@@ -548,7 +549,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                   height: 36,
                   padding: const EdgeInsets.symmetric(horizontal: 10),
                   decoration: BoxDecoration(
-                    color: const Color(0xFFF1F5F9),
+                    color: AppColors.surfaceCanvas,
                     borderRadius: BorderRadius.circular(8),
                   ),
                   child: Row(
@@ -556,7 +557,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                       const Icon(
                         LucideIcons.search,
                         size: 15,
-                        color: Color(0xFF64748B),
+                        color: AppColors.neutralMuted,
                       ),
                       const SizedBox(width: 8),
                       Expanded(
@@ -565,7 +566,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                           overflow: TextOverflow.ellipsis,
                           style: GoogleFonts.inter(
                             fontSize: 12,
-                            color: const Color(0xFF64748B),
+                            color: AppColors.neutralMuted,
                           ),
                         ),
                       ),
@@ -635,7 +636,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
             Icon(
               icon,
               size: 20,
-              color: const Color(0xFF334155),
+              color: AppColors.neutral,
             ),
             if (badgeText != null)
               Positioned(
@@ -644,7 +645,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                 child: Container(
                   padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
                   decoration: BoxDecoration(
-                    color: const Color(0xFFEF4444),
+                    color: AppColors.error,
                     borderRadius: BorderRadius.circular(10),
                     border: Border.all(color: Colors.white, width: 1.2),
                   ),
@@ -716,7 +717,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                     width: 7,
                     height: 7,
                     decoration: const BoxDecoration(
-                      color: Color(0xFF34D399),
+                      color: AppColors.primary,
                       shape: BoxShape.circle,
                     ),
                   ),
@@ -837,44 +838,42 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.baseline,
-            textBaseline: TextBaseline.alphabetic,
+          Wrap(
+            spacing: 6,
+            runSpacing: 4,
+            crossAxisAlignment: WrapCrossAlignment.center,
             children: [
               Text(
                 priceStr,
                 style: GoogleFonts.inter(
                   fontSize: 22,
                   fontWeight: FontWeight.w900,
-                  color: const Color(0xFFE11D48),
+                  color: AppColors.error,
                 ),
               ),
-              const SizedBox(width: 4),
               Text(
                 unit,
                 style: GoogleFonts.inter(
                   fontSize: 12,
                   fontWeight: FontWeight.w600,
-                  color: const Color(0xFF64748B),
+                  color: AppColors.neutralMuted,
                 ),
               ),
               if (strikethroughPriceStr.isNotEmpty) ...[
-                const SizedBox(width: 8),
                 Text(
                   strikethroughPriceStr,
                   style: GoogleFonts.inter(
                     fontSize: 12,
                     decoration: TextDecoration.lineThrough,
-                    color: const Color(0xFF94A3B8),
+                    color: AppColors.neutralSubtle,
                   ),
                 ),
-                const SizedBox(width: 6),
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1.5),
                   decoration: BoxDecoration(
                     color: _isPartaiActive
                         ? AppColors.surfaceMint
-                        : const Color(0xFFFFE4E6),
+                        : AppColors.errorTint,
                     borderRadius: BorderRadius.circular(4),
                   ),
                   child: Text(
@@ -886,7 +885,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                       fontWeight: FontWeight.w800,
                       color: _isPartaiActive
                           ? AppColors.primary
-                          : const Color(0xFFE11D48),
+                          : AppColors.error,
                     ),
                   ),
                 ),
@@ -966,10 +965,15 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                 constraints: const BoxConstraints(),
                 padding: EdgeInsets.zero,
               ),
-              const Spacer(),
-              Wrap(
-                spacing: 6,
-                children: [
+              const SizedBox(width: 8),
+              Expanded(
+                child: Align(
+                  alignment: Alignment.centerRight,
+                  child: Wrap(
+                    spacing: 6,
+                    runSpacing: 4,
+                    alignment: WrapAlignment.end,
+                    children: [
                   ActionChip(
                     label: Text('1kg', style: GoogleFonts.inter(fontSize: 10)),
                     onPressed: () => _setQty(1),
@@ -989,7 +993,9 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                       onPressed: () => _setQty(_minWholesaleQty),
                       visualDensity: VisualDensity.compact,
                     ),
-                ],
+                    ],
+                  ),
+                ),
               ),
             ],
           ),
@@ -1009,12 +1015,12 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
           const SizedBox(height: 10),
           _buildInfoRow(
             icon: LucideIcons.coins,
-            iconColor: const Color(0xFFD97706),
+            iconColor: AppColors.tertiaryText,
             text: 'Lebih hemat s.d. 3% pakai Koin LapakTani di checkout',
           ),
           _buildInfoRow(
             icon: LucideIcons.creditCard,
-            iconColor: const Color(0xFF475569),
+            iconColor: AppColors.neutralMuted,
             text: 'Bayar di Tempat (COD) / LapakPayLater',
           ),
           const SizedBox(height: 10),
@@ -1061,16 +1067,16 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                               padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
                               decoration: BoxDecoration(
                                 color: isOut
-                                    ? const Color(0xFFFEE2E2)
+                                    ? AppColors.errorTint
                                     : isLow
-                                        ? const Color(0xFFFEF3C7)
-                                        : const Color(0xFFDCFCE7),
+                                        ? AppColors.tertiaryTint
+                                        : AppColors.primaryTint,
                                 borderRadius: BorderRadius.circular(4),
                                 border: Border.all(
                                   color: isOut
-                                      ? const Color(0xFFEF4444)
+                                      ? AppColors.error
                                       : isLow
-                                          ? const Color(0xFFF59E0B)
+                                          ? AppColors.tertiary
                                           : AppColors.primary,
                                   width: 0.8,
                                 ),
@@ -1086,10 +1092,10 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                                             : LucideIcons.packageCheck,
                                     size: 11,
                                     color: isOut
-                                        ? const Color(0xFFEF4444)
+                                        ? AppColors.error
                                         : isLow
-                                            ? const Color(0xFFB45309)
-                                            : const Color(0xFF006E04),
+                                            ? AppColors.tertiaryText
+                                            : AppColors.primary,
                                   ),
                                   const SizedBox(width: 4),
                                   Text(
@@ -1102,10 +1108,10 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                                       fontSize: 9.5,
                                       fontWeight: FontWeight.w700,
                                       color: isOut
-                                          ? const Color(0xFFEF4444)
+                                          ? AppColors.error
                                           : isLow
-                                              ? const Color(0xFFB45309)
-                                              : const Color(0xFF006E04),
+                                              ? AppColors.tertiaryText
+                                              : AppColors.primary,
                                     ),
                                   ),
                                 ],
@@ -1116,32 +1122,32 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                         Container(
                           padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                           decoration: BoxDecoration(
-                            color: const Color(0xFFEFF4FF),
+                            color: AppColors.surfaceCanvas,
                             borderRadius: BorderRadius.circular(4),
-                            border: Border.all(color: const Color(0xFFBFDBFE)),
+                            border: Border.all(color: AppColors.secondaryBorder),
                           ),
                           child: Text(
                             'Grade: $grade',
                             style: GoogleFonts.inter(
                               fontSize: 9.0,
                               fontWeight: FontWeight.w700,
-                              color: const Color(0xFF1D4ED8),
+                              color: AppColors.secondaryDark,
                             ),
                           ),
                         ),
                         Container(
                           padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                           decoration: BoxDecoration(
-                            color: const Color(0xFFECFDF5),
+                            color: AppColors.primaryTint,
                             borderRadius: BorderRadius.circular(4),
-                            border: Border.all(color: const Color(0xFFA7F3D0)),
+                            border: Border.all(color: AppColors.primaryBorder),
                           ),
                           child: Text(
                             'Asal: $poktan',
                             style: GoogleFonts.inter(
                               fontSize: 9.0,
                               fontWeight: FontWeight.w700,
-                              color: const Color(0xFF047857),
+                              color: AppColors.primaryDark,
                             ),
                           ),
                         ),
@@ -1153,7 +1159,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                       style: GoogleFonts.inter(
                         fontSize: 14.5,
                         fontWeight: FontWeight.w700,
-                        color: const Color(0xFF0F172A),
+                        color: AppColors.neutral,
                         height: 1.3,
                       ),
                     ),
@@ -1162,7 +1168,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                       'Varian: 1 Kg Standar',
                       style: GoogleFonts.inter(
                         fontSize: 11.5,
-                        color: const Color(0xFF64748B),
+                        color: AppColors.neutralMuted,
                       ),
                     ),
                   ],
@@ -1191,52 +1197,49 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                   child: Icon(
                     LucideIcons.heart,
                     size: 22,
-                    color: _isWishlisted ? const Color(0xFFEF4444) : const Color(0xFF94A3B8),
+                    color: _isWishlisted ? AppColors.error : AppColors.neutralSubtle,
                   ),
                 ),
               ),
             ],
           ),
           const SizedBox(height: 8),
-          Row(
+          Wrap(
+            spacing: 5,
+            runSpacing: 4,
+            crossAxisAlignment: WrapCrossAlignment.center,
             children: [
-              const Icon(LucideIcons.star, size: 13, color: Color(0xFFF59E0B)),
-              const SizedBox(width: 3),
+              const Icon(LucideIcons.star, size: 13, color: AppColors.tertiary),
               Text(
                 '4.9',
                 style: GoogleFonts.inter(
                   fontSize: 11.5,
                   fontWeight: FontWeight.w700,
-                  color: const Color(0xFF0F172A),
+                  color: AppColors.neutral,
                 ),
               ),
-              const SizedBox(width: 4),
               Text(
                 '(42)',
                 style: GoogleFonts.inter(
                   fontSize: 11,
-                  color: const Color(0xFF64748B),
+                  color: AppColors.neutralMuted,
                 ),
               ),
-              const SizedBox(width: 6),
-              const Text('•', style: TextStyle(color: Color(0xFFCBD5E1))),
-              const SizedBox(width: 6),
+              const Text('•', style: TextStyle(color: AppColors.neutralBorder)),
               Text(
                 '26 foto ulasan',
                 style: GoogleFonts.inter(
                   fontSize: 11,
-                  color: const Color(0xFF64748B),
+                  color: AppColors.neutralMuted,
                 ),
               ),
-              const SizedBox(width: 6),
-              const Text('•', style: TextStyle(color: Color(0xFFCBD5E1))),
-              const SizedBox(width: 6),
+              const Text('•', style: TextStyle(color: AppColors.neutralBorder)),
               Text(
                 '350+ terjual',
                 style: GoogleFonts.inter(
                   fontSize: 11,
                   fontWeight: FontWeight.w600,
-                  color: const Color(0xFF0F172A),
+                  color: AppColors.neutral,
                 ),
               ),
             ],
@@ -1246,7 +1249,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
             padding: const EdgeInsets.symmetric(vertical: 8),
             decoration: const BoxDecoration(
               border: Border(
-                top: BorderSide(color: Color(0xFFF1F5F9)),
+                top: BorderSide(color: AppColors.surfaceCanvas),
               ),
             ),
             child: Row(
@@ -1258,7 +1261,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                     text: TextSpan(
                       style: GoogleFonts.inter(
                         fontSize: 11.5,
-                        color: const Color(0xFF1E293B),
+                        color: AppColors.neutral,
                       ),
                       children: const [
                         TextSpan(
@@ -1267,13 +1270,13 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                         ),
                         TextSpan(
                           text: '(Tiba 1-2 Jam Kirim Instan)',
-                          style: TextStyle(color: Color(0xFF64748B)),
+                          style: TextStyle(color: AppColors.neutralMuted),
                         ),
                       ],
                     ),
                   ),
                 ),
-                const Icon(LucideIcons.chevronRight, size: 15, color: Color(0xFF94A3B8)),
+                const Icon(LucideIcons.chevronRight, size: 15, color: AppColors.neutralSubtle),
               ],
             ),
           ),
@@ -1281,7 +1284,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
             padding: const EdgeInsets.symmetric(vertical: 8),
             decoration: const BoxDecoration(
               border: Border(
-                top: BorderSide(color: Color(0xFFF1F5F9)),
+                top: BorderSide(color: AppColors.surfaceCanvas),
               ),
             ),
             child: Row(
@@ -1302,11 +1305,11 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                     overflow: TextOverflow.ellipsis,
                     style: GoogleFonts.inter(
                       fontSize: 11,
-                      color: const Color(0xFF334155),
+                      color: AppColors.neutral,
                     ),
                   ),
                 ),
-                const Icon(LucideIcons.chevronRight, size: 15, color: Color(0xFF94A3B8)),
+                const Icon(LucideIcons.chevronRight, size: 15, color: AppColors.neutralSubtle),
               ],
             ),
           ),
@@ -1319,16 +1322,16 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
       decoration: BoxDecoration(
-        color: const Color(0xFFFFE4E6),
+        color: AppColors.errorTint,
         borderRadius: BorderRadius.circular(5),
-        border: Border.all(color: const Color(0xFFFECDD3)),
+        border: Border.all(color: AppColors.errorBorder),
       ),
       child: Text(
         label,
         style: GoogleFonts.inter(
           fontSize: 10,
           fontWeight: FontWeight.w600,
-          color: const Color(0xFFE11D48),
+          color: AppColors.error,
         ),
       ),
     );
@@ -1350,11 +1353,11 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
               text,
               style: GoogleFonts.inter(
                 fontSize: 11,
-                color: const Color(0xFF334155),
+                color: AppColors.neutral,
               ),
             ),
           ),
-          const Icon(LucideIcons.chevronRight, size: 14, color: Color(0xFF94A3B8)),
+          const Icon(LucideIcons.chevronRight, size: 14, color: AppColors.neutralSubtle),
         ],
       ),
     );
@@ -1363,7 +1366,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
   Widget _buildSectionDivider() {
     return Container(
       height: 8,
-      color: const Color(0xFFF1F5F9),
+      color: AppColors.surfaceCanvas,
     );
   }
 
@@ -1381,7 +1384,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                 style: GoogleFonts.inter(
                   fontSize: 13.5,
                   fontWeight: FontWeight.w700,
-                  color: const Color(0xFF0F172A),
+                  color: AppColors.neutral,
                 ),
               ),
               InkWell(
@@ -1408,14 +1411,14 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
           const SizedBox(height: 6),
           Row(
             children: [
-              const Icon(LucideIcons.star, size: 13, color: Color(0xFFF59E0B)),
+              const Icon(LucideIcons.star, size: 13, color: AppColors.tertiary),
               const SizedBox(width: 3),
               Text(
                 '4.9',
                 style: GoogleFonts.inter(
                   fontSize: 12,
                   fontWeight: FontWeight.w700,
-                  color: const Color(0xFF0F172A),
+                  color: AppColors.neutral,
                 ),
               ),
               const SizedBox(width: 6),
@@ -1423,7 +1426,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                 'Dari 42 rating • 22 ulasan',
                 style: GoogleFonts.inter(
                   fontSize: 11,
-                  color: const Color(0xFF64748B),
+                  color: AppColors.neutralMuted,
                 ),
               ),
             ],
@@ -1469,9 +1472,9 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                 height: 32,
                 decoration: const BoxDecoration(
                   shape: BoxShape.circle,
-                  color: Color(0xFFE2E8F0),
+                  color: AppColors.border,
                 ),
-                child: const Icon(LucideIcons.user, size: 16, color: Color(0xFF64748B)),
+                child: const Icon(LucideIcons.user, size: 16, color: AppColors.neutralMuted),
               ),
               const SizedBox(width: 8),
               Expanded(
@@ -1483,14 +1486,14 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                       style: GoogleFonts.inter(
                         fontSize: 11.5,
                         fontWeight: FontWeight.w700,
-                        color: const Color(0xFF1E293B),
+                        color: AppColors.neutral,
                       ),
                     ),
                     Text(
                       '302 ulasan lengkap • 282 terbantu',
                       style: GoogleFonts.inter(
                         fontSize: 9.5,
-                        color: const Color(0xFF94A3B8),
+                        color: AppColors.neutralSubtle,
                       ),
                     ),
                   ],
@@ -1502,13 +1505,13 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
           Row(
             children: [
               for (int i = 0; i < 5; i++)
-                const Icon(LucideIcons.star, size: 11, color: Color(0xFFF59E0B)),
+                const Icon(LucideIcons.star, size: 11, color: AppColors.tertiary),
               const SizedBox(width: 6),
               Text(
                 '1 minggu lalu',
                 style: GoogleFonts.inter(
                   fontSize: 10,
-                  color: const Color(0xFF94A3B8),
+                  color: AppColors.neutralSubtle,
                 ),
               ),
             ],
@@ -1518,7 +1521,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
             'Paket sudah diterima sesuai pesanan dalam keadaan baik. Tomat beneran segar banget langsung petik subuh, masih ada embun dan packing daun pisang kokoh. Recommended seller!',
             style: GoogleFonts.inter(
               fontSize: 11.5,
-              color: const Color(0xFF334155),
+              color: AppColors.neutral,
               height: 1.35,
             ),
           ),
@@ -1531,10 +1534,10 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
       decoration: BoxDecoration(
-        color: isSelected ? const Color(0xFFECFDF5) : const Color(0xFFF1F5F9),
+        color: isSelected ? AppColors.primaryTint : AppColors.surfaceCanvas,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
-          color: isSelected ? const Color(0xFFA7F3D0) : const Color(0xFFE2E8F0),
+          color: isSelected ? AppColors.primaryBorder : AppColors.border,
         ),
       ),
       child: Text(
@@ -1542,7 +1545,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
         style: GoogleFonts.inter(
           fontSize: 10.5,
           fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
-          color: isSelected ? const Color(0xFF065F46) : const Color(0xFF475569),
+          color: isSelected ? AppColors.primaryDark : AppColors.neutralMuted,
         ),
       ),
     );
@@ -1560,7 +1563,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                 height: 44,
                 decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(8),
-                  border: Border.all(color: const Color(0xFFE2E8F0)),
+                  border: Border.all(color: AppColors.border),
                   color: Colors.white,
                 ),
                 child: const Icon(
@@ -1599,7 +1602,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                             style: GoogleFonts.inter(
                               fontSize: 12,
                               fontWeight: FontWeight.w700,
-                              color: const Color(0xFF0F172A),
+                              color: AppColors.neutral,
                             ),
                           ),
                         ),
@@ -1610,7 +1613,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                       location,
                       style: GoogleFonts.inter(
                         fontSize: 10.5,
-                        color: const Color(0xFF64748B),
+                        color: AppColors.neutralMuted,
                       ),
                     ),
                   ],
@@ -1655,14 +1658,14 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
           const SizedBox(height: 8),
           Row(
             children: [
-              const Icon(LucideIcons.star, size: 12, color: Color(0xFFF59E0B)),
+              const Icon(LucideIcons.star, size: 12, color: AppColors.tertiary),
               const SizedBox(width: 3),
               Text(
                 '5.0',
                 style: GoogleFonts.inter(
                   fontSize: 10.5,
                   fontWeight: FontWeight.w700,
-                  color: const Color(0xFF0F172A),
+                  color: AppColors.neutral,
                 ),
               ),
               const SizedBox(width: 4),
@@ -1670,17 +1673,17 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                 '(4.2 rb)',
                 style: GoogleFonts.inter(
                   fontSize: 10.5,
-                  color: const Color(0xFF64748B),
+                  color: AppColors.neutralMuted,
                 ),
               ),
               const SizedBox(width: 14),
-              const Icon(LucideIcons.package, size: 12, color: Color(0xFF94A3B8)),
+              const Icon(LucideIcons.package, size: 12, color: AppColors.neutralSubtle),
               const SizedBox(width: 4),
               Text(
                 '48 total barang',
                 style: GoogleFonts.inter(
                   fontSize: 10.5,
-                  color: const Color(0xFF64748B),
+                  color: AppColors.neutralMuted,
                 ),
               ),
             ],
@@ -1707,7 +1710,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
             style: GoogleFonts.inter(
               fontSize: 13.5,
               fontWeight: FontWeight.w700,
-              color: const Color(0xFF0F172A),
+              color: AppColors.neutral,
             ),
           ),
           const SizedBox(height: 6),
@@ -1722,7 +1725,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
             style: GoogleFonts.inter(
               fontSize: 13.5,
               fontWeight: FontWeight.w700,
-              color: const Color(0xFF0F172A),
+              color: AppColors.neutral,
             ),
           ),
           const SizedBox(height: 4),
@@ -1732,7 +1735,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
             overflow: _isDescriptionExpanded ? TextOverflow.visible : TextOverflow.ellipsis,
             style: GoogleFonts.inter(
               fontSize: 11.5,
-              color: const Color(0xFF334155),
+              color: AppColors.neutral,
               height: 1.4,
             ),
           ),
@@ -1757,7 +1760,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
             padding: const EdgeInsets.symmetric(vertical: 8),
             decoration: const BoxDecoration(
               border: Border(
-                top: BorderSide(color: Color(0xFFF1F5F9)),
+                top: BorderSide(color: AppColors.surfaceCanvas),
               ),
             ),
             child: Row(
@@ -1769,7 +1772,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                     text: TextSpan(
                       style: GoogleFonts.inter(
                         fontSize: 11,
-                        color: const Color(0xFF334155),
+                        color: AppColors.neutral,
                       ),
                       children: const [
                         TextSpan(text: 'Tambah Proteksi Kesegaran mulai '),
@@ -1781,19 +1784,19 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                     ),
                   ),
                 ),
-                const Icon(LucideIcons.chevronRight, size: 14, color: Color(0xFF94A3B8)),
+                const Icon(LucideIcons.chevronRight, size: 14, color: AppColors.neutralSubtle),
               ],
             ),
           ),
           Row(
             children: [
-              const Icon(LucideIcons.alertTriangle, size: 13, color: Color(0xFF94A3B8)),
+              const Icon(LucideIcons.alertTriangle, size: 13, color: AppColors.neutralSubtle),
               const SizedBox(width: 6),
               Text(
                 'Produk bermasalah? ',
                 style: GoogleFonts.inter(
                   fontSize: 10.5,
-                  color: const Color(0xFF94A3B8),
+                  color: AppColors.neutralSubtle,
                 ),
               ),
               InkWell(
@@ -1827,7 +1830,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
       padding: const EdgeInsets.symmetric(vertical: 6),
       decoration: const BoxDecoration(
         border: Border(
-          bottom: BorderSide(color: Color(0xFFF1F5F9)),
+          bottom: BorderSide(color: AppColors.surfaceCanvas),
         ),
       ),
       child: Row(
@@ -1837,7 +1840,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
             label,
             style: GoogleFonts.inter(
               fontSize: 11.5,
-              color: const Color(0xFF64748B),
+              color: AppColors.neutralMuted,
             ),
           ),
           Text(
@@ -1845,7 +1848,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
             style: GoogleFonts.inter(
               fontSize: 11.5,
               fontWeight: isGreen ? FontWeight.w700 : FontWeight.w600,
-              color: isGreen ? AppColors.primary : const Color(0xFF0F172A),
+              color: isGreen ? AppColors.primary : AppColors.neutral,
             ),
           ),
         ],
@@ -1888,7 +1891,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                 style: GoogleFonts.inter(
                   fontSize: 13.5,
                   fontWeight: FontWeight.w700,
-                  color: const Color(0xFF0F172A),
+                  color: AppColors.neutral,
                 ),
               ),
               InkWell(
@@ -1924,10 +1927,10 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                   decoration: BoxDecoration(
                     color: Colors.white,
                     borderRadius: BorderRadius.circular(10),
-                    border: Border.all(color: const Color(0xFFF1F5F9)),
+                    border: Border.all(color: AppColors.surfaceCanvas),
                     boxShadow: const [
                       BoxShadow(
-                        color: Color(0x0A000000),
+                        color: AppColors.shadowFaint,
                         blurRadius: 3,
                         offset: Offset(0, 1),
                       ),
@@ -1951,7 +1954,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                                 child: Container(
                                   padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
                                   decoration: BoxDecoration(
-                                    color: const Color(0xFFEF4444),
+                                    color: AppColors.error,
                                     borderRadius: BorderRadius.circular(3),
                                   ),
                                   child: Text(
@@ -1976,7 +1979,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                         style: GoogleFonts.inter(
                           fontSize: 11,
                           fontWeight: FontWeight.w600,
-                          color: const Color(0xFF0F172A),
+                          color: AppColors.neutral,
                         ),
                       ),
                       const SizedBox(height: 2),
@@ -1985,25 +1988,34 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                         style: GoogleFonts.inter(
                           fontSize: 12,
                           fontWeight: FontWeight.w800,
-                          color: const Color(0xFFE11D48),
+                          color: AppColors.error,
                         ),
                       ),
                       Row(
                         children: [
-                          Text(
-                            item['strikethrough']!,
-                            style: GoogleFonts.inter(
-                              fontSize: 8.5,
-                              decoration: TextDecoration.lineThrough,
-                              color: const Color(0xFF94A3B8),
+                          Flexible(
+                            child: Text(
+                              item['strikethrough']!,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: GoogleFonts.inter(
+                                fontSize: 8.5,
+                                decoration: TextDecoration.lineThrough,
+                                color: AppColors.neutralSubtle,
+                              ),
                             ),
                           ),
-                          const Spacer(),
-                          Text(
-                            item['sold']!,
-                            style: GoogleFonts.inter(
-                              fontSize: 8.5,
-                              color: const Color(0xFF64748B),
+                          const SizedBox(width: 4),
+                          Flexible(
+                            child: Text(
+                              item['sold']!,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              textAlign: TextAlign.right,
+                              style: GoogleFonts.inter(
+                                fontSize: 8.5,
+                                color: AppColors.neutralMuted,
+                              ),
                             ),
                           ),
                         ],
@@ -2025,13 +2037,13 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
         color: Colors.white,
         border: Border(
           top: BorderSide(
-            color: Color(0xFFE2E8F0),
+            color: AppColors.border,
             width: 1,
           ),
         ),
         boxShadow: [
           BoxShadow(
-            color: Color(0x0D000000),
+            color: AppColors.shadowFaint,
             blurRadius: 8,
             offset: Offset(0, -2),
           ),
@@ -2058,12 +2070,12 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                 height: 44,
                 decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(10),
-                  border: Border.all(color: const Color(0xFFCBD5E1)),
+                  border: Border.all(color: AppColors.neutralBorder),
                 ),
                 child: const Icon(
                   LucideIcons.messageSquare,
                   size: 20,
-                  color: Color(0xFF475569),
+                  color: AppColors.neutralMuted,
                 ),
               ),
             ),
@@ -2081,16 +2093,16 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                       child: Container(
                         alignment: Alignment.center,
                         decoration: BoxDecoration(
-                          color: const Color(0xFFF1F5F9),
+                          color: AppColors.surfaceCanvas,
                           borderRadius: BorderRadius.circular(10),
-                          border: Border.all(color: const Color(0xFFCBD5E1)),
+                          border: Border.all(color: AppColors.neutralBorder),
                         ),
                         child: Text(
                           'Stok Habis (Menunggu Panen)',
                           style: GoogleFonts.inter(
                             fontSize: 12,
                             fontWeight: FontWeight.w700,
-                            color: const Color(0xFF94A3B8),
+                            color: AppColors.neutralSubtle,
                           ),
                         ),
                       ),
@@ -2126,7 +2138,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                                   'dengan voucher',
                                   style: GoogleFonts.inter(
                                     fontSize: 9,
-                                    color: const Color(0xFF64748B),
+                                    color: AppColors.neutralMuted,
                                   ),
                                 ),
                               ],
@@ -2154,11 +2166,15 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                               children: [
                                 const Icon(LucideIcons.shoppingCart, size: 16),
                                 const SizedBox(width: 4),
-                                Text(
-                                  '+ Keranjang',
-                                  style: GoogleFonts.inter(
-                                    fontSize: 12.5,
-                                    fontWeight: FontWeight.w700,
+                                Flexible(
+                                  child: Text(
+                                    '+ Keranjang',
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                    style: GoogleFonts.inter(
+                                      fontSize: 12.5,
+                                      fontWeight: FontWeight.w700,
+                                    ),
                                   ),
                                 ),
                               ],

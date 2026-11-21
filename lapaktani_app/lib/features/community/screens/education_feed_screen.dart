@@ -293,14 +293,14 @@ class _EducationFeedScreenState extends State<EducationFeedScreen> {
           Container(
             height: 40,
             decoration: BoxDecoration(
-              color: const Color(0xFFF1F5F9),
+              color: AppColors.surfaceCanvas,
               borderRadius: BorderRadius.circular(10),
-              border: Border.all(color: const Color(0xFFE2E8F0)),
+              border: Border.all(color: AppColors.border),
             ),
             child: Row(
               children: [
                 const SizedBox(width: 10),
-                const Icon(LucideIcons.search, size: 17, color: Color(0xFF94A3B8)),
+                const Icon(LucideIcons.search, size: 17, color: AppColors.neutralSubtle),
                 const SizedBox(width: 8),
                 Expanded(
                   child: TextField(
@@ -314,7 +314,7 @@ class _EducationFeedScreenState extends State<EducationFeedScreen> {
                       hintText: 'Cari tips budidaya, jagung, tomat, penyuluh...',
                       hintStyle: GoogleFonts.inter(
                         fontSize: 12,
-                        color: const Color(0xFF94A3B8),
+                        color: AppColors.neutralSubtle,
                       ),
                       border: InputBorder.none,
                       isDense: true,
@@ -324,7 +324,7 @@ class _EducationFeedScreenState extends State<EducationFeedScreen> {
                 ),
                 if (_searchController.text.isNotEmpty)
                   IconButton(
-                    icon: const Icon(LucideIcons.x, size: 15, color: Color(0xFF94A3B8)),
+                    icon: const Icon(LucideIcons.x, size: 15, color: AppColors.neutralSubtle),
                     onPressed: () {
                       _searchController.clear();
                       _loadArticles();
@@ -351,8 +351,8 @@ class _EducationFeedScreenState extends State<EducationFeedScreen> {
                     padding: const EdgeInsets.symmetric(vertical: 7),
                     decoration: BoxDecoration(
                       color: !_verifiedOnly
-                          ? const Color(0xFF0F172A)
-                          : const Color(0xFFF1F5F9),
+                          ? AppColors.neutral
+                          : AppColors.surfaceCanvas,
                       borderRadius: BorderRadius.circular(8),
                     ),
                     alignment: Alignment.center,
@@ -361,7 +361,7 @@ class _EducationFeedScreenState extends State<EducationFeedScreen> {
                       style: GoogleFonts.inter(
                         fontSize: 11.5,
                         fontWeight: !_verifiedOnly ? FontWeight.w700 : FontWeight.w500,
-                        color: !_verifiedOnly ? Colors.white : const Color(0xFF64748B),
+                        color: !_verifiedOnly ? Colors.white : AppColors.neutralMuted,
                       ),
                     ),
                   ),
@@ -495,7 +495,7 @@ class _EducationFeedScreenState extends State<EducationFeedScreen> {
               Text(
                 _errorMessage!,
                 textAlign: TextAlign.center,
-                style: GoogleFonts.inter(fontSize: 12, color: const Color(0xFF64748B)),
+                style: GoogleFonts.inter(fontSize: 12, color: AppColors.neutralMuted),
               ),
               const SizedBox(height: 14),
               ElevatedButton(
@@ -523,13 +523,13 @@ class _EducationFeedScreenState extends State<EducationFeedScreen> {
                 width: 64,
                 height: 64,
                 decoration: const BoxDecoration(
-                  color: Color(0xFFF1F5F9),
+                  color: AppColors.surfaceCanvas,
                   shape: BoxShape.circle,
                 ),
                 child: const Icon(
                   LucideIcons.bookOpen,
                   size: 28,
-                  color: Color(0xFF94A3B8),
+                  color: AppColors.neutralSubtle,
                 ),
               ),
               const SizedBox(height: 12),
@@ -558,8 +558,8 @@ class _EducationFeedScreenState extends State<EducationFeedScreen> {
                 icon: const Icon(LucideIcons.rotateCcw, size: 14),
                 label: const Text('Reset Filter'),
                 style: OutlinedButton.styleFrom(
-                  foregroundColor: const Color(0xFF0F172A),
-                  side: const BorderSide(color: Color(0xFFCBD5E1)),
+                  foregroundColor: AppColors.neutral,
+                  side: const BorderSide(color: AppColors.neutralBorder),
                 ),
               ),
             ],
@@ -688,9 +688,9 @@ class _EducationFeedScreenState extends State<EducationFeedScreen> {
                           fit: BoxFit.cover,
                           errorBuilder: (context, error, stackTrace) => Container(
                             height: 110,
-                            color: const Color(0xFFF1F5F9),
+                            color: AppColors.surfaceCanvas,
                             child: const Center(
-                              child: Icon(LucideIcons.image, color: Color(0xFF94A3B8)),
+                              child: Icon(LucideIcons.image, color: AppColors.neutralSubtle),
                             ),
                           ),
                         ),
@@ -762,12 +762,12 @@ class _EducationFeedScreenState extends State<EducationFeedScreen> {
                   overflow: TextOverflow.ellipsis,
                   style: GoogleFonts.inter(
                     fontSize: 12,
-                    color: const Color(0xFF475569),
+                    color: AppColors.neutralMuted,
                     height: 1.4,
                   ),
                 ),
                 const SizedBox(height: 10),
-                const Divider(height: 1, color: Color(0xFFF1F5F9)),
+                const Divider(height: 1, color: AppColors.surfaceCanvas),
                 const SizedBox(height: 8),
 
                 // Meta footer & interactive actions
@@ -778,18 +778,18 @@ class _EducationFeedScreenState extends State<EducationFeedScreen> {
                     Expanded(
                       child: Row(
                         children: [
-                          const Icon(LucideIcons.clock, size: 12, color: Color(0xFF94A3B8)),
+                          const Icon(LucideIcons.clock, size: 12, color: AppColors.neutralSubtle),
                           const SizedBox(width: 4),
                           Text(
                             '${article.readDurationMinutes} mnt',
                             style: GoogleFonts.inter(
                               fontSize: 10.5,
-                              color: const Color(0xFF94A3B8),
+                              color: AppColors.neutralSubtle,
                             ),
                           ),
                           if (article.bppOffice != null) ...[
                             const SizedBox(width: 4),
-                            const Text('•', style: TextStyle(color: Color(0xFFCBD5E1), fontSize: 10)),
+                            const Text('•', style: TextStyle(color: AppColors.neutralBorder, fontSize: 10)),
                             const SizedBox(width: 4),
                             Flexible(
                               child: Text(

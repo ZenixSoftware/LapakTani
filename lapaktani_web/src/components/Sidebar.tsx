@@ -57,18 +57,18 @@ export const Sidebar: React.FC<SidebarProps> = ({
       ];
 
   return (
-    <aside className="w-64 lg:w-72 bg-[#0D5136] border-r border-emerald-900/70 hidden md:flex flex-col justify-between fixed top-16 bottom-0 left-0 z-30 shadow-xl text-white">
+    <aside className="w-64 lg:w-72 bg-lt-surface-card border-r border-lt-border hidden md:flex flex-col justify-between fixed top-16 bottom-0 left-0 z-30 text-lt-neutral">
       <div className="p-4 space-y-6 overflow-y-auto custom-scrollbar flex-1">
-        {/* Branding Card inside Deep Forest Sidebar */}
-        <div className="px-3.5 py-3 rounded-2xl bg-[#166534]/75 border border-emerald-400/20 flex items-center gap-3">
-          <div className="w-9 h-9 rounded-xl bg-[#F59E0B] text-white flex items-center justify-center shadow-sm flex-shrink-0">
+        {/* Branding Card inside White-Dominant Sidebar */}
+        <div className="px-3.5 py-3 rounded-2xl bg-lt-surface-canvas border border-lt-border flex items-center gap-3">
+          <div className="w-9 h-9 rounded-xl bg-lt-primary text-white flex items-center justify-center shadow-sm flex-shrink-0">
             <span className="material-symbols-outlined text-[20px]">eco</span>
           </div>
           <div className="min-w-0">
-            <div className="text-[12px] font-extrabold tracking-wide text-white truncate">
+            <div className="text-[12px] font-extrabold tracking-wide text-lt-neutral truncate">
               LAPAKTANI
             </div>
-            <div className="text-[10.5px] text-emerald-200/90 font-semibold truncate">
+            <div className="text-[10.5px] text-lt-neutral-muted font-semibold truncate">
               {isSuperAdmin
                 ? 'Pusat Tata Kelola Super Admin'
                 : isDinas
@@ -80,7 +80,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
 
         {/* MENU UTAMA */}
         <div>
-          <span className="text-[10.5px] font-bold tracking-widest text-emerald-200/70 uppercase px-3">
+          <span className="text-[10.5px] font-bold tracking-widest text-lt-neutral-subtle uppercase px-3">
             MENU UTAMA
           </span>
           <nav className="mt-2 space-y-1.5">
@@ -93,14 +93,14 @@ export const Sidebar: React.FC<SidebarProps> = ({
                   onClick={() => onTabChange(item.id)}
                   className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-[13px] transition-all ${
                     active
-                      ? 'bg-[#22C55E] text-[#052e16] font-extrabold shadow-md shadow-emerald-950/30'
-                      : 'text-emerald-100/85 hover:bg-[#166534] hover:text-white font-semibold'
+                      ? 'bg-lt-primary-tint text-lt-primary font-bold border border-lt-primary-border'
+                      : 'text-lt-neutral-muted hover:bg-lt-surface-canvas hover:text-lt-neutral font-semibold'
                   }`}
                 >
                   <div className="flex items-center gap-3">
                     <span
                       className={`material-symbols-outlined text-[20px] ${
-                        active ? 'text-[#052e16]' : 'text-emerald-200/80'
+                        active ? 'text-lt-primary' : 'text-lt-neutral-muted'
                       }`}
                     >
                       {item.icon}
@@ -111,8 +111,8 @@ export const Sidebar: React.FC<SidebarProps> = ({
                     <span
                       className={`px-2 py-0.5 rounded-md text-[10px] font-extrabold ${
                         active
-                          ? 'bg-[#0D5136] text-white'
-                          : 'bg-white/10 text-emerald-100 border border-white/10'
+                          ? 'bg-lt-primary text-white'
+                          : 'bg-lt-surface-canvas text-lt-neutral-muted border border-lt-border'
                       }`}
                     >
                       {item.badge}
@@ -127,7 +127,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
         {/* MANAJEMEN & VALIDASI (Exclusive to Penyuluh BPP) */}
         {!isDinas && !isSuperAdmin && (
           <div>
-            <span className="text-[10.5px] font-bold tracking-widest text-emerald-200/70 uppercase px-3">
+            <span className="text-[10.5px] font-bold tracking-widest text-lt-neutral-subtle uppercase px-3">
               MANAJEMEN &amp; VALIDASI
             </span>
             <nav className="mt-2 space-y-1.5">
@@ -136,14 +136,14 @@ export const Sidebar: React.FC<SidebarProps> = ({
                 onClick={() => onTabChange('validasi')}
                 className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-[13px] transition-all ${
                   activeTab === 'validasi'
-                    ? 'bg-[#22C55E] text-[#052e16] font-extrabold shadow-md shadow-emerald-950/30'
-                    : 'text-emerald-100/85 hover:bg-[#166534] hover:text-white font-semibold'
+                    ? 'bg-lt-primary-tint text-lt-primary font-bold border border-lt-primary-border'
+                    : 'text-lt-neutral-muted hover:bg-lt-surface-canvas hover:text-lt-neutral font-semibold'
                 }`}
               >
                 <div className="flex items-center gap-3">
                   <span
                     className={`material-symbols-outlined text-[20px] ${
-                      activeTab === 'validasi' ? 'text-[#052e16]' : 'text-emerald-200/80'
+                      activeTab === 'validasi' ? 'text-lt-primary' : 'text-lt-neutral-muted'
                     }`}
                   >
                     verified_user
@@ -153,8 +153,8 @@ export const Sidebar: React.FC<SidebarProps> = ({
                 <span
                   className={`px-2 py-0.5 rounded-full text-[11px] font-extrabold ${
                     activeTab === 'validasi'
-                      ? 'bg-[#0D5136] text-white'
-                      : 'bg-[#F59E0B] text-white'
+                      ? 'bg-lt-primary text-white'
+                      : 'bg-lt-tertiary-tint text-lt-tertiary-text border border-lt-tertiary-border'
                   }`}
                 >
                   {pendingCount}
@@ -165,21 +165,27 @@ export const Sidebar: React.FC<SidebarProps> = ({
                 onClick={() => onTabChange('toko-forum')}
                 className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-[13px] transition-all ${
                   activeTab === 'toko-forum'
-                    ? 'bg-[#22C55E] text-[#052e16] font-extrabold shadow-md shadow-emerald-950/30'
-                    : 'text-emerald-100/85 hover:bg-[#166534] hover:text-white font-semibold'
+                    ? 'bg-lt-primary-tint text-lt-primary font-bold border border-lt-primary-border'
+                    : 'text-lt-neutral-muted hover:bg-lt-surface-canvas hover:text-lt-neutral font-semibold'
                 }`}
               >
                 <div className="flex items-center gap-3">
                   <span
                     className={`material-symbols-outlined text-[20px] ${
-                      activeTab === 'toko-forum' ? 'text-[#052e16]' : 'text-emerald-200/80'
+                      activeTab === 'toko-forum' ? 'text-lt-primary' : 'text-lt-neutral-muted'
                     }`}
                   >
                     storefront
                   </span>
                   <span>Toko &amp; Forum</span>
                 </div>
-                <span className="px-2 py-0.5 rounded-md text-[10px] font-extrabold bg-white/10 text-emerald-100 border border-white/10">
+                <span
+                  className={`px-2 py-0.5 rounded-md text-[10px] font-extrabold ${
+                    activeTab === 'toko-forum'
+                      ? 'bg-lt-primary text-white'
+                      : 'bg-lt-surface-canvas text-lt-neutral-muted border border-lt-border'
+                  }`}
+                >
                   DESA
                 </span>
               </button>
@@ -193,13 +199,13 @@ export const Sidebar: React.FC<SidebarProps> = ({
             <button
               type="button"
               onClick={onOpenDm}
-              className="w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-[13px] font-bold bg-[#F59E0B] hover:bg-amber-500 text-white shadow-sm transition-all"
+              className="w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-[13px] font-bold bg-lt-tertiary-tint hover:bg-lt-tertiary-border/40 text-lt-tertiary-text border border-lt-tertiary-border transition-all"
             >
               <div className="flex items-center gap-2.5">
                 <span className="material-symbols-outlined text-[19px]">forum</span>
                 <span>Pesan DM (6 Role)</span>
               </div>
-              <span className="px-2 py-0.5 rounded-md bg-white/20 text-[10px] font-extrabold">
+              <span className="px-2 py-0.5 rounded-md bg-lt-tertiary text-lt-neutral text-[10px] font-extrabold">
                 LIVE
               </span>
             </button>
@@ -207,13 +213,13 @@ export const Sidebar: React.FC<SidebarProps> = ({
         )}
 
         {/* Instansi Card */}
-        <div className="p-3.5 rounded-2xl bg-[#166534]/65 border border-emerald-400/20 space-y-2">
+        <div className="p-3.5 rounded-2xl bg-lt-surface-canvas border border-lt-border space-y-2">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <span className="material-symbols-outlined text-[#F59E0B] text-[18px]">
+              <span className="material-symbols-outlined text-lt-secondary text-[18px]">
                 domain
               </span>
-              <span className="text-[12px] font-extrabold text-white">
+              <span className="text-[12px] font-extrabold text-lt-neutral">
                 {isSuperAdmin
                   ? 'Super Admin Pusat'
                   : isDinas
@@ -222,12 +228,12 @@ export const Sidebar: React.FC<SidebarProps> = ({
               </span>
             </div>
             {criticalPlotCount > 0 && (
-              <span className="px-2 py-0.5 rounded-full bg-rose-500 text-white text-[10px] font-extrabold">
+              <span className="px-2 py-0.5 rounded-full bg-lt-error text-white text-[10px] font-extrabold">
                 {criticalPlotCount} Kritis
               </span>
             )}
           </div>
-          <p className="text-[11px] text-emerald-100/80 leading-relaxed">
+          <p className="text-[11px] text-lt-neutral-muted leading-relaxed">
             {isSuperAdmin
               ? 'Kendali 6-Role RBAC, provisioning akun Dinas & Penyuluh BPP, pengawasan B2B/Retail Auto-KYC, & Fee Ledger.'
               : isDinas
@@ -238,11 +244,11 @@ export const Sidebar: React.FC<SidebarProps> = ({
       </div>
 
       {/* User Profile Card in Sidebar Footer */}
-      <div className="p-3 border-t border-emerald-900/70 bg-[#0a3f2a]">
-        <div className="flex items-center justify-between p-2.5 rounded-xl bg-[#166534]/80 border border-emerald-500/25">
+      <div className="p-3 border-t border-lt-border bg-lt-surface-card">
+        <div className="flex items-center justify-between p-2.5 rounded-xl bg-lt-surface-canvas border border-lt-border">
           <div className="flex items-center gap-2.5 min-w-0">
             <div className="relative flex-shrink-0">
-              <div className="w-9 h-9 rounded-xl bg-[#22C55E] text-[#052e16] flex items-center justify-center font-extrabold text-[13px]">
+              <div className="w-9 h-9 rounded-xl bg-lt-primary-tint text-lt-primary flex items-center justify-center font-extrabold text-[13px] border border-lt-primary-border">
                 {currentUser?.full_name
                   ? currentUser.full_name
                       .split(' ')
@@ -256,10 +262,10 @@ export const Sidebar: React.FC<SidebarProps> = ({
                       ? 'DN'
                       : 'PL'}
               </div>
-              <span className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 bg-[#22C55E] rounded-full border-2 border-[#0a3f2a]"></span>
+              <span className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 bg-lt-primary rounded-full border-2 border-lt-surface-card"></span>
             </div>
             <div className="min-w-0">
-              <p className="text-[12.5px] font-bold text-white truncate">
+              <p className="text-[12.5px] font-bold text-lt-neutral truncate">
                 {currentUser?.full_name ||
                   (isSuperAdmin
                     ? 'Super Admin Pusat'
@@ -267,7 +273,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                       ? 'Dinas Pertanian'
                       : 'Penyuluh Sumenep')}
               </p>
-              <span className="text-[10.5px] text-emerald-200/85 font-medium truncate block">
+              <span className="text-[10.5px] text-lt-neutral-muted font-medium truncate block">
                 {currentUser?.email ||
                   (isSuperAdmin
                     ? 'superadmin@lapaktani.id'
@@ -279,7 +285,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
           </div>
           <button
             onClick={onLogout}
-            className="p-1.5 rounded-lg text-emerald-200 hover:text-white hover:bg-rose-600/80 transition-colors"
+            className="p-1.5 rounded-lg text-lt-neutral-muted hover:text-lt-error hover:bg-lt-error-tint transition-colors"
             title="Keluar"
           >
             <span className="material-symbols-outlined text-[19px]">logout</span>

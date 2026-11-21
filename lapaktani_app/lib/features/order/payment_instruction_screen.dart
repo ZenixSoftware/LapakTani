@@ -166,7 +166,7 @@ class _PaymentInstructionScreenState extends State<PaymentInstructionScreen> wit
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text('Status saat ini: Menunggu Pembayaran ($paymentStatus)'),
-              backgroundColor: const Color(0xFF334155),
+              backgroundColor: AppColors.neutral,
               behavior: SnackBarBehavior.floating,
             ),
           );
@@ -232,7 +232,7 @@ class _PaymentInstructionScreenState extends State<PaymentInstructionScreen> wit
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text('Gagal mengirim simulasi webhook ke server.'),
-            backgroundColor: Color(0xFFDC2626),
+            backgroundColor: AppColors.error,
             behavior: SnackBarBehavior.floating,
           ),
         );
@@ -242,7 +242,7 @@ class _PaymentInstructionScreenState extends State<PaymentInstructionScreen> wit
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('Error: $e'),
-            backgroundColor: const Color(0xFFDC2626),
+            backgroundColor: AppColors.error,
             behavior: SnackBarBehavior.floating,
           ),
         );
@@ -336,9 +336,9 @@ class _PaymentInstructionScreenState extends State<PaymentInstructionScreen> wit
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: const Color(0xFFFFFBEB),
+        color: AppColors.tertiaryTint,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: const Color(0xFFFDE68A)),
+        border: Border.all(color: AppColors.tertiaryBorder),
       ),
       child: Row(
         children: [
@@ -346,7 +346,7 @@ class _PaymentInstructionScreenState extends State<PaymentInstructionScreen> wit
             width: 40,
             height: 40,
             decoration: BoxDecoration(
-              color: const Color(0xFFFEF3C7),
+              color: AppColors.tertiaryTint,
               borderRadius: BorderRadius.circular(10),
             ),
             child: const Icon(LucideIcons.clock, size: 22, color: _warningOrange),
@@ -361,7 +361,7 @@ class _PaymentInstructionScreenState extends State<PaymentInstructionScreen> wit
                   style: GoogleFonts.inter(
                     fontSize: 11.5,
                     fontWeight: FontWeight.w600,
-                    color: const Color(0xFF92400E),
+                    color: AppColors.tertiaryText,
                   ),
                 ),
                 const SizedBox(height: 2),
@@ -376,7 +376,7 @@ class _PaymentInstructionScreenState extends State<PaymentInstructionScreen> wit
                 ),
                 Text(
                   'Jatuh tempo: ${_deadline.day.toString().padLeft(2, '0')}/${_deadline.month.toString().padLeft(2, '0')}/${_deadline.year} ${_deadline.hour.toString().padLeft(2, '0')}:${_deadline.minute.toString().padLeft(2, '0')} WIB',
-                  style: GoogleFonts.inter(fontSize: 10, color: const Color(0xFFB45309)),
+                  style: GoogleFonts.inter(fontSize: 10, color: AppColors.tertiaryText),
                 ),
               ],
             ),
@@ -394,10 +394,10 @@ class _PaymentInstructionScreenState extends State<PaymentInstructionScreen> wit
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: const Color(0xFFE2E8F0)),
+        border: Border.all(color: AppColors.border),
         boxShadow: const [
           BoxShadow(
-            color: Color(0x06000000),
+            color: AppColors.shadowFaint,
             blurRadius: 8,
             offset: Offset(0, 2),
           ),
@@ -416,18 +416,18 @@ class _PaymentInstructionScreenState extends State<PaymentInstructionScreen> wit
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                 decoration: BoxDecoration(
-                  color: const Color(0xFFEFF6FF),
+                  color: AppColors.secondaryTint,
                   borderRadius: BorderRadius.circular(6),
                 ),
                 child: Text(
                   'Verifikasi Otomatis',
-                  style: GoogleFonts.inter(fontSize: 10, fontWeight: FontWeight.w700, color: const Color(0xFF1D4ED8)),
+                  style: GoogleFonts.inter(fontSize: 10, fontWeight: FontWeight.w700, color: AppColors.secondaryDark),
                 ),
               ),
             ],
           ),
           const SizedBox(height: 14),
-          const Divider(height: 1, color: Color(0xFFF1F5F9)),
+          const Divider(height: 1, color: AppColors.surfaceCanvas),
           const SizedBox(height: 14),
           if (_isQris) ...[
             Center(
@@ -438,7 +438,7 @@ class _PaymentInstructionScreenState extends State<PaymentInstructionScreen> wit
                     decoration: BoxDecoration(
                       color: Colors.white,
                       borderRadius: BorderRadius.circular(12),
-                      border: Border.all(color: const Color(0xFFE2E8F0), width: 1.5),
+                      border: Border.all(color: AppColors.border, width: 1.5),
                     ),
                     child: Column(
                       children: [
@@ -454,7 +454,7 @@ class _PaymentInstructionScreenState extends State<PaymentInstructionScreen> wit
                         const SizedBox(height: 8),
                         Text(
                           'QRIS Standar Nasional (NMID: ID102488921)',
-                          style: GoogleFonts.inter(fontSize: 10, color: const Color(0xFF64748B)),
+                          style: GoogleFonts.inter(fontSize: 10, color: AppColors.neutralMuted),
                         ),
                       ],
                     ),
@@ -463,7 +463,7 @@ class _PaymentInstructionScreenState extends State<PaymentInstructionScreen> wit
                   Text(
                     'Pindai kode QRIS menggunakan e-Wallet atau aplikasi m-Banking Anda',
                     textAlign: TextAlign.center,
-                    style: GoogleFonts.inter(fontSize: 11, color: const Color(0xFF64748B)),
+                    style: GoogleFonts.inter(fontSize: 11, color: AppColors.neutralMuted),
                   ),
                 ],
               ),
@@ -471,15 +471,15 @@ class _PaymentInstructionScreenState extends State<PaymentInstructionScreen> wit
           ] else ...[
             Text(
               'Nomor Virtual Account / Rekening',
-              style: GoogleFonts.inter(fontSize: 11, color: const Color(0xFF64748B), fontWeight: FontWeight.w500),
+              style: GoogleFonts.inter(fontSize: 11, color: AppColors.neutralMuted, fontWeight: FontWeight.w500),
             ),
             const SizedBox(height: 6),
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
               decoration: BoxDecoration(
-                color: const Color(0xFFF8FAFC),
+                color: AppColors.surfaceCanvas,
                 borderRadius: BorderRadius.circular(10),
-                border: Border.all(color: const Color(0xFFE2E8F0)),
+                border: Border.all(color: AppColors.border),
               ),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -490,7 +490,7 @@ class _PaymentInstructionScreenState extends State<PaymentInstructionScreen> wit
                       style: GoogleFonts.robotoMono(
                         fontSize: 18,
                         fontWeight: FontWeight.w800,
-                        color: const Color(0xFF0F172A),
+                        color: AppColors.neutral,
                         letterSpacing: 1.5,
                       ),
                     ),
@@ -501,7 +501,7 @@ class _PaymentInstructionScreenState extends State<PaymentInstructionScreen> wit
                     child: Container(
                       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
                       decoration: BoxDecoration(
-                        color: const Color(0xFFDCFCE7),
+                        color: AppColors.primaryTint,
                         borderRadius: BorderRadius.circular(6),
                       ),
                       child: Row(
@@ -530,7 +530,7 @@ class _PaymentInstructionScreenState extends State<PaymentInstructionScreen> wit
             children: [
               Text(
                 'Total Nominal Transfer',
-                style: GoogleFonts.inter(fontSize: 12, color: const Color(0xFF64748B)),
+                style: GoogleFonts.inter(fontSize: 12, color: AppColors.neutralMuted),
               ),
               Row(
                 children: [
@@ -545,7 +545,7 @@ class _PaymentInstructionScreenState extends State<PaymentInstructionScreen> wit
                   const SizedBox(width: 6),
                   InkWell(
                     onTap: () => _copyToClipboard(widget.totalAmount.toString(), 'Nominal Total'),
-                    child: const Icon(LucideIcons.copy, size: 14, color: Color(0xFF94A3B8)),
+                    child: const Icon(LucideIcons.copy, size: 14, color: AppColors.neutralSubtle),
                   ),
                 ],
               ),
@@ -562,7 +562,7 @@ class _PaymentInstructionScreenState extends State<PaymentInstructionScreen> wit
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: const Color(0xFFE2E8F0)),
+        border: Border.all(color: AppColors.border),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -572,7 +572,7 @@ class _PaymentInstructionScreenState extends State<PaymentInstructionScreen> wit
             children: [
               Text(
                 'Nomor Invoice',
-                style: GoogleFonts.inter(fontSize: 12, color: const Color(0xFF64748B)),
+                style: GoogleFonts.inter(fontSize: 12, color: AppColors.neutralMuted),
               ),
               SelectableText(
                 widget.invoiceNumber,
@@ -586,17 +586,17 @@ class _PaymentInstructionScreenState extends State<PaymentInstructionScreen> wit
             children: [
               Text(
                 'Status Transaksi',
-                style: GoogleFonts.inter(fontSize: 12, color: const Color(0xFF64748B)),
+                style: GoogleFonts.inter(fontSize: 12, color: AppColors.neutralMuted),
               ),
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
                 decoration: BoxDecoration(
-                  color: const Color(0xFFFEF3C7),
+                  color: AppColors.tertiaryTint,
                   borderRadius: BorderRadius.circular(4),
                 ),
                 child: Text(
                   'Menunggu Pembayaran',
-                  style: GoogleFonts.inter(fontSize: 10, fontWeight: FontWeight.w700, color: const Color(0xFFB45309)),
+                  style: GoogleFonts.inter(fontSize: 10, fontWeight: FontWeight.w700, color: AppColors.tertiaryText),
                 ),
               ),
             ],
@@ -607,7 +607,7 @@ class _PaymentInstructionScreenState extends State<PaymentInstructionScreen> wit
             children: [
               Text(
                 'Alamat Pengiriman',
-                style: GoogleFonts.inter(fontSize: 12, color: const Color(0xFF64748B)),
+                style: GoogleFonts.inter(fontSize: 12, color: AppColors.neutralMuted),
               ),
               Expanded(
                 child: Text(
@@ -630,7 +630,7 @@ class _PaymentInstructionScreenState extends State<PaymentInstructionScreen> wit
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: const Color(0xFFE2E8F0)),
+        border: Border.all(color: AppColors.border),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -645,7 +645,7 @@ class _PaymentInstructionScreenState extends State<PaymentInstructionScreen> wit
           TabBar(
             controller: _tabController,
             labelColor: _tokopediaGreen,
-            unselectedLabelColor: const Color(0xFF64748B),
+            unselectedLabelColor: AppColors.neutralMuted,
             indicatorColor: _tokopediaGreen,
             labelStyle: GoogleFonts.inter(fontSize: 12, fontWeight: FontWeight.w700),
             unselectedLabelStyle: GoogleFonts.inter(fontSize: 12, fontWeight: FontWeight.w500),
@@ -704,19 +704,19 @@ class _PaymentInstructionScreenState extends State<PaymentInstructionScreen> wit
                 height: 18,
                 alignment: Alignment.center,
                 decoration: const BoxDecoration(
-                  color: Color(0xFFF1F5F9),
+                  color: AppColors.surfaceCanvas,
                   shape: BoxShape.circle,
                 ),
                 child: Text(
                   '${idx + 1}',
-                  style: GoogleFonts.inter(fontSize: 10, fontWeight: FontWeight.w700, color: const Color(0xFF475569)),
+                  style: GoogleFonts.inter(fontSize: 10, fontWeight: FontWeight.w700, color: AppColors.neutralMuted),
                 ),
               ),
               const SizedBox(width: 8),
               Expanded(
                 child: Text(
                   steps[idx],
-                  style: GoogleFonts.inter(fontSize: 11.5, color: const Color(0xFF334155), height: 1.35),
+                  style: GoogleFonts.inter(fontSize: 11.5, color: AppColors.neutral, height: 1.35),
                 ),
               ),
             ],
@@ -730,27 +730,27 @@ class _PaymentInstructionScreenState extends State<PaymentInstructionScreen> wit
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: const Color(0xFFEFF6FF),
+        color: AppColors.secondaryTint,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: const Color(0xFFBFDBFE)),
+        border: Border.all(color: AppColors.secondaryBorder),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             children: [
-              const Icon(LucideIcons.info, size: 16, color: Color(0xFF1D4ED8)),
+              const Icon(LucideIcons.info, size: 16, color: AppColors.secondaryDark),
               const SizedBox(width: 6),
               Text(
                 'Mode Sandbox Midtrans Aktif',
-                style: GoogleFonts.inter(fontSize: 12, fontWeight: FontWeight.w700, color: const Color(0xFF1E40AF)),
+                style: GoogleFonts.inter(fontSize: 12, fontWeight: FontWeight.w700, color: AppColors.secondaryDark),
               ),
             ],
           ),
           const SizedBox(height: 6),
           Text(
             'Uji pembayaran menggunakan simulator resmi Midtrans di simulator.sandbox.midtrans.com dengan memasukkan Nomor VA di atas.',
-            style: GoogleFonts.inter(fontSize: 11, color: const Color(0xFF1E3A8A), height: 1.35),
+            style: GoogleFonts.inter(fontSize: 11, color: AppColors.secondaryDark, height: 1.35),
           ),
           const SizedBox(height: 8),
           InkWell(
@@ -758,11 +758,11 @@ class _PaymentInstructionScreenState extends State<PaymentInstructionScreen> wit
             child: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
-                const Icon(LucideIcons.externalLink, size: 13, color: Color(0xFF2563EB)),
+                const Icon(LucideIcons.externalLink, size: 13, color: AppColors.secondary),
                 const SizedBox(width: 4),
                 Text(
                   'Salin link simulator.sandbox.midtrans.com',
-                  style: GoogleFonts.inter(fontSize: 11, fontWeight: FontWeight.w700, color: const Color(0xFF2563EB)),
+                  style: GoogleFonts.inter(fontSize: 11, fontWeight: FontWeight.w700, color: AppColors.secondary),
                 ),
               ],
             ),
@@ -776,9 +776,9 @@ class _PaymentInstructionScreenState extends State<PaymentInstructionScreen> wit
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: const Color(0xFFF0FDF4),
+        color: AppColors.primaryTint,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: const Color(0xFFBBF7D0)),
+        border: Border.all(color: AppColors.primaryBorder),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -789,14 +789,14 @@ class _PaymentInstructionScreenState extends State<PaymentInstructionScreen> wit
               const SizedBox(width: 6),
               Text(
                 'Demo Simulator Webhook Payment Gateway',
-                style: GoogleFonts.inter(fontSize: 12, fontWeight: FontWeight.w700, color: const Color(0xFF166534)),
+                style: GoogleFonts.inter(fontSize: 12, fontWeight: FontWeight.w700, color: AppColors.primary),
               ),
             ],
           ),
           const SizedBox(height: 6),
           Text(
             'Klik tombol di bawah untuk menyimulasikan notifikasi HTTP POST webhook (settlement) dari payment gateway ke server lokal secara otomatis.',
-            style: GoogleFonts.inter(fontSize: 11, color: const Color(0xFF15803D)),
+            style: GoogleFonts.inter(fontSize: 11, color: AppColors.primary),
           ),
           const SizedBox(height: 10),
           SizedBox(
@@ -829,7 +829,7 @@ class _PaymentInstructionScreenState extends State<PaymentInstructionScreen> wit
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
       decoration: const BoxDecoration(
         color: Colors.white,
-        border: Border(top: BorderSide(color: Color(0xFFE2E8F0))),
+        border: Border(top: BorderSide(color: AppColors.border)),
       ),
       child: Row(
         children: [
@@ -843,8 +843,8 @@ class _PaymentInstructionScreenState extends State<PaymentInstructionScreen> wit
                 );
               },
               style: OutlinedButton.styleFrom(
-                foregroundColor: const Color(0xFF475569),
-                side: const BorderSide(color: Color(0xFFCBD5E1)),
+                foregroundColor: AppColors.neutralMuted,
+                side: const BorderSide(color: AppColors.neutralBorder),
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                 padding: const EdgeInsets.symmetric(vertical: 12),
               ),

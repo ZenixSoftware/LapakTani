@@ -68,23 +68,23 @@ export const PlotInspectorModal: React.FC<PlotInspectorModalProps> = ({
       onClick={onClose}
     >
       <div
-        className="w-full max-w-xl bg-white h-full shadow-2xl border-l border-[#E2E8F0] flex flex-col overflow-hidden"
+        className="w-full max-w-xl bg-white h-full shadow-2xl border-l border-lt-border flex flex-col overflow-hidden"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Top Drawer Header */}
-        <div className="bg-[#0D5136] text-white px-6 py-4 flex items-start justify-between gap-4">
+        <div className="bg-lt-surface-card border-b border-lt-border border-l-4 border-l-lt-primary px-6 py-4 flex items-start justify-between gap-4">
           <div>
             <div className="flex items-center gap-2">
-              <span className="px-2 py-0.5 rounded bg-[#22C55E]/20 text-emerald-200 text-[10px] font-bold uppercase tracking-wider border border-emerald-400/30">
+              <span className="px-2 py-0.5 rounded bg-lt-primary-tint text-lt-primary text-[10px] font-bold uppercase tracking-wider border border-lt-primary-border">
                 Inspektor Lahan #{plot.id}
               </span>
               <span
                 className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider ${
                   fertilityStatus === 'kritis'
-                    ? 'bg-rose-500 text-white'
+                    ? 'bg-lt-error text-white'
                     : fertilityStatus === 'optimal'
-                      ? 'bg-[#22C55E] text-[#052e16]'
-                      : 'bg-[#F59E0B] text-white'
+                      ? 'bg-lt-primary text-white'
+                      : 'bg-lt-tertiary text-lt-neutral'
                 }`}
               >
                 {fertilityStatus === 'kritis'
@@ -94,11 +94,11 @@ export const PlotInspectorModal: React.FC<PlotInspectorModalProps> = ({
                     : 'Kesuburan Sedang'}
               </span>
             </div>
-            <h2 className="text-xl font-extrabold text-white mt-1.5">
+            <h2 className="text-xl font-extrabold text-lt-neutral mt-1.5">
               Desa {plot.nama_desa}
               {plot.kecamatan ? `, Kec. ${plot.kecamatan}` : ''}
             </h2>
-            <p className="text-[12px] text-emerald-100/80 mt-0.5">
+            <p className="text-[12px] text-lt-neutral-muted mt-0.5">
               {plot.kelompok_tani || 'Mandiri'} · Komoditas {plot.komoditas}
               {plot.varietas ? ` (${plot.varietas})` : ''}
             </p>
@@ -106,7 +106,7 @@ export const PlotInspectorModal: React.FC<PlotInspectorModalProps> = ({
           <button
             type="button"
             onClick={onClose}
-            className="p-1.5 rounded-lg bg-white/10 hover:bg-white/20 text-white transition-colors"
+            className="p-1.5 rounded-lg bg-lt-surface-canvas hover:bg-lt-border text-lt-neutral border border-lt-border transition-colors"
             aria-label="Tutup inspektor"
           >
             <span className="material-symbols-outlined text-[20px]">close</span>
@@ -114,14 +114,14 @@ export const PlotInspectorModal: React.FC<PlotInspectorModalProps> = ({
         </div>
 
         {/* Drawer Body */}
-        <div className="flex-1 overflow-y-auto p-6 space-y-5 custom-scrollbar bg-[#F8FAF9]">
+        <div className="flex-1 overflow-y-auto p-6 space-y-5 custom-scrollbar bg-lt-surface-canvas">
           {/* Location & Maps Action Bar */}
-          <div className="bg-white rounded-2xl border border-[#E2E8F0] p-4 flex flex-wrap items-center justify-between gap-3">
+          <div className="bg-white rounded-2xl border border-lt-border p-4 flex flex-wrap items-center justify-between gap-3">
             <div>
-              <div className="text-[11px] font-bold uppercase tracking-wider text-gray-400">
+              <div className="text-[11px] font-bold uppercase tracking-wider text-lt-neutral-subtle">
                 Koordinat Spasial GPS
               </div>
-              <div className="font-mono text-[13px] font-bold text-gray-800 mt-0.5">
+              <div className="font-mono text-[13px] font-bold text-lt-neutral mt-0.5">
                 {plot.latitude}, {plot.longitude}
               </div>
             </div>
@@ -129,7 +129,7 @@ export const PlotInspectorModal: React.FC<PlotInspectorModalProps> = ({
               href={`https://www.google.com/maps?q=${plot.latitude},${plot.longitude}`}
               target="_blank"
               rel="noreferrer"
-              className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-[#166534] hover:bg-[#0D5136] text-white text-[12px] font-bold transition-colors"
+              className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-lt-primary hover:bg-lt-primary-dark text-white text-[12px] font-bold transition-colors"
             >
               <span className="material-symbols-outlined text-[16px]">map</span>
               Buka Google Maps
@@ -137,12 +137,12 @@ export const PlotInspectorModal: React.FC<PlotInspectorModalProps> = ({
           </div>
 
           {/* 8-in-1 Telemetry Grid */}
-          <div className="bg-white rounded-2xl border border-[#E2E8F0] p-4">
+          <div className="bg-white rounded-2xl border border-lt-border p-4">
             <div className="flex items-center justify-between mb-3">
-              <h3 className="text-[12px] font-extrabold text-gray-600 uppercase tracking-wider">
+              <h3 className="text-[12px] font-extrabold text-lt-neutral-muted uppercase tracking-wider">
                 Pembacaan Sensor Tanah 8-in-1
               </h3>
-              <span className="text-[11px] font-bold text-[#166534] bg-emerald-50 px-2 py-0.5 rounded-md border border-emerald-200">
+              <span className="text-[11px] font-bold text-lt-primary bg-lt-primary-tint px-2 py-0.5 rounded-md border border-lt-primary-border">
                 Telemetry Live
               </span>
             </div>
@@ -165,8 +165,8 @@ export const PlotInspectorModal: React.FC<PlotInspectorModalProps> = ({
                   key={m.label}
                   className={`p-3 rounded-xl border ${
                     m.warn
-                      ? 'bg-rose-50 border-rose-200 text-rose-900'
-                      : 'bg-[#F8FAF9] border-[#E2E8F0] text-gray-900'
+                      ? 'bg-lt-error-tint border-lt-error-border text-lt-error'
+                      : 'bg-lt-surface-canvas border-lt-border text-lt-neutral'
                   }`}
                 >
                   <div className="text-[10px] font-bold uppercase tracking-wide opacity-70">
@@ -179,32 +179,32 @@ export const PlotInspectorModal: React.FC<PlotInspectorModalProps> = ({
           </div>
 
           {/* Infrastructure & Agronomy Conditions */}
-          <div className="bg-white rounded-2xl border border-[#E2E8F0] p-4 space-y-3">
-            <h3 className="text-[12px] font-extrabold text-gray-600 uppercase tracking-wider">
+          <div className="bg-white rounded-2xl border border-lt-border p-4 space-y-3">
+            <h3 className="text-[12px] font-extrabold text-lt-neutral-muted uppercase tracking-wider">
               Infrastruktur Air, Listrik &amp; Budidaya
             </h3>
             <div className="grid grid-cols-2 gap-2.5 text-[12px]">
-              <div className="p-2.5 rounded-xl bg-[#F8FAF9] border border-[#E2E8F0]">
-                <span className="text-gray-500 block text-[10px] font-bold uppercase">Irigasi &amp; Tadahan</span>
-                <span className="font-bold text-gray-800">
+              <div className="p-2.5 rounded-xl bg-lt-surface-canvas border border-lt-border">
+                <span className="text-lt-neutral-muted block text-[10px] font-bold uppercase">Irigasi &amp; Tadahan</span>
+                <span className="font-bold text-lt-neutral">
                   Irigasi: {plot.irigasi} · Tadahan: {plot.tadahan_hujan || '-'}
                 </span>
               </div>
-              <div className="p-2.5 rounded-xl bg-[#F8FAF9] border border-[#E2E8F0]">
-                <span className="text-gray-500 block text-[10px] font-bold uppercase">Pompa &amp; Energi</span>
-                <span className="font-bold text-gray-800">
+              <div className="p-2.5 rounded-xl bg-lt-surface-canvas border border-lt-border">
+                <span className="text-lt-neutral-muted block text-[10px] font-bold uppercase">Pompa &amp; Energi</span>
+                <span className="font-bold text-lt-neutral">
                   Pompa: {plot.pompa_air} ({plot.sumber_energi_pompa || '-'})
                 </span>
               </div>
-              <div className="p-2.5 rounded-xl bg-[#F8FAF9] border border-[#E2E8F0]">
-                <span className="text-gray-500 block text-[10px] font-bold uppercase">Listrik &amp; Kondisi Air</span>
-                <span className="font-bold text-gray-800">
+              <div className="p-2.5 rounded-xl bg-lt-surface-canvas border border-lt-border">
+                <span className="text-lt-neutral-muted block text-[10px] font-bold uppercase">Listrik &amp; Kondisi Air</span>
+                <span className="font-bold text-lt-neutral">
                   Listrik: {plot.listrik} · Air: {plot.sumber_air} ({plot.kondisi_air})
                 </span>
               </div>
-              <div className="p-2.5 rounded-xl bg-[#F8FAF9] border border-[#E2E8F0]">
-                <span className="text-gray-500 block text-[10px] font-bold uppercase">Pembajak &amp; Luas Lahan</span>
-                <span className="font-bold text-gray-800">
+              <div className="p-2.5 rounded-xl bg-lt-surface-canvas border border-lt-border">
+                <span className="text-lt-neutral-muted block text-[10px] font-bold uppercase">Pembajak &amp; Luas Lahan</span>
+                <span className="font-bold text-lt-neutral">
                   {plot.pembajak} · {plot.luas_lahan} ({plot.status_lahan})
                 </span>
               </div>
@@ -213,8 +213,8 @@ export const PlotInspectorModal: React.FC<PlotInspectorModalProps> = ({
 
           {/* Field Evidence Photos */}
           {(plot.foto_daun || plot.foto_pohon || plot.foto_tanah) && (
-            <div className="bg-white rounded-2xl border border-[#E2E8F0] p-4">
-              <h3 className="text-[12px] font-extrabold text-gray-600 uppercase tracking-wider mb-2.5">
+            <div className="bg-white rounded-2xl border border-lt-border p-4">
+              <h3 className="text-[12px] font-extrabold text-lt-neutral-muted uppercase tracking-wider mb-2.5">
                 Dokumentasi Foto Lapangan (3 Sudut)
               </h3>
               <div className="grid grid-cols-3 gap-2.5">
@@ -230,7 +230,7 @@ export const PlotInspectorModal: React.FC<PlotInspectorModalProps> = ({
                       href={resolved}
                       target="_blank"
                       rel="noreferrer"
-                      className="group relative rounded-xl overflow-hidden border border-[#E2E8F0] aspect-square bg-gray-100"
+                      className="group relative rounded-xl overflow-hidden border border-lt-border aspect-square bg-lt-surface-canvas"
                     >
                       <img src={resolved} alt={photo.label} className="w-full h-full object-cover" />
                       <span className="absolute bottom-1.5 left-1.5 px-2 py-0.5 rounded bg-black/65 text-white text-[10px] font-bold">
@@ -245,26 +245,26 @@ export const PlotInspectorModal: React.FC<PlotInspectorModalProps> = ({
 
           {/* PPL Agronomic Recommendation Form (editable by Penyuluh, read-only for Dinas) */}
           {readOnly ? (
-            <div className="bg-white rounded-2xl border border-[#E2E8F0] p-4 space-y-2">
+            <div className="bg-white rounded-2xl border border-lt-border p-4 space-y-2">
               <div className="flex items-center justify-between gap-2">
-                <span className="text-[12px] font-extrabold text-[#0D5136] uppercase tracking-wider">
+                <span className="text-[12px] font-extrabold text-lt-neutral uppercase tracking-wider">
                   Catatan Agronomis Penyuluh BPP
                 </span>
-                <span className="px-2.5 py-0.5 rounded-full bg-emerald-50 text-[#166534] text-[11px] font-bold">
+                <span className="px-2.5 py-0.5 rounded-full bg-lt-primary-tint text-lt-primary text-[11px] font-bold">
                   Mode Pantau Dinas (Read-Only)
                 </span>
               </div>
-              <p className="text-[13px] text-gray-800 bg-[#F8FAF9] p-3 rounded-xl border border-[#E2E8F0]">
+              <p className="text-[13px] text-lt-neutral bg-lt-surface-canvas p-3 rounded-xl border border-lt-border">
                 {plot.rekomendasi_ppl || 'Belum ada catatan rekomendasi dari Penyuluh BPP.'}
               </p>
             </div>
           ) : (
             <form
               onSubmit={handleSubmit}
-              className="bg-white rounded-2xl border border-[#E2E8F0] p-4 space-y-3"
+              className="bg-white rounded-2xl border border-lt-border p-4 space-y-3"
             >
               <div className="flex items-center justify-between gap-2">
-                <label className="text-[12px] font-extrabold text-[#0D5136] uppercase tracking-wider">
+                <label className="text-[12px] font-extrabold text-lt-neutral uppercase tracking-wider">
                   Rekomendasi Agronomis PPL
                 </label>
                 <select
@@ -272,7 +272,7 @@ export const PlotInspectorModal: React.FC<PlotInspectorModalProps> = ({
                   onChange={(e) =>
                     setVerificationStatus(e.target.value as 'verified' | 'needs_action' | 'pending')
                   }
-                  className="px-2.5 py-1.5 rounded-lg border border-[#E2E8F0] text-[12px] font-bold bg-[#F8FAF9]"
+                  className="px-2.5 py-1.5 rounded-lg border border-lt-border text-[12px] font-bold bg-lt-surface-canvas"
                 >
                   <option value="verified">Terverifikasi PPL</option>
                   <option value="needs_action">Perlu Tindakan</option>
@@ -285,13 +285,13 @@ export const PlotInspectorModal: React.FC<PlotInspectorModalProps> = ({
                 value={recommendationText}
                 onChange={(e) => setRecommendationText(e.target.value)}
                 placeholder="Tulis rekomendasi dosis pupuk berimbang (NPK/Urea/Dolomit), pengairan pompa, atau tindak lanjut lapangan..."
-                className="w-full px-3 py-2.5 text-[13px] rounded-xl border border-[#E2E8F0] bg-[#F8FAF9] focus:outline-none focus:ring-2 focus:ring-[#22C55E]/35 focus:border-[#166534]"
+                className="w-full px-3 py-2.5 text-[13px] rounded-xl border border-lt-border bg-lt-surface-canvas focus:outline-none focus:ring-2 focus:ring-lt-primary/35 focus:border-lt-primary"
               />
 
               <button
                 type="submit"
                 disabled={isSubmitting}
-                className="w-full py-2.5 px-4 rounded-xl bg-[#166534] hover:bg-[#0D5136] text-white font-bold text-[13px] flex items-center justify-center gap-2 transition-all disabled:opacity-60 shadow-sm"
+                className="w-full py-2.5 px-4 rounded-xl bg-lt-primary hover:bg-lt-primary-dark text-white font-bold text-[13px] flex items-center justify-center gap-2 transition-all disabled:opacity-60 shadow-sm"
               >
                 <span className="material-symbols-outlined text-[18px]">save</span>
                 {isSubmitting ? 'Menyimpan...' : 'Simpan Rekomendasi PPL'}

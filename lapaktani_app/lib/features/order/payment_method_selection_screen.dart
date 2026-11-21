@@ -53,7 +53,7 @@ class _PaymentMethodSelectionScreenState extends State<PaymentMethodSelectionScr
       category: 'Dompet Digital LapakTani',
       badge: 'Instan & Bebas Biaya',
       icon: LucideIcons.wallet,
-      iconBg: Color(0xFFECFDF5),
+      iconBg: AppColors.primaryTint,
       iconColor: _tokopediaGreen,
     ),
 
@@ -65,8 +65,8 @@ class _PaymentMethodSelectionScreenState extends State<PaymentMethodSelectionScr
       category: 'Virtual Account (Otomatis)',
       badge: 'Paling Populer',
       icon: LucideIcons.creditCard,
-      iconBg: Color(0xFFEFF6FF),
-      iconColor: Color(0xFF2563EB),
+      iconBg: AppColors.secondaryTint,
+      iconColor: AppColors.secondary,
     ),
     PaymentMethodOption(
       code: 'MANDIRI_VA',
@@ -74,8 +74,8 @@ class _PaymentMethodSelectionScreenState extends State<PaymentMethodSelectionScr
       subtitle: 'Bayar mudah via Livin\' by Mandiri atau ATM Mandiri',
       category: 'Virtual Account (Otomatis)',
       icon: LucideIcons.creditCard,
-      iconBg: Color(0xFFEFF6FF),
-      iconColor: Color(0xFF1D4ED8),
+      iconBg: AppColors.secondaryTint,
+      iconColor: AppColors.secondaryDark,
     ),
     PaymentMethodOption(
       code: 'BNI_VA',
@@ -83,8 +83,8 @@ class _PaymentMethodSelectionScreenState extends State<PaymentMethodSelectionScr
       subtitle: 'Transaksi instan via BNI Mobile Banking atau ATM BNI',
       category: 'Virtual Account (Otomatis)',
       icon: LucideIcons.creditCard,
-      iconBg: Color(0xFFEFF6FF),
-      iconColor: Color(0xFF0284C7),
+      iconBg: AppColors.secondaryTint,
+      iconColor: AppColors.secondary,
     ),
     PaymentMethodOption(
       code: 'BRI_VA',
@@ -92,8 +92,8 @@ class _PaymentMethodSelectionScreenState extends State<PaymentMethodSelectionScr
       subtitle: 'Dukungan luas jaringan BRImo dan ATM BRI di seluruh nusantara',
       category: 'Virtual Account (Otomatis)',
       icon: LucideIcons.creditCard,
-      iconBg: Color(0xFFEFF6FF),
-      iconColor: Color(0xFF0369A1),
+      iconBg: AppColors.secondaryTint,
+      iconColor: AppColors.secondaryDark,
     ),
 
     // QRIS & E-Wallet
@@ -104,8 +104,8 @@ class _PaymentMethodSelectionScreenState extends State<PaymentMethodSelectionScr
       category: 'QRIS & E-Wallet',
       badge: 'Scan Cepat',
       icon: LucideIcons.qrCode,
-      iconBg: Color(0xFFF0FDFA),
-      iconColor: Color(0xFF0D9488),
+      iconBg: AppColors.primaryTint,
+      iconColor: AppColors.secondary,
     ),
     PaymentMethodOption(
       code: 'GOPAY',
@@ -113,8 +113,8 @@ class _PaymentMethodSelectionScreenState extends State<PaymentMethodSelectionScr
       subtitle: 'Bayar instan langsung terhubung ke aplikasi Gojek',
       category: 'QRIS & E-Wallet',
       icon: LucideIcons.smartphone,
-      iconBg: Color(0xFFF0FDFA),
-      iconColor: Color(0xFF0284C7),
+      iconBg: AppColors.primaryTint,
+      iconColor: AppColors.secondary,
     ),
 
     // Transfer Bank Manual
@@ -124,8 +124,8 @@ class _PaymentMethodSelectionScreenState extends State<PaymentMethodSelectionScr
       subtitle: 'Kirim dana ke rekening resmi LapakTani, verifikasi sistem 1x24 jam',
       category: 'Transfer Manual',
       icon: LucideIcons.building,
-      iconBg: Color(0xFFF1F5F9),
-      iconColor: Color(0xFF475569),
+      iconBg: AppColors.surfaceCanvas,
+      iconColor: AppColors.neutralMuted,
     ),
   ];
 
@@ -182,7 +182,7 @@ class _PaymentMethodSelectionScreenState extends State<PaymentMethodSelectionScr
                         style: GoogleFonts.inter(
                           fontSize: 12,
                           fontWeight: FontWeight.w700,
-                          color: const Color(0xFF64748B),
+                          color: AppColors.neutralMuted,
                           letterSpacing: 0.3,
                         ),
                       ),
@@ -192,10 +192,10 @@ class _PaymentMethodSelectionScreenState extends State<PaymentMethodSelectionScr
                       decoration: BoxDecoration(
                         color: Colors.white,
                         borderRadius: BorderRadius.circular(12),
-                        border: Border.all(color: const Color(0xFFE2E8F0)),
+                        border: Border.all(color: AppColors.border),
                         boxShadow: const [
                           BoxShadow(
-                            color: Color(0x06000000),
+                            color: AppColors.shadowFaint,
                             blurRadius: 6,
                             offset: Offset(0, 2),
                           ),
@@ -218,11 +218,11 @@ class _PaymentMethodSelectionScreenState extends State<PaymentMethodSelectionScr
                             child: Container(
                               padding: const EdgeInsets.all(14),
                               decoration: BoxDecoration(
-                                color: isSelected ? const Color(0xFFF0FDF4) : Colors.transparent,
+                                color: isSelected ? AppColors.primaryTint : Colors.transparent,
                                 border: isLast
                                     ? null
                                     : const Border(
-                                        bottom: BorderSide(color: Color(0xFFF1F5F9)),
+                                        bottom: BorderSide(color: AppColors.surfaceCanvas),
                                       ),
                               ),
                               child: Row(
@@ -259,7 +259,7 @@ class _PaymentMethodSelectionScreenState extends State<PaymentMethodSelectionScr
                                               Container(
                                                 padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                                                 decoration: BoxDecoration(
-                                                  color: const Color(0xFFD1FAE5),
+                                                  color: AppColors.primaryTint,
                                                   borderRadius: BorderRadius.circular(4),
                                                 ),
                                                 child: Text(
@@ -267,7 +267,7 @@ class _PaymentMethodSelectionScreenState extends State<PaymentMethodSelectionScr
                                                   style: GoogleFonts.inter(
                                                     fontSize: 9.5,
                                                     fontWeight: FontWeight.w700,
-                                                    color: const Color(0xFF065F46),
+                                                    color: AppColors.primaryDark,
                                                   ),
                                                 ),
                                               ),
@@ -279,7 +279,7 @@ class _PaymentMethodSelectionScreenState extends State<PaymentMethodSelectionScr
                                           method.subtitle,
                                           style: GoogleFonts.inter(
                                             fontSize: 11,
-                                            color: const Color(0xFF64748B),
+                                            color: AppColors.neutralMuted,
                                             height: 1.3,
                                           ),
                                         ),
@@ -290,7 +290,7 @@ class _PaymentMethodSelectionScreenState extends State<PaymentMethodSelectionScr
                                   Icon(
                                     isSelected ? LucideIcons.checkCircle2 : LucideIcons.circle,
                                     size: 20,
-                                    color: isSelected ? _tokopediaGreen : const Color(0xFFCBD5E1),
+                                    color: isSelected ? _tokopediaGreen : AppColors.neutralBorder,
                                   ),
                                 ],
                               ),
@@ -308,7 +308,7 @@ class _PaymentMethodSelectionScreenState extends State<PaymentMethodSelectionScr
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
             decoration: const BoxDecoration(
               color: Colors.white,
-              border: Border(top: BorderSide(color: Color(0xFFE2E8F0))),
+              border: Border(top: BorderSide(color: AppColors.border)),
             ),
             child: SafeArea(
               child: SizedBox(

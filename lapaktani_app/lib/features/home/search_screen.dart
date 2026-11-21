@@ -292,7 +292,7 @@ class _SearchScreenState extends State<SearchScreen> {
         textTheme: GoogleFonts.interTextTheme(),
       ),
       child: Scaffold(
-        backgroundColor: const Color(0xFFF8FAFC),
+        backgroundColor: AppColors.surfaceCanvas,
         appBar: _buildSearchAppBar(),
         body: _searchQuery.trim().isEmpty
             ? _buildStateEmptyQuery()
@@ -309,7 +309,7 @@ class _SearchScreenState extends State<SearchScreen> {
       leading: IconButton(
         icon: const Icon(
           LucideIcons.arrowLeft,
-          color: Color(0xFF1E293B),
+          color: AppColors.neutral,
           size: 22,
         ),
         onPressed: () => Navigator.pop(context),
@@ -320,16 +320,16 @@ class _SearchScreenState extends State<SearchScreen> {
         margin: const EdgeInsets.only(right: 14),
         padding: const EdgeInsets.symmetric(horizontal: 10),
         decoration: BoxDecoration(
-          color: const Color(0xFFF1F5F9),
+          color: AppColors.surfaceCanvas,
           borderRadius: BorderRadius.circular(10),
-          border: Border.all(color: const Color(0xFFE2E8F0)),
+          border: Border.all(color: AppColors.border),
         ),
         child: Row(
           children: [
             const Icon(
               LucideIcons.search,
               size: 16,
-              color: Color(0xFF64748B),
+              color: AppColors.neutralMuted,
             ),
             const SizedBox(width: 8),
             Expanded(
@@ -348,7 +348,7 @@ class _SearchScreenState extends State<SearchScreen> {
                 style: GoogleFonts.inter(
                   fontSize: 13,
                   fontWeight: FontWeight.w500,
-                  color: const Color(0xFF0F172A),
+                  color: AppColors.neutral,
                 ),
                 decoration: InputDecoration(
                   isDense: true,
@@ -356,7 +356,7 @@ class _SearchScreenState extends State<SearchScreen> {
                   hintText: 'Cari komoditas, sayur, buah...',
                   hintStyle: GoogleFonts.inter(
                     fontSize: 12.5,
-                    color: const Color(0xFF94A3B8),
+                    color: AppColors.neutralSubtle,
                   ),
                   border: InputBorder.none,
                 ),
@@ -373,7 +373,7 @@ class _SearchScreenState extends State<SearchScreen> {
                   child: Icon(
                     LucideIcons.x,
                     size: 16,
-                    color: Color(0xFF64748B),
+                    color: AppColors.neutralMuted,
                   ),
                 ),
               ),
@@ -383,7 +383,7 @@ class _SearchScreenState extends State<SearchScreen> {
       bottom: PreferredSize(
         preferredSize: const Size.fromHeight(1),
         child: Container(
-          color: const Color(0xFFE2E8F0),
+          color: AppColors.border,
           height: 1,
         ),
       ),
@@ -412,10 +412,10 @@ class _SearchScreenState extends State<SearchScreen> {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: const Color(0xFFF1F5F9)),
+        border: Border.all(color: AppColors.surfaceCanvas),
         boxShadow: const [
           BoxShadow(
-            color: Color(0x06000000),
+            color: AppColors.shadowFaint,
             blurRadius: 4,
             offset: Offset(0, 1),
           ),
@@ -432,7 +432,7 @@ class _SearchScreenState extends State<SearchScreen> {
                 style: GoogleFonts.inter(
                   fontSize: 13.5,
                   fontWeight: FontWeight.w700,
-                  color: const Color(0xFF0F172A),
+                  color: AppColors.neutral,
                 ),
               ),
               if (_recentSearches.isNotEmpty)
@@ -443,7 +443,7 @@ class _SearchScreenState extends State<SearchScreen> {
                     style: GoogleFonts.inter(
                       fontSize: 11.5,
                       fontWeight: FontWeight.w600,
-                      color: const Color(0xFFE11D48),
+                      color: AppColors.error,
                     ),
                   ),
                 ),
@@ -457,7 +457,7 @@ class _SearchScreenState extends State<SearchScreen> {
                 'Belum ada riwayat pencarian.',
                 style: GoogleFonts.inter(
                   fontSize: 12,
-                  color: const Color(0xFF94A3B8),
+                  color: AppColors.neutralSubtle,
                 ),
               ),
             )
@@ -475,9 +475,9 @@ class _SearchScreenState extends State<SearchScreen> {
                       vertical: 6,
                     ),
                     decoration: BoxDecoration(
-                      color: const Color(0xFFF8FAFC),
+                      color: AppColors.surfaceCanvas,
                       borderRadius: BorderRadius.circular(20),
-                      border: Border.all(color: const Color(0xFFE2E8F0)),
+                      border: Border.all(color: AppColors.border),
                     ),
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
@@ -485,7 +485,7 @@ class _SearchScreenState extends State<SearchScreen> {
                         const Icon(
                           LucideIcons.clock,
                           size: 13,
-                          color: Color(0xFF64748B),
+                          color: AppColors.neutralMuted,
                         ),
                         const SizedBox(width: 6),
                         Text(
@@ -493,7 +493,7 @@ class _SearchScreenState extends State<SearchScreen> {
                           style: GoogleFonts.inter(
                             fontSize: 12,
                             fontWeight: FontWeight.w500,
-                            color: const Color(0xFF334155),
+                            color: AppColors.neutral,
                           ),
                         ),
                         const SizedBox(width: 6),
@@ -502,7 +502,7 @@ class _SearchScreenState extends State<SearchScreen> {
                           child: const Icon(
                             LucideIcons.x,
                             size: 13,
-                            color: Color(0xFF94A3B8),
+                            color: AppColors.neutralSubtle,
                           ),
                         ),
                       ],
@@ -522,10 +522,10 @@ class _SearchScreenState extends State<SearchScreen> {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: const Color(0xFFF1F5F9)),
+        border: Border.all(color: AppColors.surfaceCanvas),
         boxShadow: const [
           BoxShadow(
-            color: Color(0x06000000),
+            color: AppColors.shadowFaint,
             blurRadius: 4,
             offset: Offset(0, 1),
           ),
@@ -547,7 +547,7 @@ class _SearchScreenState extends State<SearchScreen> {
                 style: GoogleFonts.inter(
                   fontSize: 13.5,
                   fontWeight: FontWeight.w700,
-                  color: const Color(0xFF0F172A),
+                  color: AppColors.neutral,
                 ),
               ),
             ],
@@ -566,16 +566,16 @@ class _SearchScreenState extends State<SearchScreen> {
                     vertical: 6,
                   ),
                   decoration: BoxDecoration(
-                    color: const Color(0xFFECFDF5),
+                    color: AppColors.primaryTint,
                     borderRadius: BorderRadius.circular(20),
-                    border: Border.all(color: const Color(0xFFA7F3D0)),
+                    border: Border.all(color: AppColors.primaryBorder),
                   ),
                   child: Text(
                     keyword,
                     style: GoogleFonts.inter(
                       fontSize: 11.5,
                       fontWeight: FontWeight.w600,
-                      color: const Color(0xFF047857),
+                      color: AppColors.primaryDark,
                     ),
                   ),
                 ),
@@ -606,14 +606,14 @@ class _SearchScreenState extends State<SearchScreen> {
                   style: GoogleFonts.inter(
                     fontSize: 14,
                     fontWeight: FontWeight.w800,
-                    color: const Color(0xFF0F172A),
+                    color: AppColors.neutral,
                   ),
                 ),
                 Text(
                   'Komoditas segar pilihan langsung dari petani',
                   style: GoogleFonts.inter(
                     fontSize: 11,
-                    color: const Color(0xFF64748B),
+                    color: AppColors.neutralMuted,
                   ),
                 ),
               ],
@@ -655,7 +655,7 @@ class _SearchScreenState extends State<SearchScreen> {
               'Mencari komoditas "$_searchQuery"...',
               style: GoogleFonts.inter(
                 fontSize: 12,
-                color: const Color(0xFF64748B),
+                color: AppColors.neutralMuted,
               ),
             ),
           ],
@@ -674,13 +674,13 @@ class _SearchScreenState extends State<SearchScreen> {
                 width: 68,
                 height: 68,
                 decoration: BoxDecoration(
-                  color: const Color(0xFFF1F5F9),
+                  color: AppColors.surfaceCanvas,
                   shape: BoxShape.circle,
                 ),
                 child: const Icon(
                   LucideIcons.searchX,
                   size: 32,
-                  color: Color(0xFF94A3B8),
+                  color: AppColors.neutralSubtle,
                 ),
               ),
               const SizedBox(height: 14),
@@ -689,7 +689,7 @@ class _SearchScreenState extends State<SearchScreen> {
                 style: GoogleFonts.inter(
                   fontSize: 15,
                   fontWeight: FontWeight.w700,
-                  color: const Color(0xFF1E293B),
+                  color: AppColors.neutral,
                 ),
               ),
               const SizedBox(height: 6),
@@ -698,7 +698,7 @@ class _SearchScreenState extends State<SearchScreen> {
                 textAlign: TextAlign.center,
                 style: GoogleFonts.inter(
                   fontSize: 12,
-                  color: const Color(0xFF64748B),
+                  color: AppColors.neutralMuted,
                   height: 1.35,
                 ),
               ),
@@ -741,7 +741,7 @@ class _SearchScreenState extends State<SearchScreen> {
             style: GoogleFonts.inter(
               fontSize: 12,
               fontWeight: FontWeight.w600,
-              color: const Color(0xFF475569),
+              color: AppColors.neutralMuted,
             ),
           ),
         ),
@@ -795,10 +795,10 @@ class _SearchScreenState extends State<SearchScreen> {
         decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.circular(10),
-          border: Border.all(color: const Color(0xFFF1F5F9)),
+          border: Border.all(color: AppColors.surfaceCanvas),
           boxShadow: const [
             BoxShadow(
-              color: Color(0x06000000),
+              color: AppColors.shadowFaint,
               blurRadius: 3,
               offset: Offset(0, 1),
             ),
@@ -819,20 +819,20 @@ class _SearchScreenState extends State<SearchScreen> {
                             : '${ApiService.baseUrl.replaceAll('/api', '')}/${imageUrl.startsWith('/') ? imageUrl.substring(1) : imageUrl}',
                         fit: BoxFit.cover,
                         errorBuilder: (context, error, stackTrace) => Container(
-                          color: const Color(0xFFF1F5F9),
+                          color: AppColors.surfaceCanvas,
                           child: const Icon(
                             LucideIcons.image,
                             size: 20,
-                            color: Color(0xFF94A3B8),
+                            color: AppColors.neutralSubtle,
                           ),
                         ),
                       )
                     : Container(
-                        color: const Color(0xFFF1F5F9),
+                        color: AppColors.surfaceCanvas,
                         child: const Icon(
                           LucideIcons.image,
                           size: 20,
-                          color: Color(0xFF94A3B8),
+                          color: AppColors.neutralSubtle,
                         ),
                       ),
               ),
@@ -844,16 +844,16 @@ class _SearchScreenState extends State<SearchScreen> {
                   padding:
                       const EdgeInsets.symmetric(horizontal: 5, vertical: 1.5),
                   decoration: BoxDecoration(
-                    color: const Color(0xFFEFF4FF),
+                    color: AppColors.surfaceCanvas,
                     borderRadius: BorderRadius.circular(3),
-                    border: Border.all(color: const Color(0xFFBFDBFE)),
+                    border: Border.all(color: AppColors.secondaryBorder),
                   ),
                   child: Text(
                     grade,
                     style: GoogleFonts.inter(
                       fontSize: 8.5,
                       fontWeight: FontWeight.w700,
-                      color: const Color(0xFF1D4ED8),
+                      color: AppColors.secondaryDark,
                     ),
                   ),
                 ),
@@ -865,7 +865,7 @@ class _SearchScreenState extends State<SearchScreen> {
                     overflow: TextOverflow.ellipsis,
                     style: GoogleFonts.inter(
                       fontSize: 9,
-                      color: const Color(0xFF64748B),
+                      color: AppColors.neutralMuted,
                     ),
                   ),
                 ),
@@ -879,7 +879,7 @@ class _SearchScreenState extends State<SearchScreen> {
               style: GoogleFonts.inter(
                 fontSize: 12,
                 fontWeight: FontWeight.w600,
-                color: const Color(0xFF0F172A),
+                color: AppColors.neutral,
                 height: 1.25,
               ),
             ),
@@ -893,7 +893,7 @@ class _SearchScreenState extends State<SearchScreen> {
                   style: GoogleFonts.inter(
                     fontSize: 13.5,
                     fontWeight: FontWeight.w800,
-                    color: const Color(0xFFE11D48),
+                    color: AppColors.error,
                   ),
                 ),
                 const SizedBox(width: 2),
@@ -901,7 +901,7 @@ class _SearchScreenState extends State<SearchScreen> {
                   unit,
                   style: GoogleFonts.inter(
                     fontSize: 9.5,
-                    color: const Color(0xFF64748B),
+                    color: AppColors.neutralMuted,
                   ),
                 ),
               ],

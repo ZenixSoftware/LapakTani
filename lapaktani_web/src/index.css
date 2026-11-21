@@ -2,11 +2,39 @@
 @tailwind components;
 @tailwind utilities;
 
+:root {
+  /* Core Agrarian 4-Color Palette + White-Dominant Surfaces (Single Source of Truth) */
+  --lt-primary: #388E5C;
+  --lt-primary-dark: #2E754C;
+  --lt-primary-tint: #EFF6F1;
+  --lt-secondary: #2B7A9E;
+  --lt-secondary-tint: #EAF3F7;
+  --lt-tertiary: #E5A93B;
+  --lt-tertiary-text: #8A5E00;
+  --lt-tertiary-tint: #FDF6EA;
+  --lt-neutral: #3D3228;
+  --lt-neutral-muted: #6E6259;
+  --lt-neutral-border: #D8CFCA;
+  --lt-border: #E2E8E4;
+  --lt-surface-card: #FFFFFF;
+  --lt-surface-canvas: #F8FAF6;
+  --lt-error: #C94A29;
+
+  /* Derived Tonal Companions (computed from core tokens) */
+  --lt-primary-border: color-mix(in srgb, var(--lt-primary) 24%, #fff);
+  --lt-secondary-dark: color-mix(in srgb, var(--lt-secondary) 78%, #000);
+  --lt-secondary-border: color-mix(in srgb, var(--lt-secondary) 24%, #fff);
+  --lt-tertiary-border: color-mix(in srgb, var(--lt-tertiary) 35%, #fff);
+  --lt-error-tint: color-mix(in srgb, var(--lt-error) 9%, #fff);
+  --lt-error-border: color-mix(in srgb, var(--lt-error) 28%, #fff);
+  --lt-neutral-subtle: color-mix(in srgb, var(--lt-neutral) 52%, #fff);
+}
+
 @layer base {
   body {
-    background-color: #f8faf9;
+    background-color: var(--lt-surface-canvas);
     font-family: 'Plus Jakarta Sans', 'Inter', sans-serif;
-    color: #131f18;
+    color: var(--lt-neutral);
   }
 }
 
@@ -16,16 +44,16 @@
 }
 
 .custom-scrollbar::-webkit-scrollbar-thumb {
-  background: #cbd5e1;
+  background: var(--lt-neutral-border);
   border-radius: 9999px;
 }
 
 .polygon-glow {
-  filter: drop-shadow(0 0 8px rgba(3, 172, 14, 0.6));
+  filter: drop-shadow(0 0 8px color-mix(in srgb, var(--lt-primary) 55%, transparent));
 }
 
 /* ============================================
-   SmartAgri x LapakTani Fresh Commercial GIS
+   SmartAgri x LapakTani Agri-Commerce GIS
    ============================================ */
 .custom-div-icon,
 .custom-cluster-icon {
@@ -34,12 +62,12 @@
 }
 
 .lapaktani-leaflet-map .leaflet-popup-content-wrapper {
-  background: #ffffff !important;
-  color: #131f18 !important;
-  border: 1px solid #e2e8f0 !important;
+  background: var(--lt-surface-card) !important;
+  color: var(--lt-neutral) !important;
+  border: 1px solid var(--lt-border) !important;
   border-radius: 14px !important;
   font-family: 'Plus Jakarta Sans', 'Inter', sans-serif;
-  box-shadow: 0 12px 28px rgba(13, 81, 54, 0.16) !important;
+  box-shadow: 0 8px 24px rgba(61, 50, 40, 0.14) !important;
   padding: 0 !important;
   overflow: hidden;
 }
@@ -47,23 +75,23 @@
 .lapaktani-leaflet-map .leaflet-popup-content {
   margin: 0 !important;
   line-height: 1.5;
-  background: #ffffff !important;
+  background: var(--lt-surface-card) !important;
 }
 
 .lapaktani-leaflet-map .leaflet-popup-tip {
-  background: #ffffff !important;
-  border: 1px solid #e2e8f0 !important;
+  background: var(--lt-surface-card) !important;
+  border: 1px solid var(--lt-border) !important;
 }
 
 .lapaktani-leaflet-map a.leaflet-popup-close-button {
-  color: #cbd5e1 !important;
+  color: var(--lt-neutral-muted) !important;
   padding: 8px 10px 0 0 !important;
   font-size: 16px !important;
   z-index: 30;
 }
 
 .lapaktani-leaflet-map a.leaflet-popup-close-button:hover {
-  color: #ffffff !important;
+  color: var(--lt-neutral) !important;
 }
 
 .custom-marker-pin {
@@ -74,8 +102,8 @@
   height: 34px;
   border-radius: 50% 50% 50% 0;
   transform: rotate(-45deg);
-  box-shadow: 0 3px 8px rgba(13, 81, 54, 0.28);
-  border: 2.5px solid #ffffff;
+  box-shadow: 0 3px 8px rgba(61, 50, 40, 0.24);
+  border: 2.5px solid var(--lt-surface-card);
   transition: transform 0.15s ease, box-shadow 0.15s ease;
   cursor: pointer;
 }
@@ -83,7 +111,7 @@
 .custom-marker-pin:hover,
 .custom-marker-pin.pin-selected {
   transform: rotate(-45deg) scale(1.22);
-  box-shadow: 0 6px 16px rgba(13, 81, 54, 0.42);
+  box-shadow: 0 6px 16px rgba(61, 50, 40, 0.34);
 }
 
 .custom-marker-pin .pin-inner-icon {
@@ -96,24 +124,24 @@
 .custom-marker-pin .dot-center {
   width: 9px;
   height: 9px;
-  background: #ffffff;
+  background: var(--lt-surface-card);
   border-radius: 50%;
   transform: rotate(45deg);
 }
 
-/* Category & Status Colors aligned to LapakTani Fresh Commercial */
-.pin-default-green { background: #166534 !important; width: 30px !important; height: 30px !important; }
-.pin-padi { background: #16a34a !important; }
-.pin-jagung { background: #d97706 !important; }
-.pin-cabai { background: #dc2626 !important; }
-.pin-tembakau { background: #0d9488 !important; }
-.pin-traktor { background: #ea580c !important; }
-.pin-sapi { background: #854d0e !important; }
-.pin-poktan { background: #7c3aed !important; }
-.pin-irigasi { background: #0284c7 !important; }
-.pin-pompa { background: #0891b2 !important; }
-.pin-listrik { background: #f59e0b !important; }
-.pin-kritis { background: #e11d48 !important; }
+/* Category & Status Colors mapped to 4-color Global Tokens */
+.pin-default-green { background: var(--lt-primary) !important; width: 30px !important; height: 30px !important; }
+.pin-padi { background: var(--lt-primary) !important; }
+.pin-jagung { background: var(--lt-tertiary) !important; }
+.pin-cabai { background: var(--lt-error) !important; }
+.pin-tembakau { background: var(--lt-secondary) !important; }
+.pin-traktor { background: var(--lt-tertiary-text) !important; }
+.pin-sapi { background: var(--lt-neutral) !important; }
+.pin-poktan { background: var(--lt-secondary-dark) !important; }
+.pin-irigasi { background: var(--lt-secondary) !important; }
+.pin-pompa { background: var(--lt-secondary) !important; }
+.pin-listrik { background: var(--lt-tertiary) !important; }
+.pin-kritis { background: var(--lt-error) !important; }
 
 /* Cluster Bubbles */
 .cluster-bubble {
@@ -121,13 +149,13 @@
   align-items: center;
   justify-content: center;
   border-radius: 50%;
-  color: #ffffff;
+  color: var(--lt-surface-card);
   font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
   font-weight: 800;
   font-size: 12px;
-  border: 2.5px solid #ffffff;
+  border: 2.5px solid var(--lt-surface-card);
   cursor: pointer;
-  box-shadow: 0 4px 12px rgba(13, 81, 54, 0.28);
+  box-shadow: 0 4px 12px rgba(61, 50, 40, 0.24);
   transition: transform 0.15s ease;
 }
 
@@ -138,17 +166,17 @@
 .cluster-small {
   width: 34px;
   height: 34px;
-  background: #22c55e;
+  background: var(--lt-primary);
 }
 
 .cluster-medium {
   width: 40px;
   height: 40px;
-  background: #166534;
+  background: var(--lt-primary-dark);
 }
 
 .cluster-large {
   width: 46px;
   height: 46px;
-  background: #0d5136;
+  background: var(--lt-neutral);
 }

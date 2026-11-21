@@ -69,7 +69,7 @@ class _CreateB2BOrderSheetState extends State<CreateB2BOrderSheet> {
             colorScheme: const ColorScheme.light(
               primary: AppColors.primary,
               onPrimary: Colors.white,
-              onSurface: Color(0xFF121C2A),
+              onSurface: AppColors.neutral,
             ),
           ),
           child: child!,
@@ -91,7 +91,7 @@ class _CreateB2BOrderSheetState extends State<CreateB2BOrderSheet> {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('Masukkan nama mitra / pembeli B2B.'),
-          backgroundColor: Colors.redAccent,
+          backgroundColor: AppColors.error,
         ),
       );
       return;
@@ -101,7 +101,7 @@ class _CreateB2BOrderSheetState extends State<CreateB2BOrderSheet> {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('Pilih komoditas panen yang dipesan.'),
-          backgroundColor: Colors.redAccent,
+          backgroundColor: AppColors.error,
         ),
       );
       return;
@@ -111,7 +111,7 @@ class _CreateB2BOrderSheetState extends State<CreateB2BOrderSheet> {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('Total kuota panen (kg) harus lebih besar dari 0.'),
-          backgroundColor: Colors.redAccent,
+          backgroundColor: AppColors.error,
         ),
       );
       return;
@@ -121,7 +121,7 @@ class _CreateB2BOrderSheetState extends State<CreateB2BOrderSheet> {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('Tentukan tenggat waktu penyelesaian panen.'),
-          backgroundColor: Colors.redAccent,
+          backgroundColor: AppColors.error,
         ),
       );
       return;
@@ -155,7 +155,7 @@ class _CreateB2BOrderSheetState extends State<CreateB2BOrderSheet> {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('Gagal mendaftarkan pesanan B2B. Coba beberapa saat lagi.'),
-          backgroundColor: Colors.redAccent,
+          backgroundColor: AppColors.error,
         ),
       );
     }
@@ -186,7 +186,7 @@ class _CreateB2BOrderSheetState extends State<CreateB2BOrderSheet> {
                   width: 44,
                   height: 5,
                   decoration: BoxDecoration(
-                    color: const Color(0xFFCBD5E1),
+                    color: AppColors.neutralBorder,
                     borderRadius: BorderRadius.circular(10),
                   ),
                 ),
@@ -197,7 +197,7 @@ class _CreateB2BOrderSheetState extends State<CreateB2BOrderSheet> {
                   Container(
                     padding: const EdgeInsets.all(10),
                     decoration: BoxDecoration(
-                      color: const Color(0xFFDCFCE7),
+                      color: AppColors.primaryTint,
                       borderRadius: BorderRadius.circular(12),
                     ),
                     child: const Icon(LucideIcons.fileText, color: AppColors.primary, size: 22),
@@ -212,14 +212,14 @@ class _CreateB2BOrderSheetState extends State<CreateB2BOrderSheet> {
                           style: GoogleFonts.plusJakartaSans(
                             fontSize: 17,
                             fontWeight: FontWeight.w700,
-                            color: const Color(0xFF121C2A),
+                            color: AppColors.neutral,
                           ),
                         ),
                         Text(
                           'Input pesanan borongan institusi untuk kelompok tani',
                           style: GoogleFonts.plusJakartaSans(
                             fontSize: 12,
-                            color: const Color(0xFF64748B),
+                            color: AppColors.neutralMuted,
                           ),
                         ),
                       ],
@@ -227,7 +227,7 @@ class _CreateB2BOrderSheetState extends State<CreateB2BOrderSheet> {
                   ),
                 ],
               ),
-              const Divider(height: 24, thickness: 1, color: Color(0xFFF1F5F9)),
+              const Divider(height: 24, thickness: 1, color: AppColors.surfaceCanvas),
 
               // Buyer Name
               Text(
@@ -235,7 +235,7 @@ class _CreateB2BOrderSheetState extends State<CreateB2BOrderSheet> {
                 style: GoogleFonts.plusJakartaSans(
                   fontSize: 13,
                   fontWeight: FontWeight.w600,
-                  color: const Color(0xFF1E293B),
+                  color: AppColors.neutral,
                 ),
               ),
               const SizedBox(height: 6),
@@ -252,7 +252,7 @@ class _CreateB2BOrderSheetState extends State<CreateB2BOrderSheet> {
                 style: GoogleFonts.plusJakartaSans(
                   fontSize: 13,
                   fontWeight: FontWeight.w600,
-                  color: const Color(0xFF1E293B),
+                  color: AppColors.neutral,
                 ),
               ),
               const SizedBox(height: 6),
@@ -260,9 +260,9 @@ class _CreateB2BOrderSheetState extends State<CreateB2BOrderSheet> {
                 height: 52,
                 padding: const EdgeInsets.symmetric(horizontal: 14),
                 decoration: BoxDecoration(
-                  color: const Color(0xFFF8FAFC),
+                  color: AppColors.surfaceCanvas,
                   borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: const Color(0xFFE2E8F0)),
+                  border: Border.all(color: AppColors.border),
                 ),
                 child: _isLoadingCommodities
                     ? const Center(child: CircularProgressIndicator(strokeWidth: 2))
@@ -270,7 +270,7 @@ class _CreateB2BOrderSheetState extends State<CreateB2BOrderSheet> {
                         child: DropdownButton<String>(
                           value: _selectedCommodityId,
                           isExpanded: true,
-                          icon: const Icon(LucideIcons.chevronDown, size: 20, color: Color(0xFF64748B)),
+                          icon: const Icon(LucideIcons.chevronDown, size: 20, color: AppColors.neutralMuted),
                           items: _commodities.map((c) {
                             return DropdownMenuItem<String>(
                               value: c['id'],
@@ -279,7 +279,7 @@ class _CreateB2BOrderSheetState extends State<CreateB2BOrderSheet> {
                                 style: GoogleFonts.plusJakartaSans(
                                   fontSize: 14,
                                   fontWeight: FontWeight.w600,
-                                  color: const Color(0xFF121C2A),
+                                  color: AppColors.neutral,
                                 ),
                               ),
                             );
@@ -305,7 +305,7 @@ class _CreateB2BOrderSheetState extends State<CreateB2BOrderSheet> {
                 style: GoogleFonts.plusJakartaSans(
                   fontSize: 13,
                   fontWeight: FontWeight.w600,
-                  color: const Color(0xFF1E293B),
+                  color: AppColors.neutral,
                 ),
               ),
               const SizedBox(height: 6),
@@ -323,7 +323,7 @@ class _CreateB2BOrderSheetState extends State<CreateB2BOrderSheet> {
                 style: GoogleFonts.plusJakartaSans(
                   fontSize: 13,
                   fontWeight: FontWeight.w600,
-                  color: const Color(0xFF1E293B),
+                  color: AppColors.neutral,
                 ),
               ),
               const SizedBox(height: 6),
@@ -334,9 +334,9 @@ class _CreateB2BOrderSheetState extends State<CreateB2BOrderSheet> {
                   height: 52,
                   padding: const EdgeInsets.symmetric(horizontal: 14),
                   decoration: BoxDecoration(
-                    color: const Color(0xFFF8FAFC),
+                    color: AppColors.surfaceCanvas,
                     borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: const Color(0xFFE2E8F0)),
+                    border: Border.all(color: AppColors.border),
                   ),
                   child: Row(
                     children: [
@@ -350,11 +350,11 @@ class _CreateB2BOrderSheetState extends State<CreateB2BOrderSheet> {
                           style: GoogleFonts.plusJakartaSans(
                             fontSize: 14,
                             fontWeight: FontWeight.w600,
-                            color: const Color(0xFF121C2A),
+                            color: AppColors.neutral,
                           ),
                         ),
                       ),
-                      const Icon(LucideIcons.chevronRight, size: 18, color: Color(0xFF94A3B8)),
+                      const Icon(LucideIcons.chevronRight, size: 18, color: AppColors.neutralSubtle),
                     ],
                   ),
                 ),

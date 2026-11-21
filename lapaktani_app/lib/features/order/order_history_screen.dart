@@ -142,7 +142,7 @@ class _OrderHistoryScreenState extends State<OrderHistoryScreen> {
         scaffoldMessenger.showSnackBar(
           const SnackBar(
             content: Text('Pesanan berhasil diselesaikan.'),
-            backgroundColor: Color(0xFF2E7D32),
+            backgroundColor: AppColors.primary,
           ),
         );
         // Refresh order history from MySQL
@@ -155,7 +155,7 @@ class _OrderHistoryScreenState extends State<OrderHistoryScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text('Gagal menyelesaikan pesanan: ${e.toString()}'),
-          backgroundColor: Colors.red,
+          backgroundColor: AppColors.error,
         ),
       );
     }
@@ -188,7 +188,7 @@ class _OrderHistoryScreenState extends State<OrderHistoryScreen> {
                         width: 40,
                         height: 4,
                         decoration: BoxDecoration(
-                          color: const Color(0xFFE2E8F0),
+                          color: AppColors.border,
                           borderRadius: BorderRadius.circular(2),
                         ),
                       ),
@@ -202,7 +202,7 @@ class _OrderHistoryScreenState extends State<OrderHistoryScreen> {
                           style: GoogleFonts.inter(
                             fontSize: 16,
                             fontWeight: FontWeight.w700,
-                            color: const Color(0xFF0F172A),
+                            color: AppColors.neutral,
                           ),
                         ),
                         IconButton(
@@ -218,7 +218,7 @@ class _OrderHistoryScreenState extends State<OrderHistoryScreen> {
                       'Pastikan komoditas pertanian yang Anda terima dalam kondisi terbaik sebelum menyelesaikan pesanan.',
                       style: GoogleFonts.inter(
                         fontSize: 12,
-                        color: const Color(0xFF64748B),
+                        color: AppColors.neutralMuted,
                         height: 1.3,
                       ),
                     ),
@@ -226,9 +226,9 @@ class _OrderHistoryScreenState extends State<OrderHistoryScreen> {
                     Container(
                       padding: const EdgeInsets.all(12),
                       decoration: BoxDecoration(
-                        color: const Color(0xFFF8FAFC),
+                        color: AppColors.surfaceCanvas,
                         borderRadius: BorderRadius.circular(12),
-                        border: Border.all(color: const Color(0xFFE2E8F0)),
+                        border: Border.all(color: AppColors.border),
                       ),
                       child: Column(
                         children: [
@@ -265,12 +265,12 @@ class _OrderHistoryScreenState extends State<OrderHistoryScreen> {
                                         style: GoogleFonts.inter(
                                           fontSize: 12.5,
                                           fontWeight: FontWeight.w700,
-                                          color: const Color(0xFF0F172A),
+                                          color: AppColors.neutral,
                                         ),
                                       ),
                                       Text(
                                         'Sayur & buah tidak layu, busuk, atau cacat berlebih saat tiba.',
-                                        style: GoogleFonts.inter(fontSize: 11, color: const Color(0xFF64748B)),
+                                        style: GoogleFonts.inter(fontSize: 11, color: AppColors.neutralMuted),
                                       ),
                                     ],
                                   ),
@@ -280,7 +280,7 @@ class _OrderHistoryScreenState extends State<OrderHistoryScreen> {
                           ),
                           const Padding(
                             padding: EdgeInsets.symmetric(vertical: 8),
-                            child: Divider(height: 1, color: Color(0xFFE2E8F0)),
+                            child: Divider(height: 1, color: AppColors.border),
                           ),
                           InkWell(
                             onTap: () {
@@ -315,12 +315,12 @@ class _OrderHistoryScreenState extends State<OrderHistoryScreen> {
                                         style: GoogleFonts.inter(
                                           fontSize: 12.5,
                                           fontWeight: FontWeight.w700,
-                                          color: const Color(0xFF0F172A),
+                                          color: AppColors.neutral,
                                         ),
                                       ),
                                       Text(
                                         'Berat bersih dan kemasan sesuai nota pesanan LapakTani.',
-                                        style: GoogleFonts.inter(fontSize: 11, color: const Color(0xFF64748B)),
+                                        style: GoogleFonts.inter(fontSize: 11, color: AppColors.neutralMuted),
                                       ),
                                     ],
                                   ),
@@ -344,7 +344,7 @@ class _OrderHistoryScreenState extends State<OrderHistoryScreen> {
                             : null,
                         style: ElevatedButton.styleFrom(
                           backgroundColor: _tokopediaGreen,
-                          disabledBackgroundColor: const Color(0xFFCBD5E1),
+                          disabledBackgroundColor: AppColors.neutralBorder,
                           foregroundColor: Colors.white,
                           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                         ),
@@ -382,7 +382,7 @@ class _OrderHistoryScreenState extends State<OrderHistoryScreen> {
                   padding: const EdgeInsets.symmetric(horizontal: 20),
                   child: Text(
                     filterType,
-                    style: GoogleFonts.inter(fontSize: 15, fontWeight: FontWeight.w700, color: const Color(0xFF0F172A)),
+                    style: GoogleFonts.inter(fontSize: 15, fontWeight: FontWeight.w700, color: AppColors.neutral),
                   ),
                 ),
                 const SizedBox(height: 8),
@@ -394,7 +394,7 @@ class _OrderHistoryScreenState extends State<OrderHistoryScreen> {
                       style: GoogleFonts.inter(
                         fontSize: 13,
                         fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
-                        color: isSelected ? _tokopediaGreen : const Color(0xFF1E293B),
+                        color: isSelected ? _tokopediaGreen : AppColors.neutral,
                       ),
                     ),
                     trailing: isSelected ? const Icon(LucideIcons.check, size: 18, color: _tokopediaGreen) : null,
@@ -500,7 +500,7 @@ class _OrderHistoryScreenState extends State<OrderHistoryScreen> {
       backgroundColor: Colors.white,
       elevation: 0.5,
       leading: IconButton(
-        icon: const Icon(LucideIcons.arrowLeft, size: 20, color: Color(0xFF1E293B)),
+        icon: const Icon(LucideIcons.arrowLeft, size: 20, color: AppColors.neutral),
         onPressed: () => Navigator.pop(context),
       ),
       title: Text(
@@ -508,7 +508,7 @@ class _OrderHistoryScreenState extends State<OrderHistoryScreen> {
         style: GoogleFonts.inter(
           fontSize: 16,
           fontWeight: FontWeight.w700,
-          color: const Color(0xFF0F172A),
+          color: AppColors.neutral,
         ),
       ),
     );
@@ -526,18 +526,18 @@ class _OrderHistoryScreenState extends State<OrderHistoryScreen> {
               decoration: BoxDecoration(
                 color: Colors.white,
                 borderRadius: BorderRadius.circular(8),
-                border: Border.all(color: const Color(0xFFE2E8F0)),
+                border: Border.all(color: AppColors.border),
               ),
               child: TextField(
                 controller: _searchController,
                 onChanged: (val) {
                   setState(() => _searchQuery = val.trim());
                 },
-                style: GoogleFonts.inter(fontSize: 12.5, color: const Color(0xFF0F172A)),
+                style: GoogleFonts.inter(fontSize: 12.5, color: AppColors.neutral),
                 decoration: InputDecoration(
-                  prefixIcon: const Icon(LucideIcons.search, size: 16, color: Color(0xFF94A3B8)),
+                  prefixIcon: const Icon(LucideIcons.search, size: 16, color: AppColors.neutralSubtle),
                   hintText: 'Cari transaksi',
-                  hintStyle: GoogleFonts.inter(fontSize: 12, color: const Color(0xFF94A3B8)),
+                  hintStyle: GoogleFonts.inter(fontSize: 12, color: AppColors.neutralSubtle),
                   border: InputBorder.none,
                   isDense: true,
                   contentPadding: const EdgeInsets.symmetric(vertical: 9),
@@ -551,7 +551,7 @@ class _OrderHistoryScreenState extends State<OrderHistoryScreen> {
               Stack(
                 children: [
                   IconButton(
-                    icon: const Icon(LucideIcons.messageSquare, size: 20, color: Color(0xFF475569)),
+                    icon: const Icon(LucideIcons.messageSquare, size: 20, color: AppColors.neutralMuted),
                     onPressed: () {},
                     padding: const EdgeInsets.all(4),
                     constraints: const BoxConstraints(),
@@ -561,7 +561,7 @@ class _OrderHistoryScreenState extends State<OrderHistoryScreen> {
                     right: 0,
                     child: Container(
                       padding: const EdgeInsets.all(3),
-                      decoration: const BoxDecoration(color: Color(0xFFE11D48), shape: BoxShape.circle),
+                      decoration: const BoxDecoration(color: AppColors.error, shape: BoxShape.circle),
                       child: Text('3', style: GoogleFonts.inter(fontSize: 8, fontWeight: FontWeight.w700, color: Colors.white)),
                     ),
                   ),
@@ -571,7 +571,7 @@ class _OrderHistoryScreenState extends State<OrderHistoryScreen> {
               Stack(
                 children: [
                   IconButton(
-                    icon: const Icon(LucideIcons.shoppingCart, size: 20, color: Color(0xFF475569)),
+                    icon: const Icon(LucideIcons.shoppingCart, size: 20, color: AppColors.neutralMuted),
                     onPressed: () {
                       Navigator.push(
                         context,
@@ -586,7 +586,7 @@ class _OrderHistoryScreenState extends State<OrderHistoryScreen> {
                     right: 0,
                     child: Container(
                       padding: const EdgeInsets.all(3),
-                      decoration: const BoxDecoration(color: Color(0xFFE11D48), shape: BoxShape.circle),
+                      decoration: const BoxDecoration(color: AppColors.error, shape: BoxShape.circle),
                       child: Text('2', style: GoogleFonts.inter(fontSize: 8, fontWeight: FontWeight.w700, color: Colors.white)),
                     ),
                   ),
@@ -604,7 +604,7 @@ class _OrderHistoryScreenState extends State<OrderHistoryScreen> {
       padding: const EdgeInsets.fromLTRB(14, 0, 14, 8),
       decoration: const BoxDecoration(
         color: Colors.white,
-        border: Border(bottom: BorderSide(color: Color(0xFFF1F5F9))),
+        border: Border(bottom: BorderSide(color: AppColors.surfaceCanvas)),
       ),
       child: SingleChildScrollView(
         scrollDirection: Axis.horizontal,
@@ -660,10 +660,10 @@ class _OrderHistoryScreenState extends State<OrderHistoryScreen> {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
         decoration: BoxDecoration(
-          color: isFiltered ? const Color(0xFFECFDF5) : const Color(0xFFF8FAFC),
+          color: isFiltered ? AppColors.primaryTint : AppColors.surfaceCanvas,
           borderRadius: BorderRadius.circular(20),
           border: Border.all(
-            color: isFiltered ? _tokopediaGreen : const Color(0xFFE2E8F0),
+            color: isFiltered ? _tokopediaGreen : AppColors.border,
             width: isFiltered ? 1.2 : 1,
           ),
         ),
@@ -674,11 +674,11 @@ class _OrderHistoryScreenState extends State<OrderHistoryScreen> {
               style: GoogleFonts.inter(
                 fontSize: 11.5,
                 fontWeight: isFiltered ? FontWeight.w700 : FontWeight.w500,
-                color: isFiltered ? _tokopediaGreen : const Color(0xFF475569),
+                color: isFiltered ? _tokopediaGreen : AppColors.neutralMuted,
               ),
             ),
             const SizedBox(width: 4),
-            Icon(LucideIcons.chevronDown, size: 12, color: isFiltered ? _tokopediaGreen : const Color(0xFF94A3B8)),
+            Icon(LucideIcons.chevronDown, size: 12, color: isFiltered ? _tokopediaGreen : AppColors.neutralSubtle),
           ],
         ),
       ),
@@ -697,35 +697,35 @@ class _OrderHistoryScreenState extends State<OrderHistoryScreen> {
     switch (order.status) {
       case OrderStatus.completed:
         statusLabel = 'Selesai';
-        badgeBg = const Color(0xFFECFDF5);
-        badgeText = const Color(0xFF047857);
-        badgeBorder = const Color(0xFFA7F3D0);
+        badgeBg = AppColors.primaryTint;
+        badgeText = AppColors.primaryDark;
+        badgeBorder = AppColors.primaryBorder;
         break;
       case OrderStatus.inTransit:
       case OrderStatus.delivered:
         statusLabel = 'Sedang Dikirim';
-        badgeBg = const Color(0xFFEFF6FF);
-        badgeText = const Color(0xFF1D4ED8);
-        badgeBorder = const Color(0xFFBFDBFE);
+        badgeBg = AppColors.secondaryTint;
+        badgeText = AppColors.secondaryDark;
+        badgeBorder = AppColors.secondaryBorder;
         break;
       case OrderStatus.needHarvest:
       case OrderStatus.readyToShip:
         statusLabel = 'Diproses';
-        badgeBg = const Color(0xFFFEF3C7);
-        badgeText = const Color(0xFFB45309);
-        badgeBorder = const Color(0xFFFDE68A);
+        badgeBg = AppColors.tertiaryTint;
+        badgeText = AppColors.tertiaryText;
+        badgeBorder = AppColors.tertiaryBorder;
         break;
       case OrderStatus.pendingPayment:
         statusLabel = 'Menunggu Bayar';
-        badgeBg = const Color(0xFFFFF7ED);
-        badgeText = const Color(0xFFC2410C);
-        badgeBorder = const Color(0xFFFED7AA);
+        badgeBg = AppColors.tertiaryTint;
+        badgeText = AppColors.tertiaryText;
+        badgeBorder = AppColors.tertiaryBorder;
         break;
       case OrderStatus.cancelled:
         statusLabel = 'Dibatalkan';
-        badgeBg = const Color(0xFFFFF1F2);
-        badgeText = const Color(0xFFBE123C);
-        badgeBorder = const Color(0xFFFECDD3);
+        badgeBg = AppColors.errorTint;
+        badgeText = AppColors.error;
+        badgeBorder = AppColors.errorBorder;
         break;
     }
 
@@ -741,9 +741,9 @@ class _OrderHistoryScreenState extends State<OrderHistoryScreen> {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: const Color(0xFFF1F5F9)),
+        border: Border.all(color: AppColors.surfaceCanvas),
         boxShadow: const [
-          BoxShadow(color: Color(0x0A000000), blurRadius: 4, offset: Offset(0, 1)),
+          BoxShadow(color: AppColors.shadowFaint, blurRadius: 4, offset: Offset(0, 1)),
         ],
       ),
       child: Column(
@@ -754,18 +754,18 @@ class _OrderHistoryScreenState extends State<OrderHistoryScreen> {
             children: [
               Row(
                 children: [
-                  const Icon(LucideIcons.shoppingBag, size: 16, color: Color(0xFF475569)),
+                  const Icon(LucideIcons.shoppingBag, size: 16, color: AppColors.neutralMuted),
                   const SizedBox(width: 8),
                   Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
                         'Belanja',
-                        style: GoogleFonts.inter(fontSize: 12, fontWeight: FontWeight.w700, color: const Color(0xFF0F172A)),
+                        style: GoogleFonts.inter(fontSize: 12, fontWeight: FontWeight.w700, color: AppColors.neutral),
                       ),
                       Text(
                         '${order.createdAt.day} ${_monthShort(order.createdAt.month)} ${order.createdAt.year}',
-                        style: GoogleFonts.inter(fontSize: 10, color: const Color(0xFF94A3B8)),
+                        style: GoogleFonts.inter(fontSize: 10, color: AppColors.neutralSubtle),
                       ),
                     ],
                   ),
@@ -786,7 +786,7 @@ class _OrderHistoryScreenState extends State<OrderHistoryScreen> {
                     ),
                   ),
                   const SizedBox(width: 4),
-                  const Icon(LucideIcons.moreVertical, size: 16, color: Color(0xFF94A3B8)),
+                  const Icon(LucideIcons.moreVertical, size: 16, color: AppColors.neutralSubtle),
                 ],
               ),
             ],
@@ -800,11 +800,11 @@ class _OrderHistoryScreenState extends State<OrderHistoryScreen> {
                   child: Container(
                     width: 52,
                     height: 52,
-                    color: const Color(0xFFF1F5F9),
+                    color: AppColors.surfaceCanvas,
                     child: Image.network(
                       firstItem.imageUrl,
                       fit: BoxFit.cover,
-                      errorBuilder: (context, error, stackTrace) => const Icon(LucideIcons.image, size: 20, color: Color(0xFFCBD5E1)),
+                      errorBuilder: (context, error, stackTrace) => const Icon(LucideIcons.image, size: 20, color: AppColors.neutralBorder),
                     ),
                   ),
                 ),
@@ -817,12 +817,12 @@ class _OrderHistoryScreenState extends State<OrderHistoryScreen> {
                         firstItem.title,
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
-                        style: GoogleFonts.inter(fontSize: 12.5, fontWeight: FontWeight.w700, color: const Color(0xFF0F172A)),
+                        style: GoogleFonts.inter(fontSize: 12.5, fontWeight: FontWeight.w700, color: AppColors.neutral),
                       ),
                       const SizedBox(height: 2),
                       Text(
                         otherItemsCount > 0 ? '${firstItem.qty} barang (+ $otherItemsCount lainnya)' : '${firstItem.qty} barang (${firstItem.unit})',
-                        style: GoogleFonts.inter(fontSize: 11, color: const Color(0xFF64748B)),
+                        style: GoogleFonts.inter(fontSize: 11, color: AppColors.neutralMuted),
                       ),
                     ],
                   ),
@@ -830,7 +830,7 @@ class _OrderHistoryScreenState extends State<OrderHistoryScreen> {
               ],
             ),
           const SizedBox(height: 12),
-          const Divider(height: 1, color: Color(0xFFF1F5F9)),
+          const Divider(height: 1, color: AppColors.surfaceCanvas),
           const SizedBox(height: 10),
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -842,17 +842,17 @@ class _OrderHistoryScreenState extends State<OrderHistoryScreen> {
                   children: [
                     Text(
                       'Total belanja',
-                      style: GoogleFonts.inter(fontSize: 10.5, color: const Color(0xFF94A3B8)),
+                      style: GoogleFonts.inter(fontSize: 10.5, color: AppColors.neutralSubtle),
                     ),
                     Text(
                       _formatRupiah(order.totalPrice),
-                      style: GoogleFonts.inter(fontSize: 13, fontWeight: FontWeight.w800, color: const Color(0xFF0F172A)),
+                      style: GoogleFonts.inter(fontSize: 13, fontWeight: FontWeight.w800, color: AppColors.neutral),
                     ),
                     Text(
                       'Hemat Rp12.000 • 360 Koin',
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
-                      style: GoogleFonts.inter(fontSize: 9.5, color: const Color(0xFF047857), fontWeight: FontWeight.w600),
+                      style: GoogleFonts.inter(fontSize: 9.5, color: AppColors.primaryDark, fontWeight: FontWeight.w600),
                     ),
                   ],
                 ),
@@ -1003,21 +1003,21 @@ class _OrderHistoryScreenState extends State<OrderHistoryScreen> {
               width: 72,
               height: 72,
               decoration: const BoxDecoration(
-                color: Color(0xFFE2E8F0),
+                color: AppColors.border,
                 shape: BoxShape.circle,
               ),
-              child: const Icon(LucideIcons.receipt, size: 32, color: Color(0xFF94A3B8)),
+              child: const Icon(LucideIcons.receipt, size: 32, color: AppColors.neutralSubtle),
             ),
             const SizedBox(height: 14),
             Text(
               'Belum Ada Transaksi',
-              style: GoogleFonts.inter(fontSize: 15, fontWeight: FontWeight.w700, color: const Color(0xFF0F172A)),
+              style: GoogleFonts.inter(fontSize: 15, fontWeight: FontWeight.w700, color: AppColors.neutral),
             ),
             const SizedBox(height: 6),
             Text(
               'Riwayat belanja hasil tani dan pesanan Anda akan muncul di sini.',
               textAlign: TextAlign.center,
-              style: GoogleFonts.inter(fontSize: 12, color: const Color(0xFF64748B)),
+              style: GoogleFonts.inter(fontSize: 12, color: AppColors.neutralMuted),
             ),
           ],
         ),

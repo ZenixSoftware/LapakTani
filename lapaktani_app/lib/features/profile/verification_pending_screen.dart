@@ -12,7 +12,7 @@ class VerificationPendingScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF1F5F9),
+      backgroundColor: AppColors.surfaceCanvas,
       body: Stack(
         children: [
           Positioned(
@@ -23,10 +23,10 @@ class VerificationPendingScreen extends StatelessWidget {
               height: 320,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                color: const Color(0xFFD1FAE5).withValues(alpha: 0.6),
+                color: AppColors.primaryTint.withValues(alpha: 0.6),
                 boxShadow: [
                   BoxShadow(
-                    color: const Color(0xFFD1FAE5).withValues(alpha: 0.6),
+                    color: AppColors.primaryTint.withValues(alpha: 0.6),
                     blurRadius: 90,
                     spreadRadius: 40,
                   ),
@@ -42,10 +42,10 @@ class VerificationPendingScreen extends StatelessWidget {
               height: 288,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                color: const Color(0xFFFEF3C7).withValues(alpha: 0.5),
+                color: AppColors.tertiaryTint.withValues(alpha: 0.5),
                 boxShadow: [
                   BoxShadow(
-                    color: const Color(0xFFFEF3C7).withValues(alpha: 0.5),
+                    color: AppColors.tertiaryTint.withValues(alpha: 0.5),
                     blurRadius: 80,
                     spreadRadius: 35,
                   ),
@@ -79,10 +79,10 @@ class VerificationPendingScreen extends StatelessWidget {
                             height: 72,
                             decoration: BoxDecoration(
                               shape: BoxShape.circle,
-                              color: const Color(0xFFFEF3C7),
+                              color: AppColors.tertiaryTint,
                               boxShadow: [
                                 BoxShadow(
-                                  color: const Color(0xFFF59E0B)
+                                  color: AppColors.tertiary
                                       .withValues(alpha: 0.2),
                                   blurRadius: 20,
                                   offset: const Offset(0, 8),
@@ -92,7 +92,7 @@ class VerificationPendingScreen extends StatelessWidget {
                             child: const Icon(
                               LucideIcons.clock,
                               size: 36,
-                              color: Color(0xFFD97706),
+                              color: AppColors.tertiaryText,
                             ),
                           )
                               .animate()
@@ -104,7 +104,7 @@ class VerificationPendingScreen extends StatelessWidget {
                             style: TextStyle(
                               fontSize: 22,
                               fontWeight: FontWeight.w800,
-                              color: Color(0xFF0F172A),
+                              color: AppColors.neutral,
                               letterSpacing: -0.4,
                             ),
                           ),
@@ -114,7 +114,7 @@ class VerificationPendingScreen extends StatelessWidget {
                             textAlign: TextAlign.center,
                             style: TextStyle(
                               fontSize: 13,
-                              color: Color(0xFF64748B),
+                              color: AppColors.neutralMuted,
                               height: 1.5,
                             ),
                           ),
@@ -122,10 +122,10 @@ class VerificationPendingScreen extends StatelessWidget {
                           Container(
                             padding: const EdgeInsets.all(16),
                             decoration: BoxDecoration(
-                              color: const Color(0xFFF8FAFC),
+                              color: AppColors.surfaceCanvas,
                               borderRadius: BorderRadius.circular(16),
                               border: Border.all(
-                                color: const Color(0xFFE2E8F0),
+                                color: AppColors.border,
                                 width: 1,
                               ),
                             ),
@@ -162,10 +162,10 @@ class VerificationPendingScreen extends StatelessWidget {
                               vertical: 10,
                             ),
                             decoration: BoxDecoration(
-                              color: const Color(0xFFECFDF5),
+                              color: AppColors.primaryTint,
                               borderRadius: BorderRadius.circular(12),
                               border: Border.all(
-                                color: const Color(0xFFA7F3D0),
+                                color: AppColors.primaryBorder,
                                 width: 1,
                               ),
                             ),
@@ -174,7 +174,7 @@ class VerificationPendingScreen extends StatelessWidget {
                                 Icon(
                                   LucideIcons.info,
                                   size: 16,
-                                  color: Color(0xFF059669),
+                                  color: AppColors.primary,
                                 ),
                                 SizedBox(width: 8),
                                 Expanded(
@@ -183,7 +183,7 @@ class VerificationPendingScreen extends StatelessWidget {
                                     style: TextStyle(
                                       fontSize: 11,
                                       fontWeight: FontWeight.w600,
-                                      color: Color(0xFF065F46),
+                                      color: AppColors.primaryDark,
                                       height: 1.4,
                                     ),
                                   ),
@@ -269,10 +269,10 @@ class VerificationPendingScreen extends StatelessWidget {
                 color: isDone
                     ? AppColors.primary
                     : isCurrent
-                        ? const Color(0xFFFEF3C7)
-                        : const Color(0xFFE2E8F0),
+                        ? AppColors.tertiaryTint
+                        : AppColors.border,
                 border: isCurrent
-                    ? Border.all(color: const Color(0xFFF59E0B), width: 1.5)
+                    ? Border.all(color: AppColors.tertiary, width: 1.5)
                     : null,
               ),
               child: Center(
@@ -288,8 +288,8 @@ class VerificationPendingScreen extends StatelessWidget {
                           fontSize: 11,
                           fontWeight: FontWeight.w800,
                           color: isCurrent
-                              ? const Color(0xFFB45309)
-                              : const Color(0xFF64748B),
+                              ? AppColors.tertiaryText
+                              : AppColors.neutralMuted,
                         ),
                       ),
               ),
@@ -300,7 +300,7 @@ class VerificationPendingScreen extends StatelessWidget {
                 height: 28,
                 color: isDone
                     ? AppColors.primary.withValues(alpha: 0.4)
-                    : const Color(0xFFE2E8F0),
+                    : AppColors.border,
               ),
           ],
         ),
@@ -318,8 +318,8 @@ class VerificationPendingScreen extends StatelessWidget {
                     fontWeight:
                         isCurrent || isDone ? FontWeight.w700 : FontWeight.w500,
                     color: isCurrent || isDone
-                        ? const Color(0xFF0F172A)
-                        : const Color(0xFF64748B),
+                        ? AppColors.neutral
+                        : AppColors.neutralMuted,
                   ),
                 ),
                 const SizedBox(height: 2),
@@ -327,7 +327,7 @@ class VerificationPendingScreen extends StatelessWidget {
                   subtitle,
                   style: const TextStyle(
                     fontSize: 11,
-                    color: Color(0xFF64748B),
+                    color: AppColors.neutralMuted,
                     height: 1.3,
                   ),
                 ),

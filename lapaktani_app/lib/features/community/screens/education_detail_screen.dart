@@ -67,12 +67,12 @@ class _EducationDetailScreenState extends State<EducationDetailScreen> {
         elevation: 0,
         scrolledUnderElevation: 1,
         leading: IconButton(
-          icon: const Icon(LucideIcons.arrowLeft, color: Color(0xFF1E293B), size: 20),
+          icon: const Icon(LucideIcons.arrowLeft, color: AppColors.neutral, size: 20),
           onPressed: () => Navigator.of(context).pop(),
         ),
         actions: [
           IconButton(
-            icon: const Icon(LucideIcons.messageSquare, color: Color(0xFF64748B), size: 19),
+            icon: const Icon(LucideIcons.messageSquare, color: AppColors.neutralMuted, size: 19),
             tooltip: 'Komentar Diskusi',
             onPressed: () {
               showModalBottomSheet<void>(
@@ -93,13 +93,13 @@ class _EducationDetailScreenState extends State<EducationDetailScreen> {
           IconButton(
             icon: Icon(
               _isLiked ? LucideIcons.heart : LucideIcons.heart,
-              color: _isLiked ? const Color(0xFFDC2626) : const Color(0xFF64748B),
+              color: _isLiked ? AppColors.error : AppColors.neutralMuted,
               size: 20,
             ),
             onPressed: _handleToggleLike,
           ),
           IconButton(
-            icon: const Icon(LucideIcons.share2, color: Color(0xFF64748B), size: 19),
+            icon: const Icon(LucideIcons.share2, color: AppColors.neutralMuted, size: 19),
             onPressed: () {
               ScaffoldMessenger.of(context).showSnackBar(
                 const SnackBar(
@@ -120,16 +120,16 @@ class _EducationDetailScreenState extends State<EducationDetailScreen> {
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                 decoration: BoxDecoration(
-                  color: const Color(0xFFE8F5E9),
+                  color: AppColors.primaryTint,
                   borderRadius: BorderRadius.circular(6),
-                  border: Border.all(color: const Color(0xFFA5D6A7)),
+                  border: Border.all(color: AppColors.primaryBorder),
                 ),
                 child: Text(
                   _article.commodity,
                   style: GoogleFonts.inter(
                     fontSize: 10.5,
                     fontWeight: FontWeight.w700,
-                    color: const Color(0xFF15803D),
+                    color: AppColors.primary,
                   ),
                 ),
               ),
@@ -137,7 +137,7 @@ class _EducationDetailScreenState extends State<EducationDetailScreen> {
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                 decoration: BoxDecoration(
-                  color: const Color(0xFFF1F5F9),
+                  color: AppColors.surfaceCanvas,
                   borderRadius: BorderRadius.circular(6),
                 ),
                 child: Text(
@@ -145,7 +145,7 @@ class _EducationDetailScreenState extends State<EducationDetailScreen> {
                   style: GoogleFonts.inter(
                     fontSize: 10.5,
                     fontWeight: FontWeight.w600,
-                    color: const Color(0xFF475569),
+                    color: AppColors.neutralMuted,
                   ),
                 ),
               ),
@@ -154,7 +154,7 @@ class _EducationDetailScreenState extends State<EducationDetailScreen> {
                 '${_article.readDurationMinutes} mnt baca',
                 style: GoogleFonts.inter(
                   fontSize: 11,
-                  color: const Color(0xFF94A3B8),
+                  color: AppColors.neutralSubtle,
                 ),
               ),
             ],
@@ -167,7 +167,7 @@ class _EducationDetailScreenState extends State<EducationDetailScreen> {
             style: GoogleFonts.inter(
               fontSize: 19,
               fontWeight: FontWeight.w800,
-              color: const Color(0xFF0F172A),
+              color: AppColors.neutral,
               height: 1.3,
             ),
           ),
@@ -188,9 +188,9 @@ class _EducationDetailScreenState extends State<EducationDetailScreen> {
                 fit: BoxFit.cover,
                 errorBuilder: (context, error, stackTrace) => Container(
                   height: 160,
-                  color: const Color(0xFFE2E8F0),
+                  color: AppColors.border,
                   child: const Center(
-                    child: Icon(LucideIcons.image, color: Color(0xFF94A3B8), size: 36),
+                    child: Icon(LucideIcons.image, color: AppColors.neutralSubtle, size: 36),
                   ),
                 ),
               ),
@@ -201,16 +201,16 @@ class _EducationDetailScreenState extends State<EducationDetailScreen> {
           Container(
             padding: const EdgeInsets.all(14),
             decoration: BoxDecoration(
-              color: const Color(0xFFF0FDF4),
+              color: AppColors.primaryTint,
               borderRadius: BorderRadius.circular(10),
-              border: Border.all(color: const Color(0xFFBBF7D0)),
+              border: Border.all(color: AppColors.primaryBorder),
             ),
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 const Icon(
                   LucideIcons.sparkles,
-                  color: Color(0xFF15803D),
+                  color: AppColors.primary,
                   size: 16,
                 ),
                 const SizedBox(width: 8),
@@ -220,7 +220,7 @@ class _EducationDetailScreenState extends State<EducationDetailScreen> {
                     style: GoogleFonts.inter(
                       fontSize: 12.5,
                       fontWeight: FontWeight.w500,
-                      color: const Color(0xFF166534),
+                      color: AppColors.primary,
                       height: 1.45,
                     ),
                   ),
@@ -235,7 +235,7 @@ class _EducationDetailScreenState extends State<EducationDetailScreen> {
             _article.content,
             style: GoogleFonts.inter(
               fontSize: 13.5,
-              color: const Color(0xFF334155),
+              color: AppColors.neutral,
               height: 1.6,
             ),
           ),
@@ -258,9 +258,9 @@ class _EducationDetailScreenState extends State<EducationDetailScreen> {
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: const Color(0xFFF8FAFC),
+        color: AppColors.surfaceCanvas,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: const Color(0xFFE2E8F0)),
+        border: Border.all(color: AppColors.border),
       ),
       child: Row(
         children: [
@@ -269,8 +269,8 @@ class _EducationDetailScreenState extends State<EducationDetailScreen> {
             height: 44,
             decoration: BoxDecoration(
               color: _article.isOfficialPenyuluh
-                  ? const Color(0xFF14532D)
-                  : const Color(0xFF0F766E),
+                  ? AppColors.primaryDark
+                  : AppColors.secondaryDark,
               shape: BoxShape.circle,
             ),
             child: Center(
@@ -299,7 +299,7 @@ class _EducationDetailScreenState extends State<EducationDetailScreen> {
                         style: GoogleFonts.inter(
                           fontSize: 13.5,
                           fontWeight: FontWeight.w700,
-                          color: const Color(0xFF0F172A),
+                          color: AppColors.neutral,
                         ),
                         overflow: TextOverflow.ellipsis,
                       ),
@@ -320,7 +320,7 @@ class _EducationDetailScreenState extends State<EducationDetailScreen> {
                       : _article.authorRole,
                   style: GoogleFonts.inter(
                     fontSize: 11,
-                    color: const Color(0xFF64748B),
+                    color: AppColors.neutralMuted,
                   ),
                 ),
                 const SizedBox(height: 1),
@@ -328,7 +328,7 @@ class _EducationDetailScreenState extends State<EducationDetailScreen> {
                   _formatDate(_article.publishedAt),
                   style: GoogleFonts.inter(
                     fontSize: 10.5,
-                    color: const Color(0xFF94A3B8),
+                    color: AppColors.neutralSubtle,
                   ),
                 ),
               ],
@@ -352,7 +352,7 @@ class _EducationDetailScreenState extends State<EducationDetailScreen> {
               style: GoogleFonts.inter(
                 fontSize: 14.5,
                 fontWeight: FontWeight.w700,
-                color: const Color(0xFF0F172A),
+                color: AppColors.neutral,
               ),
             ),
           ],
@@ -362,7 +362,7 @@ class _EducationDetailScreenState extends State<EducationDetailScreen> {
           'Centang langkah yang telah Anda terapkan di lahan:',
           style: GoogleFonts.inter(
             fontSize: 11,
-            color: const Color(0xFF64748B),
+            color: AppColors.neutralMuted,
           ),
         ),
         const SizedBox(height: 10),
@@ -387,10 +387,10 @@ class _EducationDetailScreenState extends State<EducationDetailScreen> {
               child: Container(
                 padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
                 decoration: BoxDecoration(
-                  color: isDone ? const Color(0xFFF0FDF4) : const Color(0xFFF8FAFC),
+                  color: isDone ? AppColors.primaryTint : AppColors.surfaceCanvas,
                   borderRadius: BorderRadius.circular(10),
                   border: Border.all(
-                    color: isDone ? const Color(0xFF86EFAC) : const Color(0xFFE2E8F0),
+                    color: isDone ? AppColors.primaryBorder : AppColors.border,
                   ),
                 ),
                 child: Row(
@@ -404,7 +404,7 @@ class _EducationDetailScreenState extends State<EducationDetailScreen> {
                         color: isDone ? AppColors.primary : Colors.white,
                         shape: BoxShape.circle,
                         border: Border.all(
-                          color: isDone ? AppColors.primary : const Color(0xFFCBD5E1),
+                          color: isDone ? AppColors.primary : AppColors.neutralBorder,
                         ),
                       ),
                       child: isDone
@@ -415,7 +415,7 @@ class _EducationDetailScreenState extends State<EducationDetailScreen> {
                                 style: GoogleFonts.inter(
                                   fontSize: 10,
                                   fontWeight: FontWeight.w700,
-                                  color: const Color(0xFF64748B),
+                                  color: AppColors.neutralMuted,
                                 ),
                               ),
                             ),
@@ -426,7 +426,7 @@ class _EducationDetailScreenState extends State<EducationDetailScreen> {
                         _article.steps[index],
                         style: GoogleFonts.inter(
                           fontSize: 12.5,
-                          color: isDone ? const Color(0xFF166534) : const Color(0xFF334155),
+                          color: isDone ? AppColors.primary : AppColors.neutral,
                           decoration: isDone ? TextDecoration.lineThrough : null,
                           height: 1.4,
                         ),
@@ -446,7 +446,7 @@ class _EducationDetailScreenState extends State<EducationDetailScreen> {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
       decoration: BoxDecoration(
-        color: const Color(0xFFF1F5F9),
+        color: AppColors.surfaceCanvas,
         borderRadius: BorderRadius.circular(10),
       ),
       child: Row(
@@ -454,28 +454,28 @@ class _EducationDetailScreenState extends State<EducationDetailScreen> {
         children: [
           Row(
             children: [
-              const Icon(LucideIcons.heart, size: 15, color: Color(0xFFDC2626)),
+              const Icon(LucideIcons.heart, size: 15, color: AppColors.error),
               const SizedBox(width: 5),
               Text(
                 '$_likesCount petani menyukai ini',
                 style: GoogleFonts.inter(
                   fontSize: 11.5,
                   fontWeight: FontWeight.w600,
-                  color: const Color(0xFF475569),
+                  color: AppColors.neutralMuted,
                 ),
               ),
             ],
           ),
           Row(
             children: [
-              const Icon(LucideIcons.messageSquare, size: 15, color: Color(0xFF64748B)),
+              const Icon(LucideIcons.messageSquare, size: 15, color: AppColors.neutralMuted),
               const SizedBox(width: 5),
               Text(
                 '${_article.commentsCount} diskusi',
                 style: GoogleFonts.inter(
                   fontSize: 11.5,
                   fontWeight: FontWeight.w600,
-                  color: const Color(0xFF475569),
+                  color: AppColors.neutralMuted,
                 ),
               ),
             ],
@@ -490,7 +490,7 @@ class _EducationDetailScreenState extends State<EducationDetailScreen> {
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
       decoration: const BoxDecoration(
         color: Colors.white,
-        border: Border(top: BorderSide(color: Color(0xFFE2E8F0))),
+        border: Border(top: BorderSide(color: AppColors.border)),
       ),
       child: SafeArea(
         child: Row(
@@ -506,8 +506,8 @@ class _EducationDetailScreenState extends State<EducationDetailScreen> {
                   );
                 },
                 style: OutlinedButton.styleFrom(
-                  foregroundColor: const Color(0xFF334155),
-                  side: const BorderSide(color: Color(0xFFCBD5E1)),
+                  foregroundColor: AppColors.neutral,
+                  side: const BorderSide(color: AppColors.neutralBorder),
                   padding: const EdgeInsets.symmetric(vertical: 12),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(10),

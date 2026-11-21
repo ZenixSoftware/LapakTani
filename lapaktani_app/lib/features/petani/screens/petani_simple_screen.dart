@@ -153,7 +153,7 @@ class _PetaniSimpleScreenState extends State<PetaniSimpleScreen> {
                     style: GoogleFonts.plusJakartaSans(
                       fontSize: 16,
                       fontWeight: FontWeight.w700,
-                      color: const Color(0xFF121C2A),
+                      color: AppColors.neutral,
                     ),
                   ),
                   IconButton(
@@ -167,7 +167,7 @@ class _PetaniSimpleScreenState extends State<PetaniSimpleScreen> {
                 'Laporkan estimasi hasil panen ladang Anda agar Ketua Poktan dapat menyerap kuota untuk kontrak B2B.',
                 style: GoogleFonts.plusJakartaSans(
                   fontSize: 12,
-                  color: const Color(0xFF64748B),
+                  color: AppColors.neutralMuted,
                 ),
               ),
               const SizedBox(height: 16),
@@ -176,7 +176,7 @@ class _PetaniSimpleScreenState extends State<PetaniSimpleScreen> {
                 style: GoogleFonts.plusJakartaSans(
                   fontSize: 13,
                   fontWeight: FontWeight.w600,
-                  color: const Color(0xFF1E293B),
+                  color: AppColors.neutral,
                 ),
               ),
               const SizedBox(height: 6),
@@ -196,7 +196,7 @@ class _PetaniSimpleScreenState extends State<PetaniSimpleScreen> {
                 style: GoogleFonts.plusJakartaSans(
                   fontSize: 13,
                   fontWeight: FontWeight.w600,
-                  color: const Color(0xFF1E293B),
+                  color: AppColors.neutral,
                 ),
               ),
               const SizedBox(height: 6),
@@ -215,7 +215,7 @@ class _PetaniSimpleScreenState extends State<PetaniSimpleScreen> {
                 child: Container(
                   padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
                   decoration: BoxDecoration(
-                    border: Border.all(color: const Color(0xFFCBD5E1)),
+                    border: Border.all(color: AppColors.neutralBorder),
                     borderRadius: BorderRadius.circular(10),
                   ),
                   child: Row(
@@ -236,7 +236,7 @@ class _PetaniSimpleScreenState extends State<PetaniSimpleScreen> {
                 style: GoogleFonts.plusJakartaSans(
                   fontSize: 13,
                   fontWeight: FontWeight.w600,
-                  color: const Color(0xFF1E293B),
+                  color: AppColors.neutral,
                 ),
               ),
               const SizedBox(height: 6),
@@ -260,7 +260,7 @@ class _PetaniSimpleScreenState extends State<PetaniSimpleScreen> {
                       ScaffoldMessenger.of(context).showSnackBar(
                         const SnackBar(
                           content: Text('Masukkan estimasi tonase panen yang valid.'),
-                          backgroundColor: Color(0xFFDC2626),
+                          backgroundColor: AppColors.error,
                         ),
                       );
                       return;
@@ -301,17 +301,17 @@ class _PetaniSimpleScreenState extends State<PetaniSimpleScreen> {
         ),
         content: Text(
           'Apakah Anda yakin ingin keluar dari akun Petani Anda?',
-          style: GoogleFonts.plusJakartaSans(fontSize: 13, color: const Color(0xFF475569)),
+          style: GoogleFonts.plusJakartaSans(fontSize: 13, color: AppColors.neutralMuted),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx, false),
-            child: Text('Batal', style: GoogleFonts.plusJakartaSans(color: const Color(0xFF64748B))),
+            child: Text('Batal', style: GoogleFonts.plusJakartaSans(color: AppColors.neutralMuted)),
           ),
           ElevatedButton(
             onPressed: () => Navigator.pop(ctx, true),
             style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFFDC2626),
+              backgroundColor: AppColors.error,
               foregroundColor: Colors.white,
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
             ),
@@ -338,7 +338,7 @@ class _PetaniSimpleScreenState extends State<PetaniSimpleScreen> {
     final farmerName = currentUser?.fullName ?? 'Petani LapakTani';
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF8FAFC),
+      backgroundColor: AppColors.surfaceCanvas,
       appBar: AppBar(
         elevation: 0,
         backgroundColor: AppColors.primary,
@@ -445,10 +445,10 @@ class _PetaniSimpleScreenState extends State<PetaniSimpleScreen> {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: const Color(0xFFE2E8F0)),
+        border: Border.all(color: AppColors.border),
         boxShadow: const [
           BoxShadow(
-            color: Color(0x08000000),
+            color: AppColors.shadowFaint,
             blurRadius: 8,
             offset: Offset(0, 2),
           ),
@@ -465,10 +465,10 @@ class _PetaniSimpleScreenState extends State<PetaniSimpleScreen> {
                   Container(
                     padding: const EdgeInsets.all(8),
                     decoration: BoxDecoration(
-                      color: const Color(0xFFDCFCE7),
+                      color: AppColors.primaryTint,
                       borderRadius: BorderRadius.circular(8),
                     ),
-                    child: const Icon(LucideIcons.mapPin, size: 18, color: Color(0xFF006E04)),
+                    child: const Icon(LucideIcons.mapPin, size: 18, color: AppColors.primary),
                   ),
                   const SizedBox(width: 10),
                   Text(
@@ -476,7 +476,7 @@ class _PetaniSimpleScreenState extends State<PetaniSimpleScreen> {
                     style: GoogleFonts.plusJakartaSans(
                       fontSize: 14.5,
                       fontWeight: FontWeight.w700,
-                      color: const Color(0xFF121C2A),
+                      color: AppColors.neutral,
                     ),
                   ),
                 ],
@@ -484,7 +484,7 @@ class _PetaniSimpleScreenState extends State<PetaniSimpleScreen> {
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                 decoration: BoxDecoration(
-                  color: const Color(0xFFF1F5F9),
+                  color: AppColors.surfaceCanvas,
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Text(
@@ -492,7 +492,7 @@ class _PetaniSimpleScreenState extends State<PetaniSimpleScreen> {
                   style: GoogleFonts.plusJakartaSans(
                     fontSize: 11,
                     fontWeight: FontWeight.w700,
-                    color: const Color(0xFF0F172A),
+                    color: AppColors.neutral,
                   ),
                 ),
               ),
@@ -507,7 +507,7 @@ class _PetaniSimpleScreenState extends State<PetaniSimpleScreen> {
                   children: [
                     Text(
                       'Luas Lahan Terdaftar',
-                      style: GoogleFonts.plusJakartaSans(fontSize: 11, color: const Color(0xFF64748B)),
+                      style: GoogleFonts.plusJakartaSans(fontSize: 11, color: AppColors.neutralMuted),
                     ),
                     const SizedBox(height: 2),
                     Text(
@@ -515,13 +515,13 @@ class _PetaniSimpleScreenState extends State<PetaniSimpleScreen> {
                       style: GoogleFonts.plusJakartaSans(
                         fontSize: 16,
                         fontWeight: FontWeight.w800,
-                        color: const Color(0xFF0F172A),
+                        color: AppColors.neutral,
                       ),
                     ),
                   ],
                 ),
               ),
-              Container(width: 1, height: 32, color: const Color(0xFFE2E8F0)),
+              Container(width: 1, height: 32, color: AppColors.border),
               const SizedBox(width: 16),
               Expanded(
                 child: Column(
@@ -529,7 +529,7 @@ class _PetaniSimpleScreenState extends State<PetaniSimpleScreen> {
                   children: [
                     Text(
                       'Komoditas Utama',
-                      style: GoogleFonts.plusJakartaSans(fontSize: 11, color: const Color(0xFF64748B)),
+                      style: GoogleFonts.plusJakartaSans(fontSize: 11, color: AppColors.neutralMuted),
                     ),
                     const SizedBox(height: 2),
                     Text(
@@ -537,7 +537,7 @@ class _PetaniSimpleScreenState extends State<PetaniSimpleScreen> {
                       style: GoogleFonts.plusJakartaSans(
                         fontSize: 16,
                         fontWeight: FontWeight.w800,
-                        color: const Color(0xFF006E04),
+                        color: AppColors.primary,
                       ),
                     ),
                   ],
@@ -574,10 +574,10 @@ class _PetaniSimpleScreenState extends State<PetaniSimpleScreen> {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: const Color(0xFFE2E8F0)),
+        border: Border.all(color: AppColors.border),
         boxShadow: const [
           BoxShadow(
-            color: Color(0x08000000),
+            color: AppColors.shadowFaint,
             blurRadius: 8,
             offset: Offset(0, 2),
           ),
@@ -591,10 +591,10 @@ class _PetaniSimpleScreenState extends State<PetaniSimpleScreen> {
               Container(
                 padding: const EdgeInsets.all(8),
                 decoration: BoxDecoration(
-                  color: const Color(0xFFEFF6FF),
+                  color: AppColors.secondaryTint,
                   borderRadius: BorderRadius.circular(8),
                 ),
-                child: const Icon(LucideIcons.clipboardCheck, size: 18, color: Color(0xFF2563EB)),
+                child: const Icon(LucideIcons.clipboardCheck, size: 18, color: AppColors.secondary),
               ),
               const SizedBox(width: 10),
               Expanded(
@@ -605,7 +605,7 @@ class _PetaniSimpleScreenState extends State<PetaniSimpleScreen> {
                   style: GoogleFonts.plusJakartaSans(
                     fontSize: 14,
                     fontWeight: FontWeight.w700,
-                    color: const Color(0xFF121C2A),
+                    color: AppColors.neutral,
                   ),
                 ),
               ),
@@ -613,7 +613,7 @@ class _PetaniSimpleScreenState extends State<PetaniSimpleScreen> {
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                 decoration: BoxDecoration(
-                  color: const Color(0xFFDBEAFE),
+                  color: AppColors.secondaryTint,
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Text(
@@ -621,7 +621,7 @@ class _PetaniSimpleScreenState extends State<PetaniSimpleScreen> {
                   style: GoogleFonts.plusJakartaSans(
                     fontSize: 10.5,
                     fontWeight: FontWeight.w700,
-                    color: const Color(0xFF1E40AF),
+                    color: AppColors.secondaryDark,
                   ),
                 ),
               ),
@@ -630,15 +630,15 @@ class _PetaniSimpleScreenState extends State<PetaniSimpleScreen> {
           const SizedBox(height: 12),
           Text(
             'Target kuota panen yang ditugaskan oleh pengurus kelompok tani untuk memenuhi kontrak pasokan B2B.',
-            style: GoogleFonts.plusJakartaSans(fontSize: 12, color: const Color(0xFF64748B)),
+            style: GoogleFonts.plusJakartaSans(fontSize: 12, color: AppColors.neutralMuted),
           ),
           const SizedBox(height: 12),
           Container(
             padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(
-              color: const Color(0xFFF8FAFC),
+              color: AppColors.surfaceCanvas,
               borderRadius: BorderRadius.circular(10),
-              border: Border.all(color: const Color(0xFFF1F5F9)),
+              border: Border.all(color: AppColors.surfaceCanvas),
             ),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -648,14 +648,14 @@ class _PetaniSimpleScreenState extends State<PetaniSimpleScreen> {
                   children: [
                     Text(
                       'Total Alokasi Kuota Aktif',
-                      style: GoogleFonts.plusJakartaSans(fontSize: 11, color: const Color(0xFF64748B)),
+                      style: GoogleFonts.plusJakartaSans(fontSize: 11, color: AppColors.neutralMuted),
                     ),
                     Text(
                       '${_totalAssignedKg.toStringAsFixed(0)} kg',
                       style: GoogleFonts.plusJakartaSans(
                         fontSize: 18,
                         fontWeight: FontWeight.w800,
-                        color: const Color(0xFF0F172A),
+                        color: AppColors.neutral,
                       ),
                     ),
                   ],
@@ -667,17 +667,17 @@ class _PetaniSimpleScreenState extends State<PetaniSimpleScreen> {
                       MaterialPageRoute(builder: (_) => const FarmerTasksScreen()),
                     );
                   },
-                  icon: const Icon(LucideIcons.arrowRight, size: 14, color: Color(0xFF2563EB)),
+                  icon: const Icon(LucideIcons.arrowRight, size: 14, color: AppColors.secondary),
                   label: Text(
                     'Lihat Tugas',
                     style: GoogleFonts.plusJakartaSans(
                       fontSize: 12,
                       fontWeight: FontWeight.w700,
-                      color: const Color(0xFF2563EB),
+                      color: AppColors.secondary,
                     ),
                   ),
                   style: OutlinedButton.styleFrom(
-                    side: const BorderSide(color: Color(0xFF93C5FD)),
+                    side: const BorderSide(color: AppColors.secondaryBorder),
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
                   ),
                 ),
@@ -693,19 +693,19 @@ class _PetaniSimpleScreenState extends State<PetaniSimpleScreen> {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: const Color(0xFFFEF2F2),
+        color: AppColors.errorTint,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: const Color(0xFFFECACA)),
+        border: Border.all(color: AppColors.errorBorder),
       ),
       child: Row(
         children: [
           Container(
             padding: const EdgeInsets.all(10),
             decoration: const BoxDecoration(
-              color: Color(0xFFFEE2E2),
+              color: AppColors.errorTint,
               shape: BoxShape.circle,
             ),
-            child: const Icon(LucideIcons.alertTriangle, size: 22, color: Color(0xFFDC2626)),
+            child: const Icon(LucideIcons.alertTriangle, size: 22, color: AppColors.error),
           ),
           const SizedBox(width: 14),
           Expanded(
@@ -717,14 +717,14 @@ class _PetaniSimpleScreenState extends State<PetaniSimpleScreen> {
                   style: GoogleFonts.plusJakartaSans(
                     fontSize: 13.5,
                     fontWeight: FontWeight.w700,
-                    color: const Color(0xFF991B1B),
+                    color: AppColors.error,
                   ),
                 ),
                 Text(
                   'Temukan bercak daun, ulat grayak, atau wereng? Laporkan segera ke PPL.',
                   style: GoogleFonts.plusJakartaSans(
                     fontSize: 11,
-                    color: const Color(0xFFB91C1C),
+                    color: AppColors.error,
                   ),
                 ),
               ],
@@ -739,7 +739,7 @@ class _PetaniSimpleScreenState extends State<PetaniSimpleScreen> {
               );
             },
             style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFFDC2626),
+              backgroundColor: AppColors.error,
               foregroundColor: Colors.white,
               elevation: 0,
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),

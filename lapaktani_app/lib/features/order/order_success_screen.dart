@@ -43,7 +43,7 @@ class OrderSuccessScreen extends StatelessWidget {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text('$label berhasil disalin ke clipboard.'),
-        backgroundColor: const Color(0xFF0F172A),
+        backgroundColor: AppColors.neutral,
         behavior: SnackBarBehavior.floating,
         duration: const Duration(seconds: 2),
       ),
@@ -110,10 +110,10 @@ class OrderSuccessScreen extends StatelessWidget {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: const Color(0xFFE2E8F0)),
+        border: Border.all(color: AppColors.border),
         boxShadow: const [
           BoxShadow(
-            color: Color(0x08000000),
+            color: AppColors.shadowFaint,
             blurRadius: 10,
             offset: Offset(0, 2),
           ),
@@ -125,9 +125,9 @@ class OrderSuccessScreen extends StatelessWidget {
             width: 68,
             height: 68,
             decoration: BoxDecoration(
-              color: const Color(0xFFDCFCE7),
+              color: AppColors.primaryTint,
               shape: BoxShape.circle,
-              border: Border.all(color: const Color(0xFF86EFAC), width: 2),
+              border: Border.all(color: AppColors.primaryBorder, width: 2),
             ),
             child: const Center(
               child: Icon(
@@ -153,7 +153,7 @@ class OrderSuccessScreen extends StatelessWidget {
             textAlign: TextAlign.center,
             style: GoogleFonts.inter(
               fontSize: 12.5,
-              color: const Color(0xFF64748B),
+              color: AppColors.neutralMuted,
               height: 1.45,
             ),
           ),
@@ -161,9 +161,9 @@ class OrderSuccessScreen extends StatelessWidget {
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
             decoration: BoxDecoration(
-              color: const Color(0xFFF0FDF4),
+              color: AppColors.primaryTint,
               borderRadius: BorderRadius.circular(20),
-              border: Border.all(color: const Color(0xFFBBF7D0)),
+              border: Border.all(color: AppColors.primaryBorder),
             ),
             child: Row(
               mainAxisSize: MainAxisSize.min,
@@ -175,7 +175,7 @@ class OrderSuccessScreen extends StatelessWidget {
                   style: GoogleFonts.inter(
                     fontSize: 11,
                     fontWeight: FontWeight.w700,
-                    color: const Color(0xFF166534),
+                    color: AppColors.primary,
                   ),
                 ),
               ],
@@ -193,7 +193,7 @@ class OrderSuccessScreen extends StatelessWidget {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: const Color(0xFFE2E8F0)),
+        border: Border.all(color: AppColors.border),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -233,7 +233,7 @@ class OrderSuccessScreen extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 12),
-          const Divider(height: 1, color: Color(0xFFF1F5F9)),
+          const Divider(height: 1, color: AppColors.surfaceCanvas),
           const SizedBox(height: 12),
           _buildInfoRow('Nomor Invoice', invoiceNumber, isBold: true),
           const SizedBox(height: 8),
@@ -241,7 +241,7 @@ class OrderSuccessScreen extends StatelessWidget {
           const SizedBox(height: 8),
           _buildInfoRow('Waktu Transaksi', formattedDate),
           const SizedBox(height: 8),
-          _buildInfoRow('Status Pembayaran', 'Lunas (PAID)', statusColor: const Color(0xFF166534)),
+          _buildInfoRow('Status Pembayaran', 'Lunas (PAID)', statusColor: AppColors.primary),
           const SizedBox(height: 8),
           _buildInfoRow('Metode Pembayaran', paymentMethod),
         ],
@@ -256,7 +256,7 @@ class OrderSuccessScreen extends StatelessWidget {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: const Color(0xFFE2E8F0)),
+        border: Border.all(color: AppColors.border),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -291,7 +291,7 @@ class OrderSuccessScreen extends StatelessWidget {
             deliveryAddress,
             style: GoogleFonts.inter(
               fontSize: 11.5,
-              color: const Color(0xFF475569),
+              color: AppColors.neutralMuted,
               height: 1.4,
             ),
           ),
@@ -299,13 +299,13 @@ class OrderSuccessScreen extends StatelessWidget {
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
             decoration: BoxDecoration(
-              color: const Color(0xFFEFF6FF),
+              color: AppColors.secondaryTint,
               borderRadius: BorderRadius.circular(8),
-              border: Border.all(color: const Color(0xFFDBEAFE)),
+              border: Border.all(color: AppColors.secondaryTint),
             ),
             child: Row(
               children: [
-                const Icon(LucideIcons.truck, size: 14, color: Color(0xFF2563EB)),
+                const Icon(LucideIcons.truck, size: 14, color: AppColors.secondary),
                 const SizedBox(width: 8),
                 Expanded(
                   child: Text(
@@ -313,7 +313,7 @@ class OrderSuccessScreen extends StatelessWidget {
                     style: GoogleFonts.inter(
                       fontSize: 10.5,
                       fontWeight: FontWeight.w600,
-                      color: const Color(0xFF1E40AF),
+                      color: AppColors.secondaryDark,
                     ),
                   ),
                 ),
@@ -332,7 +332,7 @@ class OrderSuccessScreen extends StatelessWidget {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: const Color(0xFFE2E8F0)),
+        border: Border.all(color: AppColors.border),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -378,7 +378,7 @@ class OrderSuccessScreen extends StatelessWidget {
                               overflow: TextOverflow.ellipsis,
                               style: GoogleFonts.inter(
                                 fontSize: 11.5,
-                                color: const Color(0xFF334155),
+                                color: AppColors.neutral,
                               ),
                             ),
                           ),
@@ -387,7 +387,7 @@ class OrderSuccessScreen extends StatelessWidget {
                             '$qty $unit',
                             style: GoogleFonts.inter(
                               fontSize: 11,
-                              color: const Color(0xFF94A3B8),
+                              color: AppColors.neutralSubtle,
                             ),
                           ),
                         ],
@@ -419,7 +419,7 @@ class OrderSuccessScreen extends StatelessWidget {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: const Color(0xFFE2E8F0)),
+        border: Border.all(color: AppColors.border),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -435,9 +435,9 @@ class OrderSuccessScreen extends StatelessWidget {
           const SizedBox(height: 10),
           _buildInfoRow('Ongkos Kirim Cold-Chain', _formatRupiah(shippingFee)),
           const SizedBox(height: 6),
-          _buildInfoRow('Biaya Layanan Simulator', 'Rp 0', statusColor: const Color(0xFF166534)),
+          _buildInfoRow('Biaya Layanan Simulator', 'Rp 0', statusColor: AppColors.primary),
           const SizedBox(height: 10),
-          const Divider(height: 1, color: Color(0xFFE2E8F0)),
+          const Divider(height: 1, color: AppColors.border),
           const SizedBox(height: 10),
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -473,7 +473,7 @@ class OrderSuccessScreen extends StatelessWidget {
           label,
           style: GoogleFonts.inter(
             fontSize: 11.5,
-            color: const Color(0xFF64748B),
+            color: AppColors.neutralMuted,
           ),
         ),
         const SizedBox(width: 8),
@@ -498,10 +498,10 @@ class OrderSuccessScreen extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       decoration: const BoxDecoration(
         color: Colors.white,
-        border: Border(top: BorderSide(color: Color(0xFFE2E8F0))),
+        border: Border(top: BorderSide(color: AppColors.border)),
         boxShadow: [
           BoxShadow(
-            color: Color(0x0C000000),
+            color: AppColors.shadowFaint,
             blurRadius: 8,
             offset: Offset(0, -2),
           ),
@@ -548,8 +548,8 @@ class OrderSuccessScreen extends StatelessWidget {
                 );
               },
               style: OutlinedButton.styleFrom(
-                side: const BorderSide(color: Color(0xFFCBD5E1)),
-                foregroundColor: const Color(0xFF334155),
+                side: const BorderSide(color: AppColors.neutralBorder),
+                foregroundColor: AppColors.neutral,
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
               ),
               child: Text(

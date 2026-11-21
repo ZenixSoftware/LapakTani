@@ -114,7 +114,7 @@ class _MyProductsScreenState extends State<MyProductsScreen> {
           style: GoogleFonts.plusJakartaSans(
             fontSize: 16,
             fontWeight: FontWeight.w700,
-            color: const Color(0xFF121C2A),
+            color: AppColors.neutral,
           ),
         ),
         content: Column(
@@ -126,7 +126,7 @@ class _MyProductsScreenState extends State<MyProductsScreen> {
               style: GoogleFonts.plusJakartaSans(
                 fontSize: 13,
                 fontWeight: FontWeight.w600,
-                color: const Color(0xFF121C2A),
+                color: AppColors.neutral,
               ),
             ),
             const SizedBox(height: 12),
@@ -150,7 +150,7 @@ class _MyProductsScreenState extends State<MyProductsScreen> {
               'Stok berkurang otomatis saat pembeli membuat pesanan dan bertambah jika pesanan dibatalkan.',
               style: GoogleFonts.plusJakartaSans(
                 fontSize: 11,
-                color: const Color(0xFF64748B),
+                color: AppColors.neutralMuted,
               ),
             ),
           ],
@@ -163,7 +163,7 @@ class _MyProductsScreenState extends State<MyProductsScreen> {
               style: GoogleFonts.plusJakartaSans(
                 fontSize: 13,
                 fontWeight: FontWeight.w600,
-                color: const Color(0xFF64748B),
+                color: AppColors.neutralMuted,
               ),
             ),
           ),
@@ -211,14 +211,14 @@ class _MyProductsScreenState extends State<MyProductsScreen> {
           style: GoogleFonts.plusJakartaSans(
             fontSize: 16,
             fontWeight: FontWeight.w700,
-            color: const Color(0xFF121C2A),
+            color: AppColors.neutral,
           ),
         ),
         content: Text(
           'Apakah Anda yakin ingin menghapus "$title" dari etalase LapakTani?',
           style: GoogleFonts.plusJakartaSans(
             fontSize: 13,
-            color: const Color(0xFF64748B),
+            color: AppColors.neutralMuted,
           ),
         ),
         actions: [
@@ -229,14 +229,14 @@ class _MyProductsScreenState extends State<MyProductsScreen> {
               style: GoogleFonts.plusJakartaSans(
                 fontSize: 13,
                 fontWeight: FontWeight.w600,
-                color: const Color(0xFF64748B),
+                color: AppColors.neutralMuted,
               ),
             ),
           ),
           ElevatedButton(
             onPressed: () => Navigator.pop(ctx, true),
             style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFFEF4444),
+              backgroundColor: AppColors.error,
               foregroundColor: Colors.white,
               elevation: 0,
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
@@ -291,7 +291,7 @@ class _MyProductsScreenState extends State<MyProductsScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text('Kendala jaringan: $e'),
-          backgroundColor: const Color(0xFFEF4444),
+          backgroundColor: AppColors.error,
           behavior: SnackBarBehavior.floating,
         ),
       );
@@ -318,12 +318,12 @@ class _MyProductsScreenState extends State<MyProductsScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF8F9FF),
+      backgroundColor: AppColors.surfaceCanvas,
       appBar: AppBar(
         backgroundColor: Colors.white.withValues(alpha: 0.95),
         elevation: 0.5,
         leading: IconButton(
-          icon: const Icon(LucideIcons.arrowLeft, color: Color(0xFF121C2A), size: 22),
+          icon: const Icon(LucideIcons.arrowLeft, color: AppColors.neutral, size: 22),
           onPressed: () => Navigator.of(context, rootNavigator: true).pop(),
         ),
         title: Column(
@@ -332,7 +332,7 @@ class _MyProductsScreenState extends State<MyProductsScreen> {
           children: [
             Row(
               children: [
-                const Icon(LucideIcons.sprout, color: Color(0xFF006E04), size: 14),
+                const Icon(LucideIcons.sprout, color: AppColors.primary, size: 14),
                 const SizedBox(width: 4),
                 Text(
                   'KEBUN MANIK SARI',
@@ -340,14 +340,14 @@ class _MyProductsScreenState extends State<MyProductsScreen> {
                     fontSize: 10,
                     fontWeight: FontWeight.w700,
                     letterSpacing: 0.8,
-                    color: const Color(0xFF2C694C),
+                    color: AppColors.primary,
                   ),
                 ),
                 const SizedBox(width: 6),
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
                   decoration: BoxDecoration(
-                    color: const Color(0xFFB0F1CB),
+                    color: AppColors.primaryTint,
                     borderRadius: BorderRadius.circular(10),
                   ),
                   child: Text(
@@ -355,7 +355,7 @@ class _MyProductsScreenState extends State<MyProductsScreen> {
                     style: GoogleFonts.plusJakartaSans(
                       fontSize: 8.5,
                       fontWeight: FontWeight.w800,
-                      color: const Color(0xFF327052),
+                      color: AppColors.primary,
                     ),
                   ),
                 ),
@@ -367,18 +367,18 @@ class _MyProductsScreenState extends State<MyProductsScreen> {
               style: GoogleFonts.plusJakartaSans(
                 fontSize: 15,
                 fontWeight: FontWeight.w700,
-                color: const Color(0xFF121C2A),
+                color: AppColors.neutral,
               ),
             ),
           ],
         ),
         actions: [
           IconButton(
-            icon: const Icon(LucideIcons.search, color: Color(0xFF64748B), size: 20),
+            icon: const Icon(LucideIcons.search, color: AppColors.neutralMuted, size: 20),
             onPressed: () {},
           ),
           IconButton(
-            icon: const Icon(LucideIcons.settings, color: Color(0xFF64748B), size: 20),
+            icon: const Icon(LucideIcons.settings, color: AppColors.neutralMuted, size: 20),
             onPressed: () {},
           ),
           const SizedBox(width: 4),
@@ -397,7 +397,7 @@ class _MyProductsScreenState extends State<MyProductsScreen> {
             fetchFarmerProducts();
           }
         },
-        backgroundColor: const Color(0xFF006E04),
+        backgroundColor: AppColors.primary,
         foregroundColor: Colors.white,
         elevation: 6,
         shape: const CircleBorder(),
@@ -437,7 +437,7 @@ class _MyProductsScreenState extends State<MyProductsScreen> {
         borderRadius: BorderRadius.circular(16),
         boxShadow: const [
           BoxShadow(
-            color: Color(0x0A000000),
+            color: AppColors.shadowFaint,
             blurRadius: 8,
             offset: Offset(0, 2),
           ),
@@ -457,7 +457,7 @@ class _MyProductsScreenState extends State<MyProductsScreen> {
                     image: NetworkImage(_defaultFarmerPhoto),
                     fit: BoxFit.cover,
                   ),
-                  border: Border.all(color: const Color(0xFFD1F2D6), width: 1.5),
+                  border: Border.all(color: AppColors.primaryBorder, width: 1.5),
                 ),
               ),
               Positioned(
@@ -467,7 +467,7 @@ class _MyProductsScreenState extends State<MyProductsScreen> {
                   width: 16,
                   height: 16,
                   decoration: const BoxDecoration(
-                    color: Color(0xFF006E04),
+                    color: AppColors.primary,
                     shape: BoxShape.circle,
                   ),
                   child: const Icon(LucideIcons.check, size: 10, color: Colors.white),
@@ -487,7 +487,7 @@ class _MyProductsScreenState extends State<MyProductsScreen> {
                       style: GoogleFonts.plusJakartaSans(
                         fontSize: 15,
                         fontWeight: FontWeight.w700,
-                        color: const Color(0xFF121C2A),
+                        color: AppColors.neutral,
                       ),
                     ),
                     const SizedBox(width: 6),
@@ -511,13 +511,13 @@ class _MyProductsScreenState extends State<MyProductsScreen> {
                 const SizedBox(height: 2),
                 Row(
                   children: [
-                    const Icon(LucideIcons.mapPin, size: 13, color: Color(0xFF6D7B67)),
+                    const Icon(LucideIcons.mapPin, size: 13, color: AppColors.neutralMuted),
                     const SizedBox(width: 3),
                     Text(
                       'Lembang, Bandung Barat',
                       style: GoogleFonts.plusJakartaSans(
                         fontSize: 11.5,
-                        color: const Color(0xFF64748B),
+                        color: AppColors.neutralMuted,
                       ),
                     ),
                   ],
@@ -536,7 +536,7 @@ class _MyProductsScreenState extends State<MyProductsScreen> {
               duration: const Duration(milliseconds: 250),
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
               decoration: BoxDecoration(
-                color: _isStoreOpen ? const Color(0xFFB0F1CB) : const Color(0xFFE2E8F0),
+                color: _isStoreOpen ? AppColors.primaryTint : AppColors.border,
                 borderRadius: BorderRadius.circular(20),
               ),
               child: Row(
@@ -546,7 +546,7 @@ class _MyProductsScreenState extends State<MyProductsScreen> {
                     width: 7,
                     height: 7,
                     decoration: BoxDecoration(
-                      color: _isStoreOpen ? const Color(0xFF006E04) : const Color(0xFF64748B),
+                      color: _isStoreOpen ? AppColors.primary : AppColors.neutralMuted,
                       shape: BoxShape.circle,
                     ),
                   ),
@@ -556,7 +556,7 @@ class _MyProductsScreenState extends State<MyProductsScreen> {
                     style: GoogleFonts.plusJakartaSans(
                       fontSize: 11,
                       fontWeight: FontWeight.w700,
-                      color: _isStoreOpen ? const Color(0xFF002113) : const Color(0xFF475569),
+                      color: _isStoreOpen ? AppColors.neutral : AppColors.neutralMuted,
                     ),
                   ),
                 ],
@@ -583,14 +583,14 @@ class _MyProductsScreenState extends State<MyProductsScreen> {
                   style: GoogleFonts.plusJakartaSans(
                     fontSize: 14.5,
                     fontWeight: FontWeight.w700,
-                    color: const Color(0xFF121C2A),
+                    color: AppColors.neutral,
                   ),
                 ),
                 Text(
                   '${_products.length} komoditas aktif panen hari ini',
                   style: GoogleFonts.plusJakartaSans(
                     fontSize: 11,
-                    color: const Color(0xFF64748B),
+                    color: AppColors.neutralMuted,
                   ),
                 ),
               ],
@@ -607,20 +607,20 @@ class _MyProductsScreenState extends State<MyProductsScreen> {
               child: Container(
                 padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                 decoration: BoxDecoration(
-                  color: const Color(0xFFB0F1CB),
+                  color: AppColors.primaryTint,
                   borderRadius: BorderRadius.circular(20),
                 ),
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    const Icon(LucideIcons.plusCircle, size: 14, color: Color(0xFF005302)),
+                    const Icon(LucideIcons.plusCircle, size: 14, color: AppColors.primary),
                     const SizedBox(width: 4),
                     Text(
                       '+ Tambah Komoditas Panen',
                       style: GoogleFonts.plusJakartaSans(
                         fontSize: 11,
                         fontWeight: FontWeight.w700,
-                        color: const Color(0xFF005302),
+                        color: AppColors.primary,
                       ),
                     ),
                   ],
@@ -647,7 +647,7 @@ class _MyProductsScreenState extends State<MyProductsScreen> {
                 borderRadius: BorderRadius.circular(16),
                 boxShadow: const [
                   BoxShadow(
-                    color: Color(0x0A000000),
+                    color: AppColors.shadowFaint,
                     blurRadius: 8,
                     offset: Offset(0, 2),
                   ),
@@ -660,20 +660,20 @@ class _MyProductsScreenState extends State<MyProductsScreen> {
                     child: Container(
                       width: 64,
                       height: 64,
-                      color: const Color(0xFFF1F5F9),
+                      color: AppColors.surfaceCanvas,
                       child: imageUrl.isNotEmpty
                           ? Image.network(
                               imageUrl,
                               fit: BoxFit.cover,
                               errorBuilder: (context, error, stackTrace) => const Icon(
                                 LucideIcons.image,
-                                color: Color(0xFF94A3B8),
+                                color: AppColors.neutralSubtle,
                                 size: 24,
                               ),
                             )
                           : const Icon(
                               LucideIcons.image,
-                              color: Color(0xFF94A3B8),
+                              color: AppColors.neutralSubtle,
                               size: 24,
                             ),
                     ),
@@ -688,7 +688,7 @@ class _MyProductsScreenState extends State<MyProductsScreen> {
                           style: GoogleFonts.plusJakartaSans(
                             fontSize: 13.5,
                             fontWeight: FontWeight.w700,
-                            color: const Color(0xFF121C2A),
+                            color: AppColors.neutral,
                           ),
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
@@ -701,14 +701,14 @@ class _MyProductsScreenState extends State<MyProductsScreen> {
                               style: GoogleFonts.plusJakartaSans(
                                 fontSize: 13,
                                 fontWeight: FontWeight.w700,
-                                color: const Color(0xFF006E04),
+                                color: AppColors.primary,
                               ),
                             ),
                             Text(
                               unit.startsWith('/') ? unit : '/$unit',
                               style: GoogleFonts.plusJakartaSans(
                                 fontSize: 11,
-                                color: const Color(0xFF94A3B8),
+                                color: AppColors.neutralSubtle,
                               ),
                             ),
                           ],
@@ -724,10 +724,10 @@ class _MyProductsScreenState extends State<MyProductsScreen> {
                             final bool isLowStock = liveStock > 0 && liveStock <= 10;
 
                             final Color statusColor = isOutOfStock
-                                ? const Color(0xFFEF4444)
+                                ? AppColors.error
                                 : isLowStock
-                                    ? const Color(0xFFD97706)
-                                    : const Color(0xFF006E04);
+                                    ? AppColors.tertiaryText
+                                    : AppColors.primary;
                             final String statusText = isOutOfStock
                                 ? 'Stok Habis'
                                 : isLowStock
@@ -740,7 +740,7 @@ class _MyProductsScreenState extends State<MyProductsScreen> {
                                   'Stok: ',
                                   style: GoogleFonts.plusJakartaSans(
                                     fontSize: 11,
-                                    color: const Color(0xFF64748B),
+                                    color: AppColors.neutralMuted,
                                   ),
                                 ),
                                 Text(
@@ -749,8 +749,8 @@ class _MyProductsScreenState extends State<MyProductsScreen> {
                                     fontSize: 11,
                                     fontWeight: FontWeight.w700,
                                     color: isOutOfStock
-                                        ? const Color(0xFFEF4444)
-                                        : const Color(0xFF121C2A),
+                                        ? AppColors.error
+                                        : AppColors.neutral,
                                   ),
                                 ),
                                 const SizedBox(width: 6),
@@ -793,10 +793,10 @@ class _MyProductsScreenState extends State<MyProductsScreen> {
                           width: 36,
                           height: 36,
                           decoration: BoxDecoration(
-                            color: const Color(0xFFDCFCE7),
+                            color: AppColors.primaryTint,
                             borderRadius: BorderRadius.circular(8),
                           ),
-                          child: const Icon(LucideIcons.packagePlus, size: 16, color: Color(0xFF006E04)),
+                          child: const Icon(LucideIcons.packagePlus, size: 16, color: AppColors.primary),
                         ),
                       ),
                       const SizedBox(width: 6),
@@ -815,10 +815,10 @@ class _MyProductsScreenState extends State<MyProductsScreen> {
                           width: 36,
                           height: 36,
                           decoration: BoxDecoration(
-                            color: const Color(0xFFF1F5F9),
+                            color: AppColors.surfaceCanvas,
                             borderRadius: BorderRadius.circular(8),
                           ),
-                          child: const Icon(LucideIcons.edit2, size: 16, color: Color(0xFF475569)),
+                          child: const Icon(LucideIcons.edit2, size: 16, color: AppColors.neutralMuted),
                         ),
                       ),
                       const SizedBox(width: 6),
@@ -829,10 +829,10 @@ class _MyProductsScreenState extends State<MyProductsScreen> {
                           width: 36,
                           height: 36,
                           decoration: BoxDecoration(
-                            color: const Color(0xFFFEF2F2),
+                            color: AppColors.errorTint,
                             borderRadius: BorderRadius.circular(8),
                           ),
-                          child: const Icon(LucideIcons.trash2, size: 16, color: Color(0xFFEF4444)),
+                          child: const Icon(LucideIcons.trash2, size: 16, color: AppColors.error),
                         ),
                       ),
                     ],
@@ -850,7 +850,7 @@ class _MyProductsScreenState extends State<MyProductsScreen> {
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: const Color(0xFFEFF4FF),
+        color: AppColors.surfaceCanvas,
         borderRadius: BorderRadius.circular(16),
       ),
       child: Row(
@@ -859,10 +859,10 @@ class _MyProductsScreenState extends State<MyProductsScreen> {
             width: 44,
             height: 44,
             decoration: const BoxDecoration(
-              color: Color(0xFFB0F1CB),
+              color: AppColors.primaryTint,
               shape: BoxShape.circle,
             ),
-            child: const Icon(LucideIcons.headphones, color: Color(0xFF005302), size: 22),
+            child: const Icon(LucideIcons.headphones, color: AppColors.primary, size: 22),
           ),
           const SizedBox(width: 12),
           Expanded(
@@ -874,7 +874,7 @@ class _MyProductsScreenState extends State<MyProductsScreen> {
                   style: GoogleFonts.plusJakartaSans(
                     fontSize: 12.5,
                     fontWeight: FontWeight.w700,
-                    color: const Color(0xFF121C2A),
+                    color: AppColors.neutral,
                   ),
                 ),
                 const SizedBox(height: 2),
@@ -882,7 +882,7 @@ class _MyProductsScreenState extends State<MyProductsScreen> {
                   'Perlu pikap logistik dingin untuk hasil tani >50kg? Hubungi Tim Lapangan LapakTani Lembang.',
                   style: GoogleFonts.plusJakartaSans(
                     fontSize: 10.5,
-                    color: const Color(0xFF64748B),
+                    color: AppColors.neutralMuted,
                     height: 1.3,
                   ),
                 ),
@@ -893,7 +893,7 @@ class _MyProductsScreenState extends State<MyProductsScreen> {
           ElevatedButton(
             onPressed: () {},
             style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFF006E04),
+              backgroundColor: AppColors.primary,
               foregroundColor: Colors.white,
               elevation: 0,
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),

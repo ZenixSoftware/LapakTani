@@ -19,28 +19,28 @@ interface SumenepLandMonitoringProps {
 type TileLayerKey = 'google_roadmap' | 'google_hybrid' | 'esri_street' | 'osm_street';
 
 const FILTER_CHIPS: { key: string; label: string; icon: string; dotColor: string }[] = [
-  { key: 'all', label: 'Semua Titik', icon: 'layers', dotColor: '#166534' },
-  { key: 'padi', label: 'Padi', icon: 'grass', dotColor: '#16a34a' },
-  { key: 'jagung', label: 'Jagung', icon: 'agriculture', dotColor: '#d97706' },
-  { key: 'cabai', label: 'Cabai', icon: 'local_fire_department', dotColor: '#dc2626' },
-  { key: 'tembakau', label: 'Tembakau', icon: 'eco', dotColor: '#0d9488' },
-  { key: 'traktor', label: 'Traktor', icon: 'precision_manufacturing', dotColor: '#ea580c' },
-  { key: 'sapi', label: 'Sapi', icon: 'pets', dotColor: '#854d0e' },
-  { key: 'poktan', label: 'Poktan', icon: 'groups', dotColor: '#7c3aed' },
-  { key: 'irigasi', label: 'Irigasi', icon: 'water', dotColor: '#0284c7' },
-  { key: 'pompa', label: 'Pompa Air', icon: 'cyclone', dotColor: '#0891b2' },
-  { key: 'listrik', label: 'Listrik', icon: 'bolt', dotColor: '#f59e0b' },
-  { key: 'kritis', label: 'Titik Kritis', icon: 'warning', dotColor: '#e11d48' },
+  { key: 'all', label: 'Semua Titik', icon: 'layers', dotColor: 'var(--lt-primary)' },
+  { key: 'padi', label: 'Padi', icon: 'grass', dotColor: 'var(--lt-primary)' },
+  { key: 'jagung', label: 'Jagung', icon: 'agriculture', dotColor: 'var(--lt-tertiary)' },
+  { key: 'cabai', label: 'Cabai', icon: 'local_fire_department', dotColor: 'var(--lt-error)' },
+  { key: 'tembakau', label: 'Tembakau', icon: 'eco', dotColor: 'var(--lt-secondary)' },
+  { key: 'traktor', label: 'Traktor', icon: 'precision_manufacturing', dotColor: 'var(--lt-tertiary-text)' },
+  { key: 'sapi', label: 'Sapi', icon: 'pets', dotColor: 'var(--lt-neutral)' },
+  { key: 'poktan', label: 'Poktan', icon: 'groups', dotColor: 'var(--lt-secondary-dark)' },
+  { key: 'irigasi', label: 'Irigasi', icon: 'water', dotColor: 'var(--lt-secondary)' },
+  { key: 'pompa', label: 'Pompa Air', icon: 'cyclone', dotColor: 'var(--lt-secondary)' },
+  { key: 'listrik', label: 'Listrik', icon: 'bolt', dotColor: 'var(--lt-tertiary)' },
+  { key: 'kritis', label: 'Titik Kritis', icon: 'warning', dotColor: 'var(--lt-error)' },
 ];
 
 const PIN_SVGS: Record<string, string> = {
-  padi: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.2"><path d="M2 22 12 12"/><path d="M11.3 7.8a4 4 0 0 1 5.6-5.6 4 4 0 0 1-5.6 5.6Z"/><path d="M6.3 12.8a4 4 0 0 1 5.6-5.6 4 4 0 0 1-5.6 5.6Z"/></svg>',
-  jagung: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.2"><path d="M12 2a4 4 0 0 0-4 4v10a4 4 0 0 0 8 0V6a4 4 0 0 0-4-4Z"/><path d="M8 10h8"/></svg>',
-  cabai: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.2"><path d="M12 2c1.5 2 2 3.5 2 5 0 5-4 11-7 13-1-3 0-8 2-13 1-2.5 2-4 3-5Z"/></svg>',
-  tembakau: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.2"><path d="M11 20A7 7 0 0 1 9.8 6.1C15.5 5 17 4.48 19 2c1 2 2 4.18 2 8 0 5.5-4.78 10-10 10Z"/></svg>',
-  irigasi: '<svg width="16" height="16" viewBox="0 0 24 24" fill="#fff"><path d="M12 2.69l5.66 5.66a8 8 0 1 1-11.31 0z"/></svg>',
-  listrik: '<svg width="16" height="16" viewBox="0 0 24 24" fill="#fff"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>',
-  kritis: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.4"><path d="M12 9v4"/><path d="M12 17h.01"/><path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0Z"/></svg>',
+  padi: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--lt-surface-card)" stroke-width="2.2"><path d="M2 22 12 12"/><path d="M11.3 7.8a4 4 0 0 1 5.6-5.6 4 4 0 0 1-5.6 5.6Z"/><path d="M6.3 12.8a4 4 0 0 1 5.6-5.6 4 4 0 0 1-5.6 5.6Z"/></svg>',
+  jagung: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--lt-surface-card)" stroke-width="2.2"><path d="M12 2a4 4 0 0 0-4 4v10a4 4 0 0 0 8 0V6a4 4 0 0 0-4-4Z"/><path d="M8 10h8"/></svg>',
+  cabai: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--lt-surface-card)" stroke-width="2.2"><path d="M12 2c1.5 2 2 3.5 2 5 0 5-4 11-7 13-1-3 0-8 2-13 1-2.5 2-4 3-5Z"/></svg>',
+  tembakau: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--lt-surface-card)" stroke-width="2.2"><path d="M11 20A7 7 0 0 1 9.8 6.1C15.5 5 17 4.48 19 2c1 2 2 4.18 2 8 0 5.5-4.78 10-10 10Z"/></svg>',
+  irigasi: '<svg width="16" height="16" viewBox="0 0 24 24" fill="var(--lt-surface-card)"><path d="M12 2.69l5.66 5.66a8 8 0 1 1-11.31 0z"/></svg>',
+  listrik: '<svg width="16" height="16" viewBox="0 0 24 24" fill="var(--lt-surface-card)"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>',
+  kritis: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--lt-surface-card)" stroke-width="2.4"><path d="M12 9v4"/><path d="M12 17h.01"/><path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0Z"/></svg>',
 };
 
 const getEffectivePinType = (plot: LandPlotRecord, activeFilter: string): string => {
@@ -320,27 +320,27 @@ export const SumenepLandMonitoring: React.FC<SumenepLandMonitoringProps> = ({
       {/* Header & Breadcrumb Mirroring SmartAgri "Peta Lahan & Infrastruktur" */}
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <div className="inline-flex items-center gap-2 text-[11.5px] font-bold uppercase tracking-wider text-[#166534]">
-            <span className="w-2 h-2 rounded-full bg-[#22C55E] animate-pulse" />
+          <div className="inline-flex items-center gap-2 text-[11.5px] font-bold uppercase tracking-wider text-lt-primary">
+            <span className="w-2 h-2 rounded-full bg-lt-primary animate-pulse" />
             Kabupaten Sumenep &bull; Sensor 8-in-1 &amp; Precision Farming
           </div>
-          <h1 className="text-2xl font-extrabold text-gray-900 mt-0.5">
+          <h1 className="text-2xl font-extrabold text-lt-neutral mt-0.5">
             Peta Lahan &amp; Infrastruktur
           </h1>
-          <p className="text-[13px] text-gray-500">
+          <p className="text-[13px] text-lt-neutral-muted">
             Filter cepat komoditas pertanian, alat pembajak lahan (traktor &amp; sapi), kelompok tani, irigasi, pompa air, listrik, dan titik kritis PPL.
           </p>
         </div>
 
         <div className="flex items-center gap-2">
-          <span className="px-3.5 py-2 rounded-xl bg-white border border-[#E2E8F0] text-[12.5px] font-extrabold text-[#0D5136] shadow-sm font-mono">
+          <span className="px-3.5 py-2 rounded-xl bg-white border border-lt-border text-[12.5px] font-extrabold text-lt-neutral shadow-sm font-mono">
             Total: {filteredPlots.length} Titik
           </span>
           <button
             type="button"
             onClick={onRefresh}
             disabled={isLoading}
-            className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-[#166534] hover:bg-[#0D5136] text-white text-[12.5px] font-bold shadow-sm transition-colors disabled:opacity-50"
+            className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-lt-primary hover:bg-lt-primary-dark text-white text-[12.5px] font-bold shadow-sm transition-colors disabled:opacity-50"
           >
             <span className={`material-symbols-outlined text-[17px] ${isLoading ? 'animate-spin' : ''}`}>
               refresh
@@ -351,10 +351,10 @@ export const SumenepLandMonitoring: React.FC<SumenepLandMonitoringProps> = ({
       </div>
 
       {/* Filter & Map Controls Toolbar */}
-      <div className="bg-white rounded-2xl border border-[#E2E8F0] p-4 shadow-sm space-y-3.5">
+      <div className="bg-white rounded-2xl border border-lt-border p-4 shadow-sm space-y-3.5">
         <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3">
           <div className="relative flex-1 max-w-md">
-            <span className="material-symbols-outlined text-gray-400 text-[18px] absolute left-3 top-1/2 -translate-y-1/2">
+            <span className="material-symbols-outlined text-lt-neutral-subtle text-[18px] absolute left-3 top-1/2 -translate-y-1/2">
               search
             </span>
             <input
@@ -362,20 +362,20 @@ export const SumenepLandMonitoring: React.FC<SumenepLandMonitoringProps> = ({
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="Cari desa (Mandala, Pakondang...), Poktan, atau komoditas..."
-              className="w-full pl-9 pr-4 py-2 text-[13px] bg-[#F8FAF9] border border-[#E2E8F0] rounded-xl focus:outline-none focus:ring-2 focus:ring-[#22C55E]/30 focus:border-[#166534]"
+              className="w-full pl-9 pr-4 py-2 text-[13px] bg-lt-surface-canvas border border-lt-border rounded-xl focus:outline-none focus:ring-2 focus:ring-lt-primary/30 focus:border-lt-primary"
             />
           </div>
 
           {/* Basemap Tile Switcher & Reset */}
           <div className="flex flex-wrap items-center gap-2">
-            <label htmlFor="sumenepLayerSelect" className="text-[12px] font-bold text-gray-600">
+            <label htmlFor="sumenepLayerSelect" className="text-[12px] font-bold text-lt-neutral-muted">
               Peta Dasar:
             </label>
             <select
               id="sumenepLayerSelect"
               value={layerType}
               onChange={(e) => setLayerType(e.target.value as TileLayerKey)}
-              className="px-3 py-2 rounded-xl bg-[#F8FAF9] border border-[#E2E8F0] text-[12.5px] font-bold text-gray-800 focus:outline-none focus:border-[#166534]"
+              className="px-3 py-2 rounded-xl bg-lt-surface-canvas border border-lt-border text-[12.5px] font-bold text-lt-neutral focus:outline-none focus:border-lt-primary"
             >
               <option value="google_roadmap">Google Maps</option>
               <option value="google_hybrid">Satellite Hybrid</option>
@@ -388,7 +388,7 @@ export const SumenepLandMonitoring: React.FC<SumenepLandMonitoringProps> = ({
                 setActiveFilter('all');
                 setSearchQuery('');
               }}
-              className="px-3 py-2 rounded-xl bg-[#F8FAF9] hover:bg-gray-100 border border-[#E2E8F0] text-[12px] font-bold text-gray-700 flex items-center gap-1"
+              className="px-3 py-2 rounded-xl bg-lt-surface-canvas hover:bg-lt-surface-canvas border border-lt-border text-[12px] font-bold text-lt-neutral flex items-center gap-1"
               title="Reset ke Semua Titik"
             >
               <span className="material-symbols-outlined text-[16px]">restart_alt</span>
@@ -398,7 +398,7 @@ export const SumenepLandMonitoring: React.FC<SumenepLandMonitoringProps> = ({
         </div>
 
         {/* Multi-Chip Filter Bar */}
-        <div className="flex flex-wrap gap-2 pt-1 border-t border-[#E2E8F0]">
+        <div className="flex flex-wrap gap-2 pt-1 border-t border-lt-border">
           {FILTER_CHIPS.map((chip) => {
             const active = activeFilter === chip.key;
             return (
@@ -408,13 +408,13 @@ export const SumenepLandMonitoring: React.FC<SumenepLandMonitoringProps> = ({
                 onClick={() => setActiveFilter(chip.key)}
                 className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[12px] font-bold transition-all ${
                   active
-                    ? 'bg-[#0D5136] text-white shadow-sm'
-                    : 'bg-[#F8FAF9] text-gray-700 border border-[#E2E8F0] hover:bg-emerald-50 hover:text-[#166534]'
+                    ? 'bg-lt-primary text-white shadow-sm'
+                    : 'bg-lt-surface-canvas text-lt-neutral border border-lt-border hover:bg-lt-primary-tint hover:text-lt-primary'
                 }`}
               >
                 <span
                   className="w-2 h-2 rounded-full shrink-0"
-                  style={{ backgroundColor: active ? '#22C55E' : chip.dotColor }}
+                  style={{ backgroundColor: active ? 'var(--lt-surface-card)' : chip.dotColor }}
                 />
                 <span className="material-symbols-outlined text-[15px]">{chip.icon}</span>
                 {chip.label}
@@ -425,16 +425,16 @@ export const SumenepLandMonitoring: React.FC<SumenepLandMonitoringProps> = ({
       </div>
 
       {/* Clustered Leaflet Map Card */}
-      <div className="bg-white rounded-2xl border border-[#E2E8F0] p-3 shadow-sm">
+      <div className="bg-white rounded-2xl border border-lt-border p-3 shadow-sm">
         <div className="relative lapaktani-leaflet-map">
           <div
             ref={mapContainerRef}
-            className="w-full h-[520px] lg:h-[600px] rounded-xl border border-[#E2E8F0] z-10 bg-[#F8FAF9]"
+            className="w-full h-[520px] lg:h-[600px] rounded-xl border border-lt-border z-10 bg-lt-surface-canvas"
           />
           {filteredPlots.length === 0 && (
             <div className="absolute inset-0 z-20 flex items-center justify-center pointer-events-none">
-              <div className="bg-white/95 backdrop-blur-sm border border-[#E2E8F0] rounded-2xl px-6 py-4 shadow-lg text-center">
-                <p className="text-[13.5px] font-bold text-gray-800">
+              <div className="bg-white/95 backdrop-blur-sm border border-lt-border rounded-2xl px-6 py-4 shadow-lg text-center">
+                <p className="text-[13.5px] font-bold text-lt-neutral">
                   Tidak ada titik koordinat yang sesuai dengan filter saat ini.
                 </p>
               </div>
@@ -444,25 +444,25 @@ export const SumenepLandMonitoring: React.FC<SumenepLandMonitoringProps> = ({
       </div>
 
       {/* Interactive Plot Directory Strip for Fast Inspection */}
-      <div className="bg-white rounded-2xl border border-[#E2E8F0] shadow-sm overflow-hidden">
-        <div className="px-5 py-3.5 border-b border-[#E2E8F0] flex flex-wrap items-center justify-between gap-2 bg-[#F8FAF9]">
+      <div className="bg-white rounded-2xl border border-lt-border shadow-sm overflow-hidden">
+        <div className="px-5 py-3.5 border-b border-lt-border flex flex-wrap items-center justify-between gap-2 bg-lt-surface-canvas">
           <div>
-            <h2 className="text-[14px] font-extrabold text-gray-900">
+            <h2 className="text-[14px] font-extrabold text-lt-neutral">
               Direktori Titik Terfilter ({filteredPlots.length})
             </h2>
-            <p className="text-[11.5px] text-gray-500">
+            <p className="text-[11.5px] text-lt-neutral-muted">
               Klik baris lahan untuk membuka drawer inspektor sensor 8-in-1 &amp; form rekomendasi PPL
             </p>
           </div>
           <div className="flex items-center gap-3 text-[11px] font-bold">
-            <span className="inline-flex items-center gap-1 text-[#166534]">
-              <span className="w-2.5 h-2.5 rounded-full bg-[#22C55E]" /> Optimal
+            <span className="inline-flex items-center gap-1 text-lt-primary">
+              <span className="w-2.5 h-2.5 rounded-full bg-lt-primary" /> Optimal
             </span>
-            <span className="inline-flex items-center gap-1 text-amber-700">
-              <span className="w-2.5 h-2.5 rounded-full bg-[#F59E0B]" /> Sedang
+            <span className="inline-flex items-center gap-1 text-lt-tertiary-text">
+              <span className="w-2.5 h-2.5 rounded-full bg-lt-tertiary" /> Sedang
             </span>
-            <span className="inline-flex items-center gap-1 text-rose-700">
-              <span className="w-2.5 h-2.5 rounded-full bg-rose-500" /> Kritis
+            <span className="inline-flex items-center gap-1 text-lt-error">
+              <span className="w-2.5 h-2.5 rounded-full bg-lt-error" /> Kritis
             </span>
           </div>
         </div>
@@ -475,17 +475,17 @@ export const SumenepLandMonitoring: React.FC<SumenepLandMonitoringProps> = ({
                 key={plot.id}
                 type="button"
                 onClick={() => onInspectPlot(plot)}
-                className="text-left p-4 rounded-xl bg-[#F8FAF9] hover:bg-emerald-50/60 border border-[#E2E8F0] hover:border-[#22C55E] transition-all space-y-2"
+                className="text-left p-4 rounded-xl bg-lt-surface-canvas hover:bg-lt-primary-tint/60 border border-lt-border hover:border-lt-primary transition-all space-y-2"
               >
                 <div className="flex items-start justify-between gap-2">
                   <div>
-                    <div className="font-extrabold text-[14px] text-gray-900">
+                    <div className="font-extrabold text-[14px] text-lt-neutral">
                       Desa {plot.nama_desa}
                       {plot.kecamatan ? `, ${plot.kecamatan}` : ''}
                     </div>
-                    <div className="text-[11.5px] text-gray-500">
+                    <div className="text-[11.5px] text-lt-neutral-muted">
                       {plot.kelompok_tani || 'Mandiri'} ·{' '}
-                      <span className="capitalize font-semibold text-[#166534]">
+                      <span className="capitalize font-semibold text-lt-primary">
                         {plot.komoditas}
                       </span>
                     </div>
@@ -493,16 +493,16 @@ export const SumenepLandMonitoring: React.FC<SumenepLandMonitoringProps> = ({
                   <span
                     className={`px-2 py-0.5 rounded-full text-[10px] font-extrabold uppercase ${
                       status === 'kritis'
-                        ? 'bg-rose-100 text-rose-700'
+                        ? 'bg-lt-error-tint text-lt-error'
                         : status === 'optimal'
-                          ? 'bg-emerald-100 text-[#166534]'
-                          : 'bg-amber-100 text-amber-800'
+                          ? 'bg-lt-primary-tint text-lt-primary'
+                          : 'bg-lt-tertiary-tint text-lt-tertiary-text'
                     }`}
                   >
                     {status}
                   </span>
                 </div>
-                <div className="flex items-center justify-between text-[11.5px] font-mono font-bold text-gray-700 pt-2 border-t border-[#E2E8F0]">
+                <div className="flex items-center justify-between text-[11.5px] font-mono font-bold text-lt-neutral pt-2 border-t border-lt-border">
                   <span>pH {plot.ph}</span>
                   <span>Lembab {plot.moisture}%</span>
                   <span>Subur {plot.fertility}/100</span>

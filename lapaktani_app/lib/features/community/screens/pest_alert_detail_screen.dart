@@ -4,6 +4,7 @@ import 'package:lucide_icons/lucide_icons.dart';
 import '../models/pest_report_model.dart';
 import '../services/pest_alert_service.dart';
 import 'create_pest_report_screen.dart';
+import 'package:lapaktani_app/core/theme/app_colors.dart';
 
 /// Pest Alert Detail Screen (US-19)
 /// Styled according to Stitch AI Design Guidelines:
@@ -45,14 +46,14 @@ class _PestAlertDetailScreenState extends State<PestAlertDetailScreen> {
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         title: Row(
           children: [
-            const Icon(LucideIcons.shieldCheck, color: Color(0xFF2E7D32), size: 22),
+            const Icon(LucideIcons.shieldCheck, color: AppColors.primary, size: 22),
             const SizedBox(width: 8),
             Text(
               'Tandai Terkendali',
               style: GoogleFonts.inter(
                 fontSize: 16,
                 fontWeight: FontWeight.w700,
-                color: const Color(0xFF0F172A),
+                color: AppColors.neutral,
               ),
             ),
           ],
@@ -65,7 +66,7 @@ class _PestAlertDetailScreenState extends State<PestAlertDetailScreen> {
               'Status peringatan dini darurat akan ditutup dan status laporan diubah menjadi Terkendali.',
               style: GoogleFonts.inter(
                 fontSize: 13,
-                color: const Color(0xFF475569),
+                color: AppColors.neutralMuted,
                 height: 1.4,
               ),
             ),
@@ -75,30 +76,30 @@ class _PestAlertDetailScreenState extends State<PestAlertDetailScreen> {
               style: GoogleFonts.inter(
                 fontSize: 12,
                 fontWeight: FontWeight.w600,
-                color: const Color(0xFF1E293B),
+                color: AppColors.neutral,
               ),
             ),
             const SizedBox(height: 6),
             TextField(
               controller: noteController,
               maxLines: 3,
-              style: GoogleFonts.inter(fontSize: 12, color: const Color(0xFF0F172A)),
+              style: GoogleFonts.inter(fontSize: 12, color: AppColors.neutral),
               decoration: InputDecoration(
                 hintText: 'Tuliskan tindakan yang berhasil menekan serangan...',
-                hintStyle: GoogleFonts.inter(fontSize: 12, color: const Color(0xFF94A3B8)),
+                hintStyle: GoogleFonts.inter(fontSize: 12, color: AppColors.neutralSubtle),
                 filled: true,
-                fillColor: const Color(0xFFF8FAFC),
+                fillColor: AppColors.surfaceCanvas,
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(12),
-                  borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
+                  borderSide: const BorderSide(color: AppColors.border),
                 ),
                 enabledBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(12),
-                  borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
+                  borderSide: const BorderSide(color: AppColors.border),
                 ),
                 focusedBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(12),
-                  borderSide: const BorderSide(color: Color(0xFF2E7D32), width: 1.5),
+                  borderSide: const BorderSide(color: AppColors.primary, width: 1.5),
                 ),
                 contentPadding: const EdgeInsets.all(12),
               ),
@@ -110,7 +111,7 @@ class _PestAlertDetailScreenState extends State<PestAlertDetailScreen> {
             onPressed: () => Navigator.pop(ctx),
             child: Text(
               'Batal',
-              style: GoogleFonts.inter(color: const Color(0xFF64748B), fontWeight: FontWeight.w600),
+              style: GoogleFonts.inter(color: AppColors.neutralMuted, fontWeight: FontWeight.w600),
             ),
           ),
           ElevatedButton(
@@ -155,12 +156,12 @@ class _PestAlertDetailScreenState extends State<PestAlertDetailScreen> {
                         ? 'Laporan berhasil ditandai sebagai Terkendali di database.'
                         : 'Gagal memperbarui status laporan.',
                   ),
-                  backgroundColor: success ? const Color(0xFF2E7D32) : const Color(0xFFDC2626),
+                  backgroundColor: success ? AppColors.primary : AppColors.error,
                 ),
               );
             },
             style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFF2E7D32),
+              backgroundColor: AppColors.primary,
               foregroundColor: Colors.white,
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
               elevation: 0,
@@ -185,7 +186,7 @@ class _PestAlertDetailScreenState extends State<PestAlertDetailScreen> {
     final badgeText = report.severityColor;
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF8FAFC),
+      backgroundColor: AppColors.surfaceCanvas,
       appBar: AppBar(
         backgroundColor: Colors.white,
         elevation: 0,
@@ -195,11 +196,11 @@ class _PestAlertDetailScreenState extends State<PestAlertDetailScreen> {
           style: GoogleFonts.inter(
             fontSize: 16,
             fontWeight: FontWeight.w700,
-            color: const Color(0xFF0F172A),
+            color: AppColors.neutral,
           ),
         ),
         leading: IconButton(
-          icon: const Icon(LucideIcons.arrowLeft, color: Color(0xFF334155), size: 20),
+          icon: const Icon(LucideIcons.arrowLeft, color: AppColors.neutral, size: 20),
           onPressed: () => Navigator.pop(context),
         ),
       ),
@@ -230,9 +231,9 @@ class _PestAlertDetailScreenState extends State<PestAlertDetailScreen> {
                       report.imageUrl!,
                       fit: BoxFit.cover,
                       errorBuilder: (_, _, _) => Container(
-                        color: const Color(0xFFF1F5F9),
+                        color: AppColors.surfaceCanvas,
                         child: const Center(
-                          child: Icon(LucideIcons.image, size: 40, color: Color(0xFF94A3B8)),
+                          child: Icon(LucideIcons.image, size: 40, color: AppColors.neutralSubtle),
                         ),
                       ),
                     ),
@@ -282,8 +283,8 @@ class _PestAlertDetailScreenState extends State<PestAlertDetailScreen> {
                             padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                             decoration: BoxDecoration(
                               color: report.status == 'resolved'
-                                  ? const Color(0xFFE8F5E9)
-                                  : const Color(0xFFFFF3E0),
+                                  ? AppColors.primaryTint
+                                  : AppColors.tertiaryTint,
                               borderRadius: BorderRadius.circular(8),
                             ),
                             child: Text(
@@ -292,8 +293,8 @@ class _PestAlertDetailScreenState extends State<PestAlertDetailScreen> {
                                 fontSize: 11.5,
                                 fontWeight: FontWeight.w700,
                                 color: report.status == 'resolved'
-                                    ? const Color(0xFF2E7D32)
-                                    : const Color(0xFFEF6C00),
+                                    ? AppColors.primary
+                                    : AppColors.tertiaryText,
                               ),
                             ),
                           ),
@@ -305,7 +306,7 @@ class _PestAlertDetailScreenState extends State<PestAlertDetailScreen> {
                         style: GoogleFonts.inter(
                           fontSize: 18,
                           fontWeight: FontWeight.w800,
-                          color: const Color(0xFF0F172A),
+                          color: AppColors.neutral,
                           height: 1.3,
                         ),
                       ),
@@ -314,7 +315,7 @@ class _PestAlertDetailScreenState extends State<PestAlertDetailScreen> {
                         'Dilaporkan pada ${report.formattedDate} (${report.timeAgo})',
                         style: GoogleFonts.inter(
                           fontSize: 11.5,
-                          color: const Color(0xFF64748B),
+                          color: AppColors.neutralMuted,
                         ),
                       ),
                     ],
@@ -346,25 +347,25 @@ class _PestAlertDetailScreenState extends State<PestAlertDetailScreen> {
                   label: 'Komoditas Terdampak',
                   value: report.cropType,
                 ),
-                const Divider(height: 20, color: Color(0xFFF1F5F9)),
+                const Divider(height: 20, color: AppColors.surfaceCanvas),
                 _buildAttributeRow(
                   icon: LucideIcons.maximize2,
                   label: 'Luas Area Serangan',
                   value: report.affectedArea,
                 ),
-                const Divider(height: 20, color: Color(0xFFF1F5F9)),
+                const Divider(height: 20, color: AppColors.surfaceCanvas),
                 _buildAttributeRow(
                   icon: LucideIcons.users,
                   label: 'Kelompok Tani (Poktan)',
                   value: report.farmerGroupName,
                 ),
-                const Divider(height: 20, color: Color(0xFFF1F5F9)),
+                const Divider(height: 20, color: AppColors.surfaceCanvas),
                 _buildAttributeRow(
                   icon: LucideIcons.mapPin,
                   label: 'Wilayah / Desa',
                   value: report.villageName,
                 ),
-                const Divider(height: 20, color: Color(0xFFF1F5F9)),
+                const Divider(height: 20, color: AppColors.surfaceCanvas),
                 _buildAttributeRow(
                   icon: LucideIcons.userCheck,
                   label: 'Pelapor',
@@ -397,7 +398,7 @@ class _PestAlertDetailScreenState extends State<PestAlertDetailScreen> {
                   style: GoogleFonts.inter(
                     fontSize: 14,
                     fontWeight: FontWeight.w700,
-                    color: const Color(0xFF0F172A),
+                    color: AppColors.neutral,
                   ),
                 ),
                 const SizedBox(height: 10),
@@ -405,7 +406,7 @@ class _PestAlertDetailScreenState extends State<PestAlertDetailScreen> {
                   report.description,
                   style: GoogleFonts.inter(
                     fontSize: 13,
-                    color: const Color(0xFF334155),
+                    color: AppColors.neutral,
                     height: 1.5,
                   ),
                 ),
@@ -418,23 +419,23 @@ class _PestAlertDetailScreenState extends State<PestAlertDetailScreen> {
           Container(
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
-              color: const Color(0xFFE8F5E9),
+              color: AppColors.primaryTint,
               borderRadius: BorderRadius.circular(16),
-              border: Border.all(color: const Color(0xFFC8E6C9)),
+              border: Border.all(color: AppColors.primaryBorder),
             ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Row(
                   children: [
-                    const Icon(LucideIcons.shieldAlert, size: 18, color: Color(0xFF2E7D32)),
+                    const Icon(LucideIcons.shieldAlert, size: 18, color: AppColors.primary),
                     const SizedBox(width: 8),
                     Text(
                       'Rekomendasi Penanganan PPL',
                       style: GoogleFonts.inter(
                         fontSize: 13.5,
                         fontWeight: FontWeight.w700,
-                        color: const Color(0xFF1B5E20),
+                        color: AppColors.primaryDark,
                       ),
                     ),
                   ],
@@ -447,7 +448,7 @@ class _PestAlertDetailScreenState extends State<PestAlertDetailScreen> {
                       : 'Belum ada rekomendasi tertulis dari Penyuluh. Lakukan isolasi area tanaman yang bergejala dan hubungi BPP terdekat.',
                   style: GoogleFonts.inter(
                     fontSize: 12.5,
-                    color: const Color(0xFF166534),
+                    color: AppColors.primary,
                     height: 1.45,
                   ),
                 ),
@@ -469,7 +470,7 @@ class _PestAlertDetailScreenState extends State<PestAlertDetailScreen> {
                   style: GoogleFonts.inter(fontSize: 13.5, fontWeight: FontWeight.w700),
                 ),
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFF2E7D32),
+                  backgroundColor: AppColors.primary,
                   foregroundColor: Colors.white,
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                   elevation: 0,
@@ -494,17 +495,17 @@ class _PestAlertDetailScreenState extends State<PestAlertDetailScreen> {
                   ),
                 );
               },
-              icon: const Icon(LucideIcons.plusCircle, size: 18, color: Color(0xFF2E7D32)),
+              icon: const Icon(LucideIcons.plusCircle, size: 18, color: AppColors.primary),
               label: Text(
                 'Laporkan Serangan Serupa',
                 style: GoogleFonts.inter(
                   fontSize: 13.5,
                   fontWeight: FontWeight.w700,
-                  color: const Color(0xFF2E7D32),
+                  color: AppColors.primary,
                 ),
               ),
               style: OutlinedButton.styleFrom(
-                side: const BorderSide(color: Color(0xFF2E7D32), width: 1.2),
+                side: const BorderSide(color: AppColors.primary, width: 1.2),
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
               ),
             ),
@@ -525,7 +526,7 @@ class _PestAlertDetailScreenState extends State<PestAlertDetailScreen> {
       children: [
         Padding(
           padding: const EdgeInsets.only(top: 2),
-          child: Icon(icon, size: 16, color: const Color(0xFF64748B)),
+          child: Icon(icon, size: 16, color: AppColors.neutralMuted),
         ),
         const SizedBox(width: 10),
         Expanded(
@@ -534,7 +535,7 @@ class _PestAlertDetailScreenState extends State<PestAlertDetailScreen> {
             label,
             style: GoogleFonts.inter(
               fontSize: 12.5,
-              color: const Color(0xFF64748B),
+              color: AppColors.neutralMuted,
             ),
           ),
         ),
@@ -549,7 +550,7 @@ class _PestAlertDetailScreenState extends State<PestAlertDetailScreen> {
             style: GoogleFonts.inter(
               fontSize: 13,
               fontWeight: FontWeight.w600,
-              color: const Color(0xFF0F172A),
+              color: AppColors.neutral,
             ),
           ),
         ),

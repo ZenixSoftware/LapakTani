@@ -4,6 +4,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 import '../services/pest_alert_service.dart';
+import 'package:lapaktani_app/core/theme/app_colors.dart';
 
 /// Screen to create and submit a new pest attack report (US-19)
 /// Restyled with Stitch AI Design System Guidelines:
@@ -203,7 +204,7 @@ class _CreatePestReportScreenState extends State<CreatePestReportScreen> {
           content: Text(
             'Laporan berhasil dikirim! $notifCount anggota Poktan & Penyuluh telah menerima peringatan.',
           ),
-          backgroundColor: const Color(0xFF2E7D32),
+          backgroundColor: AppColors.primary,
           duration: const Duration(seconds: 4),
         ),
       );
@@ -212,7 +213,7 @@ class _CreatePestReportScreenState extends State<CreatePestReportScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(result['message'] ?? 'Gagal mengirim laporan serangan hama.'),
-          backgroundColor: const Color(0xFFDC2626),
+          backgroundColor: AppColors.error,
         ),
       );
     }
@@ -221,7 +222,7 @@ class _CreatePestReportScreenState extends State<CreatePestReportScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF8FAFC),
+      backgroundColor: AppColors.surfaceCanvas,
       resizeToAvoidBottomInset: true,
       appBar: AppBar(
         backgroundColor: Colors.white,
@@ -232,11 +233,11 @@ class _CreatePestReportScreenState extends State<CreatePestReportScreen> {
           style: GoogleFonts.inter(
             fontSize: 16,
             fontWeight: FontWeight.w700,
-            color: const Color(0xFF0F172A),
+            color: AppColors.neutral,
           ),
         ),
         leading: IconButton(
-          icon: const Icon(LucideIcons.arrowLeft, color: Color(0xFF334155), size: 20),
+          icon: const Icon(LucideIcons.arrowLeft, color: AppColors.neutral, size: 20),
           onPressed: () => Navigator.pop(context),
         ),
       ),
@@ -271,14 +272,14 @@ class _CreatePestReportScreenState extends State<CreatePestReportScreen> {
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: const Color(0xFFE8F5E9),
+        color: AppColors.primaryTint,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: const Color(0xFFC8E6C9)),
+        border: Border.all(color: AppColors.primaryBorder),
       ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Icon(LucideIcons.shieldAlert, size: 20, color: Color(0xFF2E7D32)),
+          const Icon(LucideIcons.shieldAlert, size: 20, color: AppColors.primary),
           const SizedBox(width: 12),
           Expanded(
             child: Column(
@@ -289,7 +290,7 @@ class _CreatePestReportScreenState extends State<CreatePestReportScreen> {
                   style: GoogleFonts.inter(
                     fontSize: 13,
                     fontWeight: FontWeight.w700,
-                    color: const Color(0xFF1B5E20),
+                    color: AppColors.primaryDark,
                   ),
                 ),
                 const SizedBox(height: 3),
@@ -297,7 +298,7 @@ class _CreatePestReportScreenState extends State<CreatePestReportScreen> {
                   'Laporan Anda akan otomatis disiarkan ke petani di kelompok tani yang sama dan diteruskan ke Penyuluh Pertanian Lapangan (PPL).',
                   style: GoogleFonts.inter(
                     fontSize: 11.5,
-                    color: const Color(0xFF166534),
+                    color: AppColors.primary,
                     height: 1.4,
                   ),
                 ),
@@ -331,7 +332,7 @@ class _CreatePestReportScreenState extends State<CreatePestReportScreen> {
             style: GoogleFonts.inter(
               fontSize: 14,
               fontWeight: FontWeight.w700,
-              color: const Color(0xFF0F172A),
+              color: AppColors.neutral,
             ),
           ),
           const SizedBox(height: 14),
@@ -428,20 +429,20 @@ class _CreatePestReportScreenState extends State<CreatePestReportScreen> {
       {
         'label': 'Ringan',
         'desc': 'Bercak awal <10% populasi',
-        'color': const Color(0xFF2E7D32),
-        'bg': const Color(0xFFE8F5E9),
+        'color': AppColors.primary,
+        'bg': AppColors.primaryTint,
       },
       {
         'label': 'Sedang',
         'desc': 'Menyerang 10-30% lahan',
-        'color': const Color(0xFFEF6C00),
-        'bg': const Color(0xFFFFF3E0),
+        'color': AppColors.tertiaryText,
+        'bg': AppColors.tertiaryTint,
       },
       {
         'label': 'Berat',
         'desc': 'Kritis >30%, risiko gagal panen',
-        'color': const Color(0xFFC62828),
-        'bg': const Color(0xFFFFEBEE),
+        'color': AppColors.error,
+        'bg': AppColors.errorTint,
       },
     ];
 
@@ -466,13 +467,13 @@ class _CreatePestReportScreenState extends State<CreatePestReportScreen> {
             style: GoogleFonts.inter(
               fontSize: 14,
               fontWeight: FontWeight.w700,
-              color: const Color(0xFF0F172A),
+              color: AppColors.neutral,
             ),
           ),
           const SizedBox(height: 4),
           Text(
             'Tingkat keparahan Berat akan otomatis memicu status Siaga Darurat.',
-            style: GoogleFonts.inter(fontSize: 11.5, color: const Color(0xFF64748B)),
+            style: GoogleFonts.inter(fontSize: 11.5, color: AppColors.neutralMuted),
           ),
           const SizedBox(height: 12),
           Row(
@@ -495,10 +496,10 @@ class _CreatePestReportScreenState extends State<CreatePestReportScreen> {
                     margin: const EdgeInsets.symmetric(horizontal: 4),
                     padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
                     decoration: BoxDecoration(
-                      color: isSelected ? bg : const Color(0xFFF8FAFC),
+                      color: isSelected ? bg : AppColors.surfaceCanvas,
                       borderRadius: BorderRadius.circular(12),
                       border: Border.all(
-                        color: isSelected ? color : const Color(0xFFE2E8F0),
+                        color: isSelected ? color : AppColors.border,
                         width: isSelected ? 1.8 : 1,
                       ),
                     ),
@@ -509,7 +510,7 @@ class _CreatePestReportScreenState extends State<CreatePestReportScreen> {
                           style: GoogleFonts.inter(
                             fontSize: 13,
                             fontWeight: isSelected ? FontWeight.w800 : FontWeight.w600,
-                            color: isSelected ? color : const Color(0xFF334155),
+                            color: isSelected ? color : AppColors.neutral,
                           ),
                         ),
                         const SizedBox(height: 4),
@@ -518,7 +519,7 @@ class _CreatePestReportScreenState extends State<CreatePestReportScreen> {
                           textAlign: TextAlign.center,
                           style: GoogleFonts.inter(
                             fontSize: 9.5,
-                            color: isSelected ? color : const Color(0xFF64748B),
+                            color: isSelected ? color : AppColors.neutralMuted,
                             height: 1.2,
                           ),
                         ),
@@ -533,14 +534,14 @@ class _CreatePestReportScreenState extends State<CreatePestReportScreen> {
           Container(
             padding: const EdgeInsets.all(10),
             decoration: BoxDecoration(
-              color: const Color(0xFFF8FAFC),
+              color: AppColors.surfaceCanvas,
               borderRadius: BorderRadius.circular(12),
             ),
             child: Row(
               children: [
                 Checkbox(
                   value: _enableEmergencyAlert || _selectedSeverity == 'Berat',
-                  activeColor: const Color(0xFFC62828),
+                  activeColor: AppColors.error,
                   onChanged: _selectedSeverity == 'Berat'
                       ? null
                       : (val) => setState(() => _enableEmergencyAlert = val ?? false),
@@ -548,7 +549,7 @@ class _CreatePestReportScreenState extends State<CreatePestReportScreen> {
                 Expanded(
                   child: Text(
                     'Kirim sebagai Notifikasi Siaga Darurat (Push Alert ke semua petani sekitar)',
-                    style: GoogleFonts.inter(fontSize: 11.5, color: const Color(0xFF334155)),
+                    style: GoogleFonts.inter(fontSize: 11.5, color: AppColors.neutral),
                   ),
                 ),
               ],
@@ -581,13 +582,13 @@ class _CreatePestReportScreenState extends State<CreatePestReportScreen> {
             style: GoogleFonts.inter(
               fontSize: 14,
               fontWeight: FontWeight.w700,
-              color: const Color(0xFF0F172A),
+              color: AppColors.neutral,
             ),
           ),
           const SizedBox(height: 4),
           Text(
             'Ambil foto langsung di lahan atau gunakan contoh dokumentasi gejala.',
-            style: GoogleFonts.inter(fontSize: 11.5, color: const Color(0xFF64748B)),
+            style: GoogleFonts.inter(fontSize: 11.5, color: AppColors.neutralMuted),
           ),
           const SizedBox(height: 12),
 
@@ -599,7 +600,7 @@ class _CreatePestReportScreenState extends State<CreatePestReportScreen> {
               margin: const EdgeInsets.only(bottom: 12),
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: const Color(0xFFE2E8F0)),
+                border: Border.all(color: AppColors.border),
               ),
               clipBehavior: Clip.antiAlias,
               child: Stack(
@@ -637,10 +638,10 @@ class _CreatePestReportScreenState extends State<CreatePestReportScreen> {
               Expanded(
                 child: OutlinedButton.icon(
                   onPressed: () => _pickImage(ImageSource.camera),
-                  icon: const Icon(LucideIcons.camera, size: 16, color: Color(0xFF2E7D32)),
-                  label: Text('Kamera', style: GoogleFonts.inter(fontSize: 12.5, fontWeight: FontWeight.w600, color: const Color(0xFF2E7D32))),
+                  icon: const Icon(LucideIcons.camera, size: 16, color: AppColors.primary),
+                  label: Text('Kamera', style: GoogleFonts.inter(fontSize: 12.5, fontWeight: FontWeight.w600, color: AppColors.primary)),
                   style: OutlinedButton.styleFrom(
-                    side: const BorderSide(color: Color(0xFF2E7D32)),
+                    side: const BorderSide(color: AppColors.primary),
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                   ),
                 ),
@@ -649,10 +650,10 @@ class _CreatePestReportScreenState extends State<CreatePestReportScreen> {
               Expanded(
                 child: OutlinedButton.icon(
                   onPressed: () => _pickImage(ImageSource.gallery),
-                  icon: const Icon(LucideIcons.image, size: 16, color: Color(0xFF2E7D32)),
-                  label: Text('Galeri', style: GoogleFonts.inter(fontSize: 12.5, fontWeight: FontWeight.w600, color: const Color(0xFF2E7D32))),
+                  icon: const Icon(LucideIcons.image, size: 16, color: AppColors.primary),
+                  label: Text('Galeri', style: GoogleFonts.inter(fontSize: 12.5, fontWeight: FontWeight.w600, color: AppColors.primary)),
                   style: OutlinedButton.styleFrom(
-                    side: const BorderSide(color: Color(0xFF2E7D32)),
+                    side: const BorderSide(color: AppColors.primary),
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                   ),
                 ),
@@ -662,7 +663,7 @@ class _CreatePestReportScreenState extends State<CreatePestReportScreen> {
           const SizedBox(height: 12),
           Text(
             'Atau pilih contoh dokumentasi gejala:',
-            style: GoogleFonts.inter(fontSize: 11, color: const Color(0xFF64748B)),
+            style: GoogleFonts.inter(fontSize: 11, color: AppColors.neutralMuted),
           ),
           const SizedBox(height: 6),
           SizedBox(
@@ -687,7 +688,7 @@ class _CreatePestReportScreenState extends State<CreatePestReportScreen> {
                     decoration: BoxDecoration(
                       borderRadius: BorderRadius.circular(10),
                       border: Border.all(
-                        color: isSelected ? const Color(0xFF2E7D32) : const Color(0xFFE2E8F0),
+                        color: isSelected ? AppColors.primary : AppColors.border,
                         width: isSelected ? 2 : 1,
                       ),
                       image: DecorationImage(
@@ -742,13 +743,13 @@ class _CreatePestReportScreenState extends State<CreatePestReportScreen> {
             style: GoogleFonts.inter(
               fontSize: 14,
               fontWeight: FontWeight.w700,
-              color: const Color(0xFF0F172A),
+              color: AppColors.neutral,
             ),
           ),
           const SizedBox(height: 4),
           Text(
             'Saran penanganan awal bagi sesama petani sebelum penyuluh tiba.',
-            style: GoogleFonts.inter(fontSize: 11.5, color: const Color(0xFF64748B)),
+            style: GoogleFonts.inter(fontSize: 11.5, color: AppColors.neutralMuted),
           ),
           const SizedBox(height: 12),
           TextFormField(
@@ -771,9 +772,9 @@ class _CreatePestReportScreenState extends State<CreatePestReportScreen> {
       child: ElevatedButton(
         onPressed: _isSubmitting ? null : _submitReport,
         style: ElevatedButton.styleFrom(
-          backgroundColor: const Color(0xFF2E7D32), // Stitch Brand Primary
+          backgroundColor: AppColors.primary, // Stitch Brand Primary
           foregroundColor: Colors.white,
-          disabledBackgroundColor: const Color(0xFF94A3B8),
+          disabledBackgroundColor: AppColors.neutralSubtle,
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
           elevation: 2,
         ),
@@ -809,7 +810,7 @@ class _CreatePestReportScreenState extends State<CreatePestReportScreen> {
         style: GoogleFonts.inter(
           fontSize: 12,
           fontWeight: FontWeight.w600,
-          color: const Color(0xFF334155),
+          color: AppColors.neutral,
         ),
       ),
     );
@@ -829,15 +830,15 @@ class _CreatePestReportScreenState extends State<CreatePestReportScreen> {
           child: Container(
             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
             decoration: BoxDecoration(
-              color: const Color(0xFFF1F5F9),
+              color: AppColors.surfaceCanvas,
               borderRadius: BorderRadius.circular(8),
-              border: Border.all(color: const Color(0xFFE2E8F0)),
+              border: Border.all(color: AppColors.border),
             ),
             child: Text(
               item,
               style: GoogleFonts.inter(
                 fontSize: 11,
-                color: const Color(0xFF475569),
+                color: AppColors.neutralMuted,
                 fontWeight: FontWeight.w500,
               ),
             ),
@@ -850,21 +851,21 @@ class _CreatePestReportScreenState extends State<CreatePestReportScreen> {
   InputDecoration _inputDecoration(String hint) {
     return InputDecoration(
       hintText: hint,
-      hintStyle: GoogleFonts.inter(fontSize: 12, color: const Color(0xFF94A3B8)),
+      hintStyle: GoogleFonts.inter(fontSize: 12, color: AppColors.neutralSubtle),
       contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
       filled: true,
-      fillColor: const Color(0xFFF8FAFC),
+      fillColor: AppColors.surfaceCanvas,
       border: OutlineInputBorder(
         borderRadius: BorderRadius.circular(12),
-        borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
+        borderSide: const BorderSide(color: AppColors.border),
       ),
       enabledBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(12),
-        borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
+        borderSide: const BorderSide(color: AppColors.border),
       ),
       focusedBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(12),
-        borderSide: const BorderSide(color: Color(0xFF2E7D32), width: 1.5),
+        borderSide: const BorderSide(color: AppColors.primary, width: 1.5),
       ),
     );
   }

@@ -34,21 +34,21 @@ export const RejectionModal = ({
 
   return (
     <div
-      className="fixed inset-0 z-50 bg-slate-900/40 backdrop-blur-sm flex items-center justify-center p-4 animate-in fade-in duration-200"
+      className="fixed inset-0 z-50 bg-lt-neutral/40 backdrop-blur-sm flex items-center justify-center p-4 animate-in fade-in duration-200"
       id="rejectionModal"
       onClick={onClose}
     >
       <div
-        className="bg-cream-50 border-2 border-brutal-border rounded-3xl max-w-md w-full p-6 shadow-brutal-lg flex flex-col gap-4"
+        className="bg-lt-surface-card border-2 border-lt-border rounded-3xl max-w-md w-full p-6 shadow-lg flex flex-col gap-4"
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="flex items-center justify-between border-b-2 border-brutal-border pb-3">
+        <div className="flex items-center justify-between border-b-2 border-lt-border pb-3">
           <div className="flex items-center gap-2">
-            <AlertTriangle className="text-rose-600 w-6 h-6" />
-            <span className="font-extrabold text-base text-brutal-dark">Tolak / Permintaan Revisi</span>
+            <AlertTriangle className="text-lt-error w-6 h-6" />
+            <span className="font-extrabold text-base text-lt-neutral">Tolak / Permintaan Revisi</span>
           </div>
           <button
-            className="w-8 h-8 rounded-xl bg-white border border-brutal-border flex items-center justify-center text-slate-500 hover:text-brutal-dark shadow-brutal-sm cursor-pointer"
+            className="w-8 h-8 rounded-xl bg-white border border-lt-border flex items-center justify-center text-lt-neutral-muted hover:text-lt-neutral shadow-sm cursor-pointer"
             onClick={onClose}
             type="button"
           >
@@ -56,7 +56,7 @@ export const RejectionModal = ({
           </button>
         </div>
 
-        <p className="text-xs text-slate-600 font-medium">
+        <p className="text-xs text-lt-neutral-muted font-medium">
           Pilih alasan penolakan untuk dikirimkan secara langsung melalui WhatsApp ke petani{' '}
           <strong id="modalFarmerTarget">{farmerName}</strong>:
         </p>
@@ -66,26 +66,26 @@ export const RejectionModal = ({
             {REASONS.map((reason) => (
               <label
                 key={reason}
-                className={`flex items-center gap-2.5 p-2.5 rounded-xl border-2 border-brutal-border shadow-brutal-sm cursor-pointer transition-colors ${
-                  selectedReason === reason ? 'bg-amberSoft/40' : 'bg-white hover:bg-cream-100'
+                className={`flex items-center gap-2.5 p-2.5 rounded-xl border-2 border-lt-border shadow-sm cursor-pointer transition-colors ${
+                  selectedReason === reason ? 'bg-lt-tertiary-tint' : 'bg-white hover:bg-lt-surface-canvas'
                 }`}
               >
                 <input
                   checked={selectedReason === reason}
                   onChange={() => setSelectedReason(reason)}
-                  className="accent-brand cursor-pointer"
+                  className="accent-lt-primary cursor-pointer"
                   name="reject_reason"
                   type="radio"
                 />
-                <span className="font-bold text-slate-800">{reason}</span>
+                <span className="font-bold text-lt-neutral">{reason}</span>
               </label>
             ))}
           </div>
 
           <div className="flex flex-col gap-1">
-            <label className="text-[11px] font-bold text-slate-600">Catatan Tambahan Penyuluh (Opsional)</label>
+            <label className="text-[11px] font-bold text-lt-neutral-muted">Catatan Tambahan Penyuluh (Opsional)</label>
             <textarea
-              className="w-full p-2.5 rounded-xl bg-white border-2 border-brutal-border text-xs font-medium text-slate-800 placeholder:text-slate-400 focus:outline-none focus:shadow-brutal-sm"
+              className="w-full p-2.5 rounded-xl bg-white border-2 border-lt-border text-xs font-medium text-lt-neutral placeholder:text-lt-neutral-subtle focus:outline-none focus:shadow-sm"
               placeholder="Tulis instruksi perbaikan foto dokumen..."
               rows={2}
               value={note}
@@ -93,9 +93,9 @@ export const RejectionModal = ({
             ></textarea>
           </div>
 
-          <div className="flex items-center justify-end gap-2 pt-2 border-t border-slate-200">
+          <div className="flex items-center justify-end gap-2 pt-2 border-t border-lt-border">
             <button
-              className="px-4 py-2 rounded-xl bg-white border border-brutal-border text-slate-700 font-bold text-xs hover:bg-cream-200 cursor-pointer"
+              className="px-4 py-2 rounded-xl bg-white border border-lt-border text-lt-neutral font-bold text-xs hover:bg-lt-surface-canvas cursor-pointer"
               onClick={onClose}
               type="button"
               disabled={isProcessing}
@@ -103,7 +103,7 @@ export const RejectionModal = ({
               Batal
             </button>
             <button
-              className="px-4 py-2 rounded-xl bg-rose-600 text-white font-bold text-xs border border-brutal-border shadow-brutal-sm hover:bg-rose-700 cursor-pointer disabled:opacity-70"
+              className="px-4 py-2 rounded-xl bg-lt-error text-white font-bold text-xs border border-lt-border shadow-sm hover:bg-lt-error cursor-pointer disabled:opacity-70"
               type="submit"
               disabled={isProcessing}
             >

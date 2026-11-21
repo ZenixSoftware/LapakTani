@@ -19,15 +19,15 @@ interface AiDecisionSupportProps {
 const SCOPE_LABELS: Record<DecisionReportRecord['target_scope'], { text: string; cls: string }> = {
   BOTH: {
     text: 'DINAS + PETANI',
-    cls: 'bg-emerald-50 text-[#166534] border-emerald-200',
+    cls: 'bg-lt-primary-tint text-lt-primary border-lt-primary-border',
   },
   DINAS_ONLY: {
     text: 'DINAS SAJA',
-    cls: 'bg-amber-50 text-amber-800 border-amber-200',
+    cls: 'bg-lt-tertiary-tint text-lt-tertiary-text border-lt-tertiary-border',
   },
   FARMERS_ONLY: {
     text: 'PETANI SAJA',
-    cls: 'bg-sky-50 text-sky-800 border-sky-200',
+    cls: 'bg-lt-secondary-tint text-lt-secondary-dark border-lt-secondary-border',
   },
 };
 
@@ -175,17 +175,17 @@ export const AiDecisionSupport: React.FC<AiDecisionSupportProps> = ({
   return (
     <div className="space-y-6">
       {/* Header Banner */}
-      <section className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-[#0D5136] via-[#166534] to-[#14532d] text-white p-6 shadow-lg shadow-emerald-950/15">
-        <div className="relative z-10 flex flex-wrap items-start justify-between gap-4">
+      <section className="rounded-2xl bg-lt-surface-card border border-lt-border border-l-4 border-l-lt-primary p-6 shadow-sm">
+        <div className="flex flex-wrap items-start justify-between gap-4">
           <div className="max-w-2xl space-y-1.5">
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/10 border border-white/15 text-[11px] font-bold text-emerald-100">
-              <span className="material-symbols-outlined text-[15px] text-[#22C55E]">psychology</span>
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-lt-primary-tint border border-lt-primary-border text-[11px] font-bold text-lt-primary">
+              <span className="material-symbols-outlined text-[15px] text-lt-primary">psychology</span>
               Eksklusif Penyuluh BPP · Kabupaten Sumenep
             </div>
-            <h1 className="text-2xl font-extrabold tracking-tight">
+            <h1 className="text-2xl font-extrabold tracking-tight text-lt-neutral">
               AI Decision Support (RAG) &amp; Pengiriman Arahan Ganda
             </h1>
-            <p className="text-emerald-100/90 text-[13px] leading-relaxed">
+            <p className="text-lt-neutral-muted text-[13px] leading-relaxed">
               Ambil konteks langsung dari sensor 8-in-1, laporan hama OPT, dan catatan harian petani, lalu kirimkan keputusan agronomis ke Dinas Pertanian maupun Petani/Poktan di aplikasi mobile.
             </p>
           </div>
@@ -193,7 +193,7 @@ export const AiDecisionSupport: React.FC<AiDecisionSupportProps> = ({
             <button
               type="button"
               onClick={() => onInspectPlot(selectedPlot)}
-              className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-white/15 hover:bg-white/25 text-white border border-white/20 text-[12.5px] font-bold"
+              className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-lt-primary-tint hover:bg-lt-primary-border/40 text-lt-primary border border-lt-primary-border text-[12.5px] font-bold transition-colors"
             >
               <span className="material-symbols-outlined text-[17px]">visibility</span>
               Inspeksi Lahan Desa {selectedPlot.nama_desa}
@@ -205,24 +205,24 @@ export const AiDecisionSupport: React.FC<AiDecisionSupportProps> = ({
       {/* Main Split Workbench */}
       <div className="grid grid-cols-1 xl:grid-cols-12 gap-6 items-start">
         {/* Left: Retrieval Context & Synthesizer */}
-        <div className="xl:col-span-5 bg-white rounded-2xl border border-[#E2E8F0] p-5 shadow-sm space-y-4">
+        <div className="xl:col-span-5 bg-white rounded-2xl border border-lt-border p-5 shadow-sm space-y-4">
           <div className="flex items-center justify-between">
-            <h2 className="text-[14px] font-extrabold text-gray-900 uppercase tracking-wide">
+            <h2 className="text-[14px] font-extrabold text-lt-neutral uppercase tracking-wide">
               1. Konteks Telemetri Lahan (Retrieval)
             </h2>
-            <span className="px-2.5 py-0.5 rounded-full bg-emerald-50 text-[#166534] text-[11px] font-extrabold">
+            <span className="px-2.5 py-0.5 rounded-full bg-lt-primary-tint text-lt-primary text-[11px] font-extrabold">
               {sortedPlots.length} Plot Terpantau
             </span>
           </div>
 
           <div>
-            <label className="block text-[11.5px] font-bold text-gray-600 uppercase mb-1.5">
+            <label className="block text-[11.5px] font-bold text-lt-neutral-muted uppercase mb-1.5">
               Pilih Plot Lahan / Desa Target
             </label>
             <select
               value={selectedPlotId}
               onChange={(e) => setSelectedPlotId(e.target.value)}
-              className="w-full px-3 py-2.5 rounded-xl bg-[#F8FAF9] border border-[#E2E8F0] text-[13px] font-bold text-gray-800 focus:border-[#166534] outline-none"
+              className="w-full px-3 py-2.5 rounded-xl bg-lt-surface-canvas border border-lt-border text-[13px] font-bold text-lt-neutral focus:border-lt-primary outline-none"
             >
               {sortedPlots.map((p) => (
                 <option key={p.id} value={String(p.id)}>
@@ -233,50 +233,50 @@ export const AiDecisionSupport: React.FC<AiDecisionSupportProps> = ({
           </div>
 
           {selectedPlot && (
-            <div className="p-4 rounded-xl bg-[#F8FAF9] border border-[#E2E8F0] space-y-2.5">
+            <div className="p-4 rounded-xl bg-lt-surface-canvas border border-lt-border space-y-2.5">
               <div className="flex items-center justify-between">
-                <span className="text-[13px] font-extrabold text-[#0D5136]">
+                <span className="text-[13px] font-extrabold text-lt-neutral">
                   Desa {selectedPlot.nama_desa}, Kec. {selectedPlot.kecamatan || 'Sumenep'}
                 </span>
                 <span
                   className={`px-2 py-0.5 rounded-full text-[10.5px] font-extrabold ${
                     isPlotCritical(selectedPlot)
-                      ? 'bg-rose-100 text-rose-800'
-                      : 'bg-emerald-100 text-[#166534]'
+                      ? 'bg-lt-error-tint text-lt-error'
+                      : 'bg-lt-primary-tint text-lt-primary'
                   }`}
                 >
                   {isPlotCritical(selectedPlot) ? 'BUTUH INTERVENSI SEGERA' : 'TERPANTAU'}
                 </span>
               </div>
               <div className="grid grid-cols-3 gap-2 text-[11.5px]">
-                <div className="p-2 rounded-lg bg-white border border-[#E2E8F0]">
-                  <span className="text-gray-500 block text-[10px] font-bold">pH Tanah</span>
-                  <span className="font-mono font-extrabold text-gray-900">{selectedPlot.ph}</span>
+                <div className="p-2 rounded-lg bg-white border border-lt-border">
+                  <span className="text-lt-neutral-muted block text-[10px] font-bold">pH Tanah</span>
+                  <span className="font-mono font-extrabold text-lt-neutral">{selectedPlot.ph}</span>
                 </div>
-                <div className="p-2 rounded-lg bg-white border border-[#E2E8F0]">
-                  <span className="text-gray-500 block text-[10px] font-bold">Kelembapan</span>
-                  <span className="font-mono font-extrabold text-gray-900">{selectedPlot.moisture}%</span>
+                <div className="p-2 rounded-lg bg-white border border-lt-border">
+                  <span className="text-lt-neutral-muted block text-[10px] font-bold">Kelembapan</span>
+                  <span className="font-mono font-extrabold text-lt-neutral">{selectedPlot.moisture}%</span>
                 </div>
-                <div className="p-2 rounded-lg bg-white border border-[#E2E8F0]">
-                  <span className="text-gray-500 block text-[10px] font-bold">Fertilitas</span>
-                  <span className="font-mono font-extrabold text-gray-900">{selectedPlot.fertility}/100</span>
+                <div className="p-2 rounded-lg bg-white border border-lt-border">
+                  <span className="text-lt-neutral-muted block text-[10px] font-bold">Fertilitas</span>
+                  <span className="font-mono font-extrabold text-lt-neutral">{selectedPlot.fertility}/100</span>
                 </div>
-                <div className="p-2 rounded-lg bg-white border border-[#E2E8F0]">
-                  <span className="text-gray-500 block text-[10px] font-bold">NPK (mg/kg)</span>
-                  <span className="font-mono font-bold text-gray-800">
+                <div className="p-2 rounded-lg bg-white border border-lt-border">
+                  <span className="text-lt-neutral-muted block text-[10px] font-bold">NPK (mg/kg)</span>
+                  <span className="font-mono font-bold text-lt-neutral">
                     {selectedPlot.nitrogen}/{selectedPlot.phosphorus}/{selectedPlot.potassium}
                   </span>
                 </div>
-                <div className="p-2 rounded-lg bg-white border border-[#E2E8F0]">
-                  <span className="text-gray-500 block text-[10px] font-bold">EC / Konduktivitas</span>
-                  <span className="font-mono font-bold text-gray-800">{selectedPlot.conductivity} uS</span>
+                <div className="p-2 rounded-lg bg-white border border-lt-border">
+                  <span className="text-lt-neutral-muted block text-[10px] font-bold">EC / Konduktivitas</span>
+                  <span className="font-mono font-bold text-lt-neutral">{selectedPlot.conductivity} uS</span>
                 </div>
-                <div className="p-2 rounded-lg bg-white border border-[#E2E8F0]">
-                  <span className="text-gray-500 block text-[10px] font-bold">Kondisi Air</span>
-                  <span className="font-bold text-gray-800 capitalize">{selectedPlot.kondisi_air}</span>
+                <div className="p-2 rounded-lg bg-white border border-lt-border">
+                  <span className="text-lt-neutral-muted block text-[10px] font-bold">Kondisi Air</span>
+                  <span className="font-bold text-lt-neutral capitalize">{selectedPlot.kondisi_air}</span>
                 </div>
               </div>
-              <div className="text-[11.5px] text-gray-600">
+              <div className="text-[11.5px] text-lt-neutral-muted">
                 <strong>Poktan:</strong> {selectedPlot.kelompok_tani || 'Mandiri'} ·{' '}
                 <strong>Penginput:</strong> {selectedPlot.tipe_penginput || 'petani'}
               </div>
@@ -284,14 +284,14 @@ export const AiDecisionSupport: React.FC<AiDecisionSupportProps> = ({
           )}
 
           <div>
-            <label className="block text-[11.5px] font-bold text-gray-600 uppercase mb-1.5">
+            <label className="block text-[11.5px] font-bold text-lt-neutral-muted uppercase mb-1.5">
               Fokus Pertanyaan Agronomi PPL (Opsional)
             </label>
             <textarea
               rows={2}
               value={queryPrompt}
               onChange={(e) => setQueryPrompt(e.target.value)}
-              className="w-full px-3 py-2 rounded-xl bg-[#F8FAF9] border border-[#E2E8F0] text-[12.5px] text-gray-800 focus:border-[#166534] outline-none"
+              className="w-full px-3 py-2 rounded-xl bg-lt-surface-canvas border border-lt-border text-[12.5px] text-lt-neutral focus:border-lt-primary outline-none"
             />
           </div>
 
@@ -299,7 +299,7 @@ export const AiDecisionSupport: React.FC<AiDecisionSupportProps> = ({
             type="button"
             onClick={handleSynthesize}
             disabled={isSynthesizing}
-            className="w-full py-2.5 px-4 rounded-xl bg-[#F59E0B] hover:bg-amber-500 text-white font-extrabold text-[13px] flex items-center justify-center gap-2 shadow-sm transition-all disabled:opacity-60"
+            className="w-full py-2.5 px-4 rounded-xl bg-lt-tertiary hover:bg-lt-tertiary-tint text-lt-neutral border border-lt-tertiary-border font-extrabold text-[13px] flex items-center justify-center gap-2 shadow-sm transition-all disabled:opacity-60"
           >
             <span className={`material-symbols-outlined text-[18px] ${isSynthesizing ? 'animate-spin' : ''}`}>
               {isSynthesizing ? 'progress_activity' : 'auto_awesome'}
@@ -308,7 +308,7 @@ export const AiDecisionSupport: React.FC<AiDecisionSupportProps> = ({
           </button>
 
           {synthesis && (
-            <div className="p-3 rounded-xl bg-emerald-50 border border-emerald-200 text-[11.5px] text-[#0D5136] space-y-1">
+            <div className="p-3 rounded-xl bg-lt-primary-tint border border-lt-primary-border text-[11.5px] text-lt-neutral space-y-1">
               <div className="font-extrabold flex items-center gap-1.5">
                 <span className="material-symbols-outlined text-[16px]">verified</span>
                 Sumber RAG Terhubung ({synthesis.synthesizer_engine})
@@ -325,19 +325,19 @@ export const AiDecisionSupport: React.FC<AiDecisionSupportProps> = ({
         {/* Right: Dual-Target Composer & Dispatch */}
         <form
           onSubmit={handleDispatch}
-          className="xl:col-span-7 bg-white rounded-2xl border border-[#E2E8F0] p-5 shadow-sm space-y-4"
+          className="xl:col-span-7 bg-white rounded-2xl border border-lt-border p-5 shadow-sm space-y-4"
         >
           <div className="flex items-center justify-between">
-            <h2 className="text-[14px] font-extrabold text-gray-900 uppercase tracking-wide">
+            <h2 className="text-[14px] font-extrabold text-lt-neutral uppercase tracking-wide">
               2. Finalisasi &amp; Distribusi Tujuan Ganda
             </h2>
-            <span className="text-[11px] font-bold text-gray-500">
+            <span className="text-[11px] font-bold text-lt-neutral-muted">
               Terverifikasi oleh Role: Penyuluh
             </span>
           </div>
 
           <div>
-            <label className="block text-[11.5px] font-bold text-gray-700 uppercase mb-1.5">
+            <label className="block text-[11.5px] font-bold text-lt-neutral uppercase mb-1.5">
               Ringkasan Keputusan Masalah (Problem-Solving Summary)
             </label>
             <textarea
@@ -346,12 +346,12 @@ export const AiDecisionSupport: React.FC<AiDecisionSupportProps> = ({
               value={decisionSummary}
               onChange={(e) => setDecisionSummary(e.target.value)}
               placeholder="Klik 'Sintesis Keputusan Agronomi (RAG)' di sebelah kiri atau tulis keputusan agronomis..."
-              className="w-full px-3.5 py-2.5 rounded-xl bg-[#F8FAF9] border border-[#E2E8F0] text-[13px] text-gray-900 focus:bg-white focus:border-[#166534] outline-none"
+              className="w-full px-3.5 py-2.5 rounded-xl bg-lt-surface-canvas border border-lt-border text-[13px] text-lt-neutral focus:bg-white focus:border-lt-primary outline-none"
             />
           </div>
 
           <div>
-            <label className="block text-[11.5px] font-bold text-gray-700 uppercase mb-1.5">
+            <label className="block text-[11.5px] font-bold text-lt-neutral uppercase mb-1.5">
               Rencana Aksi Teknis &amp; Kebutuhan Sarpras (Dinas / Petani)
             </label>
             <textarea
@@ -360,44 +360,44 @@ export const AiDecisionSupport: React.FC<AiDecisionSupportProps> = ({
               value={actionPlan}
               onChange={(e) => setActionPlan(e.target.value)}
               placeholder="Rincian langkah teknis untuk petani (dosis Dolomit/NPK/mulsa) serta pengajuan dukungan ke Dinas Pertanian..."
-              className="w-full px-3.5 py-2.5 rounded-xl bg-[#F8FAF9] border border-[#E2E8F0] text-[13px] text-gray-900 focus:bg-white focus:border-[#166534] outline-none"
+              className="w-full px-3.5 py-2.5 rounded-xl bg-lt-surface-canvas border border-lt-border text-[13px] text-lt-neutral focus:bg-white focus:border-lt-primary outline-none"
             />
           </div>
 
           {/* Dual-Target Checkboxes */}
-          <div className="p-4 rounded-xl bg-[#F8FAF9] border border-[#E2E8F0] space-y-2.5">
-            <div className="text-[11.5px] font-extrabold text-[#0D5136] uppercase tracking-wider">
+          <div className="p-4 rounded-xl bg-lt-surface-canvas border border-lt-border space-y-2.5">
+            <div className="text-[11.5px] font-extrabold text-lt-neutral uppercase tracking-wider">
               Target Penerima Keputusan (Bisa Pilih Keduanya)
             </div>
-            <label className="flex items-start gap-3 p-2.5 rounded-xl bg-white border border-[#E2E8F0] cursor-pointer hover:border-[#166534]">
+            <label className="flex items-start gap-3 p-2.5 rounded-xl bg-white border border-lt-border cursor-pointer hover:border-lt-primary">
               <input
                 type="checkbox"
                 checked={sendToDinas}
                 onChange={(e) => setSendToDinas(e.target.checked)}
-                className="mt-0.5 w-4 h-4 accent-[#166534]"
+                className="mt-0.5 w-4 h-4 accent-lt-primary"
               />
               <div>
-                <div className="text-[13px] font-bold text-gray-900">
+                <div className="text-[13px] font-bold text-lt-neutral">
                   Kirim ke Dinas Pertanian Kab. Sumenep
                 </div>
-                <div className="text-[11.5px] text-gray-500">
+                <div className="text-[11.5px] text-lt-neutral-muted">
                   Masuk ke Kotak Masuk Eskalasi Kebijakan Pemerintah untuk persetujuan subsidi pupuk, pompa, dan irigasi.
                 </div>
               </div>
             </label>
 
-            <label className="flex items-start gap-3 p-2.5 rounded-xl bg-white border border-[#E2E8F0] cursor-pointer hover:border-[#166534]">
+            <label className="flex items-start gap-3 p-2.5 rounded-xl bg-white border border-lt-border cursor-pointer hover:border-lt-primary">
               <input
                 type="checkbox"
                 checked={sendToFarmers}
                 onChange={(e) => setSendToFarmers(e.target.checked)}
-                className="mt-0.5 w-4 h-4 accent-[#166534]"
+                className="mt-0.5 w-4 h-4 accent-lt-primary"
               />
               <div>
-                <div className="text-[13px] font-bold text-gray-900">
+                <div className="text-[13px] font-bold text-lt-neutral">
                   Kirim ke Petani / Poktan Desa Terkait
                 </div>
-                <div className="text-[11.5px] text-gray-500">
+                <div className="text-[11.5px] text-lt-neutral-muted">
                   Tampil langsung di dashboard HP Petani (&ldquo;Arahan &amp; Keputusan Penyuluh&rdquo;) dan terkirim sebagai Kartu Arahan DM.
                 </div>
               </div>
@@ -407,7 +407,7 @@ export const AiDecisionSupport: React.FC<AiDecisionSupportProps> = ({
           <button
             type="submit"
             disabled={isDispatching}
-            className="w-full py-3 px-4 rounded-xl bg-[#166534] hover:bg-[#0D5136] text-white font-extrabold text-[13.5px] flex items-center justify-center gap-2 shadow-md transition-all disabled:opacity-60"
+            className="w-full py-3 px-4 rounded-xl bg-lt-primary hover:bg-lt-primary-dark text-white font-extrabold text-[13.5px] flex items-center justify-center gap-2 shadow-md transition-all disabled:opacity-60"
           >
             <span className="material-symbols-outlined text-[19px]">send</span>
             <span>
@@ -424,20 +424,20 @@ export const AiDecisionSupport: React.FC<AiDecisionSupportProps> = ({
       </div>
 
       {/* Dispatched History Table */}
-      <div className="bg-white rounded-2xl border border-[#E2E8F0] shadow-sm overflow-hidden">
-        <div className="px-5 py-4 border-b border-[#E2E8F0] bg-[#F8FAF9] flex flex-wrap items-center justify-between gap-2">
+      <div className="bg-white rounded-2xl border border-lt-border shadow-sm overflow-hidden">
+        <div className="px-5 py-4 border-b border-lt-border bg-lt-surface-canvas flex flex-wrap items-center justify-between gap-2">
           <div>
-            <h2 className="text-[14px] font-extrabold text-gray-900 uppercase tracking-wide">
+            <h2 className="text-[14px] font-extrabold text-lt-neutral uppercase tracking-wide">
               Riwayat Keputusan RAG Terkirim
             </h2>
-            <p className="text-[12px] text-gray-500">
+            <p className="text-[12px] text-lt-neutral-muted">
               Pantau status pembacaan oleh Dinas Pertanian dan penerapan oleh Petani Desa
             </p>
           </div>
           <button
             type="button"
             onClick={() => void loadReports()}
-            className="px-3 py-1.5 rounded-xl bg-white border border-[#E2E8F0] hover:border-[#166534] text-[12px] font-bold text-gray-700"
+            className="px-3 py-1.5 rounded-xl bg-white border border-lt-border hover:border-lt-primary text-[12px] font-bold text-lt-neutral"
           >
             Muat Ulang
           </button>
@@ -445,7 +445,7 @@ export const AiDecisionSupport: React.FC<AiDecisionSupportProps> = ({
 
         <div className="overflow-x-auto">
           <table className="w-full text-[12.5px] text-left">
-            <thead className="bg-[#F8FAF9] text-gray-600 uppercase text-[11px] font-extrabold border-b border-[#E2E8F0]">
+            <thead className="bg-lt-surface-canvas text-lt-neutral-muted uppercase text-[11px] font-extrabold border-b border-lt-border">
               <tr>
                 <th className="px-4 py-3">Desa / Komoditas</th>
                 <th className="px-4 py-3">Ringkasan Keputusan</th>
@@ -453,16 +453,16 @@ export const AiDecisionSupport: React.FC<AiDecisionSupportProps> = ({
                 <th className="px-3 py-3">Status Dinas / Petani</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-[#F1F5F9]">
+            <tbody className="divide-y divide-lt-surface-canvas">
               {isLoadingReports ? (
                 <tr>
-                  <td colSpan={4} className="px-4 py-6 text-center text-gray-500">
+                  <td colSpan={4} className="px-4 py-6 text-center text-lt-neutral-muted">
                     Memuat riwayat keputusan RAG...
                   </td>
                 </tr>
               ) : reports.length === 0 ? (
                 <tr>
-                  <td colSpan={4} className="px-4 py-6 text-center text-gray-500">
+                  <td colSpan={4} className="px-4 py-6 text-center text-lt-neutral-muted">
                     Belum ada keputusan RAG yang dikirimkan.
                   </td>
                 </tr>
@@ -470,20 +470,20 @@ export const AiDecisionSupport: React.FC<AiDecisionSupportProps> = ({
                 reports.map((rep) => {
                   const scopeMeta = SCOPE_LABELS[rep.target_scope] || SCOPE_LABELS.BOTH;
                   return (
-                    <tr key={rep.id} className="hover:bg-[#F8FAF9] align-top">
-                      <td className="px-4 py-3 font-extrabold text-[#0D5136] whitespace-nowrap">
+                    <tr key={rep.id} className="hover:bg-lt-surface-canvas align-top">
+                      <td className="px-4 py-3 font-extrabold text-lt-neutral whitespace-nowrap">
                         Desa {rep.desa}
-                        <span className="block text-[11px] font-normal text-gray-500">
+                        <span className="block text-[11px] font-normal text-lt-neutral-muted">
                           Kec. {rep.kecamatan} · {rep.komoditas}
                         </span>
                       </td>
-                      <td className="px-4 py-3 text-gray-800 max-w-md">
+                      <td className="px-4 py-3 text-lt-neutral max-w-md">
                         <div className="font-bold">{rep.decision_summary}</div>
-                        <pre className="mt-1 whitespace-pre-wrap font-sans text-[11.5px] text-gray-600">
+                        <pre className="mt-1 whitespace-pre-wrap font-sans text-[11.5px] text-lt-neutral-muted">
                           {rep.action_plan}
                         </pre>
                         {rep.dinas_notes && (
-                          <div className="mt-1.5 px-2.5 py-1 rounded-lg bg-amber-50 border border-amber-200 text-[11px] text-amber-900">
+                          <div className="mt-1.5 px-2.5 py-1 rounded-lg bg-lt-tertiary-tint border border-lt-tertiary-border text-[11px] text-lt-tertiary-text">
                             <strong>Catatan Dinas:</strong> {rep.dinas_notes}
                           </div>
                         )}
@@ -497,10 +497,10 @@ export const AiDecisionSupport: React.FC<AiDecisionSupportProps> = ({
                         <span
                           className={`px-2.5 py-1 rounded-full text-[10.5px] font-extrabold ${
                             rep.status === 'REVIEWED'
-                              ? 'bg-emerald-100 text-[#166534]'
+                              ? 'bg-lt-primary-tint text-lt-primary'
                               : rep.status === 'ACKNOWLEDGED'
-                                ? 'bg-sky-100 text-sky-800'
-                                : 'bg-gray-100 text-gray-700'
+                                ? 'bg-lt-secondary-tint text-lt-secondary-dark'
+                                : 'bg-lt-surface-canvas text-lt-neutral'
                           }`}
                         >
                           {rep.status}

@@ -72,7 +72,7 @@ class _LoginScreenState extends State<LoginScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(message),
-            backgroundColor: const Color(0xFFDC2626),
+            backgroundColor: AppColors.error,
           ),
         );
       }
@@ -81,7 +81,7 @@ class _LoginScreenState extends State<LoginScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text('Terjadi kesalahan: ${e.toString()}'),
-          backgroundColor: const Color(0xFFDC2626),
+          backgroundColor: AppColors.error,
         ),
       );
     } finally {
@@ -132,7 +132,7 @@ class _LoginScreenState extends State<LoginScreen> {
         content: Text(
           'Login Google dinonaktifkan pada lingkungan server lokal.',
         ),
-        backgroundColor: Color(0xFFDC2626),
+        backgroundColor: AppColors.error,
       ),
     );
     if (mounted) setState(() => _isGoogleLoading = false);
@@ -141,7 +141,7 @@ class _LoginScreenState extends State<LoginScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF1F5F9),
+      backgroundColor: AppColors.surfaceCanvas,
       body: Stack(
         children: [
           Positioned(
@@ -152,10 +152,10 @@ class _LoginScreenState extends State<LoginScreen> {
               height: 320,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                color: const Color(0xFFD1FAE5).withValues(alpha: 0.6),
+                color: AppColors.primaryTint.withValues(alpha: 0.6),
                 boxShadow: [
                   BoxShadow(
-                    color: const Color(0xFFD1FAE5).withValues(alpha: 0.6),
+                    color: AppColors.primaryTint.withValues(alpha: 0.6),
                     blurRadius: 90,
                     spreadRadius: 40,
                   ),
@@ -171,10 +171,10 @@ class _LoginScreenState extends State<LoginScreen> {
               height: 288,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                color: const Color(0xFFECFCCB).withValues(alpha: 0.4),
+                color: AppColors.primaryTint.withValues(alpha: 0.4),
                 boxShadow: [
                   BoxShadow(
-                    color: const Color(0xFFECFCCB).withValues(alpha: 0.4),
+                    color: AppColors.primaryTint.withValues(alpha: 0.4),
                     blurRadius: 80,
                     spreadRadius: 35,
                   ),
@@ -207,7 +207,7 @@ class _LoginScreenState extends State<LoginScreen> {
                             style: TextStyle(
                               fontSize: 26,
                               fontWeight: FontWeight.w800,
-                              color: Color(0xFF0F172A),
+                              color: AppColors.neutral,
                               letterSpacing: -0.6,
                             ),
                           ),
@@ -231,7 +231,7 @@ class _LoginScreenState extends State<LoginScreen> {
                         textAlign: TextAlign.center,
                         style: TextStyle(
                           fontSize: 13,
-                          color: Color(0xFF64748B),
+                          color: AppColors.neutralMuted,
                           height: 1.45,
                         ),
                       ),
@@ -290,7 +290,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                       ? LucideIcons.eye
                                       : LucideIcons.eyeOff,
                                   size: 19,
-                                  color: const Color(0xFF94A3B8),
+                                  color: AppColors.neutralSubtle,
                                 ),
                                 onPressed: () {
                                   setState(() {
@@ -440,7 +440,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                         'Pembeli',
                                         'pembeli@lapaktani.id',
                                         'pembeli123',
-                                        const Color(0xFF0D9488),
+                                        AppColors.secondary,
                                       ),
                                     ],
                                   ),
@@ -451,7 +451,7 @@ class _LoginScreenState extends State<LoginScreen> {
                             Row(
                               children: [
                                 const Expanded(
-                                  child: Divider(color: Color(0xFFE2E8F0)),
+                                  child: Divider(color: AppColors.border),
                                 ),
                                 Padding(
                                   padding:
@@ -461,13 +461,13 @@ class _LoginScreenState extends State<LoginScreen> {
                                     style: TextStyle(
                                       fontSize: 11,
                                       fontWeight: FontWeight.w600,
-                                      color: Colors.grey.shade400,
+                                      color: AppColors.neutralSubtle,
                                       letterSpacing: 0.4,
                                     ),
                                   ),
                                 ),
                                 const Expanded(
-                                  child: Divider(color: Color(0xFFE2E8F0)),
+                                  child: Divider(color: AppColors.border),
                                 ),
                               ],
                             ),
@@ -481,7 +481,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                       color: Colors.white,
                                       borderRadius: BorderRadius.circular(16),
                                       border: Border.all(
-                                        color: const Color(0xFFE2E8F0),
+                                        color: AppColors.border,
                                         width: 1,
                                       ),
                                       boxShadow: [
@@ -509,7 +509,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                               style: TextStyle(
                                                 fontSize: 16,
                                                 fontWeight: FontWeight.w900,
-                                                color: Colors.blue.shade700,
+                                                color: AppColors.secondaryDark,
                                               ),
                                             ),
                                             const SizedBox(width: 8),
@@ -518,7 +518,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                               style: TextStyle(
                                                 fontSize: 13,
                                                 fontWeight: FontWeight.w600,
-                                                color: Color(0xFF334155),
+                                                color: AppColors.neutral,
                                               ),
                                             ),
                                           ],
@@ -535,7 +535,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                       color: Colors.white,
                                       borderRadius: BorderRadius.circular(16),
                                       border: Border.all(
-                                        color: const Color(0xFFE2E8F0),
+                                        color: AppColors.border,
                                         width: 1,
                                       ),
                                       boxShadow: [
@@ -568,7 +568,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                             Icon(
                                               LucideIcons.phone,
                                               size: 16,
-                                              color: Color(0xFF25D366),
+                                              color: AppColors.primary,
                                             ),
                                             SizedBox(width: 8),
                                             Text(
@@ -576,7 +576,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                               style: TextStyle(
                                                 fontSize: 13,
                                                 fontWeight: FontWeight.w600,
-                                                color: Color(0xFF334155),
+                                                color: AppColors.neutral,
                                               ),
                                             ),
                                           ],
@@ -607,7 +607,7 @@ class _LoginScreenState extends State<LoginScreen> {
                           'Belum punya akun?',
                           style: TextStyle(
                             fontSize: 13,
-                            color: Color(0xFF64748B),
+                            color: AppColors.neutralMuted,
                           ),
                         ),
                         const SizedBox(width: 6),

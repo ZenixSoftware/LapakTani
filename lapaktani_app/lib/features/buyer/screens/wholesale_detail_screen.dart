@@ -89,7 +89,7 @@ class _WholesaleDetailScreenState extends State<WholesaleDetailScreen> {
           'Untuk memesan kuota borongan partai panen, Anda perlu masuk ke akun LapakTani terlebih dahulu.',
           style: GoogleFonts.plusJakartaSans(
             fontSize: 13,
-            color: const Color(0xFF475569),
+            color: AppColors.neutralMuted,
           ),
         ),
         actions: [
@@ -98,7 +98,7 @@ class _WholesaleDetailScreenState extends State<WholesaleDetailScreen> {
             child: Text(
               'Nanti Saja',
               style: GoogleFonts.plusJakartaSans(
-                color: const Color(0xFF64748B),
+                color: AppColors.neutralMuted,
                 fontWeight: FontWeight.w600,
               ),
             ),
@@ -179,7 +179,7 @@ class _WholesaleDetailScreenState extends State<WholesaleDetailScreen> {
                         style: GoogleFonts.plusJakartaSans(
                           fontSize: 17,
                           fontWeight: FontWeight.w700,
-                          color: const Color(0xFF0F172A),
+                          color: AppColors.neutral,
                         ),
                       ),
                       IconButton(
@@ -201,9 +201,9 @@ class _WholesaleDetailScreenState extends State<WholesaleDetailScreen> {
                   Container(
                     padding: const EdgeInsets.all(12),
                     decoration: BoxDecoration(
-                      color: const Color(0xFFF8FAFC),
+                      color: AppColors.surfaceCanvas,
                       borderRadius: BorderRadius.circular(12),
-                      border: Border.all(color: const Color(0xFFE2E8F0)),
+                      border: Border.all(color: AppColors.border),
                     ),
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -211,17 +211,17 @@ class _WholesaleDetailScreenState extends State<WholesaleDetailScreen> {
                         Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Text('Harga Partai', style: GoogleFonts.plusJakartaSans(fontSize: 11, color: const Color(0xFF64748B))),
+                            Text('Harga Partai', style: GoogleFonts.plusJakartaSans(fontSize: 11, color: AppColors.neutralMuted)),
                             const SizedBox(height: 2),
-                            Text('Rp ${_currencyFormat.format(pricePerKg)} / kg', style: GoogleFonts.plusJakartaSans(fontSize: 14, fontWeight: FontWeight.w700, color: const Color(0xFF0F172A))),
+                            Text('Rp ${_currencyFormat.format(pricePerKg)} / kg', style: GoogleFonts.plusJakartaSans(fontSize: 14, fontWeight: FontWeight.w700, color: AppColors.neutral)),
                           ],
                         ),
                         Column(
                           crossAxisAlignment: CrossAxisAlignment.end,
                           children: [
-                            Text('Tersedia', style: GoogleFonts.plusJakartaSans(fontSize: 11, color: const Color(0xFF64748B))),
+                            Text('Tersedia', style: GoogleFonts.plusJakartaSans(fontSize: 11, color: AppColors.neutralMuted)),
                             const SizedBox(height: 2),
-                            Text('${_currencyFormat.format(remaining)} kg', style: GoogleFonts.plusJakartaSans(fontSize: 14, fontWeight: FontWeight.w700, color: const Color(0xFF16A34A))),
+                            Text('${_currencyFormat.format(remaining)} kg', style: GoogleFonts.plusJakartaSans(fontSize: 14, fontWeight: FontWeight.w700, color: AppColors.primary)),
                           ],
                         ),
                       ],
@@ -235,7 +235,7 @@ class _WholesaleDetailScreenState extends State<WholesaleDetailScreen> {
                   const SizedBox(height: 4),
                   Text(
                     'Minimal pemesanan partai: ${minOrder.toStringAsFixed(0)} kg',
-                    style: GoogleFonts.plusJakartaSans(fontSize: 11.5, color: const Color(0xFF64748B)),
+                    style: GoogleFonts.plusJakartaSans(fontSize: 11.5, color: AppColors.neutralMuted),
                   ),
                   const SizedBox(height: 10),
                   Row(
@@ -334,16 +334,16 @@ class _WholesaleDetailScreenState extends State<WholesaleDetailScreen> {
                   Container(
                     padding: const EdgeInsets.all(12),
                     decoration: BoxDecoration(
-                      color: const Color(0xFFF0FDF4),
+                      color: AppColors.primaryTint,
                       borderRadius: BorderRadius.circular(12),
-                      border: Border.all(color: const Color(0xFFBBF7D0)),
+                      border: Border.all(color: AppColors.primaryBorder),
                     ),
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
                         Text(
                           'Total Estimasi:',
-                          style: GoogleFonts.plusJakartaSans(fontSize: 13, fontWeight: FontWeight.w600, color: const Color(0xFF166534)),
+                          style: GoogleFonts.plusJakartaSans(fontSize: 13, fontWeight: FontWeight.w600, color: AppColors.primary),
                         ),
                         Text(
                           'Rp ${_currencyFormat.format(totalAmount)}',
@@ -364,7 +364,7 @@ class _WholesaleDetailScreenState extends State<WholesaleDetailScreen> {
                           messenger.showSnackBar(
                             SnackBar(
                               content: Text('Jumlah pesanan harus antara ${minOrder.toStringAsFixed(0)} sampai ${_currencyFormat.format(remaining)} kg.'),
-                              backgroundColor: const Color(0xFFEF4444),
+                              backgroundColor: AppColors.error,
                               behavior: SnackBarBehavior.floating,
                             ),
                           );
@@ -412,7 +412,7 @@ class _WholesaleDetailScreenState extends State<WholesaleDetailScreen> {
                             messenger.showSnackBar(
                               SnackBar(
                                 content: Text('Gagal: $e'),
-                                backgroundColor: const Color(0xFFEF4444),
+                                backgroundColor: AppColors.error,
                                 behavior: SnackBarBehavior.floating,
                               ),
                             );
@@ -444,7 +444,7 @@ class _WholesaleDetailScreenState extends State<WholesaleDetailScreen> {
                           messenger.showSnackBar(
                             const SnackBar(
                               content: Text('Gagal memesan kuota borongan. Silakan coba kembali.'),
-                              backgroundColor: Color(0xFFEF4444),
+                              backgroundColor: AppColors.error,
                               behavior: SnackBarBehavior.floating,
                             ),
                           );
@@ -490,10 +490,10 @@ class _WholesaleDetailScreenState extends State<WholesaleDetailScreen> {
     final String packagingSop = _poolData['packaging_sop'] ?? 'Krat Plastik & Cold Storage (10-12°C)';
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF8FAFC),
+      backgroundColor: AppColors.surfaceCanvas,
       appBar: AppBar(
         backgroundColor: Colors.white,
-        foregroundColor: const Color(0xFF0F172A),
+        foregroundColor: AppColors.neutral,
         elevation: 0.5,
         title: Text(
           'Detail Bursa Partai B2B',
@@ -531,8 +531,8 @@ class _WholesaleDetailScreenState extends State<WholesaleDetailScreen> {
                         _carouselImages[index],
                         fit: BoxFit.cover,
                         errorBuilder: (context, error, stackTrace) => Container(
-                          color: const Color(0xFFE2E8F0),
-                          child: const Icon(LucideIcons.image, size: 48, color: Color(0xFF94A3B8)),
+                          color: AppColors.border,
+                          child: const Icon(LucideIcons.image, size: 48, color: AppColors.neutralSubtle),
                         ),
                       );
                     },
@@ -572,7 +572,7 @@ class _WholesaleDetailScreenState extends State<WholesaleDetailScreen> {
                       Container(
                         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                         decoration: BoxDecoration(
-                          color: const Color(0xFFDCFCE7),
+                          color: AppColors.primaryTint,
                           borderRadius: BorderRadius.circular(6),
                         ),
                         child: Text(
@@ -580,7 +580,7 @@ class _WholesaleDetailScreenState extends State<WholesaleDetailScreen> {
                           style: GoogleFonts.plusJakartaSans(
                             fontSize: 11,
                             fontWeight: FontWeight.w700,
-                            color: const Color(0xFF16A34A),
+                            color: AppColors.primary,
                           ),
                         ),
                       ),
@@ -588,19 +588,19 @@ class _WholesaleDetailScreenState extends State<WholesaleDetailScreen> {
                       Container(
                         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                         decoration: BoxDecoration(
-                          color: const Color(0xFFEFF6FF),
+                          color: AppColors.secondaryTint,
                           borderRadius: BorderRadius.circular(6),
                         ),
                         child: Row(
                           children: [
-                            const Icon(LucideIcons.shieldCheck, size: 12, color: Color(0xFF2563EB)),
+                            const Icon(LucideIcons.shieldCheck, size: 12, color: AppColors.secondary),
                             const SizedBox(width: 4),
                             Text(
                               'Bebas Residu Pestisida',
                               style: GoogleFonts.plusJakartaSans(
                                 fontSize: 11,
                                 fontWeight: FontWeight.w600,
-                                color: const Color(0xFF2563EB),
+                                color: AppColors.secondary,
                               ),
                             ),
                           ],
@@ -614,7 +614,7 @@ class _WholesaleDetailScreenState extends State<WholesaleDetailScreen> {
                     style: GoogleFonts.plusJakartaSans(
                       fontSize: 20,
                       fontWeight: FontWeight.w800,
-                      color: const Color(0xFF0F172A),
+                      color: AppColors.neutral,
                     ),
                   ),
                   const SizedBox(height: 2),
@@ -623,7 +623,7 @@ class _WholesaleDetailScreenState extends State<WholesaleDetailScreen> {
                     style: GoogleFonts.plusJakartaSans(
                       fontSize: 13,
                       fontWeight: FontWeight.w500,
-                      color: const Color(0xFF64748B),
+                      color: AppColors.neutralMuted,
                     ),
                   ),
                   const SizedBox(height: 12),
@@ -644,14 +644,14 @@ class _WholesaleDetailScreenState extends State<WholesaleDetailScreen> {
                         style: GoogleFonts.plusJakartaSans(
                           fontSize: 14,
                           fontWeight: FontWeight.w600,
-                          color: const Color(0xFF64748B),
+                          color: AppColors.neutralMuted,
                         ),
                       ),
                       const Spacer(),
                       Container(
                         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
                         decoration: BoxDecoration(
-                          color: const Color(0xFFFEF3C7),
+                          color: AppColors.tertiaryTint,
                           borderRadius: BorderRadius.circular(8),
                         ),
                         child: Text(
@@ -659,7 +659,7 @@ class _WholesaleDetailScreenState extends State<WholesaleDetailScreen> {
                           style: GoogleFonts.plusJakartaSans(
                             fontSize: 11.5,
                             fontWeight: FontWeight.w700,
-                            color: const Color(0xFFB45309),
+                            color: AppColors.tertiaryText,
                           ),
                         ),
                       ),
@@ -682,13 +682,13 @@ class _WholesaleDetailScreenState extends State<WholesaleDetailScreen> {
                               style: GoogleFonts.plusJakartaSans(
                                 fontSize: 13.5,
                                 fontWeight: FontWeight.w700,
-                                color: const Color(0xFF0F172A),
+                                color: AppColors.neutral,
                               ),
                             ),
                             Container(
                               padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                               decoration: BoxDecoration(
-                                color: remainingKg <= 0.01 ? const Color(0xFFDCFCE7) : const Color(0xFFEFF6FF),
+                                color: remainingKg <= 0.01 ? AppColors.primaryTint : AppColors.secondaryTint,
                                 borderRadius: BorderRadius.circular(6),
                               ),
                               child: Text(
@@ -696,7 +696,7 @@ class _WholesaleDetailScreenState extends State<WholesaleDetailScreen> {
                                 style: GoogleFonts.plusJakartaSans(
                                   fontSize: 10.5,
                                   fontWeight: FontWeight.w700,
-                                  color: remainingKg <= 0.01 ? const Color(0xFF16A34A) : const Color(0xFF2563EB),
+                                  color: remainingKg <= 0.01 ? AppColors.primary : AppColors.secondary,
                                 ),
                               ),
                             ),
@@ -711,7 +711,7 @@ class _WholesaleDetailScreenState extends State<WholesaleDetailScreen> {
                               style: GoogleFonts.plusJakartaSans(
                                 fontSize: 12,
                                 fontWeight: FontWeight.w700,
-                                color: const Color(0xFF1E293B),
+                                color: AppColors.neutral,
                               ),
                             ),
                             Text(
@@ -719,7 +719,7 @@ class _WholesaleDetailScreenState extends State<WholesaleDetailScreen> {
                               style: GoogleFonts.plusJakartaSans(
                                 fontSize: 12,
                                 fontWeight: FontWeight.w700,
-                                color: const Color(0xFFD97706),
+                                color: AppColors.tertiaryText,
                               ),
                             ),
                           ],
@@ -730,12 +730,12 @@ class _WholesaleDetailScreenState extends State<WholesaleDetailScreen> {
                           child: LinearProgressIndicator(
                             value: progress,
                             minHeight: 10,
-                            backgroundColor: const Color(0xFFE2E8F0),
+                            backgroundColor: AppColors.border,
                             valueColor: const AlwaysStoppedAnimation<Color>(AppColors.primary),
                           ),
                         ),
                         const SizedBox(height: 14),
-                        const Divider(height: 1, color: Color(0xFFF1F5F9)),
+                        const Divider(height: 1, color: AppColors.surfaceCanvas),
                         const SizedBox(height: 12),
                         Row(
                           children: [
@@ -746,7 +746,7 @@ class _WholesaleDetailScreenState extends State<WholesaleDetailScreen> {
                               style: GoogleFonts.plusJakartaSans(
                                 fontSize: 12.5,
                                 fontWeight: FontWeight.w600,
-                                color: const Color(0xFF1E293B),
+                                color: AppColors.neutral,
                               ),
                             ),
                           ],
@@ -766,7 +766,7 @@ class _WholesaleDetailScreenState extends State<WholesaleDetailScreen> {
                           width: 48,
                           height: 48,
                           decoration: const BoxDecoration(
-                            color: Color(0xFFDCFCE7),
+                            color: AppColors.primaryTint,
                             shape: BoxShape.circle,
                           ),
                           child: const Center(
@@ -786,7 +786,7 @@ class _WholesaleDetailScreenState extends State<WholesaleDetailScreen> {
                                       style: GoogleFonts.plusJakartaSans(
                                         fontSize: 14,
                                         fontWeight: FontWeight.w700,
-                                        color: const Color(0xFF0F172A),
+                                        color: AppColors.neutral,
                                       ),
                                       maxLines: 1,
                                       overflow: TextOverflow.ellipsis,
@@ -801,7 +801,7 @@ class _WholesaleDetailScreenState extends State<WholesaleDetailScreen> {
                                 'Rating 4.9 ★ • 42 Petani Anggota Binaan',
                                 style: GoogleFonts.plusJakartaSans(
                                   fontSize: 11.5,
-                                  color: const Color(0xFF64748B),
+                                  color: AppColors.neutralMuted,
                                 ),
                               ),
                             ],
@@ -847,7 +847,7 @@ class _WholesaleDetailScreenState extends State<WholesaleDetailScreen> {
                           style: GoogleFonts.plusJakartaSans(
                             fontSize: 14,
                             fontWeight: FontWeight.w700,
-                            color: const Color(0xFF0F172A),
+                            color: AppColors.neutral,
                           ),
                         ),
                         const SizedBox(height: 12),
@@ -864,9 +864,9 @@ class _WholesaleDetailScreenState extends State<WholesaleDetailScreen> {
                   Container(
                     padding: const EdgeInsets.all(14),
                     decoration: BoxDecoration(
-                      color: const Color(0xFFF0FDF4),
+                      color: AppColors.primaryTint,
                       borderRadius: BorderRadius.circular(14),
-                      border: Border.all(color: const Color(0xFFBBF7D0)),
+                      border: Border.all(color: AppColors.primaryBorder),
                     ),
                     child: Row(
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -882,7 +882,7 @@ class _WholesaleDetailScreenState extends State<WholesaleDetailScreen> {
                                 style: GoogleFonts.plusJakartaSans(
                                   fontSize: 13,
                                   fontWeight: FontWeight.w700,
-                                  color: const Color(0xFF166534),
+                                  color: AppColors.primary,
                                 ),
                               ),
                               const SizedBox(height: 2),
@@ -890,7 +890,7 @@ class _WholesaleDetailScreenState extends State<WholesaleDetailScreen> {
                                 'Dana ditahan aman di escrow. Jika terjadi defisit panen, sisa dana otomatis dikembalikan (instant refund) ke rekening/dompet Anda.',
                                 style: GoogleFonts.plusJakartaSans(
                                   fontSize: 11.5,
-                                  color: const Color(0xFF15803D),
+                                  color: AppColors.primary,
                                   height: 1.35,
                                 ),
                               ),
@@ -908,14 +908,14 @@ class _WholesaleDetailScreenState extends State<WholesaleDetailScreen> {
                     decoration: BoxDecoration(
                       color: (_poolData['source_farmer_name'] != null &&
                               _poolData['source_farmer_name'].toString().isNotEmpty)
-                          ? const Color(0xFFFEF3C7)
-                          : const Color(0xFFF8FAFC),
+                          ? AppColors.tertiaryTint
+                          : AppColors.surfaceCanvas,
                       borderRadius: BorderRadius.circular(14),
                       border: Border.all(
                         color: (_poolData['source_farmer_name'] != null &&
                                 _poolData['source_farmer_name'].toString().isNotEmpty)
-                            ? const Color(0xFFF59E0B)
-                            : const Color(0xFFE2E8F0),
+                            ? AppColors.tertiary
+                            : AppColors.border,
                       ),
                     ),
                     child: Row(
@@ -939,7 +939,7 @@ class _WholesaleDetailScreenState extends State<WholesaleDetailScreen> {
                                 style: GoogleFonts.plusJakartaSans(
                                   fontSize: 12.5,
                                   fontWeight: FontWeight.w800,
-                                  color: const Color(0xFF0F172A),
+                                  color: AppColors.neutral,
                                 ),
                               ),
                               const SizedBox(height: 2),
@@ -952,7 +952,7 @@ class _WholesaleDetailScreenState extends State<WholesaleDetailScreen> {
                                     : 'Nama petani sumber desa disembunyikan untuk mencegah bypass, dan dibuka otomatis setelah status PAID_ESCROW.',
                                 style: GoogleFonts.plusJakartaSans(
                                   fontSize: 11.5,
-                                  color: const Color(0xFF475569),
+                                  color: AppColors.neutralMuted,
                                   height: 1.35,
                                 ),
                               ),
@@ -974,9 +974,9 @@ class _WholesaleDetailScreenState extends State<WholesaleDetailScreen> {
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
         decoration: const BoxDecoration(
           color: Colors.white,
-          border: Border(top: BorderSide(color: Color(0xFFE2E8F0))),
+          border: Border(top: BorderSide(color: AppColors.border)),
           boxShadow: [
-            BoxShadow(color: Color(0x0A000000), offset: Offset(0, -3), blurRadius: 8),
+            BoxShadow(color: AppColors.shadowFaint, offset: Offset(0, -3), blurRadius: 8),
           ],
         ),
         child: SafeArea(
@@ -989,7 +989,7 @@ class _WholesaleDetailScreenState extends State<WholesaleDetailScreen> {
                   children: [
                     Text(
                       'Harga Grosir:',
-                      style: GoogleFonts.plusJakartaSans(fontSize: 11, color: const Color(0xFF64748B)),
+                      style: GoogleFonts.plusJakartaSans(fontSize: 11, color: AppColors.neutralMuted),
                     ),
                     Text(
                       'Rp ${_currencyFormat.format(priceKg)} / kg',
@@ -1015,8 +1015,8 @@ class _WholesaleDetailScreenState extends State<WholesaleDetailScreen> {
                 style: ElevatedButton.styleFrom(
                   backgroundColor: AppColors.primary,
                   foregroundColor: Colors.white,
-                  disabledBackgroundColor: const Color(0xFFCBD5E1),
-                  disabledForegroundColor: const Color(0xFF64748B),
+                  disabledBackgroundColor: AppColors.neutralBorder,
+                  disabledForegroundColor: AppColors.neutralMuted,
                   padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                   elevation: 0,
@@ -1044,7 +1044,7 @@ class _WholesaleDetailScreenState extends State<WholesaleDetailScreen> {
               style: GoogleFonts.plusJakartaSans(
                 fontSize: 12,
                 fontWeight: FontWeight.w600,
-                color: const Color(0xFF64748B),
+                color: AppColors.neutralMuted,
               ),
             ),
           ),
@@ -1054,7 +1054,7 @@ class _WholesaleDetailScreenState extends State<WholesaleDetailScreen> {
               style: GoogleFonts.plusJakartaSans(
                 fontSize: 12,
                 fontWeight: FontWeight.w600,
-                color: const Color(0xFF0F172A),
+                color: AppColors.neutral,
               ),
             ),
           ),

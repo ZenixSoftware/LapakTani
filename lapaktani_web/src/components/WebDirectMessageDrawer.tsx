@@ -156,18 +156,18 @@ export const WebDirectMessageDrawer: React.FC<WebDirectMessageDrawerProps> = ({
 
   return (
     <div className="fixed inset-0 z-50 flex justify-end bg-black/40 backdrop-blur-[1px]">
-      <div className="w-full max-w-3xl bg-white h-full shadow-2xl border-l border-[#E2E8F0] flex flex-col">
+      <div className="w-full max-w-3xl bg-white h-full shadow-2xl border-l border-lt-border flex flex-col">
         {/* Header */}
-        <div className="px-5 py-4 bg-[#0D5136] text-white flex items-center justify-between">
+        <div className="px-5 py-4 bg-lt-surface-card border-b border-lt-border border-l-4 border-l-lt-primary flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="w-9 h-9 rounded-xl bg-[#22C55E] text-[#052e16] flex items-center justify-center">
+            <div className="w-9 h-9 rounded-xl bg-lt-primary-tint text-lt-primary flex items-center justify-center">
               <span className="material-symbols-outlined text-[20px]">forum</span>
             </div>
             <div>
-              <h2 className="text-[15px] font-extrabold leading-tight">
+              <h2 className="text-[15px] font-extrabold text-lt-neutral leading-tight">
                 Pesan Langsung (DM) 6-Role Terpadu
               </h2>
-              <p className="text-[11px] text-emerald-100/90">
+              <p className="text-[11px] text-lt-neutral-muted">
                 {isSuperAdmin
                   ? 'Komando langsung Super Admin ↔ Dinas Pertanian, Penyuluh BPP, & Admin Toko'
                   : isDinas
@@ -180,7 +180,7 @@ export const WebDirectMessageDrawer: React.FC<WebDirectMessageDrawerProps> = ({
             <button
               type="button"
               onClick={() => void loadInbox()}
-              className="p-2 rounded-lg bg-white/10 hover:bg-white/20 text-white"
+              className="p-2 rounded-lg bg-lt-surface-canvas hover:bg-lt-primary-tint text-lt-neutral border border-lt-border transition-colors"
               title="Muat Ulang"
             >
               <span className="material-symbols-outlined text-[18px]">refresh</span>
@@ -188,7 +188,7 @@ export const WebDirectMessageDrawer: React.FC<WebDirectMessageDrawerProps> = ({
             <button
               type="button"
               onClick={onClose}
-              className="p-2 rounded-lg bg-white/10 hover:bg-rose-600 text-white"
+              className="p-2 rounded-lg bg-lt-surface-canvas hover:bg-lt-error-tint text-lt-neutral-muted hover:text-lt-error border border-lt-border transition-colors"
               title="Tutup"
             >
               <span className="material-symbols-outlined text-[18px]">close</span>
@@ -197,8 +197,8 @@ export const WebDirectMessageDrawer: React.FC<WebDirectMessageDrawerProps> = ({
         </div>
 
         {/* Quick Contacts Strip */}
-        <div className="px-5 py-3 bg-[#F8FAF9] border-b border-[#E2E8F0] space-y-2">
-          <div className="text-[10.5px] font-extrabold uppercase tracking-wider text-[#166534]">
+        <div className="px-5 py-3 bg-lt-surface-canvas border-b border-lt-border space-y-2">
+          <div className="text-[10.5px] font-extrabold uppercase tracking-wider text-lt-primary">
             Akses Cepat Kontak Koordinasi
           </div>
           <div className="flex flex-wrap gap-2">
@@ -212,7 +212,7 @@ export const WebDirectMessageDrawer: React.FC<WebDirectMessageDrawerProps> = ({
                       title: 'Tata Kelola Super Admin ↔ Dinas Pertanian',
                     })
                   }
-                  className="px-3 py-1.5 rounded-xl bg-[#F59E0B] text-white text-[11.5px] font-bold flex items-center gap-1.5 hover:bg-amber-600"
+                  className="px-3 py-1.5 rounded-xl bg-lt-tertiary text-lt-neutral text-[11.5px] font-bold flex items-center gap-1.5 hover:bg-lt-tertiary-tint border border-lt-tertiary-border transition-colors"
                 >
                   <span className="material-symbols-outlined text-[15px]">account_balance</span>
                   DM Dinas Pertanian
@@ -225,7 +225,7 @@ export const WebDirectMessageDrawer: React.FC<WebDirectMessageDrawerProps> = ({
                       title: 'Koordinasi Super Admin ↔ Penyuluh BPP',
                     })
                   }
-                  className="px-3 py-1.5 rounded-xl bg-[#166534] text-white text-[11.5px] font-bold flex items-center gap-1.5 hover:bg-[#0D5136]"
+                  className="px-3 py-1.5 rounded-xl bg-lt-primary text-white text-[11.5px] font-bold flex items-center gap-1.5 hover:bg-lt-primary-dark"
                 >
                   <span className="material-symbols-outlined text-[15px]">agriculture</span>
                   DM Penyuluh BPP
@@ -238,7 +238,7 @@ export const WebDirectMessageDrawer: React.FC<WebDirectMessageDrawerProps> = ({
                       title: 'Audit Super Admin ↔ Admin Toko',
                     })
                   }
-                  className="px-3 py-1.5 rounded-xl bg-white border border-[#E2E8F0] text-gray-800 text-[11.5px] font-bold flex items-center gap-1.5 hover:border-[#166534]"
+                  className="px-3 py-1.5 rounded-xl bg-white border border-lt-border text-lt-neutral text-[11.5px] font-bold flex items-center gap-1.5 hover:border-lt-primary"
                 >
                   <span className="material-symbols-outlined text-[15px]">storefront</span>
                   DM Admin Toko
@@ -253,7 +253,7 @@ export const WebDirectMessageDrawer: React.FC<WebDirectMessageDrawerProps> = ({
                     title: 'Koordinasi Dinas ↔ Penyuluh BPP',
                   })
                 }
-                className="px-3 py-1.5 rounded-xl bg-[#166534] text-white text-[11.5px] font-bold flex items-center gap-1.5 hover:bg-[#0D5136]"
+                className="px-3 py-1.5 rounded-xl bg-lt-primary text-white text-[11.5px] font-bold flex items-center gap-1.5 hover:bg-lt-primary-dark"
               >
                 <span className="material-symbols-outlined text-[15px]">agriculture</span>
                 DM Penyuluh BPP
@@ -268,7 +268,7 @@ export const WebDirectMessageDrawer: React.FC<WebDirectMessageDrawerProps> = ({
                       title: 'Eskalasi Penyuluh ↔ Dinas Pertanian',
                     })
                   }
-                  className="px-3 py-1.5 rounded-xl bg-[#F59E0B] text-white text-[11.5px] font-bold flex items-center gap-1.5 hover:bg-amber-600"
+                  className="px-3 py-1.5 rounded-xl bg-lt-tertiary text-lt-neutral text-[11.5px] font-bold flex items-center gap-1.5 hover:bg-lt-tertiary-tint border border-lt-tertiary-border transition-colors"
                 >
                   <span className="material-symbols-outlined text-[15px]">account_balance</span>
                   DM Dinas Pertanian
@@ -281,7 +281,7 @@ export const WebDirectMessageDrawer: React.FC<WebDirectMessageDrawerProps> = ({
                       title: 'Pendampingan Penyuluh ↔ Petani Desa',
                     })
                   }
-                  className="px-3 py-1.5 rounded-xl bg-[#166534] text-white text-[11.5px] font-bold flex items-center gap-1.5 hover:bg-[#0D5136]"
+                  className="px-3 py-1.5 rounded-xl bg-lt-primary text-white text-[11.5px] font-bold flex items-center gap-1.5 hover:bg-lt-primary-dark"
                 >
                   <span className="material-symbols-outlined text-[15px]">person</span>
                   DM Petani Desa
@@ -294,7 +294,7 @@ export const WebDirectMessageDrawer: React.FC<WebDirectMessageDrawerProps> = ({
                       title: 'Koordinasi Penyuluh ↔ Admin Toko',
                     })
                   }
-                  className="px-3 py-1.5 rounded-xl bg-white border border-[#E2E8F0] text-gray-800 text-[11.5px] font-bold flex items-center gap-1.5 hover:border-[#166534]"
+                  className="px-3 py-1.5 rounded-xl bg-white border border-lt-border text-lt-neutral text-[11.5px] font-bold flex items-center gap-1.5 hover:border-lt-primary"
                 >
                   <span className="material-symbols-outlined text-[15px]">storefront</span>
                   DM Admin Toko
@@ -312,11 +312,11 @@ export const WebDirectMessageDrawer: React.FC<WebDirectMessageDrawerProps> = ({
                     title: `DM — ${c.full_name}`,
                   })
                 }
-                className="px-2.5 py-1.5 rounded-xl bg-white border border-[#E2E8F0] hover:border-[#22C55E] text-[11px] font-semibold text-gray-700 flex items-center gap-1.5"
+                className="px-2.5 py-1.5 rounded-xl bg-white border border-lt-border hover:border-lt-primary text-[11px] font-semibold text-lt-neutral flex items-center gap-1.5"
               >
-                <span className="w-2 h-2 rounded-full bg-[#22C55E]"></span>
+                <span className="w-2 h-2 rounded-full bg-lt-primary"></span>
                 <span>{c.full_name}</span>
-                <span className="text-[10px] text-gray-400">
+                <span className="text-[10px] text-lt-neutral-subtle">
                   ({ROLE_LABELS[c.role] || c.role}
                   {c.village_name ? ` · ${c.village_name}` : ''})
                 </span>
@@ -328,11 +328,11 @@ export const WebDirectMessageDrawer: React.FC<WebDirectMessageDrawerProps> = ({
         {/* Body Split: Conversation List + Thread */}
         <div className="flex-1 grid grid-cols-1 md:grid-cols-12 min-h-0">
           {/* Conversations sidebar */}
-          <div className="md:col-span-5 border-r border-[#E2E8F0] overflow-y-auto divide-y divide-[#F1F5F9]">
+          <div className="md:col-span-5 border-r border-lt-border overflow-y-auto divide-y divide-lt-surface-canvas">
             {isLoading ? (
-              <div className="p-6 text-center text-[12px] text-gray-500">Memuat daftar DM...</div>
+              <div className="p-6 text-center text-[12px] text-lt-neutral-muted">Memuat daftar DM...</div>
             ) : conversations.length === 0 ? (
-              <div className="p-6 text-center text-[12px] text-gray-500">
+              <div className="p-6 text-center text-[12px] text-lt-neutral-muted">
                 Belum ada riwayat DM. Pilih salah satu kontak di atas untuk memulai obrolan.
               </div>
             ) : (
@@ -345,25 +345,25 @@ export const WebDirectMessageDrawer: React.FC<WebDirectMessageDrawerProps> = ({
                     type="button"
                     onClick={() => setActiveConv(conv)}
                     className={`w-full text-left p-3.5 transition-colors ${
-                      selected ? 'bg-emerald-50 border-l-4 border-l-[#166534]' : 'hover:bg-[#F8FAF9]'
+                      selected ? 'bg-lt-primary-tint border-l-4 border-l-lt-primary' : 'hover:bg-lt-surface-canvas'
                     }`}
                   >
                     <div className="flex items-center justify-between gap-2">
-                      <span className="text-[12.5px] font-extrabold text-gray-900 truncate">
+                      <span className="text-[12.5px] font-extrabold text-lt-neutral truncate">
                         {other?.full_name || conv.title || 'Obrolan Langsung'}
                       </span>
                       {conv.unread_count > 0 && (
-                        <span className="px-1.5 py-0.5 rounded-full bg-[#166534] text-white text-[10px] font-extrabold">
+                        <span className="px-1.5 py-0.5 rounded-full bg-lt-primary text-white text-[10px] font-extrabold">
                           {conv.unread_count}
                         </span>
                       )}
                     </div>
                     {other && (
-                      <div className="text-[10.5px] font-bold text-[#166534] mt-0.5">
+                      <div className="text-[10.5px] font-bold text-lt-primary mt-0.5">
                         {ROLE_LABELS[other.role] || other.role}
                       </div>
                     )}
-                    <p className="text-[11.5px] text-gray-500 truncate mt-1">
+                    <p className="text-[11.5px] text-lt-neutral-muted truncate mt-1">
                       {conv.last_message?.body || 'Ketuk untuk membaca pesan...'}
                     </p>
                   </button>
@@ -373,18 +373,18 @@ export const WebDirectMessageDrawer: React.FC<WebDirectMessageDrawerProps> = ({
           </div>
 
           {/* Active Thread */}
-          <div className="md:col-span-7 flex flex-col min-h-0 bg-[#F8FAF9]">
+          <div className="md:col-span-7 flex flex-col min-h-0 bg-lt-surface-canvas">
             {!activeConv ? (
-              <div className="flex-1 flex items-center justify-center p-6 text-center text-[12.5px] text-gray-500">
+              <div className="flex-1 flex items-center justify-center p-6 text-center text-[12.5px] text-lt-neutral-muted">
                 Pilih percakapan atau tombol kontak cepat di atas.
               </div>
             ) : (
               <>
-                <div className="px-4 py-3 bg-white border-b border-[#E2E8F0]">
-                  <div className="text-[13px] font-extrabold text-[#0D5136]">
+                <div className="px-4 py-3 bg-white border-b border-lt-border">
+                  <div className="text-[13px] font-extrabold text-lt-neutral">
                     {activeConv.other_participant?.full_name || activeConv.title}
                   </div>
-                  <div className="text-[11px] text-gray-500">
+                  <div className="text-[11px] text-lt-neutral-muted">
                     {activeConv.other_participant
                       ? `${ROLE_LABELS[activeConv.other_participant.role] || activeConv.other_participant.role} · ${activeConv.other_participant.email}`
                       : 'Ruang Koordinasi LapakTani'}
@@ -393,11 +393,11 @@ export const WebDirectMessageDrawer: React.FC<WebDirectMessageDrawerProps> = ({
 
                 <div className="flex-1 overflow-y-auto p-4 space-y-2.5">
                   {isLoadingMessages ? (
-                    <div className="text-center text-[12px] text-gray-500 py-8">
+                    <div className="text-center text-[12px] text-lt-neutral-muted py-8">
                       Memuat pesan...
                     </div>
                   ) : messages.length === 0 ? (
-                    <div className="text-center text-[12px] text-gray-500 py-8">
+                    <div className="text-center text-[12px] text-lt-neutral-muted py-8">
                       Belum ada pesan. Mulai diskusi di bawah ini.
                     </div>
                   ) : (
@@ -412,21 +412,21 @@ export const WebDirectMessageDrawer: React.FC<WebDirectMessageDrawerProps> = ({
                           <div
                             className={`max-w-[85%] rounded-2xl px-3.5 py-2.5 text-[12.5px] shadow-sm ${
                               isAdvisory
-                                ? 'bg-amber-50 border border-amber-200 text-amber-950'
+                                ? 'bg-lt-tertiary-tint border border-lt-tertiary-border text-lt-tertiary-text'
                                 : isMe
-                                  ? 'bg-[#166534] text-white'
-                                  : 'bg-white border border-[#E2E8F0] text-gray-800'
+                                  ? 'bg-lt-primary text-white'
+                                  : 'bg-white border border-lt-border text-lt-neutral'
                             }`}
                           >
                             {!isMe && (
-                              <div className="text-[10.5px] font-extrabold text-[#166534] mb-0.5">
+                              <div className="text-[10.5px] font-extrabold text-lt-primary mb-0.5">
                                 {m.sender_name}
                               </div>
                             )}
                             <div className="whitespace-pre-wrap leading-relaxed">{m.body}</div>
                             <div
                               className={`text-[9.5px] mt-1 ${
-                                isMe && !isAdvisory ? 'text-emerald-100 text-right' : 'text-gray-400'
+                                isMe && !isAdvisory ? 'text-lt-primary-tint text-right' : 'text-lt-neutral-subtle'
                               }`}
                             >
                               {new Date(m.created_at).toLocaleTimeString('id-ID', {
@@ -443,19 +443,19 @@ export const WebDirectMessageDrawer: React.FC<WebDirectMessageDrawerProps> = ({
 
                 <form
                   onSubmit={handleSend}
-                  className="p-3 bg-white border-t border-[#E2E8F0] flex items-center gap-2"
+                  className="p-3 bg-white border-t border-lt-border flex items-center gap-2"
                 >
                   <input
                     type="text"
                     value={draft}
                     onChange={(e) => setDraft(e.target.value)}
                     placeholder="Tulis pesan DM koordinasi..."
-                    className="flex-1 px-3.5 py-2 rounded-xl bg-[#F8FAF9] border border-[#E2E8F0] text-[12.5px] focus:bg-white focus:border-[#166534] outline-none"
+                    className="flex-1 px-3.5 py-2 rounded-xl bg-lt-surface-canvas border border-lt-border text-[12.5px] focus:bg-white focus:border-lt-primary outline-none"
                   />
                   <button
                     type="submit"
                     disabled={isSending || !draft.trim()}
-                    className="px-4 py-2 rounded-xl bg-[#166534] hover:bg-[#0D5136] text-white text-[12.5px] font-bold disabled:opacity-50"
+                    className="px-4 py-2 rounded-xl bg-lt-primary hover:bg-lt-primary-dark text-white text-[12.5px] font-bold disabled:opacity-50"
                   >
                     {isSending ? 'Kirim...' : 'Kirim'}
                   </button>

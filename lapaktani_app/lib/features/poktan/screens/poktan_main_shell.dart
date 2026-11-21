@@ -50,11 +50,11 @@ class _PoktanMainShellState extends State<PoktanMainShell> {
         decoration: const BoxDecoration(
           color: Colors.white,
           border: Border(
-            top: BorderSide(color: Color(0xFFE2E8F0), width: 0.8),
+            top: BorderSide(color: AppColors.border, width: 0.8),
           ),
           boxShadow: [
             BoxShadow(
-              color: Color(0x0A000000),
+              color: AppColors.shadowFaint,
               offset: Offset(0, -2),
               blurRadius: 8,
             ),
@@ -105,7 +105,7 @@ class _PoktanMainShellState extends State<PoktanMainShell> {
     required IconData inactiveIcon,
   }) {
     final bool isSelected = _currentIndex == index;
-    final Color color = isSelected ? const Color(0xFF006E04) : const Color(0xFF64748B);
+    final Color color = isSelected ? AppColors.primary : AppColors.neutralMuted;
 
     return Expanded(
       child: InkWell(
@@ -183,17 +183,17 @@ class _PoktanMembersTabState extends State<PoktanMembersTab> {
         ),
         content: Text(
           'Apakah Anda yakin ingin keluar dari akun Pengurus Poktan?',
-          style: GoogleFonts.plusJakartaSans(fontSize: 13, color: const Color(0xFF475569)),
+          style: GoogleFonts.plusJakartaSans(fontSize: 13, color: AppColors.neutralMuted),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx, false),
-            child: Text('Batal', style: GoogleFonts.plusJakartaSans(color: const Color(0xFF64748B))),
+            child: Text('Batal', style: GoogleFonts.plusJakartaSans(color: AppColors.neutralMuted)),
           ),
           ElevatedButton(
             onPressed: () => Navigator.pop(ctx, true),
             style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFFDC2626),
+              backgroundColor: AppColors.error,
               foregroundColor: Colors.white,
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
             ),
@@ -217,7 +217,7 @@ class _PoktanMembersTabState extends State<PoktanMembersTab> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF8F9FF),
+      backgroundColor: AppColors.surfaceCanvas,
       appBar: AppBar(
         backgroundColor: Colors.white,
         elevation: 0.5,
@@ -227,7 +227,7 @@ class _PoktanMembersTabState extends State<PoktanMembersTab> {
           style: GoogleFonts.plusJakartaSans(
             fontSize: 17,
             fontWeight: FontWeight.w700,
-            color: const Color(0xFF121C2A),
+            color: AppColors.neutral,
           ),
         ),
         actions: [
@@ -242,12 +242,12 @@ class _PoktanMembersTabState extends State<PoktanMembersTab> {
             },
           ),
           IconButton(
-            icon: const Icon(LucideIcons.refreshCw, color: Color(0xFF475569), size: 20),
+            icon: const Icon(LucideIcons.refreshCw, color: AppColors.neutralMuted, size: 20),
             tooltip: 'Segarkan',
             onPressed: _loadMembers,
           ),
           IconButton(
-            icon: const Icon(Icons.logout_rounded, color: Color(0xFFDC2626), size: 22),
+            icon: const Icon(Icons.logout_rounded, color: AppColors.error, size: 22),
             tooltip: 'Keluar',
             onPressed: _handleLogout,
           ),
@@ -273,7 +273,7 @@ class _PoktanMembersTabState extends State<PoktanMembersTab> {
                       borderRadius: BorderRadius.circular(16),
                       boxShadow: const [
                         BoxShadow(
-                          color: Color(0x20166534),
+                          color: AppColors.shadowMedium,
                           blurRadius: 10,
                           offset: Offset(0, 4),
                         ),
@@ -315,7 +315,7 @@ class _PoktanMembersTabState extends State<PoktanMembersTab> {
                           'Total Konsolidasi Lahan Produktif',
                           style: GoogleFonts.plusJakartaSans(
                             fontSize: 12,
-                            color: const Color(0xFFD1FAE5),
+                            color: AppColors.primaryTint,
                           ),
                         ),
                         const SizedBox(height: 2),
@@ -336,7 +336,7 @@ class _PoktanMembersTabState extends State<PoktanMembersTab> {
                     style: GoogleFonts.plusJakartaSans(
                       fontSize: 14,
                       fontWeight: FontWeight.w700,
-                      color: const Color(0xFF1E293B),
+                      color: AppColors.neutral,
                     ),
                   ),
                   const SizedBox(height: 10),
@@ -355,13 +355,13 @@ class _PoktanMembersTabState extends State<PoktanMembersTab> {
                             CircleAvatar(
                               radius: 20,
                               backgroundColor: member.isChairman
-                                  ? const Color(0xFFFEF3C7)
-                                  : const Color(0xFFE2E8F0),
+                                  ? AppColors.tertiaryTint
+                                  : AppColors.border,
                               child: Icon(
                                 member.isChairman ? Icons.star : Icons.person,
                                 color: member.isChairman
-                                    ? const Color(0xFFD97706)
-                                    : const Color(0xFF475569),
+                                    ? AppColors.tertiaryText
+                                    : AppColors.neutralMuted,
                                 size: 20,
                               ),
                             ),
@@ -380,7 +380,7 @@ class _PoktanMembersTabState extends State<PoktanMembersTab> {
                                           style: GoogleFonts.plusJakartaSans(
                                             fontSize: 14,
                                             fontWeight: FontWeight.w700,
-                                            color: const Color(0xFF121C2A),
+                                            color: AppColors.neutral,
                                           ),
                                         ),
                                       ),
@@ -389,7 +389,7 @@ class _PoktanMembersTabState extends State<PoktanMembersTab> {
                                         Container(
                                           padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                                           decoration: BoxDecoration(
-                                            color: const Color(0xFFFEF3C7),
+                                            color: AppColors.tertiaryTint,
                                             borderRadius: BorderRadius.circular(6),
                                           ),
                                           child: Text(
@@ -397,7 +397,7 @@ class _PoktanMembersTabState extends State<PoktanMembersTab> {
                                             style: GoogleFonts.plusJakartaSans(
                                               fontSize: 10,
                                               fontWeight: FontWeight.w700,
-                                              color: const Color(0xFFB45309),
+                                              color: AppColors.tertiaryText,
                                             ),
                                           ),
                                         ),
@@ -411,7 +411,7 @@ class _PoktanMembersTabState extends State<PoktanMembersTab> {
                                     overflow: TextOverflow.ellipsis,
                                     style: GoogleFonts.plusJakartaSans(
                                       fontSize: 11,
-                                      color: const Color(0xFF64748B),
+                                      color: AppColors.neutralMuted,
                                     ),
                                   ),
                                   const SizedBox(height: 2),
@@ -419,7 +419,7 @@ class _PoktanMembersTabState extends State<PoktanMembersTab> {
                                     'Jenis Tanah: ${member.soilType}',
                                     style: GoogleFonts.plusJakartaSans(
                                       fontSize: 11,
-                                      color: const Color(0xFF64748B),
+                                      color: AppColors.neutralMuted,
                                     ),
                                   ),
                                 ],
@@ -442,7 +442,7 @@ class _PoktanMembersTabState extends State<PoktanMembersTab> {
                                   style: GoogleFonts.plusJakartaSans(
                                     fontSize: 10,
                                     fontWeight: FontWeight.w600,
-                                    color: const Color(0xFF94A3B8),
+                                    color: AppColors.neutralSubtle,
                                   ),
                                 ),
                               ],
@@ -473,17 +473,17 @@ class PoktanProfileTab extends StatelessWidget {
         ),
         content: Text(
           'Apakah Anda yakin ingin keluar dari akun Pengurus Poktan?',
-          style: GoogleFonts.plusJakartaSans(fontSize: 13, color: const Color(0xFF475569)),
+          style: GoogleFonts.plusJakartaSans(fontSize: 13, color: AppColors.neutralMuted),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx, false),
-            child: Text('Batal', style: GoogleFonts.plusJakartaSans(color: const Color(0xFF64748B))),
+            child: Text('Batal', style: GoogleFonts.plusJakartaSans(color: AppColors.neutralMuted)),
           ),
           ElevatedButton(
             onPressed: () => Navigator.pop(ctx, true),
             style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFFDC2626),
+              backgroundColor: AppColors.error,
               foregroundColor: Colors.white,
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
             ),
@@ -512,7 +512,7 @@ class PoktanProfileTab extends StatelessWidget {
     final String phone = currentUser?.phone ?? '081234567890';
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF8F9FF),
+      backgroundColor: AppColors.surfaceCanvas,
       appBar: AppBar(
         backgroundColor: Colors.white,
         elevation: 0.5,
@@ -522,12 +522,12 @@ class PoktanProfileTab extends StatelessWidget {
           style: GoogleFonts.plusJakartaSans(
             fontSize: 17,
             fontWeight: FontWeight.w700,
-            color: const Color(0xFF121C2A),
+            color: AppColors.neutral,
           ),
         ),
         actions: [
           IconButton(
-            icon: const Icon(Icons.logout_rounded, color: Color(0xFFDC2626), size: 22),
+            icon: const Icon(Icons.logout_rounded, color: AppColors.error, size: 22),
             tooltip: 'Keluar',
             onPressed: () => _handleLogout(context),
           ),
@@ -542,10 +542,10 @@ class PoktanProfileTab extends StatelessWidget {
             decoration: BoxDecoration(
               color: Colors.white,
               borderRadius: BorderRadius.circular(16),
-              border: Border.all(color: const Color(0xFFE2E8F0)),
+              border: Border.all(color: AppColors.border),
               boxShadow: const [
                 BoxShadow(
-                  color: Color(0x08000000),
+                  color: AppColors.shadowFaint,
                   blurRadius: 8,
                   offset: Offset(0, 2),
                 ),
@@ -555,11 +555,11 @@ class PoktanProfileTab extends StatelessWidget {
               children: [
                 CircleAvatar(
                   radius: 36,
-                  backgroundColor: const Color(0xFFE8F5E9),
+                  backgroundColor: AppColors.primaryTint,
                   child: const Icon(
                     Icons.account_balance,
                     size: 36,
-                    color: Color(0xFF006E04),
+                    color: AppColors.primary,
                   ),
                 ),
                 const SizedBox(height: 12),
@@ -568,14 +568,14 @@ class PoktanProfileTab extends StatelessWidget {
                   style: GoogleFonts.plusJakartaSans(
                     fontSize: 18,
                     fontWeight: FontWeight.w800,
-                    color: const Color(0xFF121C2A),
+                    color: AppColors.neutral,
                   ),
                 ),
                 const SizedBox(height: 4),
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                   decoration: BoxDecoration(
-                    color: const Color(0xFFDCFCE7),
+                    color: AppColors.primaryTint,
                     borderRadius: BorderRadius.circular(20),
                   ),
                   child: Text(
@@ -583,7 +583,7 @@ class PoktanProfileTab extends StatelessWidget {
                     style: GoogleFonts.plusJakartaSans(
                       fontSize: 11,
                       fontWeight: FontWeight.w700,
-                      color: const Color(0xFF166534),
+                      color: AppColors.primary,
                     ),
                   ),
                 ),
@@ -592,7 +592,7 @@ class PoktanProfileTab extends StatelessWidget {
                   'Mitra Tani Makmur • Desa Lembang',
                   style: GoogleFonts.plusJakartaSans(
                     fontSize: 12.5,
-                    color: const Color(0xFF64748B),
+                    color: AppColors.neutralMuted,
                   ),
                 ),
                 const SizedBox(height: 2),
@@ -600,7 +600,7 @@ class PoktanProfileTab extends StatelessWidget {
                   '$email | $phone',
                   style: GoogleFonts.plusJakartaSans(
                     fontSize: 11,
-                    color: const Color(0xFF94A3B8),
+                    color: AppColors.neutralSubtle,
                   ),
                 ),
               ],
@@ -614,7 +614,7 @@ class PoktanProfileTab extends StatelessWidget {
             style: GoogleFonts.plusJakartaSans(
               fontSize: 13,
               fontWeight: FontWeight.w700,
-              color: const Color(0xFF64748B),
+              color: AppColors.neutralMuted,
             ),
           ),
           const SizedBox(height: 8),
@@ -626,7 +626,7 @@ class PoktanProfileTab extends StatelessWidget {
               ScaffoldMessenger.of(context).showSnackBar(
                 const SnackBar(
                   content: Text('Rekening operasional terhubung dengan Bank BCA (Escrow Poktan).'),
-                  backgroundColor: Color(0xFF006E04),
+                  backgroundColor: AppColors.primary,
                   behavior: SnackBarBehavior.floating,
                 ),
               );
@@ -640,7 +640,7 @@ class PoktanProfileTab extends StatelessWidget {
               ScaffoldMessenger.of(context).showSnackBar(
                 const SnackBar(
                   content: Text('Armada kurir terintegrasi untuk pick-up komoditas segar.'),
-                  backgroundColor: Color(0xFF006E04),
+                  backgroundColor: AppColors.primary,
                   behavior: SnackBarBehavior.floating,
                 ),
               );
@@ -654,7 +654,7 @@ class PoktanProfileTab extends StatelessWidget {
               ScaffoldMessenger.of(context).showSnackBar(
                 const SnackBar(
                   content: Text('Hubungi BPP Lembang untuk pendampingan penyuluh.'),
-                  backgroundColor: Color(0xFF006E04),
+                  backgroundColor: AppColors.primary,
                   behavior: SnackBarBehavior.floating,
                 ),
               );
@@ -669,7 +669,7 @@ class PoktanProfileTab extends StatelessWidget {
             child: ElevatedButton.icon(
               onPressed: () => _handleLogout(context),
               style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFFDC2626),
+                backgroundColor: AppColors.error,
                 foregroundColor: Colors.white,
                 elevation: 0,
                 shape: RoundedRectangleBorder(
@@ -703,33 +703,33 @@ class PoktanProfileTab extends StatelessWidget {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: const Color(0xFFE2E8F0)),
+        border: Border.all(color: AppColors.border),
       ),
       child: ListTile(
         leading: Container(
           padding: const EdgeInsets.all(8),
           decoration: BoxDecoration(
-            color: const Color(0xFFF1F5F9),
+            color: AppColors.surfaceCanvas,
             borderRadius: BorderRadius.circular(8),
           ),
-          child: Icon(icon, size: 20, color: const Color(0xFF475569)),
+          child: Icon(icon, size: 20, color: AppColors.neutralMuted),
         ),
         title: Text(
           title,
           style: GoogleFonts.plusJakartaSans(
             fontSize: 13.5,
             fontWeight: FontWeight.w700,
-            color: const Color(0xFF1E293B),
+            color: AppColors.neutral,
           ),
         ),
         subtitle: Text(
           subtitle,
           style: GoogleFonts.plusJakartaSans(
             fontSize: 11,
-            color: const Color(0xFF64748B),
+            color: AppColors.neutralMuted,
           ),
         ),
-        trailing: const Icon(LucideIcons.chevronRight, size: 16, color: Color(0xFF94A3B8)),
+        trailing: const Icon(LucideIcons.chevronRight, size: 16, color: AppColors.neutralSubtle),
         onTap: onTap,
       ),
     );

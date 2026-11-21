@@ -309,16 +309,16 @@ export function App() {
   const criticalPlotCount = useMemo(() => plots.filter(isPlotCritical).length, [plots]);
 
   return (
-    <div className="text-neutral-dark antialiased bg-[#F8FAF9] min-h-screen flex flex-col">
+    <div className="text-lt-neutral antialiased bg-lt-surface-canvas min-h-screen flex flex-col">
       {/* Toast Notification */}
       {toast && (
         <div
           className={`fixed bottom-5 right-5 z-[60] px-4 py-3 rounded-xl shadow-lg border text-[13px] font-semibold flex items-center gap-2.5 transition-all ${
             toast.type === 'success'
-              ? 'bg-[#0D5136] text-white border-emerald-700'
+              ? 'bg-lt-primary text-white border-lt-primary-dark'
               : toast.type === 'error'
-                ? 'bg-rose-800 text-white border-rose-600'
-                : 'bg-[#166534] text-white border-emerald-600'
+                ? 'bg-lt-error text-white border-lt-error'
+                : 'bg-lt-secondary text-white border-lt-secondary-dark'
           }`}
         >
           <span className="material-symbols-outlined text-[18px]">
@@ -365,8 +365,8 @@ export function App() {
                     onClick={() => setActiveTab(tab.id)}
                     className={`shrink-0 py-2 px-3 rounded-xl text-[12px] font-bold transition-all ${
                       active
-                        ? 'bg-[#0D5136] text-white shadow-sm'
-                        : 'bg-white text-gray-700 border border-[#E2E8F0]'
+                        ? 'bg-lt-primary text-white shadow-sm'
+                        : 'bg-white text-lt-neutral border border-lt-border'
                     }`}
                   >
                     {tab.label}

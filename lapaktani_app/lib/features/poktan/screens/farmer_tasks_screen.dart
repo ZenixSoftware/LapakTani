@@ -52,29 +52,29 @@ class _FarmerTasksScreenState extends State<FarmerTasksScreen> {
 
     switch (status.toLowerCase()) {
       case 'planting':
-        bg = const Color(0xFFEFF6FF);
-        fg = const Color(0xFF2563EB);
+        bg = AppColors.secondaryTint;
+        fg = AppColors.secondary;
         label = 'Masa Tanam';
         break;
       case 'harvesting':
-        bg = const Color(0xFFFEF3C7);
-        fg = const Color(0xFFD97706);
+        bg = AppColors.tertiaryTint;
+        fg = AppColors.tertiaryText;
         label = 'Masa Panen';
         break;
       case 'delivered':
-        bg = const Color(0xFFDCFCE7);
-        fg = const Color(0xFF16A34A);
+        bg = AppColors.primaryTint;
+        fg = AppColors.primary;
         label = 'Terkirim';
         break;
       case 'cancelled':
-        bg = const Color(0xFFFEE2E2);
-        fg = const Color(0xFFDC2626);
+        bg = AppColors.errorTint;
+        fg = AppColors.error;
         label = 'Dibatalkan';
         break;
       case 'pending':
       default:
-        bg = const Color(0xFFF1F5F9);
-        fg = const Color(0xFF475569);
+        bg = AppColors.surfaceCanvas;
+        fg = AppColors.neutralMuted;
         label = 'Persiapan Lahan';
         break;
     }
@@ -99,13 +99,13 @@ class _FarmerTasksScreenState extends State<FarmerTasksScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF8F9FF),
+      backgroundColor: AppColors.surfaceCanvas,
       appBar: AppBar(
         backgroundColor: Colors.white,
         elevation: 0.5,
         leading: widget.showBackButton
             ? IconButton(
-                icon: const Icon(LucideIcons.arrowLeft, color: Color(0xFF121C2A), size: 22),
+                icon: const Icon(LucideIcons.arrowLeft, color: AppColors.neutral, size: 22),
                 onPressed: () => Navigator.of(context).pop(),
               )
             : null,
@@ -114,12 +114,12 @@ class _FarmerTasksScreenState extends State<FarmerTasksScreen> {
           style: GoogleFonts.plusJakartaSans(
             fontSize: 17,
             fontWeight: FontWeight.w700,
-            color: const Color(0xFF121C2A),
+            color: AppColors.neutral,
           ),
         ),
         actions: [
           IconButton(
-            icon: const Icon(LucideIcons.refreshCw, color: Color(0xFF475569), size: 20),
+            icon: const Icon(LucideIcons.refreshCw, color: AppColors.neutralMuted, size: 20),
             onPressed: _loadTasks,
           ),
         ],
@@ -137,9 +137,9 @@ class _FarmerTasksScreenState extends State<FarmerTasksScreen> {
                     Container(
                       padding: const EdgeInsets.all(14),
                       decoration: BoxDecoration(
-                        color: const Color(0xFFECFDF5),
+                        color: AppColors.primaryTint,
                         borderRadius: BorderRadius.circular(16),
-                        border: Border.all(color: const Color(0xFFA7F3D0)),
+                        border: Border.all(color: AppColors.primaryBorder),
                       ),
                       child: Row(
                         crossAxisAlignment: CrossAxisAlignment.start,
@@ -147,10 +147,10 @@ class _FarmerTasksScreenState extends State<FarmerTasksScreen> {
                           Container(
                             padding: const EdgeInsets.all(8),
                             decoration: BoxDecoration(
-                              color: const Color(0xFFD1FAE5),
+                              color: AppColors.primaryTint,
                               borderRadius: BorderRadius.circular(10),
                             ),
-                            child: const Icon(LucideIcons.bellRing, color: Color(0xFF047857), size: 20),
+                            child: const Icon(LucideIcons.bellRing, color: AppColors.primaryDark, size: 20),
                           ),
                           const SizedBox(width: 12),
                           Expanded(
@@ -165,12 +165,12 @@ class _FarmerTasksScreenState extends State<FarmerTasksScreen> {
                                       style: GoogleFonts.plusJakartaSans(
                                         fontSize: 13,
                                         fontWeight: FontWeight.w700,
-                                        color: const Color(0xFF065F46),
+                                        color: AppColors.primaryDark,
                                       ),
                                     ),
                                     InkWell(
                                       onTap: () => setState(() => _showNotifBanner = false),
-                                      child: const Icon(LucideIcons.x, size: 16, color: Color(0xFF047857)),
+                                      child: const Icon(LucideIcons.x, size: 16, color: AppColors.primaryDark),
                                     ),
                                   ],
                                 ),
@@ -179,7 +179,7 @@ class _FarmerTasksScreenState extends State<FarmerTasksScreen> {
                                   _notifications.first.message,
                                   style: GoogleFonts.plusJakartaSans(
                                     fontSize: 12,
-                                    color: const Color(0xFF047857),
+                                    color: AppColors.primaryDark,
                                   ),
                                 ),
                               ],
@@ -200,7 +200,7 @@ class _FarmerTasksScreenState extends State<FarmerTasksScreen> {
                         style: GoogleFonts.plusJakartaSans(
                           fontSize: 15,
                           fontWeight: FontWeight.w700,
-                          color: const Color(0xFF121C2A),
+                          color: AppColors.neutral,
                         ),
                       ),
                       Text(
@@ -208,7 +208,7 @@ class _FarmerTasksScreenState extends State<FarmerTasksScreen> {
                         style: GoogleFonts.plusJakartaSans(
                           fontSize: 12,
                           fontWeight: FontWeight.w600,
-                          color: const Color(0xFF64748B),
+                          color: AppColors.neutralMuted,
                         ),
                       ),
                     ],
@@ -226,10 +226,10 @@ class _FarmerTasksScreenState extends State<FarmerTasksScreen> {
                               width: 64,
                               height: 64,
                               decoration: const BoxDecoration(
-                                color: Color(0xFFF1F5F9),
+                                color: AppColors.surfaceCanvas,
                                 shape: BoxShape.circle,
                               ),
-                              child: const Icon(LucideIcons.clipboardCheck, color: Color(0xFF94A3B8), size: 32),
+                              child: const Icon(LucideIcons.clipboardCheck, color: AppColors.neutralSubtle, size: 32),
                             ),
                             const SizedBox(height: 16),
                             Text(
@@ -237,7 +237,7 @@ class _FarmerTasksScreenState extends State<FarmerTasksScreen> {
                               style: GoogleFonts.plusJakartaSans(
                                 fontSize: 15,
                                 fontWeight: FontWeight.w600,
-                                color: const Color(0xFF475569),
+                                color: AppColors.neutralMuted,
                               ),
                             ),
                             const SizedBox(height: 6),
@@ -246,7 +246,7 @@ class _FarmerTasksScreenState extends State<FarmerTasksScreen> {
                               textAlign: TextAlign.center,
                               style: GoogleFonts.plusJakartaSans(
                                 fontSize: 12,
-                                color: const Color(0xFF94A3B8),
+                                color: AppColors.neutralSubtle,
                               ),
                             ),
                           ],
@@ -270,7 +270,7 @@ class _FarmerTasksScreenState extends State<FarmerTasksScreen> {
                                     width: 44,
                                     height: 44,
                                     decoration: BoxDecoration(
-                                      color: const Color(0xFFDCFCE7),
+                                      color: AppColors.primaryTint,
                                       borderRadius: BorderRadius.circular(12),
                                     ),
                                     child: const Icon(LucideIcons.sprout, color: AppColors.primary, size: 24),
@@ -285,7 +285,7 @@ class _FarmerTasksScreenState extends State<FarmerTasksScreen> {
                                           style: GoogleFonts.plusJakartaSans(
                                             fontSize: 15,
                                             fontWeight: FontWeight.w700,
-                                            color: const Color(0xFF121C2A),
+                                            color: AppColors.neutral,
                                           ),
                                         ),
                                         const SizedBox(height: 2),
@@ -293,7 +293,7 @@ class _FarmerTasksScreenState extends State<FarmerTasksScreen> {
                                           'Kontrak: ${task.buyerName}',
                                           style: GoogleFonts.plusJakartaSans(
                                             fontSize: 12,
-                                            color: const Color(0xFF64748B),
+                                            color: AppColors.neutralMuted,
                                           ),
                                         ),
                                       ],
@@ -308,9 +308,9 @@ class _FarmerTasksScreenState extends State<FarmerTasksScreen> {
                               Container(
                                 padding: const EdgeInsets.all(12),
                                 decoration: BoxDecoration(
-                                  color: const Color(0xFFF8FAFC),
+                                  color: AppColors.surfaceCanvas,
                                   borderRadius: BorderRadius.circular(12),
-                                  border: Border.all(color: const Color(0xFFE2E8F0)),
+                                  border: Border.all(color: AppColors.border),
                                 ),
                                 child: Row(
                                   children: [
@@ -322,7 +322,7 @@ class _FarmerTasksScreenState extends State<FarmerTasksScreen> {
                                             'Target Kuota Anda',
                                             style: GoogleFonts.plusJakartaSans(
                                               fontSize: 11,
-                                              color: const Color(0xFF64748B),
+                                              color: AppColors.neutralMuted,
                                             ),
                                           ),
                                           const SizedBox(height: 2),
@@ -340,7 +340,7 @@ class _FarmerTasksScreenState extends State<FarmerTasksScreen> {
                                     Container(
                                       height: 32,
                                       width: 1,
-                                      color: const Color(0xFFE2E8F0),
+                                      color: AppColors.border,
                                     ),
                                     const SizedBox(width: 12),
                                     Expanded(
@@ -351,7 +351,7 @@ class _FarmerTasksScreenState extends State<FarmerTasksScreen> {
                                             'Tenggat Panen',
                                             style: GoogleFonts.plusJakartaSans(
                                               fontSize: 11,
-                                              color: const Color(0xFF64748B),
+                                              color: AppColors.neutralMuted,
                                             ),
                                           ),
                                           const SizedBox(height: 2),
@@ -360,7 +360,7 @@ class _FarmerTasksScreenState extends State<FarmerTasksScreen> {
                                             style: GoogleFonts.plusJakartaSans(
                                               fontSize: 13,
                                               fontWeight: FontWeight.w700,
-                                              color: const Color(0xFF1E293B),
+                                              color: AppColors.neutral,
                                             ),
                                           ),
                                         ],
@@ -374,23 +374,23 @@ class _FarmerTasksScreenState extends State<FarmerTasksScreen> {
                               // Details row
                               Row(
                                 children: [
-                                  const Icon(LucideIcons.calendarDays, size: 14, color: Color(0xFF94A3B8)),
+                                  const Icon(LucideIcons.calendarDays, size: 14, color: AppColors.neutralSubtle),
                                   const SizedBox(width: 6),
                                   Text(
                                     'Tanam: ${task.plantingDeadline ?? 'Segera'}',
                                     style: GoogleFonts.plusJakartaSans(
                                       fontSize: 11,
-                                      color: const Color(0xFF64748B),
+                                      color: AppColors.neutralMuted,
                                     ),
                                   ),
                                   const Spacer(),
-                                  const Icon(LucideIcons.users, size: 14, color: Color(0xFF94A3B8)),
+                                  const Icon(LucideIcons.users, size: 14, color: AppColors.neutralSubtle),
                                   const SizedBox(width: 6),
                                   Text(
                                     task.poktanName,
                                     style: GoogleFonts.plusJakartaSans(
                                       fontSize: 11,
-                                      color: const Color(0xFF64748B),
+                                      color: AppColors.neutralMuted,
                                     ),
                                   ),
                                 ],

@@ -108,7 +108,7 @@ class _AllocateQuotaSheetState extends State<AllocateQuotaSheet> {
             colorScheme: const ColorScheme.light(
               primary: AppColors.primary,
               onPrimary: Colors.white,
-              onSurface: Color(0xFF121C2A),
+              onSurface: AppColors.neutral,
             ),
           ),
           child: child!,
@@ -133,7 +133,7 @@ class _AllocateQuotaSheetState extends State<AllocateQuotaSheet> {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('Masukkan kuota panen (kg) untuk minimal satu petani anggota.'),
-          backgroundColor: Colors.redAccent,
+          backgroundColor: AppColors.error,
         ),
       );
       return;
@@ -145,7 +145,7 @@ class _AllocateQuotaSheetState extends State<AllocateQuotaSheet> {
           content: Text(
             'Total alokasi (${_currencyFormat.format(currentSum)} kg) melebihi sisa kuota yang tersedia (${_currencyFormat.format(_availableQuotaToAllocate)} kg).',
           ),
-          backgroundColor: Colors.redAccent,
+          backgroundColor: AppColors.error,
         ),
       );
       return;
@@ -198,7 +198,7 @@ class _AllocateQuotaSheetState extends State<AllocateQuotaSheet> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(res['message'] ?? 'Gagal mendistribusikan kuota panen.'),
-          backgroundColor: Colors.redAccent,
+          backgroundColor: AppColors.error,
         ),
       );
     }
@@ -228,7 +228,7 @@ class _AllocateQuotaSheetState extends State<AllocateQuotaSheet> {
               width: 44,
               height: 5,
               decoration: BoxDecoration(
-                color: const Color(0xFFCBD5E1),
+                color: AppColors.neutralBorder,
                 borderRadius: BorderRadius.circular(10),
               ),
             ),
@@ -242,7 +242,7 @@ class _AllocateQuotaSheetState extends State<AllocateQuotaSheet> {
                   Container(
                     padding: const EdgeInsets.all(10),
                     decoration: BoxDecoration(
-                      color: const Color(0xFFDCFCE7),
+                      color: AppColors.primaryTint,
                       borderRadius: BorderRadius.circular(12),
                     ),
                     child: const Icon(LucideIcons.split, color: AppColors.primary, size: 22),
@@ -257,7 +257,7 @@ class _AllocateQuotaSheetState extends State<AllocateQuotaSheet> {
                           style: GoogleFonts.plusJakartaSans(
                             fontSize: 17,
                             fontWeight: FontWeight.w700,
-                            color: const Color(0xFF121C2A),
+                            color: AppColors.neutral,
                           ),
                         ),
                         Text(
@@ -266,20 +266,20 @@ class _AllocateQuotaSheetState extends State<AllocateQuotaSheet> {
                           overflow: TextOverflow.ellipsis,
                           style: GoogleFonts.plusJakartaSans(
                             fontSize: 13,
-                            color: const Color(0xFF64748B),
+                            color: AppColors.neutralMuted,
                           ),
                         ),
                       ],
                     ),
                   ),
                   IconButton(
-                    icon: const Icon(LucideIcons.x, color: Color(0xFF64748B)),
+                    icon: const Icon(LucideIcons.x, color: AppColors.neutralMuted),
                     onPressed: () => Navigator.of(context).pop(),
                   ),
                 ],
               ),
             ),
-            const Divider(height: 24, thickness: 1, color: Color(0xFFF1F5F9)),
+            const Divider(height: 24, thickness: 1, color: AppColors.surfaceCanvas),
 
             // Live quota status card
             Padding(
@@ -288,13 +288,13 @@ class _AllocateQuotaSheetState extends State<AllocateQuotaSheet> {
                 padding: const EdgeInsets.all(14),
                 decoration: BoxDecoration(
                   color: isOverQuota
-                      ? const Color(0xFFFEF2F2)
-                      : (isFullyAllocated ? const Color(0xFFF0FDF4) : const Color(0xFFF8FAFC)),
+                      ? AppColors.errorTint
+                      : (isFullyAllocated ? AppColors.primaryTint : AppColors.surfaceCanvas),
                   borderRadius: BorderRadius.circular(16),
                   border: Border.all(
                     color: isOverQuota
-                        ? const Color(0xFFFCA5A5)
-                        : (isFullyAllocated ? const Color(0xFF86EFAC) : const Color(0xFFE2E8F0)),
+                        ? AppColors.errorBorder
+                        : (isFullyAllocated ? AppColors.primaryBorder : AppColors.border),
                   ),
                 ),
                 child: Column(
@@ -309,7 +309,7 @@ class _AllocateQuotaSheetState extends State<AllocateQuotaSheet> {
                               'Target Pesanan',
                               style: GoogleFonts.plusJakartaSans(
                                 fontSize: 11,
-                                color: const Color(0xFF64748B),
+                                color: AppColors.neutralMuted,
                               ),
                             ),
                             Text(
@@ -317,7 +317,7 @@ class _AllocateQuotaSheetState extends State<AllocateQuotaSheet> {
                               style: GoogleFonts.plusJakartaSans(
                                 fontSize: 15,
                                 fontWeight: FontWeight.w700,
-                                color: const Color(0xFF121C2A),
+                                color: AppColors.neutral,
                               ),
                             ),
                           ],
@@ -329,7 +329,7 @@ class _AllocateQuotaSheetState extends State<AllocateQuotaSheet> {
                               'Input Alokasi',
                               style: GoogleFonts.plusJakartaSans(
                                 fontSize: 11,
-                                color: const Color(0xFF64748B),
+                                color: AppColors.neutralMuted,
                               ),
                             ),
                             Text(
@@ -337,7 +337,7 @@ class _AllocateQuotaSheetState extends State<AllocateQuotaSheet> {
                               style: GoogleFonts.plusJakartaSans(
                                 fontSize: 15,
                                 fontWeight: FontWeight.w700,
-                                color: isOverQuota ? const Color(0xFFDC2626) : AppColors.primary,
+                                color: isOverQuota ? AppColors.error : AppColors.primary,
                               ),
                             ),
                           ],
@@ -349,7 +349,7 @@ class _AllocateQuotaSheetState extends State<AllocateQuotaSheet> {
                               'Sisa Kuota',
                               style: GoogleFonts.plusJakartaSans(
                                 fontSize: 11,
-                                color: const Color(0xFF64748B),
+                                color: AppColors.neutralMuted,
                               ),
                             ),
                             Text(
@@ -358,10 +358,10 @@ class _AllocateQuotaSheetState extends State<AllocateQuotaSheet> {
                                 fontSize: 15,
                                 fontWeight: FontWeight.w700,
                                 color: isOverQuota
-                                    ? const Color(0xFFDC2626)
+                                    ? AppColors.error
                                     : (isFullyAllocated
-                                        ? const Color(0xFF16A34A)
-                                        : const Color(0xFF334155)),
+                                        ? AppColors.primary
+                                        : AppColors.neutral),
                               ),
                             ),
                           ],
@@ -382,10 +382,10 @@ class _AllocateQuotaSheetState extends State<AllocateQuotaSheet> {
                               fontSize: 12,
                               fontWeight: FontWeight.w600,
                               color: isOverQuota
-                                  ? const Color(0xFFB91C1C)
+                                  ? AppColors.error
                                   : (isFullyAllocated
-                                      ? const Color(0xFF15803D)
-                                      : const Color(0xFF64748B)),
+                                      ? AppColors.primary
+                                      : AppColors.neutralMuted),
                             ),
                           ),
                         ),
@@ -429,7 +429,7 @@ class _AllocateQuotaSheetState extends State<AllocateQuotaSheet> {
                   return CustomSoftCard(
                     padding: const EdgeInsets.all(14),
                     borderRadius: BorderRadius.circular(16),
-                    backgroundColor: const Color(0xFFFBFBFC),
+                    backgroundColor: AppColors.surfaceCanvas,
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
@@ -438,14 +438,14 @@ class _AllocateQuotaSheetState extends State<AllocateQuotaSheet> {
                             CircleAvatar(
                               radius: 18,
                               backgroundColor: member.isChairman
-                                  ? const Color(0xFFFEF3C7)
-                                  : const Color(0xFFE2E8F0),
+                                  ? AppColors.tertiaryTint
+                                  : AppColors.border,
                               child: Icon(
                                 member.isChairman ? Icons.stars : Icons.person,
                                 size: 18,
                                 color: member.isChairman
-                                    ? const Color(0xFFD97706)
-                                    : const Color(0xFF475569),
+                                    ? AppColors.tertiaryText
+                                    : AppColors.neutralMuted,
                               ),
                             ),
                             const SizedBox(width: 12),
@@ -461,7 +461,7 @@ class _AllocateQuotaSheetState extends State<AllocateQuotaSheet> {
                                           style: GoogleFonts.plusJakartaSans(
                                             fontSize: 14,
                                             fontWeight: FontWeight.w700,
-                                            color: const Color(0xFF121C2A),
+                                            color: AppColors.neutral,
                                           ),
                                         ),
                                       ),
@@ -471,7 +471,7 @@ class _AllocateQuotaSheetState extends State<AllocateQuotaSheet> {
                                           padding: const EdgeInsets.symmetric(
                                               horizontal: 6, vertical: 2),
                                           decoration: BoxDecoration(
-                                            color: const Color(0xFFFEF3C7),
+                                            color: AppColors.tertiaryTint,
                                             borderRadius: BorderRadius.circular(6),
                                           ),
                                           child: Text(
@@ -479,7 +479,7 @@ class _AllocateQuotaSheetState extends State<AllocateQuotaSheet> {
                                             style: GoogleFonts.plusJakartaSans(
                                               fontSize: 10,
                                               fontWeight: FontWeight.w700,
-                                              color: const Color(0xFFB45309),
+                                              color: AppColors.tertiaryText,
                                             ),
                                           ),
                                         ),
@@ -491,7 +491,7 @@ class _AllocateQuotaSheetState extends State<AllocateQuotaSheet> {
                                     'Luas Lahan: ${member.landAreaHa.toStringAsFixed(2)} ha | Tanah: ${member.soilType}',
                                     style: GoogleFonts.plusJakartaSans(
                                       fontSize: 12,
-                                      color: const Color(0xFF64748B),
+                                      color: AppColors.neutralMuted,
                                     ),
                                   ),
                                 ],
@@ -511,7 +511,7 @@ class _AllocateQuotaSheetState extends State<AllocateQuotaSheet> {
                                 decoration: BoxDecoration(
                                   color: Colors.white,
                                   borderRadius: BorderRadius.circular(10),
-                                  border: Border.all(color: const Color(0xFFCBD5E1)),
+                                  border: Border.all(color: AppColors.neutralBorder),
                                 ),
                                 padding: const EdgeInsets.symmetric(horizontal: 12),
                                 child: Row(
@@ -529,7 +529,7 @@ class _AllocateQuotaSheetState extends State<AllocateQuotaSheet> {
                                         style: GoogleFonts.plusJakartaSans(
                                           fontSize: 14,
                                           fontWeight: FontWeight.w600,
-                                          color: const Color(0xFF121C2A),
+                                          color: AppColors.neutral,
                                         ),
                                       ),
                                     ),
@@ -538,7 +538,7 @@ class _AllocateQuotaSheetState extends State<AllocateQuotaSheet> {
                                       style: GoogleFonts.plusJakartaSans(
                                         fontSize: 13,
                                         fontWeight: FontWeight.w600,
-                                        color: const Color(0xFF64748B),
+                                        color: AppColors.neutralMuted,
                                       ),
                                     ),
                                   ],
@@ -559,7 +559,7 @@ class _AllocateQuotaSheetState extends State<AllocateQuotaSheet> {
                                   decoration: BoxDecoration(
                                     color: Colors.white,
                                     borderRadius: BorderRadius.circular(10),
-                                    border: Border.all(color: const Color(0xFFE2E8F0)),
+                                    border: Border.all(color: AppColors.border),
                                   ),
                                   child: Column(
                                     mainAxisAlignment: MainAxisAlignment.center,
@@ -569,7 +569,7 @@ class _AllocateQuotaSheetState extends State<AllocateQuotaSheet> {
                                         'Tenggat Tanam',
                                         style: GoogleFonts.plusJakartaSans(
                                           fontSize: 10,
-                                          color: const Color(0xFF94A3B8),
+                                          color: AppColors.neutralSubtle,
                                         ),
                                       ),
                                       Text(
@@ -579,7 +579,7 @@ class _AllocateQuotaSheetState extends State<AllocateQuotaSheet> {
                                         style: GoogleFonts.plusJakartaSans(
                                           fontSize: 11,
                                           fontWeight: FontWeight.w600,
-                                          color: const Color(0xFF1E293B),
+                                          color: AppColors.neutral,
                                         ),
                                       ),
                                     ],
@@ -601,7 +601,7 @@ class _AllocateQuotaSheetState extends State<AllocateQuotaSheet> {
                                   decoration: BoxDecoration(
                                     color: Colors.white,
                                     borderRadius: BorderRadius.circular(10),
-                                    border: Border.all(color: const Color(0xFFE2E8F0)),
+                                    border: Border.all(color: AppColors.border),
                                   ),
                                   child: Column(
                                     mainAxisAlignment: MainAxisAlignment.center,
@@ -611,7 +611,7 @@ class _AllocateQuotaSheetState extends State<AllocateQuotaSheet> {
                                         'Tenggat Panen',
                                         style: GoogleFonts.plusJakartaSans(
                                           fontSize: 10,
-                                          color: const Color(0xFF94A3B8),
+                                          color: AppColors.neutralSubtle,
                                         ),
                                       ),
                                       Text(
@@ -621,7 +621,7 @@ class _AllocateQuotaSheetState extends State<AllocateQuotaSheet> {
                                         style: GoogleFonts.plusJakartaSans(
                                           fontSize: 11,
                                           fontWeight: FontWeight.w600,
-                                          color: const Color(0xFF1E293B),
+                                          color: AppColors.neutral,
                                         ),
                                       ),
                                     ],
@@ -650,7 +650,7 @@ class _AllocateQuotaSheetState extends State<AllocateQuotaSheet> {
                       : _submitAllocation,
                   style: ElevatedButton.styleFrom(
                     backgroundColor: AppColors.primary,
-                    disabledBackgroundColor: const Color(0xFFCBD5E1),
+                    disabledBackgroundColor: AppColors.neutralBorder,
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(14),
                     ),

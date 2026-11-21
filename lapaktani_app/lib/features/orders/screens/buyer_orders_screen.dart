@@ -147,7 +147,7 @@ class _BuyerOrdersScreenState extends State<BuyerOrdersScreen> with SingleTicker
                       width: 40,
                       height: 4,
                       decoration: BoxDecoration(
-                        color: const Color(0xFFE2E8F0),
+                        color: AppColors.border,
                         borderRadius: BorderRadius.circular(2),
                       ),
                     ),
@@ -161,13 +161,13 @@ class _BuyerOrdersScreenState extends State<BuyerOrdersScreen> with SingleTicker
                         style: GoogleFonts.plusJakartaSans(
                           fontSize: 16,
                           fontWeight: FontWeight.w700,
-                          color: const Color(0xFF121C2A),
+                          color: AppColors.neutral,
                         ),
                       ),
                       Container(
                         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                         decoration: BoxDecoration(
-                          color: const Color(0xFFE8F8EC),
+                          color: AppColors.primaryTint,
                           borderRadius: BorderRadius.circular(8),
                         ),
                         child: Text(
@@ -185,9 +185,9 @@ class _BuyerOrdersScreenState extends State<BuyerOrdersScreen> with SingleTicker
                   Container(
                     padding: const EdgeInsets.all(12),
                     decoration: BoxDecoration(
-                      color: const Color(0xFFF8F9FF),
+                      color: AppColors.surfaceCanvas,
                       borderRadius: BorderRadius.circular(12),
-                      border: Border.all(color: const Color(0xFFE2E8F0)),
+                      border: Border.all(color: AppColors.border),
                     ),
                     child: Column(
                       children: [
@@ -209,7 +209,7 @@ class _BuyerOrdersScreenState extends State<BuyerOrdersScreen> with SingleTicker
                     style: GoogleFonts.plusJakartaSans(
                       fontSize: 13.5,
                       fontWeight: FontWeight.w700,
-                      color: const Color(0xFF121C2A),
+                      color: AppColors.neutral,
                     ),
                   ),
                   const SizedBox(height: 10),
@@ -222,7 +222,7 @@ class _BuyerOrdersScreenState extends State<BuyerOrdersScreen> with SingleTicker
                             width: 36,
                             height: 36,
                             decoration: BoxDecoration(
-                              color: const Color(0xFFF1F5F9),
+                              color: AppColors.surfaceCanvas,
                               borderRadius: BorderRadius.circular(6),
                             ),
                             clipBehavior: Clip.antiAlias,
@@ -241,7 +241,7 @@ class _BuyerOrdersScreenState extends State<BuyerOrdersScreen> with SingleTicker
                                 ),
                                 Text(
                                   '${item.qty} ${item.unit} • ${item.grade ?? 'Grade Standar'}',
-                                  style: GoogleFonts.plusJakartaSans(fontSize: 11, color: const Color(0xFF64748B)),
+                                  style: GoogleFonts.plusJakartaSans(fontSize: 11, color: AppColors.neutralMuted),
                                 ),
                               ],
                             ),
@@ -255,7 +255,7 @@ class _BuyerOrdersScreenState extends State<BuyerOrdersScreen> with SingleTicker
                     );
                   }),
                   const SizedBox(height: 16),
-                  const Divider(color: Color(0xFFE2E8F0)),
+                  const Divider(color: AppColors.border),
                   const SizedBox(height: 10),
                   _buildSheetRow('Subtotal Produk', 'Rp ${order.totalPrice.toString().replaceAllMapped(RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'), (m) => '${m[1]}.')}'),
                   const SizedBox(height: 6),
@@ -266,11 +266,11 @@ class _BuyerOrdersScreenState extends State<BuyerOrdersScreen> with SingleTicker
                     children: [
                       Text(
                         'Total Pembayaran',
-                        style: GoogleFonts.plusJakartaSans(fontSize: 14, fontWeight: FontWeight.w800, color: const Color(0xFF121C2A)),
+                        style: GoogleFonts.plusJakartaSans(fontSize: 14, fontWeight: FontWeight.w800, color: AppColors.neutral),
                       ),
                       Text(
                         'Rp ${(order.totalPrice + order.shippingFee).toString().replaceAllMapped(RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'), (m) => '${m[1]}.')}',
-                        style: GoogleFonts.plusJakartaSans(fontSize: 15, fontWeight: FontWeight.w800, color: const Color(0xFF006E04)),
+                        style: GoogleFonts.plusJakartaSans(fontSize: 15, fontWeight: FontWeight.w800, color: AppColors.primary),
                       ),
                     ],
                   ),
@@ -424,11 +424,11 @@ class _BuyerOrdersScreenState extends State<BuyerOrdersScreen> with SingleTicker
       children: [
         Text(
           label,
-          style: GoogleFonts.plusJakartaSans(fontSize: 11.5, color: const Color(0xFF64748B)),
+          style: GoogleFonts.plusJakartaSans(fontSize: 11.5, color: AppColors.neutralMuted),
         ),
         Text(
           value,
-          style: GoogleFonts.plusJakartaSans(fontSize: 12, fontWeight: FontWeight.w600, color: const Color(0xFF121C2A)),
+          style: GoogleFonts.plusJakartaSans(fontSize: 12, fontWeight: FontWeight.w600, color: AppColors.neutral),
         ),
       ],
     );
@@ -444,7 +444,7 @@ class _BuyerOrdersScreenState extends State<BuyerOrdersScreen> with SingleTicker
             controller: _tabController,
             isScrollable: true,
             labelColor: AppColors.primary,
-            unselectedLabelColor: const Color(0xFF64748B),
+            unselectedLabelColor: AppColors.neutralMuted,
             indicatorColor: AppColors.primary,
             indicatorWeight: 2.5,
             tabAlignment: TabAlignment.start,
@@ -490,7 +490,7 @@ class _BuyerOrdersScreenState extends State<BuyerOrdersScreen> with SingleTicker
 
     if (widget.isTabEmbedded) {
       return Scaffold(
-        backgroundColor: const Color(0xFFF8F9FF),
+        backgroundColor: AppColors.surfaceCanvas,
         appBar: AppBar(
           backgroundColor: Colors.white,
           elevation: 0.5,
@@ -500,7 +500,7 @@ class _BuyerOrdersScreenState extends State<BuyerOrdersScreen> with SingleTicker
             style: GoogleFonts.plusJakartaSans(
               fontSize: 16.5,
               fontWeight: FontWeight.w700,
-              color: const Color(0xFF121C2A),
+              color: AppColors.neutral,
             ),
           ),
         ),
@@ -509,12 +509,12 @@ class _BuyerOrdersScreenState extends State<BuyerOrdersScreen> with SingleTicker
     }
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF8F9FF),
+      backgroundColor: AppColors.surfaceCanvas,
       appBar: AppBar(
         backgroundColor: Colors.white,
         elevation: 0.5,
         leading: IconButton(
-          icon: const Icon(LucideIcons.arrowLeft, color: Color(0xFF121C2A), size: 22),
+          icon: const Icon(LucideIcons.arrowLeft, color: AppColors.neutral, size: 22),
           onPressed: () => Navigator.pop(context),
         ),
         title: Text(
@@ -522,7 +522,7 @@ class _BuyerOrdersScreenState extends State<BuyerOrdersScreen> with SingleTicker
           style: GoogleFonts.plusJakartaSans(
             fontSize: 16.5,
             fontWeight: FontWeight.w700,
-            color: const Color(0xFF121C2A),
+            color: AppColors.neutral,
           ),
         ),
       ),
@@ -541,10 +541,10 @@ class _BuyerOrdersScreenState extends State<BuyerOrdersScreen> with SingleTicker
               width: 64,
               height: 64,
               decoration: const BoxDecoration(
-                color: Color(0xFFF1F5F9),
+                color: AppColors.surfaceCanvas,
                 shape: BoxShape.circle,
               ),
-              child: const Icon(LucideIcons.receipt, size: 28, color: Color(0xFF94A3B8)),
+              child: const Icon(LucideIcons.receipt, size: 28, color: AppColors.neutralSubtle),
             ),
             const SizedBox(height: 16),
             Text(
@@ -552,7 +552,7 @@ class _BuyerOrdersScreenState extends State<BuyerOrdersScreen> with SingleTicker
               style: GoogleFonts.plusJakartaSans(
                 fontSize: 15,
                 fontWeight: FontWeight.w700,
-                color: const Color(0xFF121C2A),
+                color: AppColors.neutral,
               ),
             ),
             const SizedBox(height: 6),
@@ -561,7 +561,7 @@ class _BuyerOrdersScreenState extends State<BuyerOrdersScreen> with SingleTicker
               textAlign: TextAlign.center,
               style: GoogleFonts.plusJakartaSans(
                 fontSize: 12,
-                color: const Color(0xFF64748B),
+                color: AppColors.neutralMuted,
               ),
             ),
           ],
@@ -578,29 +578,29 @@ class _BuyerOrdersScreenState extends State<BuyerOrdersScreen> with SingleTicker
     Color badgeTextColor;
     switch (order.status) {
       case OrderStatus.pendingPayment:
-        badgeBg = const Color(0xFFFEF3C7);
-        badgeTextColor = const Color(0xFF92400E);
+        badgeBg = AppColors.tertiaryTint;
+        badgeTextColor = AppColors.tertiaryText;
         break;
       case OrderStatus.needHarvest:
-        badgeBg = const Color(0xFFE8F8EC);
-        badgeTextColor = const Color(0xFF006E04);
+        badgeBg = AppColors.primaryTint;
+        badgeTextColor = AppColors.primary;
         break;
       case OrderStatus.readyToShip:
-        badgeBg = const Color(0xFFE0E7FF);
-        badgeTextColor = const Color(0xFF3730A3);
+        badgeBg = AppColors.secondaryTint;
+        badgeTextColor = AppColors.secondaryDark;
         break;
       case OrderStatus.inTransit:
-        badgeBg = const Color(0xFFEFF6FF);
-        badgeTextColor = const Color(0xFF1E40AF);
+        badgeBg = AppColors.secondaryTint;
+        badgeTextColor = AppColors.secondaryDark;
         break;
       case OrderStatus.delivered:
       case OrderStatus.completed:
-        badgeBg = const Color(0xFFDCFCE7);
-        badgeTextColor = const Color(0xFF166534);
+        badgeBg = AppColors.primaryTint;
+        badgeTextColor = AppColors.primary;
         break;
       case OrderStatus.cancelled:
-        badgeBg = const Color(0xFFFEE2E2);
-        badgeTextColor = const Color(0xFF991B1B);
+        badgeBg = AppColors.errorTint;
+        badgeTextColor = AppColors.error;
         break;
     }
 
@@ -612,7 +612,7 @@ class _BuyerOrdersScreenState extends State<BuyerOrdersScreen> with SingleTicker
         borderRadius: BorderRadius.circular(14),
         boxShadow: const [
           BoxShadow(
-            color: Color(0x06000000),
+            color: AppColors.shadowFaint,
             blurRadius: 8,
             offset: Offset(0, 2),
           ),
@@ -626,14 +626,14 @@ class _BuyerOrdersScreenState extends State<BuyerOrdersScreen> with SingleTicker
             children: [
               Row(
                 children: [
-                  const Icon(LucideIcons.store, size: 14, color: Color(0xFF006E04)),
+                  const Icon(LucideIcons.store, size: 14, color: AppColors.primary),
                   const SizedBox(width: 6),
                   Text(
                     order.sellerName,
                     style: GoogleFonts.plusJakartaSans(
                       fontSize: 12,
                       fontWeight: FontWeight.w700,
-                      color: const Color(0xFF121C2A),
+                      color: AppColors.neutral,
                     ),
                   ),
                 ],
@@ -660,7 +660,7 @@ class _BuyerOrdersScreenState extends State<BuyerOrdersScreen> with SingleTicker
             '${order.id} • ${order.createdAt.day} Okt ${order.createdAt.year}',
             style: GoogleFonts.plusJakartaSans(
               fontSize: 10.5,
-              color: const Color(0xFF94A3B8),
+              color: AppColors.neutralSubtle,
             ),
           ),
           const SizedBox(height: 10),
@@ -671,7 +671,7 @@ class _BuyerOrdersScreenState extends State<BuyerOrdersScreen> with SingleTicker
                   width: 48,
                   height: 48,
                   decoration: BoxDecoration(
-                    color: const Color(0xFFF1F5F9),
+                    color: AppColors.surfaceCanvas,
                     borderRadius: BorderRadius.circular(8),
                   ),
                   clipBehavior: Clip.antiAlias,
@@ -695,7 +695,7 @@ class _BuyerOrdersScreenState extends State<BuyerOrdersScreen> with SingleTicker
                         style: GoogleFonts.plusJakartaSans(
                           fontSize: 13,
                           fontWeight: FontWeight.w700,
-                          color: const Color(0xFF121C2A),
+                          color: AppColors.neutral,
                         ),
                       ),
                       const SizedBox(height: 2),
@@ -703,7 +703,7 @@ class _BuyerOrdersScreenState extends State<BuyerOrdersScreen> with SingleTicker
                         '${firstItem.qty} ${firstItem.unit} ${order.items.length > 1 ? '(+${order.items.length - 1} produk lain)' : ''}',
                         style: GoogleFonts.plusJakartaSans(
                           fontSize: 11,
-                          color: const Color(0xFF64748B),
+                          color: AppColors.neutralMuted,
                         ),
                       ),
                       Text(
@@ -720,7 +720,7 @@ class _BuyerOrdersScreenState extends State<BuyerOrdersScreen> with SingleTicker
               ],
             ),
           const SizedBox(height: 12),
-          const Divider(height: 1, color: Color(0xFFF1F5F9)),
+          const Divider(height: 1, color: AppColors.surfaceCanvas),
           const SizedBox(height: 10),
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -733,7 +733,7 @@ class _BuyerOrdersScreenState extends State<BuyerOrdersScreen> with SingleTicker
                       'Total Belanja ($totalQty barang)',
                       style: GoogleFonts.plusJakartaSans(
                         fontSize: 10.5,
-                        color: const Color(0xFF94A3B8),
+                        color: AppColors.neutralSubtle,
                       ),
                     ),
                     Text(
@@ -741,7 +741,7 @@ class _BuyerOrdersScreenState extends State<BuyerOrdersScreen> with SingleTicker
                       style: GoogleFonts.plusJakartaSans(
                         fontSize: 14.5,
                         fontWeight: FontWeight.w800,
-                        color: const Color(0xFF006E04),
+                        color: AppColors.primary,
                       ),
                     ),
                   ],
@@ -782,7 +782,7 @@ class _BuyerOrdersScreenState extends State<BuyerOrdersScreen> with SingleTicker
                   OutlinedButton(
                     onPressed: () => _showOrderDetailSheet(order),
                     style: OutlinedButton.styleFrom(
-                      side: const BorderSide(color: Color(0xFFCBD5E1)),
+                      side: const BorderSide(color: AppColors.neutralBorder),
                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
                       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
                     ),
@@ -791,7 +791,7 @@ class _BuyerOrdersScreenState extends State<BuyerOrdersScreen> with SingleTicker
                       style: GoogleFonts.plusJakartaSans(
                         fontSize: 11,
                         fontWeight: FontWeight.w700,
-                        color: const Color(0xFF334155),
+                        color: AppColors.neutral,
                       ),
                     ),
                   ),

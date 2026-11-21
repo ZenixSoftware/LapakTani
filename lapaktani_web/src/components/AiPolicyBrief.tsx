@@ -260,14 +260,14 @@ export const AiPolicyBrief: React.FC<AiPolicyBriefProps> = ({
       {/* Header */}
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div>
-          <div className="inline-flex items-center gap-2 text-[11.5px] font-bold uppercase tracking-wider text-[#166534]">
+          <div className="inline-flex items-center gap-2 text-[11.5px] font-bold uppercase tracking-wider text-lt-primary">
             <span className="material-symbols-outlined text-[16px]">psychology</span>
             Decision Support System &bull; BPP Kabupaten Sumenep
           </div>
-          <h1 className="text-2xl font-extrabold text-gray-900 mt-0.5">
+          <h1 className="text-2xl font-extrabold text-lt-neutral mt-0.5">
             AI Policy Brief &amp; Zonasi Komoditas
           </h1>
-          <p className="text-[13px] text-gray-500">
+          <p className="text-[13px] text-lt-neutral-muted">
             Ringkasan rekomendasi kebijakan pemupukan berimbang, alokasi subsidi NPK/Dolomit, dan prioritas irigasi berdasarkan agregasi data sensor 8-in-1 Sumenep.
           </p>
         </div>
@@ -276,7 +276,7 @@ export const AiPolicyBrief: React.FC<AiPolicyBriefProps> = ({
           <select
             value={focus}
             onChange={(e) => setFocus(e.target.value as PolicyFocus)}
-            className="px-3 py-2 rounded-xl bg-white border border-[#E2E8F0] text-[12.5px] font-bold text-gray-800"
+            className="px-3 py-2 rounded-xl bg-white border border-lt-border text-[12.5px] font-bold text-lt-neutral"
           >
             <option value="semua">Semua Pilar Kebijakan</option>
             <option value="pemupukan">Fokus Pemupukan &amp; pH</option>
@@ -292,7 +292,7 @@ export const AiPolicyBrief: React.FC<AiPolicyBriefProps> = ({
                 new Date().toLocaleString('id-ID', { dateStyle: 'medium', timeStyle: 'short' })
               );
             }}
-            className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-[#166534] hover:bg-[#0D5136] text-white text-[12.5px] font-bold shadow-sm transition-colors"
+            className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-lt-primary hover:bg-lt-primary-dark text-white text-[12.5px] font-bold shadow-sm transition-colors"
           >
             <span className="material-symbols-outlined text-[17px]">auto_awesome</span>
             Sintesis Ulang Brief
@@ -300,7 +300,7 @@ export const AiPolicyBrief: React.FC<AiPolicyBriefProps> = ({
           <button
             type="button"
             onClick={handlePrintBrief}
-            className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-[#F59E0B] hover:bg-amber-500 text-white text-[12.5px] font-bold shadow-sm transition-colors"
+            className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-lt-tertiary hover:bg-lt-tertiary-tint text-lt-neutral border border-lt-tertiary-border text-[12.5px] font-bold shadow-sm transition-colors"
           >
             <span className="material-symbols-outlined text-[17px]">print</span>
             Cetak Policy Brief
@@ -309,33 +309,33 @@ export const AiPolicyBrief: React.FC<AiPolicyBriefProps> = ({
       </div>
 
       {/* Kotak Masuk Eskalasi RAG dari Penyuluh BPP (Eksklusif Dinas Pertanian) */}
-      <div className="bg-white rounded-2xl border border-amber-200 shadow-sm overflow-hidden">
-        <div className="px-5 py-4 bg-gradient-to-r from-[#0D5136] to-[#166534] text-white flex flex-wrap items-center justify-between gap-2">
+      <div className="bg-lt-surface-card rounded-2xl border border-lt-border shadow-sm overflow-hidden">
+        <div className="px-5 py-4 bg-lt-surface-card border-b border-lt-border border-l-4 border-l-lt-primary flex flex-wrap items-center justify-between gap-2">
           <div className="flex items-center gap-2.5">
-            <span className="material-symbols-outlined text-[#F59E0B] text-[22px]">
-              inbox
+            <span className="w-9 h-9 rounded-xl bg-lt-primary-tint text-lt-primary flex items-center justify-center shrink-0">
+              <span className="material-symbols-outlined text-[20px]">inbox</span>
             </span>
             <div>
-              <h2 className="text-[15px] font-extrabold">
+              <h2 className="text-[15px] font-extrabold text-lt-neutral">
                 Kotak Masuk Rekomendasi &amp; Eskalasi RAG Penyuluh BPP Sumenep
               </h2>
-              <p className="text-[11.5px] text-emerald-100/85">
+              <p className="text-[11.5px] text-lt-neutral-muted">
                 Laporan keputusan lapangan terverifikasi Penyuluh untuk tindak lanjut subsidi, pompa air, dan intervensi Dinas Pertanian
               </p>
             </div>
           </div>
-          <span className="px-3 py-1 rounded-full bg-white/15 text-white text-[11px] font-extrabold">
+          <span className="px-3 py-1 rounded-full bg-lt-tertiary-tint text-lt-tertiary-text border border-lt-tertiary-border text-[11px] font-extrabold">
             {dinasReports.length} Laporan Masuk
           </span>
         </div>
 
         <div className="p-4 space-y-3">
           {isLoadingInbox ? (
-            <div className="py-6 text-center text-[13px] text-gray-500">
+            <div className="py-6 text-center text-[13px] text-lt-neutral-muted">
               Memuat kotak masuk rekomendasi Penyuluh...
             </div>
           ) : dinasReports.length === 0 ? (
-            <div className="py-6 text-center text-[13px] text-gray-500">
+            <div className="py-6 text-center text-[13px] text-lt-neutral-muted">
               Belum ada eskalasi keputusan RAG dari Penyuluh BPP untuk ditinjau Dinas.
             </div>
           ) : (
@@ -344,42 +344,42 @@ export const AiPolicyBrief: React.FC<AiPolicyBriefProps> = ({
               return (
                 <div
                   key={rep.id}
-                  className="p-4 rounded-xl bg-[#F8FAF9] border border-[#E2E8F0] space-y-3"
+                  className="p-4 rounded-xl bg-lt-surface-canvas border border-lt-border space-y-3"
                 >
                   <div className="flex flex-wrap items-start justify-between gap-2">
                     <div>
                       <div className="flex flex-wrap items-center gap-2">
-                        <span className="px-2.5 py-0.5 rounded-full bg-emerald-100 text-[#166534] text-[11px] font-extrabold">
+                        <span className="px-2.5 py-0.5 rounded-full bg-lt-primary-tint text-lt-primary text-[11px] font-extrabold">
                           Desa {rep.desa}, Kec. {rep.kecamatan}
                         </span>
-                        <span className="px-2.5 py-0.5 rounded-full bg-amber-100 text-amber-800 text-[10.5px] font-extrabold">
+                        <span className="px-2.5 py-0.5 rounded-full bg-lt-tertiary-tint text-lt-tertiary-text text-[10.5px] font-extrabold">
                           {rep.target_scope === 'BOTH' ? 'DINAS + PETANI DESA' : 'KHUSUS DINAS'}
                         </span>
                         <span
                           className={`px-2.5 py-0.5 rounded-full text-[10.5px] font-extrabold ${
                             isReviewed
-                              ? 'bg-[#22C55E] text-[#052e16]'
-                              : 'bg-rose-100 text-rose-800'
+                              ? 'bg-lt-primary text-white'
+                              : 'bg-lt-error-tint text-lt-error'
                           }`}
                         >
                           {isReviewed ? 'SUDAH DITINJAU DINAS' : 'MENUNGGU TINDAK LANJUT'}
                         </span>
                       </div>
-                      <h3 className="text-[14px] font-extrabold text-gray-900 mt-1.5">
+                      <h3 className="text-[14px] font-extrabold text-lt-neutral mt-1.5">
                         {rep.decision_summary}
                       </h3>
-                      <p className="text-[11.5px] text-gray-500 mt-0.5">
+                      <p className="text-[11.5px] text-lt-neutral-muted mt-0.5">
                         Pelapor: {rep.penyuluh_name} · Komoditas: {rep.komoditas}
                       </p>
                     </div>
                   </div>
 
-                  <pre className="whitespace-pre-wrap font-sans text-[12.5px] text-gray-700 bg-white p-3 rounded-xl border border-[#E2E8F0]">
+                  <pre className="whitespace-pre-wrap font-sans text-[12.5px] text-lt-neutral bg-white p-3 rounded-xl border border-lt-border">
                     {rep.action_plan}
                   </pre>
 
                   {rep.dinas_notes && (
-                    <div className="px-3 py-2 rounded-xl bg-emerald-50 border border-emerald-200 text-[12px] text-[#0D5136]">
+                    <div className="px-3 py-2 rounded-xl bg-lt-primary-tint border border-lt-primary-border text-[12px] text-lt-neutral">
                       <strong>Catatan Tindak Lanjut Dinas:</strong> {rep.dinas_notes}
                     </div>
                   )}
@@ -392,13 +392,13 @@ export const AiPolicyBrief: React.FC<AiPolicyBriefProps> = ({
                         setReviewNotesMap((prev) => ({ ...prev, [rep.id]: e.target.value }))
                       }
                       placeholder="Tambahkan arahan / nomor disposisi bantuan Dinas..."
-                      className="flex-1 min-w-[220px] px-3 py-2 rounded-xl bg-white border border-[#E2E8F0] text-[12.5px] outline-none focus:border-[#166534]"
+                      className="flex-1 min-w-[220px] px-3 py-2 rounded-xl bg-white border border-lt-border text-[12.5px] outline-none focus:border-lt-primary"
                     />
                     <button
                       type="button"
                       disabled={updatingId === rep.id}
                       onClick={() => void handleApproveReview(rep.id)}
-                      className="px-4 py-2 rounded-xl bg-[#166534] hover:bg-[#0D5136] text-white text-[12px] font-extrabold flex items-center gap-1.5 disabled:opacity-60"
+                      className="px-4 py-2 rounded-xl bg-lt-primary hover:bg-lt-primary-dark text-white text-[12px] font-extrabold flex items-center gap-1.5 disabled:opacity-60"
                     >
                       <span className="material-symbols-outlined text-[16px]">task_alt</span>
                       {updatingId === rep.id
@@ -417,72 +417,72 @@ export const AiPolicyBrief: React.FC<AiPolicyBriefProps> = ({
 
       {/* 3 Strategic Pillar Cards */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <div className="bg-white rounded-2xl border border-[#E2E8F0] p-5 shadow-sm">
+        <div className="bg-white rounded-2xl border border-lt-border p-5 shadow-sm">
           <div className="flex items-center justify-between mb-2">
-            <span className="px-2.5 py-0.5 rounded-full bg-emerald-50 text-[#166534] text-[11px] font-extrabold">
+            <span className="px-2.5 py-0.5 rounded-full bg-lt-primary-tint text-lt-primary text-[11px] font-extrabold">
               Pilar 1 · Kesehatan Tanah
             </span>
-            <span className="material-symbols-outlined text-[#166534]">science</span>
+            <span className="material-symbols-outlined text-lt-primary">science</span>
           </div>
-          <div className="text-xl font-extrabold text-gray-900">
+          <div className="text-xl font-extrabold text-lt-neutral">
             pH {avgPh.toFixed(2)} · Subur {avgFertility.toFixed(0)}/100
           </div>
-          <p className="text-[12.5px] text-gray-600 mt-1.5 leading-relaxed">
+          <p className="text-[12.5px] text-lt-neutral-muted mt-1.5 leading-relaxed">
             {acidPlots.length} dari {totalPlots} plot terdeteksi memiliki pH masam (&lt; 6.0) dan memerlukan program subsidi dolomit &amp; bahan organik Poktan.
           </p>
         </div>
 
-        <div className="bg-white rounded-2xl border border-[#E2E8F0] p-5 shadow-sm">
+        <div className="bg-white rounded-2xl border border-lt-border p-5 shadow-sm">
           <div className="flex items-center justify-between mb-2">
-            <span className="px-2.5 py-0.5 rounded-full bg-sky-50 text-sky-700 text-[11px] font-extrabold">
+            <span className="px-2.5 py-0.5 rounded-full bg-lt-secondary-tint text-lt-secondary-dark text-[11px] font-extrabold">
               Pilar 2 · Infrastruktur Air
             </span>
-            <span className="material-symbols-outlined text-sky-600">water_drop</span>
+            <span className="material-symbols-outlined text-lt-secondary">water_drop</span>
           </div>
-          <div className="text-xl font-extrabold text-gray-900">
+          <div className="text-xl font-extrabold text-lt-neutral">
             Lembab {avgMoisture.toFixed(1)}% · {nonIrrigatedCount} Non-Irigasi
           </div>
-          <p className="text-[12.5px] text-gray-600 mt-1.5 leading-relaxed">
+          <p className="text-[12.5px] text-lt-neutral-muted mt-1.5 leading-relaxed">
             {dryPlots.length} plot berada di bawah ambang kelembaban 25%. Prioritaskan elektrifikasi pompa sumur bor pada lahan tadah hujan.
           </p>
         </div>
 
-        <div className="bg-white rounded-2xl border border-[#E2E8F0] p-5 shadow-sm">
+        <div className="bg-white rounded-2xl border border-lt-border p-5 shadow-sm">
           <div className="flex items-center justify-between mb-2">
-            <span className="px-2.5 py-0.5 rounded-full bg-amber-50 text-amber-800 text-[11px] font-extrabold">
+            <span className="px-2.5 py-0.5 rounded-full bg-lt-tertiary-tint text-lt-tertiary-text text-[11px] font-extrabold">
               Pilar 3 · Intervensi Kritis
             </span>
-            <span className="material-symbols-outlined text-[#F59E0B]">verified</span>
+            <span className="material-symbols-outlined text-lt-tertiary-text">verified</span>
           </div>
-          <div className="text-xl font-extrabold text-gray-900">
+          <div className="text-xl font-extrabold text-lt-neutral">
             {criticalPlots.length} Plot Prioritas Tinggi
           </div>
-          <p className="text-[12.5px] text-gray-600 mt-1.5 leading-relaxed">
+          <p className="text-[12.5px] text-lt-neutral-muted mt-1.5 leading-relaxed">
             Diperlukan kunjungan pendampingan BPP dan penyaluran pupuk NPK tepat dosis agar produktivitas pra-panen tidak turun.
           </p>
         </div>
       </div>
 
       {/* Executive Policy Brief Document Card */}
-      <div className="bg-white rounded-2xl border border-[#E2E8F0] shadow-sm overflow-hidden">
-        <div className="bg-[#0D5136] text-white px-6 py-4 flex flex-wrap items-center justify-between gap-2">
+      <div className="bg-lt-surface-card rounded-2xl border border-lt-border shadow-sm overflow-hidden">
+        <div className="bg-lt-surface-card border-b border-lt-border border-l-4 border-l-lt-primary px-6 py-4 flex flex-wrap items-center justify-between gap-2">
           <div>
-            <h2 className="text-[16px] font-extrabold">
+            <h2 className="text-[16px] font-extrabold text-lt-neutral">
               Naskah Ringkas Kebijakan Agronomi Kabupaten Sumenep
             </h2>
-            <p className="text-[11.5px] text-emerald-100/85">
+            <p className="text-[11.5px] text-lt-neutral-muted">
               Diperbarui otomatis dari {totalPlots} catatan monitoring 8-in-1 &bull; {generatedAt}
             </p>
           </div>
-          <span className="px-2.5 py-1 rounded-lg bg-[#22C55E] text-[#052e16] text-[11px] font-extrabold">
+          <span className="px-2.5 py-1 rounded-lg bg-lt-primary-tint text-lt-primary border border-lt-primary-border text-[11px] font-extrabold">
             Siap Tindak Lanjut BPP
           </span>
         </div>
 
-        <div className="p-6 space-y-5 text-[13.5px] text-gray-700 leading-relaxed">
+        <div className="p-6 space-y-5 text-[13.5px] text-lt-neutral leading-relaxed">
           {(focus === 'semua' || focus === 'pemupukan') && (
-            <div className="p-4 rounded-xl bg-[#F8FAF9] border border-[#E2E8F0] space-y-1.5">
-              <h3 className="font-extrabold text-[#0D5136] text-[14px]">
+            <div className="p-4 rounded-xl bg-lt-surface-canvas border border-lt-border space-y-1.5">
+              <h3 className="font-extrabold text-lt-neutral text-[14px]">
                 1. Rekomendasi Pemupukan Berimbang &amp; Remediasi pH Tanah
               </h3>
               <p>
@@ -495,8 +495,8 @@ export const AiPolicyBrief: React.FC<AiPolicyBriefProps> = ({
           )}
 
           {(focus === 'semua' || focus === 'irigasi') && (
-            <div className="p-4 rounded-xl bg-[#F8FAF9] border border-[#E2E8F0] space-y-1.5">
-              <h3 className="font-extrabold text-[#0D5136] text-[14px]">
+            <div className="p-4 rounded-xl bg-lt-surface-canvas border border-lt-border space-y-1.5">
+              <h3 className="font-extrabold text-lt-neutral text-[14px]">
                 2. Penguatan Irigasi Tadah Hujan &amp; Elektrifikasi Pompa Air
               </h3>
               <p>
@@ -507,8 +507,8 @@ export const AiPolicyBrief: React.FC<AiPolicyBriefProps> = ({
           )}
 
           {(focus === 'semua' || focus === 'zonasi') && (
-            <div className="p-4 rounded-xl bg-[#F8FAF9] border border-[#E2E8F0] space-y-1.5">
-              <h3 className="font-extrabold text-[#0D5136] text-[14px]">
+            <div className="p-4 rounded-xl bg-lt-surface-canvas border border-lt-border space-y-1.5">
+              <h3 className="font-extrabold text-lt-neutral text-[14px]">
                 3. Zonasi Komoditas &amp; Bursa Pra-Panen LapakTani
               </h3>
               <p>
@@ -520,32 +520,32 @@ export const AiPolicyBrief: React.FC<AiPolicyBriefProps> = ({
       </div>
 
       {/* Fertilizer Subsidy Dispatch Center (Dinas -> Penyuluh Desa) */}
-      <div className="bg-white rounded-2xl border border-[#E2E8F0] shadow-sm overflow-hidden">
-        <div className="px-5 py-4 border-b border-[#E2E8F0] bg-gradient-to-r from-[#0D5136] to-[#166534] text-white flex flex-wrap items-center justify-between gap-2">
+      <div className="bg-lt-surface-card rounded-2xl border border-lt-border shadow-sm overflow-hidden">
+        <div className="px-5 py-4 border-b border-lt-border border-l-4 border-l-lt-secondary bg-lt-surface-card flex flex-wrap items-center justify-between gap-2">
           <div>
-            <h2 className="text-[14.5px] font-extrabold">
+            <h2 className="text-[14.5px] font-extrabold text-lt-neutral">
               Distribusi &amp; Konfirmasi Pupuk Subsidi Desa (Kontak Penyuluh)
             </h2>
-            <p className="text-[11.5px] text-emerald-100/90">
+            <p className="text-[11.5px] text-lt-neutral-muted">
               Konfirmasi kebutuhan pupuk dengan PPL desa, tetapkan tonase &amp; kirim alokasi ke titik distribusi
             </p>
           </div>
-          <span className="px-2.5 py-1 rounded-full bg-white/15 text-[11px] font-extrabold">
+          <span className="px-2.5 py-1 rounded-full bg-lt-secondary-tint text-lt-secondary-dark border border-lt-secondary-border text-[11px] font-extrabold">
             {fertilizerList.length} Pengiriman / Usulan
           </span>
         </div>
 
         <div className="p-5 grid grid-cols-1 lg:grid-cols-12 gap-5">
-          <form onSubmit={handleCreateFertilizerDispatch} className="lg:col-span-4 space-y-3 bg-[#F8FAF9] p-4 rounded-xl border border-[#E2E8F0]">
-            <h3 className="text-[13px] font-extrabold text-[#0D5136]">
+          <form onSubmit={handleCreateFertilizerDispatch} className="lg:col-span-4 space-y-3 bg-lt-surface-canvas p-4 rounded-xl border border-lt-border">
+            <h3 className="text-[13px] font-extrabold text-lt-neutral">
               Kirim Alokasi Pupuk Langsung ke Desa
             </h3>
             <div>
-              <label className="block text-[11px] font-bold text-gray-600 mb-1">Desa Tujuan</label>
+              <label className="block text-[11px] font-bold text-lt-neutral-muted mb-1">Desa Tujuan</label>
               <select
                 value={newFertVillageId}
                 onChange={(e) => setNewFertVillageId(Number(e.target.value))}
-                className="w-full px-3 py-2 rounded-lg border border-gray-300 text-[12px] bg-white"
+                className="w-full px-3 py-2 rounded-lg border border-lt-neutral-border text-[12px] bg-white"
               >
                 <option value={109}>Desa Dungkek (Kec. Dungkek)</option>
                 <option value={101}>Desa Mandala (Kec. Gapura)</option>
@@ -555,41 +555,41 @@ export const AiPolicyBrief: React.FC<AiPolicyBriefProps> = ({
               </select>
             </div>
             <div>
-              <label className="block text-[11px] font-bold text-gray-600 mb-1">Jenis Pupuk Subsidi</label>
+              <label className="block text-[11px] font-bold text-lt-neutral-muted mb-1">Jenis Pupuk Subsidi</label>
               <input
                 type="text"
                 value={newFertJenis}
                 onChange={(e) => setNewFertJenis(e.target.value)}
                 required
-                className="w-full px-3 py-2 rounded-lg border border-gray-300 text-[12px] bg-white"
+                className="w-full px-3 py-2 rounded-lg border border-lt-neutral-border text-[12px] bg-white"
               />
             </div>
             <div className="grid grid-cols-2 gap-2">
               <div>
-                <label className="block text-[11px] font-bold text-gray-600 mb-1">Tonase (Ton)</label>
+                <label className="block text-[11px] font-bold text-lt-neutral-muted mb-1">Tonase (Ton)</label>
                 <input
                   type="number"
                   step="0.5"
                   min="0.5"
                   value={newFertTon}
                   onChange={(e) => setNewFertTon(e.target.value)}
-                  className="w-full px-3 py-2 rounded-lg border border-gray-300 text-[12px] bg-white"
+                  className="w-full px-3 py-2 rounded-lg border border-lt-neutral-border text-[12px] bg-white"
                 />
               </div>
               <div>
-                <label className="block text-[11px] font-bold text-gray-600 mb-1">Titik Ambil Desa</label>
+                <label className="block text-[11px] font-bold text-lt-neutral-muted mb-1">Titik Ambil Desa</label>
                 <input
                   type="text"
                   value={newFertTitik}
                   onChange={(e) => setNewFertTitik(e.target.value)}
-                  className="w-full px-3 py-2 rounded-lg border border-gray-300 text-[12px] bg-white"
+                  className="w-full px-3 py-2 rounded-lg border border-lt-neutral-border text-[12px] bg-white"
                 />
               </div>
             </div>
             <button
               type="submit"
               disabled={isSendingFert}
-              className="w-full py-2.5 rounded-xl bg-[#0D5136] hover:bg-[#166534] text-white text-[12px] font-extrabold transition-colors disabled:opacity-50"
+              className="w-full py-2.5 rounded-xl bg-lt-primary-dark hover:bg-lt-primary text-white text-[12px] font-extrabold transition-colors disabled:opacity-50"
             >
               {isSendingFert ? 'Mengirim Alokasi...' : 'Konfirmasi & Kirim Pupuk ke Desa'}
             </button>
@@ -597,26 +597,26 @@ export const AiPolicyBrief: React.FC<AiPolicyBriefProps> = ({
 
           <div className="lg:col-span-8 space-y-2.5 max-h-[340px] overflow-y-auto pr-1">
             {fertilizerList.length === 0 ? (
-              <div className="p-6 text-center text-[12.5px] text-gray-500 border border-dashed rounded-xl">
+              <div className="p-6 text-center text-[12.5px] text-lt-neutral-muted border border-dashed rounded-xl">
                 Belum ada usulan atau pengiriman pupuk subsidi.
               </div>
             ) : (
               fertilizerList.map((f) => (
-                <div key={f.id} className="p-3.5 rounded-xl border border-[#E2E8F0] bg-white flex flex-wrap items-center justify-between gap-3">
+                <div key={f.id} className="p-3.5 rounded-xl border border-lt-border bg-white flex flex-wrap items-center justify-between gap-3">
                   <div className="space-y-1 flex-1 min-w-[240px]">
                     <div className="flex items-center gap-2 flex-wrap">
-                      <span className="font-extrabold text-[13px] text-[#0D5136]">
+                      <span className="font-extrabold text-[13px] text-lt-neutral">
                         Desa {f.village_name} · {f.jenis_pupuk} ({f.jumlah_ton} Ton)
                       </span>
-                      <span className="px-2 py-0.5 rounded-full text-[10px] font-extrabold bg-emerald-50 text-[#166534] border border-emerald-200">
+                      <span className="px-2 py-0.5 rounded-full text-[10px] font-extrabold bg-lt-primary-tint text-lt-primary border border-lt-primary-border">
                         {f.status}
                       </span>
                     </div>
-                    <p className="text-[11.5px] text-gray-600">
+                    <p className="text-[11.5px] text-lt-neutral-muted">
                       PPL: {f.penyuluh_name} · Titik Ambil: {f.titik_ambil_desa || 'Balai Poktan'}
                     </p>
                     {f.alasan_kebutuhan && (
-                      <p className="text-[11px] text-gray-500">{f.alasan_kebutuhan}</p>
+                      <p className="text-[11px] text-lt-neutral-muted">{f.alasan_kebutuhan}</p>
                     )}
                   </div>
                   <div className="flex items-center gap-2">
@@ -625,7 +625,7 @@ export const AiPolicyBrief: React.FC<AiPolicyBriefProps> = ({
                         type="button"
                         disabled={updatingId === f.id}
                         onClick={() => void handleDispatchFertilizer(f, 'KONFIRMASI_DINAS')}
-                        className="px-3 py-1.5 rounded-lg bg-[#F59E0B] hover:bg-[#D97706] text-white text-[11.5px] font-bold"
+                        className="px-3 py-1.5 rounded-lg bg-lt-tertiary hover:bg-lt-tertiary-tint text-lt-neutral border border-lt-tertiary-border text-[11.5px] font-bold transition-colors"
                       >
                         Konfirmasi PPL
                       </button>
@@ -635,7 +635,7 @@ export const AiPolicyBrief: React.FC<AiPolicyBriefProps> = ({
                         type="button"
                         disabled={updatingId === f.id}
                         onClick={() => void handleDispatchFertilizer(f, 'DIKIRIM_DINAS')}
-                        className="px-3 py-1.5 rounded-lg bg-[#0D5136] hover:bg-[#166534] text-white text-[11.5px] font-bold"
+                        className="px-3 py-1.5 rounded-lg bg-lt-primary hover:bg-lt-primary-dark text-white text-[11.5px] font-bold transition-colors"
                       >
                         Kirim ke Desa
                       </button>
@@ -649,24 +649,24 @@ export const AiPolicyBrief: React.FC<AiPolicyBriefProps> = ({
       </div>
 
       {/* Regional Zoning & Fertilizer Matrix */}
-      <div className="bg-white rounded-2xl border border-[#E2E8F0] shadow-sm overflow-hidden">
-        <div className="px-5 py-4 border-b border-[#E2E8F0] bg-[#F8FAF9] flex flex-wrap items-center justify-between gap-2">
+      <div className="bg-white rounded-2xl border border-lt-border shadow-sm overflow-hidden">
+        <div className="px-5 py-4 border-b border-lt-border bg-lt-surface-canvas flex flex-wrap items-center justify-between gap-2">
           <div>
-            <h2 className="text-[14px] font-extrabold text-gray-900 uppercase tracking-wide">
+            <h2 className="text-[14px] font-extrabold text-lt-neutral uppercase tracking-wide">
               Matriks Zonasi Komoditas &amp; Rekomendasi Pupuk Daerah
             </h2>
-            <p className="text-[12px] text-gray-500">
+            <p className="text-[12px] text-lt-neutral-muted">
               Dihitung langsung dari rata-rata parameter N-P-K, pH, dan lengas masing-masing komoditas
             </p>
           </div>
-          <span className="px-2.5 py-1 rounded-lg bg-emerald-50 text-[#166534] text-[11px] font-extrabold">
+          <span className="px-2.5 py-1 rounded-lg bg-lt-primary-tint text-lt-primary text-[11px] font-extrabold">
             {zoningMatrix.length} Zona Komoditas
           </span>
         </div>
 
         <div className="overflow-x-auto">
           <table className="w-full text-[12.5px] text-left">
-            <thead className="bg-[#F8FAF9] text-gray-600 uppercase text-[11px] font-extrabold border-b border-[#E2E8F0]">
+            <thead className="bg-lt-surface-canvas text-lt-neutral-muted uppercase text-[11px] font-extrabold border-b border-lt-border">
               <tr>
                 <th className="px-4 py-3">Komoditas</th>
                 <th className="px-3 py-3">Sebaran Desa</th>
@@ -675,18 +675,18 @@ export const AiPolicyBrief: React.FC<AiPolicyBriefProps> = ({
                 <th className="px-4 py-3">Prioritas Infrastruktur</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-[#F1F5F9]">
+            <tbody className="divide-y divide-lt-surface-canvas">
               {zoningMatrix.map((z) => (
-                <tr key={z.komoditas} className="hover:bg-[#F8FAF9]">
-                  <td className="px-4 py-3 font-extrabold text-[#0D5136] capitalize">
+                <tr key={z.komoditas} className="hover:bg-lt-surface-canvas">
+                  <td className="px-4 py-3 font-extrabold text-lt-neutral capitalize">
                     {z.komoditas} ({z.count})
                   </td>
-                  <td className="px-3 py-3 text-gray-600">{z.villages || 'Kab. Sumenep'}</td>
-                  <td className="px-3 py-3 font-mono font-bold text-gray-800">
+                  <td className="px-3 py-3 text-lt-neutral-muted">{z.villages || 'Kab. Sumenep'}</td>
+                  <td className="px-3 py-3 font-mono font-bold text-lt-neutral">
                     pH {z.avgPh.toFixed(2)} · Subur {z.avgFertility.toFixed(0)}
                   </td>
-                  <td className="px-4 py-3 text-gray-800">{z.fertilizerDirective}</td>
-                  <td className="px-4 py-3 text-gray-700">{z.infraDirective}</td>
+                  <td className="px-4 py-3 text-lt-neutral">{z.fertilizerDirective}</td>
+                  <td className="px-4 py-3 text-lt-neutral">{z.infraDirective}</td>
                 </tr>
               ))}
             </tbody>
@@ -696,26 +696,26 @@ export const AiPolicyBrief: React.FC<AiPolicyBriefProps> = ({
 
       {/* Critical Action Plots Strip */}
       {criticalPlots.length > 0 && (
-        <div className="bg-white rounded-2xl border border-rose-200 shadow-sm overflow-hidden">
-          <div className="px-5 py-3.5 bg-rose-50 border-b border-rose-200 flex items-center justify-between">
-            <div className="flex items-center gap-2 text-rose-800 font-extrabold text-[13.5px]">
+        <div className="bg-white rounded-2xl border border-lt-error-border shadow-sm overflow-hidden">
+          <div className="px-5 py-3.5 bg-lt-error-tint border-b border-lt-error-border flex items-center justify-between">
+            <div className="flex items-center gap-2 text-lt-error font-extrabold text-[13.5px]">
               <span className="material-symbols-outlined text-[19px]">warning</span>
               Lahan Titik Kritis Memerlukan Tindak Lanjut Kebijakan ({criticalPlots.length})
             </div>
           </div>
-          <div className="divide-y divide-rose-100">
+          <div className="divide-y divide-lt-error-tint">
             {criticalPlots.map((plot) => (
               <div
                 key={plot.id}
-                className="p-4 flex flex-wrap items-center justify-between gap-3 hover:bg-rose-50/40"
+                className="p-4 flex flex-wrap items-center justify-between gap-3 hover:bg-lt-error-tint/40"
               >
                 <div>
-                  <div className="font-extrabold text-[13.5px] text-gray-900">
+                  <div className="font-extrabold text-[13.5px] text-lt-neutral">
                     Desa {plot.nama_desa}
                     {plot.kecamatan ? `, Kec. ${plot.kecamatan}` : ''} ·{' '}
-                    <span className="capitalize text-rose-700">{plot.komoditas}</span>
+                    <span className="capitalize text-lt-error">{plot.komoditas}</span>
                   </div>
-                  <p className="text-[12px] text-gray-600">
+                  <p className="text-[12px] text-lt-neutral-muted">
                     Status: {getPlotFertilityStatus(plot).toUpperCase()} · pH {plot.ph} · Lengas{' '}
                     {plot.moisture}% · Fertilitas {plot.fertility}/100 · Rekomendasi PPL:{' '}
                     {plot.rekomendasi_ppl || 'Belum diisi'}
@@ -724,7 +724,7 @@ export const AiPolicyBrief: React.FC<AiPolicyBriefProps> = ({
                 <button
                   type="button"
                   onClick={() => onInspectPlot(plot)}
-                  className="px-3.5 py-1.5 rounded-xl bg-[#0D5136] hover:bg-[#166534] text-white text-[12px] font-bold"
+                  className="px-3.5 py-1.5 rounded-xl bg-lt-primary-dark hover:bg-lt-primary text-white text-[12px] font-bold"
                 >
                   Tulis Arahan PPL
                 </button>

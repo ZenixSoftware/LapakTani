@@ -559,7 +559,7 @@ class _PenyuluhHubScreenState extends State<PenyuluhHubScreen> {
                 ),
                 child: const Icon(
                   LucideIcons.sparkles,
-                  color: AppColors.accent,
+                  color: AppColors.tertiaryText,
                   size: 21,
                 ),
               ),

@@ -58,39 +58,39 @@ export const QueueTable: React.FC<QueueTableProps> = ({
 
   const getAvatarBg = (index: number) => {
     const colors = [
-      'bg-amber-100 text-amber-800',
-      'bg-purple-100 text-purple-800',
-      'bg-blue-100 text-blue-800',
-      'bg-emerald-100 text-emerald-800',
-      'bg-rose-100 text-rose-800',
-      'bg-teal-100 text-teal-800',
+      'bg-lt-tertiary-tint text-lt-tertiary-text',
+      'bg-lt-secondary-tint text-lt-secondary-dark',
+      'bg-lt-secondary-tint text-lt-secondary-dark',
+      'bg-lt-primary-tint text-lt-primary-dark',
+      'bg-lt-error-tint text-lt-error',
+      'bg-lt-secondary-tint text-lt-secondary-dark',
     ];
     return colors[index % colors.length];
   };
 
   return (
     <div className="xl:col-span-7 space-y-4">
-      <div className="bg-surface-white rounded-2xl p-5 border border-gray-100 shadow-sm">
+      <div className="bg-lt-surface-card rounded-2xl p-5 border border-lt-surface-canvas shadow-sm">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
           <div>
             <div className="flex items-center gap-2">
-              <span className="w-2.5 h-2.5 rounded-full bg-primary animate-pulse"></span>
-              <h2 className="text-[16px] font-extrabold text-neutral-dark">
+              <span className="w-2.5 h-2.5 rounded-full bg-lt-primary animate-pulse"></span>
+              <h2 className="text-[16px] font-extrabold text-lt-neutral">
                 Daftar Antrean Permohonan Akun
               </h2>
             </div>
-            <p className="text-[12px] text-gray-500 mt-0.5">
+            <p className="text-[12px] text-lt-neutral-muted mt-0.5">
               Pilih pemohon untuk melihat audit KTP, verifikasi lahan polygon, dan beri keputusan.
             </p>
           </div>
 
           <div className="flex items-center gap-2">
             <div className="relative">
-              <span className="material-symbols-outlined absolute left-2.5 top-1/2 -translate-y-1/2 text-gray-400 text-[16px]">
+              <span className="material-symbols-outlined absolute left-2.5 top-1/2 -translate-y-1/2 text-lt-neutral-subtle text-[16px]">
                 search
               </span>
               <input
-                className="h-8 pl-8 pr-3 text-[12px] rounded-lg bg-gray-50 border border-gray-200 focus:bg-white focus:border-primary focus:ring-1 focus:ring-primary outline-none"
+                className="h-8 pl-8 pr-3 text-[12px] rounded-lg bg-lt-surface-canvas border border-lt-border focus:bg-white focus:border-lt-primary focus:ring-1 focus:ring-lt-primary outline-none"
                 placeholder="Cari nama / NIK..."
                 type="text"
                 value={tableSearch}
@@ -102,7 +102,7 @@ export const QueueTable: React.FC<QueueTableProps> = ({
             </div>
             <button
               onClick={onRefresh}
-              className="h-8 px-2.5 rounded-lg border border-gray-200 hover:bg-gray-50 text-gray-600 flex items-center gap-1 text-[12px] font-semibold transition-colors"
+              className="h-8 px-2.5 rounded-lg border border-lt-border hover:bg-lt-surface-canvas text-lt-neutral-muted flex items-center gap-1 text-[12px] font-semibold transition-colors"
               title="Perbarui Data"
             >
               <span className="material-symbols-outlined text-[16px]">refresh</span>
@@ -111,7 +111,7 @@ export const QueueTable: React.FC<QueueTableProps> = ({
         </div>
 
         {/* Filter Tab Pills */}
-        <div className="flex items-center gap-2 overflow-x-auto pb-2 border-b border-gray-100 text-[12px] font-bold">
+        <div className="flex items-center gap-2 overflow-x-auto pb-2 border-b border-lt-surface-canvas text-[12px] font-bold">
           <button
             onClick={() => {
               setActiveTab('all');
@@ -119,8 +119,8 @@ export const QueueTable: React.FC<QueueTableProps> = ({
             }}
             className={`px-3 py-1.5 rounded-lg whitespace-nowrap transition-colors ${
               activeTab === 'all'
-                ? 'bg-forest-emerald text-white shadow-sm'
-                : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                ? 'bg-lt-primary-dark text-white shadow-sm'
+                : 'bg-lt-surface-canvas text-lt-neutral-muted hover:bg-lt-border'
             }`}
           >
             Semua ({farmers.length})
@@ -132,8 +132,8 @@ export const QueueTable: React.FC<QueueTableProps> = ({
             }}
             className={`px-3 py-1.5 rounded-lg whitespace-nowrap transition-colors ${
               activeTab === 'need_action'
-                ? 'bg-forest-emerald text-white shadow-sm'
-                : 'bg-emerald-50 text-forest-emerald hover:bg-emerald-100'
+                ? 'bg-lt-primary-dark text-white shadow-sm'
+                : 'bg-lt-primary-tint text-lt-primary-dark hover:bg-lt-primary-tint'
             }`}
           >
             Perlu Tindakan ({farmers.filter((f) => f.verification_status === 'pending').length})
@@ -145,8 +145,8 @@ export const QueueTable: React.FC<QueueTableProps> = ({
             }}
             className={`px-3 py-1.5 rounded-lg whitespace-nowrap transition-colors ${
               activeTab === 'geofence'
-                ? 'bg-forest-emerald text-white shadow-sm'
-                : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                ? 'bg-lt-primary-dark text-white shadow-sm'
+                : 'bg-lt-surface-canvas text-lt-neutral-muted hover:bg-lt-border'
             }`}
           >
             Verifikasi Geofencing (10)
@@ -158,8 +158,8 @@ export const QueueTable: React.FC<QueueTableProps> = ({
             }}
             className={`px-3 py-1.5 rounded-lg whitespace-nowrap transition-colors ${
               activeTab === 'revision'
-                ? 'bg-forest-emerald text-white shadow-sm'
-                : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                ? 'bg-lt-primary-dark text-white shadow-sm'
+                : 'bg-lt-surface-canvas text-lt-neutral-muted hover:bg-lt-border'
             }`}
           >
             Revisi Dokumen (4)
@@ -169,33 +169,33 @@ export const QueueTable: React.FC<QueueTableProps> = ({
         {/* Table Content */}
         <div className="overflow-x-auto mt-3">
           {isLoading ? (
-            <div className="py-16 text-center text-gray-500 space-y-2">
-              <span className="material-symbols-outlined text-3xl animate-spin text-forest-emerald">
+            <div className="py-16 text-center text-lt-neutral-muted space-y-2">
+              <span className="material-symbols-outlined text-3xl animate-spin text-lt-primary-dark">
                 progress_activity
               </span>
               <p className="text-[13px] font-semibold">Memuat data antrean dari backend...</p>
             </div>
           ) : paginatedList.length === 0 ? (
-            <div className="py-16 text-center text-gray-500 space-y-2">
-              <span className="material-symbols-outlined text-4xl text-gray-400">
+            <div className="py-16 text-center text-lt-neutral-muted space-y-2">
+              <span className="material-symbols-outlined text-4xl text-lt-neutral-subtle">
                 inbox
               </span>
-              <p className="text-[13px] font-bold text-gray-700">Tidak ada data permohonan</p>
-              <p className="text-[12px] text-gray-400">
+              <p className="text-[13px] font-bold text-lt-neutral">Tidak ada data permohonan</p>
+              <p className="text-[12px] text-lt-neutral-subtle">
                 Semua permohonan petani pada filter ini telah diproses.
               </p>
             </div>
           ) : (
             <table className="w-full text-left border-collapse">
               <thead>
-                <tr className="text-[11px] font-bold uppercase tracking-wider text-gray-400 border-b border-gray-100">
+                <tr className="text-[11px] font-bold uppercase tracking-wider text-lt-neutral-subtle border-b border-lt-surface-canvas">
                   <th className="py-2.5 px-3">Petani &amp; Poktan</th>
                   <th className="py-2.5 px-3">Komoditas &amp; Lahan</th>
                   <th className="py-2.5 px-3">Verifikasi Dokumen</th>
                   <th className="py-2.5 px-3 text-right">Aksi</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-gray-100 text-[13px]">
+              <tbody className="divide-y divide-lt-surface-canvas text-[13px]">
                 {paginatedList.map((farmer, idx) => {
                   const isSelected =
                     farmer.id === selectedFarmerId || farmer.user_id === selectedFarmerId;
@@ -212,8 +212,8 @@ export const QueueTable: React.FC<QueueTableProps> = ({
                       onClick={() => onSelectFarmer(farmer)}
                       className={`cursor-pointer transition-all ${
                         isSelected
-                          ? 'bg-emerald-50/70 border-l-4 border-primary'
-                          : 'hover:bg-gray-50'
+                          ? 'bg-lt-primary-tint/70 border-l-4 border-lt-primary'
+                          : 'hover:bg-lt-surface-canvas'
                       }`}
                     >
                       {/* Column 1: Petani & Poktan */}
@@ -225,15 +225,15 @@ export const QueueTable: React.FC<QueueTableProps> = ({
                               <div className="relative flex-shrink-0">
                                 <img
                                   alt={displayName}
-                                  className={`w-11 h-11 rounded-xl object-cover bg-gray-100 ${
-                                    isSelected ? 'ring-2 ring-primary' : ''
+                                  className={`w-11 h-11 rounded-xl object-cover bg-lt-surface-canvas ${
+                                    isSelected ? 'ring-2 ring-lt-primary' : ''
                                   }`}
                                   src={avatarSrc}
                                   onError={(e) => {
                                     (e.currentTarget as HTMLElement).style.display = 'none';
                                   }}
                                 />
-                                <span className="absolute -bottom-1 -right-1 w-4 h-4 bg-primary text-white rounded-full flex items-center justify-center text-[10px]">
+                                <span className="absolute -bottom-1 -right-1 w-4 h-4 bg-lt-primary text-white rounded-full flex items-center justify-center text-[10px]">
                                   <span className="material-symbols-outlined text-[10px]">check</span>
                                 </span>
                               </div>
@@ -249,13 +249,13 @@ export const QueueTable: React.FC<QueueTableProps> = ({
                           })()}
 
                           <div>
-                            <span className="font-bold text-gray-900 block leading-tight">
+                            <span className="font-bold text-lt-neutral block leading-tight">
                               {displayName}
                             </span>
-                            <span className="text-[11px] text-gray-500 font-medium">
+                            <span className="text-[11px] text-lt-neutral-muted font-medium">
                               {displayPoktan} • {displayVillage}
                             </span>
-                            <span className="text-[10px] font-mono text-forest-emerald font-semibold block">
+                            <span className="text-[10px] font-mono text-lt-primary-dark font-semibold block">
                               NIK: {displayNik}
                             </span>
                           </div>
@@ -266,19 +266,19 @@ export const QueueTable: React.FC<QueueTableProps> = ({
                       <td className="py-3.5 px-3">
                         <div className="space-y-1">
                           <div className="flex flex-wrap gap-1">
-                            <span className="px-2 py-0.5 rounded-md bg-red-100 text-red-700 font-bold text-[10px]">
+                            <span className="px-2 py-0.5 rounded-md bg-lt-error-tint text-lt-error font-bold text-[10px]">
                               Tomat Merah
                             </span>
-                            <span className="px-2 py-0.5 rounded-md bg-emerald-100 text-emerald-800 font-bold text-[10px]">
+                            <span className="px-2 py-0.5 rounded-md bg-lt-primary-tint text-lt-primary-dark font-bold text-[10px]">
                               Sayur Segar
                             </span>
                           </div>
-                          <span className="text-[11px] font-semibold text-gray-600 block">
+                          <span className="text-[11px] font-semibold text-lt-neutral-muted block">
                             {displayArea} Ha • Milik Sendiri
                           </span>
                           <span
                             className={`inline-flex items-center gap-1 text-[11px] font-bold ${
-                              hasGps ? 'text-emerald-700' : 'text-amber-700'
+                              hasGps ? 'text-lt-primary-dark' : 'text-lt-tertiary-text'
                             }`}
                           >
                             <span className="material-symbols-outlined text-[13px]">
@@ -292,11 +292,11 @@ export const QueueTable: React.FC<QueueTableProps> = ({
                       {/* Column 3: Verifikasi Dokumen */}
                       <td className="py-3.5 px-3">
                         <div className="space-y-1">
-                          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-emerald-100 text-emerald-800 text-[10px] font-bold">
+                          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-lt-primary-tint text-lt-primary-dark text-[10px] font-bold">
                             <span className="material-symbols-outlined text-[12px]">verified</span>
                             <span>Dukcapil Match</span>
                           </span>
-                          <span className="text-[11px] text-gray-500 block">
+                          <span className="text-[11px] text-lt-neutral-muted block">
                             {farmer.ktp_image_url ? 'KTP Terlampir' : 'KTP Belum Diunggah'}
                           </span>
                         </div>
@@ -307,7 +307,7 @@ export const QueueTable: React.FC<QueueTableProps> = ({
                         {isSelected ? (
                           <button
                             type="button"
-                            className="px-3 py-1.5 rounded-xl bg-forest-emerald text-white text-[12px] font-bold shadow-sm flex items-center gap-1 ml-auto"
+                            className="px-3 py-1.5 rounded-xl bg-lt-primary-dark text-white text-[12px] font-bold shadow-sm flex items-center gap-1 ml-auto"
                           >
                             <span className="material-symbols-outlined text-[16px]">
                               search_check
@@ -317,7 +317,7 @@ export const QueueTable: React.FC<QueueTableProps> = ({
                         ) : (
                           <button
                             type="button"
-                            className="px-3 py-1.5 rounded-xl border border-gray-200 hover:border-forest-emerald hover:text-forest-emerald text-gray-700 text-[12px] font-bold transition-all ml-auto"
+                            className="px-3 py-1.5 rounded-xl border border-lt-border hover:border-lt-primary-dark hover:text-lt-primary-dark text-lt-neutral text-[12px] font-bold transition-all ml-auto"
                           >
                             Audit Permohonan
                           </button>
@@ -332,7 +332,7 @@ export const QueueTable: React.FC<QueueTableProps> = ({
         </div>
 
         {/* Pagination Info */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pt-4 mt-3 border-t border-gray-100 text-[12px] text-gray-500">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pt-4 mt-3 border-t border-lt-surface-canvas text-[12px] text-lt-neutral-muted">
           <span>
             Menampilkan <strong>{paginatedList.length}</strong> dari{' '}
             <strong>{filteredList.length}</strong> permohonan aktif
@@ -341,7 +341,7 @@ export const QueueTable: React.FC<QueueTableProps> = ({
             <button
               onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
               disabled={currentPage === 1}
-              className="w-8 h-8 rounded-lg border border-gray-200 flex items-center justify-center hover:bg-gray-50 text-gray-500 disabled:opacity-40"
+              className="w-8 h-8 rounded-lg border border-lt-border flex items-center justify-center hover:bg-lt-surface-canvas text-lt-neutral-muted disabled:opacity-40"
             >
               <span className="material-symbols-outlined text-[16px]">chevron_left</span>
             </button>
@@ -351,8 +351,8 @@ export const QueueTable: React.FC<QueueTableProps> = ({
                 onClick={() => setCurrentPage(i + 1)}
                 className={`w-8 h-8 rounded-lg text-[12px] font-bold transition-colors ${
                   currentPage === i + 1
-                    ? 'bg-forest-emerald text-white'
-                    : 'border border-gray-200 hover:bg-gray-50 text-gray-700'
+                    ? 'bg-lt-primary-dark text-white'
+                    : 'border border-lt-border hover:bg-lt-surface-canvas text-lt-neutral'
                 }`}
               >
                 {i + 1}
@@ -361,7 +361,7 @@ export const QueueTable: React.FC<QueueTableProps> = ({
             <button
               onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
               disabled={currentPage === totalPages}
-              className="w-8 h-8 rounded-lg border border-gray-200 flex items-center justify-center hover:bg-gray-50 text-gray-500 disabled:opacity-40"
+              className="w-8 h-8 rounded-lg border border-lt-border flex items-center justify-center hover:bg-lt-surface-canvas text-lt-neutral-muted disabled:opacity-40"
             >
               <span className="material-symbols-outlined text-[16px]">chevron_right</span>
             </button>
@@ -370,15 +370,15 @@ export const QueueTable: React.FC<QueueTableProps> = ({
       </div>
 
       {/* Quick Guidance Card */}
-      <div className="bg-gradient-to-r from-emerald-50 to-teal-50 border border-emerald-100 rounded-2xl p-4 flex items-start gap-3.5">
-        <div className="w-9 h-9 rounded-xl bg-forest-emerald text-white flex items-center justify-center flex-shrink-0 shadow-sm">
+      <div className="bg-gradient-to-r from-lt-primary-tint to-lt-secondary-tint border border-lt-primary-tint rounded-2xl p-4 flex items-start gap-3.5">
+        <div className="w-9 h-9 rounded-xl bg-lt-primary-dark text-white flex items-center justify-center flex-shrink-0 shadow-sm">
           <span className="material-symbols-outlined text-[20px]">assignment_turned_in</span>
         </div>
-        <div className="text-[12px] text-emerald-950 space-y-0.5">
-          <span className="font-bold text-[13px] text-forest-emerald block">
+        <div className="text-[12px] text-lt-primary-dark space-y-0.5">
+          <span className="font-bold text-[13px] text-lt-primary-dark block">
             Standar Validasi LapakTani Sesuai Pedoman US-06:
           </span>
-          <p className="text-gray-600">
+          <p className="text-lt-neutral-muted">
             Pastikan NIK terdaftar aktif di Dukcapil, foto selfie KTP tidak buram/terpotong, dan koordinat polygon GPS berada di batas desa binaan BPP Lembang sebelum menekan tombol Setujui Akun.
           </p>
         </div>

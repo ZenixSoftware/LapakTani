@@ -107,7 +107,7 @@ class _LapaktaniTextFieldState extends State<LapaktaniTextField> {
                     style: const TextStyle(
                       fontSize: 13,
                       fontWeight: FontWeight.w700,
-                      color: Color(0xFF1E293B),
+                      color: AppColors.neutral,
                     ),
                   ),
                   if (widget.labelTrailing != null)
@@ -116,7 +116,7 @@ class _LapaktaniTextFieldState extends State<LapaktaniTextField> {
                       style: const TextStyle(
                         fontSize: 11,
                         fontWeight: FontWeight.w500,
-                        color: Color(0xFF94A3B8),
+                        color: AppColors.neutralSubtle,
                       ),
                     ),
                 ],
@@ -130,14 +130,14 @@ class _LapaktaniTextFieldState extends State<LapaktaniTextField> {
                 color: Colors.white,
                 borderRadius: BorderRadius.circular(16),
                 border: hasError
-                    ? Border.all(color: const Color(0xFFEF4444), width: 1.5)
+                    ? Border.all(color: AppColors.error, width: 1.5)
                     : _isFocused
                         ? Border.all(color: AppColors.primary, width: 1.5)
-                        : Border.all(color: const Color(0xFFE2E8F0), width: 1),
+                        : Border.all(color: AppColors.border, width: 1),
                 boxShadow: hasError
                     ? [
                         BoxShadow(
-                          color: const Color(0xFFEF4444).withValues(alpha: 0.15),
+                          color: AppColors.error.withValues(alpha: 0.15),
                           blurRadius: 0,
                           spreadRadius: 3,
                         ),
@@ -170,7 +170,7 @@ class _LapaktaniTextFieldState extends State<LapaktaniTextField> {
                         size: 19,
                         color: _isFocused
                             ? AppColors.primary
-                            : const Color(0xFF94A3B8),
+                            : AppColors.neutralSubtle,
                       ),
                     ),
                   Expanded(
@@ -193,7 +193,7 @@ class _LapaktaniTextFieldState extends State<LapaktaniTextField> {
                       style: const TextStyle(
                         fontSize: 14,
                         fontWeight: FontWeight.w600,
-                        color: Color(0xFF0F172A),
+                        color: AppColors.neutral,
                       ),
                       decoration: InputDecoration(
                         border: InputBorder.none,
@@ -205,7 +205,7 @@ class _LapaktaniTextFieldState extends State<LapaktaniTextField> {
                         hintText: widget.hintText,
                         hintStyle: const TextStyle(
                           fontSize: 14,
-                          color: Color(0xFF94A3B8),
+                          color: AppColors.neutralSubtle,
                           fontWeight: FontWeight.w400,
                         ),
                         counterText: '',
@@ -236,14 +236,14 @@ class _LapaktaniTextFieldState extends State<LapaktaniTextField> {
                     const Icon(
                       Icons.error_outline_rounded,
                       size: 13,
-                      color: Color(0xFFEF4444),
+                      color: AppColors.error,
                     ),
                     const SizedBox(width: 4),
                     Text(
                       state.errorText ?? '',
                       style: const TextStyle(
                         fontSize: 11,
-                        color: Color(0xFFEF4444),
+                        color: AppColors.error,
                         fontWeight: FontWeight.w600,
                       ),
                     ),
@@ -260,7 +260,7 @@ class _LapaktaniTextFieldState extends State<LapaktaniTextField> {
                   widget.helperText!,
                   style: const TextStyle(
                     fontSize: 11,
-                    color: Color(0xFF94A3B8),
+                    color: AppColors.neutralSubtle,
                     fontWeight: FontWeight.w500,
                   ),
                 ),

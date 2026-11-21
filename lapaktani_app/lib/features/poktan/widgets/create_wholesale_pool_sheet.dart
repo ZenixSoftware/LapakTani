@@ -3,6 +3,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 import '../../../core/services/api_service.dart';
+import 'package:lapaktani_app/core/theme/app_colors.dart';
 
 class CreateWholesalePoolSheet {
   static Future<bool?> show(
@@ -136,7 +137,7 @@ class _CreateWholesalePoolContentState
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('Total kuota dan harga per kg harus lebih dari 0.'),
-          backgroundColor: Color(0xFFEF4444),
+          backgroundColor: AppColors.error,
           behavior: SnackBarBehavior.floating,
         ),
       );
@@ -171,7 +172,7 @@ class _CreateWholesalePoolContentState
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('Bursa penawaran partai panen berhasil dibuka!'),
-          backgroundColor: Color(0xFF006E04),
+          backgroundColor: AppColors.primary,
           behavior: SnackBarBehavior.floating,
         ),
       );
@@ -179,7 +180,7 @@ class _CreateWholesalePoolContentState
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('Gagal membuka penawaran partai. Silakan periksa kembali.'),
-          backgroundColor: Color(0xFFEF4444),
+          backgroundColor: AppColors.error,
           behavior: SnackBarBehavior.floating,
         ),
       );
@@ -222,7 +223,7 @@ class _CreateWholesalePoolContentState
                           style: GoogleFonts.plusJakartaSans(
                             fontSize: 17,
                             fontWeight: FontWeight.w800,
-                            color: const Color(0xFF0F172A),
+                            color: AppColors.neutral,
                           ),
                         ),
                         const SizedBox(height: 2),
@@ -231,7 +232,7 @@ class _CreateWholesalePoolContentState
                           style: GoogleFonts.plusJakartaSans(
                             fontSize: 12,
                             fontWeight: FontWeight.w600,
-                            color: const Color(0xFF006E04),
+                            color: AppColors.primary,
                           ),
                         ),
                       ],
@@ -251,7 +252,7 @@ class _CreateWholesalePoolContentState
                 style: GoogleFonts.plusJakartaSans(
                   fontSize: 12.5,
                   fontWeight: FontWeight.w700,
-                  color: const Color(0xFF1E293B),
+                  color: AppColors.neutral,
                 ),
               ),
               const SizedBox(height: 8),
@@ -278,10 +279,10 @@ class _CreateWholesalePoolContentState
                         width: 90,
                         padding: const EdgeInsets.all(4),
                         decoration: BoxDecoration(
-                          color: isSelected ? const Color(0xFFF0FDF4) : Colors.white,
+                          color: isSelected ? AppColors.primaryTint : Colors.white,
                           borderRadius: BorderRadius.circular(12),
                           border: Border.all(
-                            color: isSelected ? const Color(0xFF006E04) : const Color(0xFFE2E8F0),
+                            color: isSelected ? AppColors.primary : AppColors.border,
                             width: isSelected ? 2 : 1,
                           ),
                         ),
@@ -296,7 +297,7 @@ class _CreateWholesalePoolContentState
                                 fit: BoxFit.cover,
                                 errorBuilder: (context, error, stackTrace) => Container(
                                   height: 48,
-                                  color: const Color(0xFFE2E8F0),
+                                  color: AppColors.border,
                                   child: const Icon(LucideIcons.image, size: 20),
                                 ),
                               ),
@@ -307,7 +308,7 @@ class _CreateWholesalePoolContentState
                               style: GoogleFonts.plusJakartaSans(
                                 fontSize: 9.5,
                                 fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
-                                color: isSelected ? const Color(0xFF006E04) : const Color(0xFF475569),
+                                color: isSelected ? AppColors.primary : AppColors.neutralMuted,
                               ),
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
@@ -509,22 +510,22 @@ class _CreateWholesalePoolContentState
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                 decoration: BoxDecoration(
-                  color: const Color(0xFFF8FAFC),
+                  color: AppColors.surfaceCanvas,
                   borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: const Color(0xFFE2E8F0)),
+                  border: Border.all(color: AppColors.border),
                 ),
                 child: SwitchListTile(
                   contentPadding: EdgeInsets.zero,
                   value: _autoSpillover,
                   onChanged: (val) => setState(() => _autoSpillover = val),
-                  activeThumbColor: const Color(0xFF006E04),
+                  activeThumbColor: AppColors.primary,
                   title: Text(
                     'Mekanisme Zero-Waste Otomatis',
                     style: GoogleFonts.plusJakartaSans(fontSize: 13, fontWeight: FontWeight.w700),
                   ),
                   subtitle: Text(
                     'Otomatis alihkan sisa kuota ke etalase retail jika tidak habis saat tanggal panen tiba.',
-                    style: GoogleFonts.plusJakartaSans(fontSize: 11, color: const Color(0xFF64748B)),
+                    style: GoogleFonts.plusJakartaSans(fontSize: 11, color: AppColors.neutralMuted),
                   ),
                 ),
               ),
@@ -537,7 +538,7 @@ class _CreateWholesalePoolContentState
                 child: ElevatedButton(
                   onPressed: _isSubmitting ? null : _handleSubmit,
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFF006E04),
+                    backgroundColor: AppColors.primary,
                     foregroundColor: Colors.white,
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                   ),

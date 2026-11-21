@@ -4,6 +4,7 @@ import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 import '../../core/services/api_service.dart';
+import 'package:lapaktani_app/core/theme/app_colors.dart';
 
 class EditProductScreen extends StatefulWidget {
   final Map<String, dynamic> product;
@@ -81,7 +82,7 @@ class _EditProductScreenState extends State<EditProductScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text('Perubahan stok dan harga berhasil disimpan.'),
-            backgroundColor: Color(0xFF03AC0E),
+            backgroundColor: AppColors.primary,
             duration: Duration(seconds: 2),
             behavior: SnackBarBehavior.floating,
           ),
@@ -95,7 +96,7 @@ class _EditProductScreenState extends State<EditProductScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(message),
-            backgroundColor: const Color(0xFFEF4444),
+            backgroundColor: AppColors.error,
             duration: const Duration(seconds: 3),
             behavior: SnackBarBehavior.floating,
           ),
@@ -106,7 +107,7 @@ class _EditProductScreenState extends State<EditProductScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text('Kendala jaringan: $e'),
-          backgroundColor: const Color(0xFFEF4444),
+          backgroundColor: AppColors.error,
           duration: const Duration(seconds: 3),
           behavior: SnackBarBehavior.floating,
         ),
@@ -127,25 +128,25 @@ class _EditProductScreenState extends State<EditProductScreen> {
     final gradeLabel = p['grade'] ?? 'Grade A / Super';
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF8F9FF),
+      backgroundColor: AppColors.surfaceCanvas,
       appBar: AppBar(
         title: Text(
           'Edit Harga Stok',
           style: GoogleFonts.plusJakartaSans(
             fontSize: 16,
             fontWeight: FontWeight.w700,
-            color: const Color(0xFF121C2A),
+            color: AppColors.neutral,
           ),
         ),
         backgroundColor: Colors.white,
         elevation: 0.5,
         leading: IconButton(
-          icon: const Icon(LucideIcons.arrowLeft, color: Color(0xFF121C2A), size: 22),
+          icon: const Icon(LucideIcons.arrowLeft, color: AppColors.neutral, size: 22),
           onPressed: () => Navigator.pop(context),
         ),
         actions: [
           IconButton(
-            icon: const Icon(LucideIcons.helpCircle, color: Color(0xFF64748B), size: 20),
+            icon: const Icon(LucideIcons.helpCircle, color: AppColors.neutralMuted, size: 20),
             onPressed: () {},
           ),
           const SizedBox(width: 8),
@@ -165,7 +166,7 @@ class _EditProductScreenState extends State<EditProductScreen> {
                   borderRadius: BorderRadius.circular(14),
                   boxShadow: [
                     BoxShadow(
-                      color: const Color(0xFF084E33).withValues(alpha: 0.05),
+                      color: AppColors.primaryDark.withValues(alpha: 0.05),
                       blurRadius: 8,
                       offset: const Offset(0, 2),
                     ),
@@ -183,7 +184,7 @@ class _EditProductScreenState extends State<EditProductScreen> {
                               width: 9,
                               height: 9,
                               decoration: BoxDecoration(
-                                color: _isActive ? const Color(0xFF03AC0E) : const Color(0xFF94A3B8),
+                                color: _isActive ? AppColors.primary : AppColors.neutralSubtle,
                                 shape: BoxShape.circle,
                               ),
                             ),
@@ -193,15 +194,15 @@ class _EditProductScreenState extends State<EditProductScreen> {
                               style: GoogleFonts.plusJakartaSans(
                                 fontSize: 14,
                                 fontWeight: FontWeight.w700,
-                                color: const Color(0xFF121C2A),
+                                color: AppColors.neutral,
                               ),
                             ),
                           ],
                         ),
                         Switch(
                           value: _isActive,
-                          activeThumbColor: const Color(0xFF03AC0E),
-                          activeTrackColor: const Color(0xFFB0F1CB),
+                          activeThumbColor: AppColors.primary,
+                          activeTrackColor: AppColors.primaryTint,
                           onChanged: (val) {
                             setState(() {
                               _isActive = val;
@@ -215,7 +216,7 @@ class _EditProductScreenState extends State<EditProductScreen> {
                       'Komoditas ini dapat langsung ditemukan dan dipesan oleh pembeli umum & resto.',
                       style: GoogleFonts.plusJakartaSans(
                         fontSize: 11.5,
-                        color: const Color(0xFF64748B),
+                        color: AppColors.neutralMuted,
                       ),
                     ),
                     const SizedBox(height: 10),
@@ -224,19 +225,19 @@ class _EditProductScreenState extends State<EditProductScreen> {
                         Container(
                           padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                           decoration: BoxDecoration(
-                            color: const Color(0xFFEFF4FF),
+                            color: AppColors.surfaceCanvas,
                             borderRadius: BorderRadius.circular(20),
                           ),
                           child: Row(
                             children: [
-                              const Icon(LucideIcons.sprout, size: 14, color: Color(0xFF03AC0E)),
+                              const Icon(LucideIcons.sprout, size: 14, color: AppColors.primary),
                               const SizedBox(width: 4),
                               Text(
                                 'Panen Terverifikasi',
                                 style: GoogleFonts.plusJakartaSans(
                                   fontSize: 11,
                                   fontWeight: FontWeight.w600,
-                                  color: const Color(0xFF121C2A),
+                                  color: AppColors.neutral,
                                 ),
                               ),
                             ],
@@ -246,19 +247,19 @@ class _EditProductScreenState extends State<EditProductScreen> {
                         Container(
                           padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                           decoration: BoxDecoration(
-                            color: const Color(0xFFFEF3C7),
+                            color: AppColors.tertiaryTint,
                             borderRadius: BorderRadius.circular(20),
                           ),
                           child: Row(
                             children: [
-                              const Icon(LucideIcons.star, size: 13, color: Color(0xFFD97706)),
+                              const Icon(LucideIcons.star, size: 13, color: AppColors.tertiaryText),
                               const SizedBox(width: 4),
                               Text(
                                 '4.9 Mutu Unggul',
                                 style: GoogleFonts.plusJakartaSans(
                                   fontSize: 11,
                                   fontWeight: FontWeight.w700,
-                                  color: const Color(0xFF92400E),
+                                  color: AppColors.tertiaryText,
                                 ),
                               ),
                             ],
@@ -279,7 +280,7 @@ class _EditProductScreenState extends State<EditProductScreen> {
                   borderRadius: BorderRadius.circular(14),
                   boxShadow: [
                     BoxShadow(
-                      color: const Color(0xFF084E33).withValues(alpha: 0.05),
+                      color: AppColors.primaryDark.withValues(alpha: 0.05),
                       blurRadius: 8,
                       offset: const Offset(0, 2),
                     ),
@@ -293,7 +294,7 @@ class _EditProductScreenState extends State<EditProductScreen> {
                       style: GoogleFonts.plusJakartaSans(
                         fontSize: 14,
                         fontWeight: FontWeight.w700,
-                        color: const Color(0xFF121C2A),
+                        color: AppColors.neutral,
                       ),
                     ),
                     const SizedBox(height: 12),
@@ -302,7 +303,7 @@ class _EditProductScreenState extends State<EditProductScreen> {
                       style: GoogleFonts.plusJakartaSans(
                         fontSize: 12.5,
                         fontWeight: FontWeight.w600,
-                        color: const Color(0xFF121C2A),
+                        color: AppColors.neutral,
                       ),
                     ),
                     const SizedBox(height: 6),
@@ -310,24 +311,24 @@ class _EditProductScreenState extends State<EditProductScreen> {
                       controller: _titleController,
                       style: GoogleFonts.plusJakartaSans(
                         fontSize: 14,
-                        color: const Color(0xFF121C2A),
+                        color: AppColors.neutral,
                         fontWeight: FontWeight.w500,
                       ),
                       decoration: InputDecoration(
                         filled: true,
-                        fillColor: const Color(0xFFEFF4FF).withValues(alpha: 0.5),
+                        fillColor: AppColors.surfaceCanvas.withValues(alpha: 0.5),
                         contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(10),
-                          borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
+                          borderSide: const BorderSide(color: AppColors.border),
                         ),
                         enabledBorder: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(10),
-                          borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
+                          borderSide: const BorderSide(color: AppColors.border),
                         ),
                         focusedBorder: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(10),
-                          borderSide: const BorderSide(color: Color(0xFF03AC0E), width: 1.5),
+                          borderSide: const BorderSide(color: AppColors.primary, width: 1.5),
                         ),
                       ),
                       validator: (val) =>
@@ -339,7 +340,7 @@ class _EditProductScreenState extends State<EditProductScreen> {
                       style: GoogleFonts.plusJakartaSans(
                         fontSize: 12.5,
                         fontWeight: FontWeight.w600,
-                        color: const Color(0xFF121C2A),
+                        color: AppColors.neutral,
                       ),
                     ),
                     const SizedBox(height: 8),
@@ -349,7 +350,7 @@ class _EditProductScreenState extends State<EditProductScreen> {
                         Container(
                           padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
                           decoration: BoxDecoration(
-                            color: const Color(0xFFB0F1CB),
+                            color: AppColors.primaryTint,
                             borderRadius: BorderRadius.circular(20),
                           ),
                           child: Text(
@@ -357,14 +358,14 @@ class _EditProductScreenState extends State<EditProductScreen> {
                             style: GoogleFonts.plusJakartaSans(
                               fontSize: 11.5,
                               fontWeight: FontWeight.w700,
-                              color: const Color(0xFF005302),
+                              color: AppColors.primary,
                             ),
                           ),
                         ),
                         Container(
                           padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
                           decoration: BoxDecoration(
-                            color: const Color(0xFFE6EEFF),
+                            color: AppColors.surfaceCanvas,
                             borderRadius: BorderRadius.circular(20),
                           ),
                           child: Text(
@@ -372,7 +373,7 @@ class _EditProductScreenState extends State<EditProductScreen> {
                             style: GoogleFonts.plusJakartaSans(
                               fontSize: 11.5,
                               fontWeight: FontWeight.w600,
-                              color: const Color(0xFF327052),
+                              color: AppColors.primary,
                             ),
                           ),
                         ),
@@ -387,9 +388,9 @@ class _EditProductScreenState extends State<EditProductScreen> {
               Container(
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
-                  color: const Color(0xFFB0F1CB).withValues(alpha: 0.2),
+                  color: AppColors.primaryTint.withValues(alpha: 0.2),
                   borderRadius: BorderRadius.circular(14),
-                  border: Border.all(color: const Color(0xFFB0F1CB)),
+                  border: Border.all(color: AppColors.primaryTint),
                 ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -399,14 +400,14 @@ class _EditProductScreenState extends State<EditProductScreen> {
                       children: [
                         Row(
                           children: [
-                            const Icon(LucideIcons.banknote, size: 18, color: Color(0xFF03AC0E)),
+                            const Icon(LucideIcons.banknote, size: 18, color: AppColors.primary),
                             const SizedBox(width: 6),
                             Text(
                               'Penyesuaian Harga & Stok',
                               style: GoogleFonts.plusJakartaSans(
                                 fontSize: 14,
                                 fontWeight: FontWeight.w700,
-                                color: const Color(0xFF121C2A),
+                                color: AppColors.neutral,
                               ),
                             ),
                           ],
@@ -414,7 +415,7 @@ class _EditProductScreenState extends State<EditProductScreen> {
                         Container(
                           padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
                           decoration: BoxDecoration(
-                            color: const Color(0xFF03AC0E),
+                            color: AppColors.primary,
                             borderRadius: BorderRadius.circular(12),
                           ),
                           child: Text(
@@ -436,7 +437,7 @@ class _EditProductScreenState extends State<EditProductScreen> {
                       style: GoogleFonts.plusJakartaSans(
                         fontSize: 12.5,
                         fontWeight: FontWeight.w600,
-                        color: const Color(0xFF121C2A),
+                        color: AppColors.neutral,
                       ),
                     ),
                     const SizedBox(height: 6),
@@ -449,29 +450,29 @@ class _EditProductScreenState extends State<EditProductScreen> {
                       style: GoogleFonts.plusJakartaSans(
                         fontSize: 16,
                         fontWeight: FontWeight.w800,
-                        color: const Color(0xFF03AC0E),
+                        color: AppColors.primary,
                       ),
                       decoration: InputDecoration(
                         prefixText: 'Rp ',
                         prefixStyle: GoogleFonts.plusJakartaSans(
                           fontSize: 15,
                           fontWeight: FontWeight.w700,
-                          color: const Color(0xFF121C2A),
+                          color: AppColors.neutral,
                         ),
                         filled: true,
                         fillColor: Colors.white,
                         contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(10),
-                          borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
+                          borderSide: const BorderSide(color: AppColors.border),
                         ),
                         enabledBorder: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(10),
-                          borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
+                          borderSide: const BorderSide(color: AppColors.border),
                         ),
                         focusedBorder: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(10),
-                          borderSide: const BorderSide(color: Color(0xFF03AC0E), width: 1.5),
+                          borderSide: const BorderSide(color: AppColors.primary, width: 1.5),
                         ),
                       ),
                       validator: (val) {
@@ -492,14 +493,14 @@ class _EditProductScreenState extends State<EditProductScreen> {
                           style: GoogleFonts.plusJakartaSans(
                             fontSize: 12.5,
                             fontWeight: FontWeight.w600,
-                            color: const Color(0xFF121C2A),
+                            color: AppColors.neutral,
                           ),
                         ),
                         Text(
                           'Satuan: Kilogram',
                           style: GoogleFonts.plusJakartaSans(
                             fontSize: 11,
-                            color: const Color(0xFF64748B),
+                            color: AppColors.neutralMuted,
                           ),
                         ),
                       ],
@@ -511,11 +512,11 @@ class _EditProductScreenState extends State<EditProductScreen> {
                           onPressed: () => _adjustStock(-10),
                           style: ElevatedButton.styleFrom(
                             backgroundColor: Colors.white,
-                            foregroundColor: const Color(0xFF121C2A),
+                            foregroundColor: AppColors.neutral,
                             elevation: 0,
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(10),
-                              side: const BorderSide(color: Color(0xFFE2E8F0)),
+                              side: const BorderSide(color: AppColors.border),
                             ),
                             minimumSize: const Size(48, 48),
                             padding: EdgeInsets.zero,
@@ -538,7 +539,7 @@ class _EditProductScreenState extends State<EditProductScreen> {
                             style: GoogleFonts.plusJakartaSans(
                               fontSize: 17,
                               fontWeight: FontWeight.w800,
-                              color: const Color(0xFF121C2A),
+                              color: AppColors.neutral,
                             ),
                             decoration: InputDecoration(
                               filled: true,
@@ -548,16 +549,16 @@ class _EditProductScreenState extends State<EditProductScreen> {
                                   const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
                               border: OutlineInputBorder(
                                 borderRadius: BorderRadius.circular(10),
-                                borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
+                                borderSide: const BorderSide(color: AppColors.border),
                               ),
                               enabledBorder: OutlineInputBorder(
                                 borderRadius: BorderRadius.circular(10),
-                                borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
+                                borderSide: const BorderSide(color: AppColors.border),
                               ),
                               focusedBorder: OutlineInputBorder(
                                 borderRadius: BorderRadius.circular(10),
                                 borderSide:
-                                    const BorderSide(color: Color(0xFF03AC0E), width: 1.5),
+                                    const BorderSide(color: AppColors.primary, width: 1.5),
                               ),
                             ),
                             validator: (val) {
@@ -573,11 +574,11 @@ class _EditProductScreenState extends State<EditProductScreen> {
                           onPressed: () => _adjustStock(10),
                           style: ElevatedButton.styleFrom(
                             backgroundColor: Colors.white,
-                            foregroundColor: const Color(0xFF121C2A),
+                            foregroundColor: AppColors.neutral,
                             elevation: 0,
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(10),
-                              side: const BorderSide(color: Color(0xFFE2E8F0)),
+                              side: const BorderSide(color: AppColors.border),
                             ),
                             minimumSize: const Size(48, 48),
                             padding: EdgeInsets.zero,
@@ -602,7 +603,7 @@ class _EditProductScreenState extends State<EditProductScreen> {
         decoration: BoxDecoration(
           color: Colors.white,
           border: const Border(
-            top: BorderSide(color: Color(0xFFE2E8F0), width: 1),
+            top: BorderSide(color: AppColors.border, width: 1),
           ),
           boxShadow: [
             BoxShadow(
@@ -620,7 +621,7 @@ class _EditProductScreenState extends State<EditProductScreen> {
                 onPressed: () => Navigator.pop(context),
                 style: OutlinedButton.styleFrom(
                   padding: const EdgeInsets.symmetric(vertical: 13),
-                  side: const BorderSide(color: Color(0xFFE2E8F0)),
+                  side: const BorderSide(color: AppColors.border),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(10),
                   ),
@@ -630,7 +631,7 @@ class _EditProductScreenState extends State<EditProductScreen> {
                   style: GoogleFonts.plusJakartaSans(
                     fontSize: 13,
                     fontWeight: FontWeight.w700,
-                    color: const Color(0xFF64748B),
+                    color: AppColors.neutralMuted,
                   ),
                 ),
               ),
@@ -641,8 +642,8 @@ class _EditProductScreenState extends State<EditProductScreen> {
               child: ElevatedButton(
                 onPressed: _isSaving ? null : _saveChanges,
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFF03AC0E),
-                  disabledBackgroundColor: const Color(0xFF94A3B8),
+                  backgroundColor: AppColors.primary,
+                  disabledBackgroundColor: AppColors.neutralSubtle,
                   padding: const EdgeInsets.symmetric(vertical: 13),
                   elevation: 1,
                   shape: RoundedRectangleBorder(

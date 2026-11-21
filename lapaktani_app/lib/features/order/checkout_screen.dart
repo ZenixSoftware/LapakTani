@@ -139,7 +139,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                       style: GoogleFonts.inter(
                         fontSize: 16,
                         fontWeight: FontWeight.w700,
-                        color: const Color(0xFF0F172A),
+                        color: AppColors.neutral,
                       ),
                     ),
                     IconButton(
@@ -193,21 +193,21 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
       children: [
         Text(
           label,
-          style: GoogleFonts.inter(fontSize: 11.5, fontWeight: FontWeight.w600, color: const Color(0xFF475569)),
+          style: GoogleFonts.inter(fontSize: 11.5, fontWeight: FontWeight.w600, color: AppColors.neutralMuted),
         ),
         const SizedBox(height: 4),
         TextField(
           controller: ctrl,
           maxLines: maxLines,
           keyboardType: keyboardType,
-          style: GoogleFonts.inter(fontSize: 13, color: const Color(0xFF0F172A)),
+          style: GoogleFonts.inter(fontSize: 13, color: AppColors.neutral),
           decoration: InputDecoration(
             isDense: true,
             filled: true,
-            fillColor: const Color(0xFFF8FAFC),
+            fillColor: AppColors.surfaceCanvas,
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(8),
-              borderSide: const BorderSide(color: Color(0xFFCBD5E1)),
+              borderSide: const BorderSide(color: AppColors.neutralBorder),
             ),
             focusedBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(8),
@@ -226,7 +226,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('Tidak ada produk untuk dicheckout.'),
-          backgroundColor: Color(0xFFDC2626),
+          backgroundColor: AppColors.error,
           behavior: SnackBarBehavior.floating,
         ),
       );
@@ -337,7 +337,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
               ScaffoldMessenger.of(context).showSnackBar(
                 const SnackBar(
                   content: Text('Gagal memproses pembayaran via Midtrans. Silakan coba kembali.'),
-                  backgroundColor: Color(0xFFDC2626),
+                  backgroundColor: AppColors.error,
                   behavior: SnackBarBehavior.floating,
                 ),
               );
@@ -355,7 +355,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                 ScaffoldMessenger.of(context).showSnackBar(
                   const SnackBar(
                     content: Text('Nomor Virtual Account tidak berhasil diterbitkan oleh Midtrans.'),
-                    backgroundColor: Color(0xFFDC2626),
+                    backgroundColor: AppColors.error,
                     behavior: SnackBarBehavior.floating,
                   ),
                 );
@@ -369,7 +369,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                 ScaffoldMessenger.of(context).showSnackBar(
                   const SnackBar(
                     content: Text('QR Code QRIS tidak berhasil diterbitkan oleh Midtrans.'),
-                    backgroundColor: Color(0xFFDC2626),
+                    backgroundColor: AppColors.error,
                     behavior: SnackBarBehavior.floating,
                   ),
                 );
@@ -448,7 +448,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(errorMsg),
-            backgroundColor: const Color(0xFFDC2626),
+            backgroundColor: AppColors.error,
             behavior: SnackBarBehavior.floating,
             duration: const Duration(seconds: 4),
           ),
@@ -498,7 +498,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
       decoration: const BoxDecoration(
         color: Colors.white,
-        border: Border(bottom: BorderSide(color: Color(0xFFF1F5F9), width: 1)),
+        border: Border(bottom: BorderSide(color: AppColors.surfaceCanvas, width: 1)),
       ),
       child: Row(
         children: [
@@ -507,7 +507,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
             borderRadius: BorderRadius.circular(8),
             child: const Padding(
               padding: EdgeInsets.all(4),
-              child: Icon(LucideIcons.arrowLeft, size: 20, color: Color(0xFF1E293B)),
+              child: Icon(LucideIcons.arrowLeft, size: 20, color: AppColors.neutral),
             ),
           ),
           const SizedBox(width: 8),
@@ -521,7 +521,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                     style: GoogleFonts.inter(
                       fontSize: 15,
                       fontWeight: FontWeight.w700,
-                      color: const Color(0xFF0F172A),
+                      color: AppColors.neutral,
                     ),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
@@ -531,21 +531,21 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                   decoration: BoxDecoration(
-                    color: const Color(0xFFECFDF5),
+                    color: AppColors.primaryTint,
                     borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: const Color(0xFFA7F3D0)),
+                    border: Border.all(color: AppColors.primaryBorder),
                   ),
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      const Icon(LucideIcons.shieldCheck, size: 11, color: Color(0xFF059669)),
+                      const Icon(LucideIcons.shieldCheck, size: 11, color: AppColors.primary),
                       const SizedBox(width: 3),
                       Text(
                         'Aman',
                         style: GoogleFonts.inter(
                           fontSize: 10,
                           fontWeight: FontWeight.w700,
-                          color: const Color(0xFF047857),
+                          color: AppColors.primaryDark,
                         ),
                       ),
                     ],
@@ -562,7 +562,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                 visualDensity: VisualDensity.compact,
                 padding: const EdgeInsets.all(4),
                 constraints: const BoxConstraints(),
-                icon: const Icon(LucideIcons.share2, size: 18, color: Color(0xFF475569)),
+                icon: const Icon(LucideIcons.share2, size: 18, color: AppColors.neutralMuted),
                 onPressed: () {},
               ),
               const SizedBox(width: 8),
@@ -570,7 +570,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                 visualDensity: VisualDensity.compact,
                 padding: const EdgeInsets.all(4),
                 constraints: const BoxConstraints(),
-                icon: const Icon(LucideIcons.bell, size: 18, color: Color(0xFF475569)),
+                icon: const Icon(LucideIcons.bell, size: 18, color: AppColors.neutralMuted),
                 onPressed: () {},
               ),
               const SizedBox(width: 8),
@@ -603,7 +603,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
       decoration: const BoxDecoration(
         color: Colors.white,
-        border: Border(bottom: BorderSide(color: Color(0xFFF1F5F9))),
+        border: Border(bottom: BorderSide(color: AppColors.surfaceCanvas)),
       ),
       child: Row(
         children: [
@@ -652,7 +652,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
             child: Container(
               margin: const EdgeInsets.symmetric(horizontal: 8),
               height: 2,
-              color: const Color(0xFFE2E8F0),
+              color: AppColors.border,
             ),
           ),
           Row(
@@ -661,14 +661,14 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
               Container(
                 width: 18,
                 height: 18,
-                decoration: const BoxDecoration(color: Color(0xFFF1F5F9), shape: BoxShape.circle),
+                decoration: const BoxDecoration(color: AppColors.surfaceCanvas, shape: BoxShape.circle),
                 alignment: Alignment.center,
-                child: Text('3', style: GoogleFonts.inter(fontSize: 10, fontWeight: FontWeight.w600, color: const Color(0xFF94A3B8))),
+                child: Text('3', style: GoogleFonts.inter(fontSize: 10, fontWeight: FontWeight.w600, color: AppColors.neutralSubtle)),
               ),
               const SizedBox(width: 4),
               Text(
                 'Selesai',
-                style: GoogleFonts.inter(fontSize: 11, fontWeight: FontWeight.w500, color: const Color(0xFF94A3B8)),
+                style: GoogleFonts.inter(fontSize: 11, fontWeight: FontWeight.w500, color: AppColors.neutralSubtle),
               ),
             ],
           ),
@@ -683,7 +683,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
       padding: const EdgeInsets.all(14),
       decoration: const BoxDecoration(
         color: Colors.white,
-        border: Border.symmetric(horizontal: BorderSide(color: Color(0xFFF1F5F9))),
+        border: Border.symmetric(horizontal: BorderSide(color: AppColors.surfaceCanvas)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -700,7 +700,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                     style: GoogleFonts.inter(
                       fontSize: 12.5,
                       fontWeight: FontWeight.w700,
-                      color: const Color(0xFF0F172A),
+                      color: AppColors.neutral,
                     ),
                   ),
                 ],
@@ -727,44 +727,49 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Row(
+                Wrap(
+                  spacing: 6,
+                  runSpacing: 4,
+                  crossAxisAlignment: WrapCrossAlignment.center,
                   children: [
                     Text(
                       _recipientName,
-                      style: GoogleFonts.inter(fontSize: 12, fontWeight: FontWeight.w700, color: const Color(0xFF0F172A)),
+                      style: GoogleFonts.inter(fontSize: 12, fontWeight: FontWeight.w700, color: AppColors.neutral),
                     ),
-                    const SizedBox(width: 6),
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
                       decoration: BoxDecoration(
-                        color: const Color(0xFFD1FAE5),
+                        color: AppColors.primaryTint,
                         borderRadius: BorderRadius.circular(4),
                       ),
                       child: Text(
                         'Rumah',
-                        style: GoogleFonts.inter(fontSize: 9.5, fontWeight: FontWeight.w700, color: const Color(0xFF065F46)),
+                        style: GoogleFonts.inter(fontSize: 9.5, fontWeight: FontWeight.w700, color: AppColors.primaryDark),
                       ),
                     ),
-                    const SizedBox(width: 6),
                     Text(
                       _recipientPhone,
-                      style: GoogleFonts.inter(fontSize: 11, color: const Color(0xFF64748B)),
+                      style: GoogleFonts.inter(fontSize: 11, color: AppColors.neutralMuted),
                     ),
                   ],
                 ),
                 const SizedBox(height: 3),
                 Text(
                   _deliveryAddress,
-                  style: GoogleFonts.inter(fontSize: 11.5, color: const Color(0xFF334155), height: 1.3),
+                  style: GoogleFonts.inter(fontSize: 11.5, color: AppColors.neutral, height: 1.3),
                 ),
                 const SizedBox(height: 4),
                 Row(
                   children: [
                     const Icon(LucideIcons.crosshair, size: 11, color: _tokopediaGreen),
                     const SizedBox(width: 4),
-                    Text(
-                      _pinpointNote,
-                      style: GoogleFonts.inter(fontSize: 10.5, color: const Color(0xFF64748B)),
+                    Expanded(
+                      child: Text(
+                        _pinpointNote,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: GoogleFonts.inter(fontSize: 10.5, color: AppColors.neutralMuted),
+                      ),
                     ),
                   ],
                 ),
@@ -782,47 +787,57 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
       padding: const EdgeInsets.all(14),
       decoration: const BoxDecoration(
         color: Colors.white,
-        border: Border.symmetric(horizontal: BorderSide(color: Color(0xFFF1F5F9))),
+        border: Border.symmetric(horizontal: BorderSide(color: AppColors.surfaceCanvas)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Row(
-                children: [
-                  Container(
-                    width: 28,
-                    height: 28,
-                    decoration: const BoxDecoration(
-                      color: Color(0xFFD1FAE5),
-                      shape: BoxShape.circle,
+              Expanded(
+                child: Row(
+                  children: [
+                    Container(
+                      width: 28,
+                      height: 28,
+                      decoration: const BoxDecoration(
+                        color: AppColors.primaryTint,
+                        shape: BoxShape.circle,
+                      ),
+                      child: const Icon(LucideIcons.sprout, size: 14, color: _tokopediaGreen),
                     ),
-                    child: const Icon(LucideIcons.sprout, size: 14, color: _tokopediaGreen),
-                  ),
-                  const SizedBox(width: 8),
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text(
-                            'Kebun Manik Sari (Pak Wayan)',
-                            style: GoogleFonts.inter(fontSize: 12, fontWeight: FontWeight.w700, color: const Color(0xFF0F172A)),
+                          Row(
+                            children: [
+                              Flexible(
+                                child: Text(
+                                  'Kebun Manik Sari (Pak Wayan)',
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: GoogleFonts.inter(fontSize: 12, fontWeight: FontWeight.w700, color: AppColors.neutral),
+                                ),
+                              ),
+                              const SizedBox(width: 4),
+                              const Icon(LucideIcons.checkCircle2, size: 11, color: _tokopediaGreen),
+                            ],
                           ),
-                          const SizedBox(width: 4),
-                          const Icon(LucideIcons.checkCircle2, size: 11, color: _tokopediaGreen),
+                          Text(
+                            'Lembang, Jawa Barat • Panen Subuh 04:30 WIB',
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: GoogleFonts.inter(fontSize: 9.5, color: AppColors.neutralMuted),
+                          ),
                         ],
                       ),
-                      Text(
-                        'Lembang, Jawa Barat • Panen Subuh 04:30 WIB',
-                        style: GoogleFonts.inter(fontSize: 9.5, color: const Color(0xFF64748B)),
-                      ),
-                    ],
-                  ),
-                ],
+                    ),
+                  ],
+                ),
               ),
+              const SizedBox(width: 8),
               Row(
                 children: [
                   OutlinedButton.icon(
@@ -864,7 +879,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                     ),
                     style: OutlinedButton.styleFrom(
                       foregroundColor: _tokopediaGreen,
-                      side: const BorderSide(color: Color(0xFFA7F3D0)),
+                      side: const BorderSide(color: AppColors.primaryBorder),
                       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                       minimumSize: Size.zero,
                       tapTargetSize: MaterialTapTargetSize.shrinkWrap,
@@ -878,7 +893,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
             ],
           ),
           const SizedBox(height: 12),
-          const Divider(height: 1, color: Color(0xFFF1F5F9)),
+          const Divider(height: 1, color: AppColors.surfaceCanvas),
           const SizedBox(height: 10),
           ..._items.map((item) {
             return Padding(
@@ -890,13 +905,13 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                     child: Container(
                       width: 48,
                       height: 48,
-                      color: const Color(0xFFF1F5F9),
+                      color: AppColors.surfaceCanvas,
                       child: Image.network(
                         item.imageUrl.startsWith('http')
                             ? item.imageUrl
                             : '${ApiService.baseUrl.replaceAll('/api', '')}/${item.imageUrl.startsWith('/') ? item.imageUrl.substring(1) : item.imageUrl}',
                         fit: BoxFit.cover,
-                        errorBuilder: (context, error, stackTrace) => const Icon(LucideIcons.image, size: 18, color: Color(0xFFCBD5E1)),
+                        errorBuilder: (context, error, stackTrace) => const Icon(LucideIcons.image, size: 18, color: AppColors.neutralBorder),
                       ),
                     ),
                   ),
@@ -909,39 +924,39 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                           item.title,
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
-                          style: GoogleFonts.inter(fontSize: 12, fontWeight: FontWeight.w700, color: const Color(0xFF0F172A)),
+                          style: GoogleFonts.inter(fontSize: 12, fontWeight: FontWeight.w700, color: AppColors.neutral),
                         ),
                         Text(
                           item.unit,
-                          style: GoogleFonts.inter(fontSize: 10.5, color: const Color(0xFF64748B)),
+                          style: GoogleFonts.inter(fontSize: 10.5, color: AppColors.neutralMuted),
                         ),
                         Text(
                           _formatRupiah(item.price),
-                          style: GoogleFonts.inter(fontSize: 12, fontWeight: FontWeight.w700, color: const Color(0xFF0F172A)),
+                          style: GoogleFonts.inter(fontSize: 12, fontWeight: FontWeight.w700, color: AppColors.neutral),
                         ),
                       ],
                     ),
                   ),
                   Text(
                     '${item.quantity}x',
-                    style: GoogleFonts.inter(fontSize: 12, fontWeight: FontWeight.w600, color: const Color(0xFF64748B)),
+                    style: GoogleFonts.inter(fontSize: 12, fontWeight: FontWeight.w600, color: AppColors.neutralMuted),
                   ),
                 ],
               ),
             );
           }),
-          const Divider(height: 1, color: Color(0xFFF1F5F9)),
+          const Divider(height: 1, color: AppColors.surfaceCanvas),
           const SizedBox(height: 8),
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text(
                 'Subtotal Pesanan (${_items.length} Barang)',
-                style: GoogleFonts.inter(fontSize: 11.5, color: const Color(0xFF64748B)),
+                style: GoogleFonts.inter(fontSize: 11.5, color: AppColors.neutralMuted),
               ),
               Text(
                 _formatRupiah(_itemsSubtotal),
-                style: GoogleFonts.inter(fontSize: 12.5, fontWeight: FontWeight.w700, color: const Color(0xFF0F172A)),
+                style: GoogleFonts.inter(fontSize: 12.5, fontWeight: FontWeight.w700, color: AppColors.neutral),
               ),
             ],
           ),
@@ -956,14 +971,14 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
       padding: const EdgeInsets.all(14),
       decoration: const BoxDecoration(
         color: Colors.white,
-        border: Border.symmetric(horizontal: BorderSide(color: Color(0xFFF1F5F9))),
+        border: Border.symmetric(horizontal: BorderSide(color: AppColors.surfaceCanvas)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
             'Pilih Pengiriman LapakTani',
-            style: GoogleFonts.inter(fontSize: 12, fontWeight: FontWeight.w700, color: const Color(0xFF475569)),
+            style: GoogleFonts.inter(fontSize: 12, fontWeight: FontWeight.w700, color: AppColors.neutralMuted),
           ),
           const SizedBox(height: 8),
           _buildLogisticsOption(
@@ -989,9 +1004,9 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
           Container(
             padding: const EdgeInsets.all(10),
             decoration: BoxDecoration(
-              color: const Color(0xFFECFDF5),
+              color: AppColors.primaryTint,
               borderRadius: BorderRadius.circular(8),
-              border: Border.all(color: const Color(0xFFA7F3D0)),
+              border: Border.all(color: AppColors.primaryBorder),
             ),
             child: Row(
               children: [
@@ -1000,7 +1015,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                 Expanded(
                   child: RichText(
                     text: TextSpan(
-                      style: GoogleFonts.inter(fontSize: 10.5, color: const Color(0xFF065F46), height: 1.3),
+                      style: GoogleFonts.inter(fontSize: 10.5, color: AppColors.primaryDark, height: 1.3),
                       children: const [
                         TextSpan(text: 'Garansi Pasti Segar 2 Jam: ', style: TextStyle(fontWeight: FontWeight.w700)),
                         TextSpan(text: 'Sayur layu diganti 100% baru atau pengembalian saldo instan.'),
@@ -1035,10 +1050,10 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
       child: Container(
         padding: const EdgeInsets.all(10),
         decoration: BoxDecoration(
-          color: isSelected ? const Color(0xFFECFDF5) : Colors.white,
+          color: isSelected ? AppColors.primaryTint : Colors.white,
           borderRadius: BorderRadius.circular(10),
           border: Border.all(
-            color: isSelected ? _tokopediaGreen : const Color(0xFFE2E8F0),
+            color: isSelected ? _tokopediaGreen : AppColors.border,
             width: isSelected ? 1.5 : 1,
           ),
         ),
@@ -1060,7 +1075,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                           style: GoogleFonts.inter(
                             fontSize: 12,
                             fontWeight: FontWeight.w700,
-                            color: const Color(0xFF0F172A),
+                            color: AppColors.neutral,
                           ),
                         ),
                       ),
@@ -1077,7 +1092,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                         style: GoogleFonts.inter(
                           fontSize: 10,
                           decoration: TextDecoration.lineThrough,
-                          color: const Color(0xFF94A3B8),
+                          color: AppColors.neutralSubtle,
                         ),
                       ),
                       const SizedBox(width: 4),
@@ -1098,7 +1113,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
               padding: const EdgeInsets.only(left: 24, top: 2),
               child: Text(
                 eta,
-                style: GoogleFonts.inter(fontSize: 10.5, color: const Color(0xFF475569)),
+                style: GoogleFonts.inter(fontSize: 10.5, color: AppColors.neutralMuted),
               ),
             ),
             const SizedBox(height: 6),
@@ -1107,11 +1122,11 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
               decoration: BoxDecoration(
                 color: Colors.white,
                 borderRadius: BorderRadius.circular(6),
-                border: Border.all(color: const Color(0xFFA7F3D0)),
+                border: Border.all(color: AppColors.primaryBorder),
               ),
               child: Row(
                 children: [
-                  const Icon(LucideIcons.snowflake, size: 10, color: Color(0xFF059669)),
+                  const Icon(LucideIcons.snowflake, size: 10, color: AppColors.primary),
                   const SizedBox(width: 4),
                   Expanded(
                     child: Text(
@@ -1120,7 +1135,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                       style: GoogleFonts.inter(
                         fontSize: 9.5,
                         fontWeight: FontWeight.w600,
-                        color: const Color(0xFF065F46),
+                        color: AppColors.primaryDark,
                       ),
                     ),
                   ),
@@ -1139,7 +1154,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
       padding: const EdgeInsets.all(14),
       decoration: const BoxDecoration(
         color: Colors.white,
-        border: Border.symmetric(horizontal: BorderSide(color: Color(0xFFF1F5F9))),
+        border: Border.symmetric(horizontal: BorderSide(color: AppColors.surfaceCanvas)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -1149,7 +1164,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
             children: [
               Text(
                 'Voucher & Keuntungan',
-                style: GoogleFonts.inter(fontSize: 12, fontWeight: FontWeight.w700, color: const Color(0xFF0F172A)),
+                style: GoogleFonts.inter(fontSize: 12, fontWeight: FontWeight.w700, color: AppColors.neutral),
               ),
               Text(
                 'Makin Hemat',
@@ -1175,10 +1190,10 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
               padding: const EdgeInsets.all(10),
               decoration: BoxDecoration(
                 gradient: const LinearGradient(
-                  colors: [Color(0xFFECFDF5), Colors.white],
+                  colors: [AppColors.primaryTint, Colors.white],
                 ),
                 borderRadius: BorderRadius.circular(10),
-                border: Border.all(color: const Color(0xFFA7F3D0)),
+                border: Border.all(color: AppColors.primaryBorder),
               ),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -1190,7 +1205,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                           width: 30,
                           height: 30,
                           decoration: BoxDecoration(
-                            color: const Color(0xFFD1FAE5),
+                            color: AppColors.primaryTint,
                             borderRadius: BorderRadius.circular(6),
                           ),
                           child: const Icon(LucideIcons.ticket, size: 16, color: _tokopediaGreen),
@@ -1206,7 +1221,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                                 style: GoogleFonts.inter(
                                   fontSize: 11.5,
                                   fontWeight: FontWeight.w700,
-                                  color: const Color(0xFF0F172A),
+                                  color: AppColors.neutral,
                                 ),
                               ),
                               Text(
@@ -1228,7 +1243,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                     decoration: BoxDecoration(
-                      color: const Color(0xFFD1FAE5),
+                      color: AppColors.primaryTint,
                       borderRadius: BorderRadius.circular(12),
                     ),
                     child: Row(
@@ -1239,11 +1254,11 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                           style: GoogleFonts.inter(
                             fontSize: 10.5,
                             fontWeight: FontWeight.w700,
-                            color: const Color(0xFF065F46),
+                            color: AppColors.primaryDark,
                           ),
                         ),
                         const SizedBox(width: 4),
-                        const Icon(LucideIcons.chevronRight, size: 11, color: Color(0xFF065F46)),
+                        const Icon(LucideIcons.chevronRight, size: 11, color: AppColors.primaryDark),
                       ],
                     ),
                   ),
@@ -1255,9 +1270,9 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
           Container(
             padding: const EdgeInsets.all(10),
             decoration: BoxDecoration(
-              gradient: const LinearGradient(colors: [Color(0xFFECFDF5), Color(0xFFCCFBF1)]),
+              gradient: const LinearGradient(colors: [AppColors.primaryTint, AppColors.secondaryTint]),
               borderRadius: BorderRadius.circular(10),
-              border: Border.all(color: const Color(0xFFA7F3D0)),
+              border: Border.all(color: AppColors.primaryBorder),
             ),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -1282,12 +1297,12 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                             Text(
                               'BEBAS ONGKIR & Diskon Panen 10%',
                               overflow: TextOverflow.ellipsis,
-                              style: GoogleFonts.inter(fontSize: 11.5, fontWeight: FontWeight.w700, color: const Color(0xFF0F172A)),
+                              style: GoogleFonts.inter(fontSize: 11.5, fontWeight: FontWeight.w700, color: AppColors.neutral),
                             ),
                             Text(
                               'Hemat total Rp15.000 untuk pengiriman instan',
                               overflow: TextOverflow.ellipsis,
-                              style: GoogleFonts.inter(fontSize: 10, color: const Color(0xFF047857)),
+                              style: GoogleFonts.inter(fontSize: 10, color: AppColors.primaryDark),
                             ),
                           ],
                         ),
@@ -1311,10 +1326,10 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                       width: 26,
                       height: 26,
                       decoration: const BoxDecoration(
-                        color: Color(0xFFFEF3C7),
+                        color: AppColors.tertiaryTint,
                         shape: BoxShape.circle,
                       ),
-                      child: const Icon(LucideIcons.coins, size: 14, color: Color(0xFFD97706)),
+                      child: const Icon(LucideIcons.coins, size: 14, color: AppColors.tertiaryText),
                     ),
                     const SizedBox(width: 8),
                     Expanded(
@@ -1324,12 +1339,12 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                           Text(
                             'Tukarkan 350 Koin LapakTani',
                             overflow: TextOverflow.ellipsis,
-                            style: GoogleFonts.inter(fontSize: 11.5, fontWeight: FontWeight.w700, color: const Color(0xFF0F172A)),
+                            style: GoogleFonts.inter(fontSize: 11.5, fontWeight: FontWeight.w700, color: AppColors.neutral),
                           ),
                           Text(
                             'Hemat Rp350 dari saldo koin panen',
                             overflow: TextOverflow.ellipsis,
-                            style: GoogleFonts.inter(fontSize: 10, color: const Color(0xFF64748B)),
+                            style: GoogleFonts.inter(fontSize: 10, color: AppColors.neutralMuted),
                           ),
                         ],
                       ),
@@ -1371,7 +1386,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
       padding: const EdgeInsets.all(14),
       decoration: const BoxDecoration(
         color: Colors.white,
-        border: Border.symmetric(horizontal: BorderSide(color: Color(0xFFF1F5F9))),
+        border: Border.symmetric(horizontal: BorderSide(color: AppColors.surfaceCanvas)),
       ),
       child: InkWell(
         onTap: () {
@@ -1402,28 +1417,34 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Row(
-                        children: [
-                          Text(
-                            'Protokol Kesegaran Panen',
-                            style: GoogleFonts.inter(
-                              fontSize: 12,
-                              fontWeight: FontWeight.w700,
-                              color: const Color(0xFF0F172A),
+                      Expanded(
+                        child: Row(
+                          children: [
+                            Flexible(
+                              child: Text(
+                                'Protokol Kesegaran Panen',
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: GoogleFonts.inter(
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w700,
+                                  color: AppColors.neutral,
+                                ),
+                              ),
                             ),
-                          ),
-                          const SizedBox(width: 4),
-                          const Icon(LucideIcons.checkCircle2, size: 13, color: _tokopediaGreen),
-                        ],
+                            const SizedBox(width: 4),
+                            const Icon(LucideIcons.checkCircle2, size: 13, color: _tokopediaGreen),
+                          ],
+                        ),
                       ),
+                      const SizedBox(width: 8),
                       Text(
                         '+Rp1.000',
                         style: GoogleFonts.inter(
                           fontSize: 12,
                           fontWeight: FontWeight.w700,
-                          color: const Color(0xFF0F172A),
+                          color: AppColors.neutral,
                         ),
                       ),
                     ],
@@ -1433,7 +1454,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                     'Jaminan ganti rugi 100% jika sayur & buah layu atau busuk saat tiba di alamat tujuan.',
                     style: GoogleFonts.inter(
                       fontSize: 10.5,
-                      color: const Color(0xFF64748B),
+                      color: AppColors.neutralMuted,
                       height: 1.3,
                     ),
                   ),
@@ -1452,7 +1473,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
       padding: const EdgeInsets.all(14),
       decoration: const BoxDecoration(
         color: Colors.white,
-        border: Border.symmetric(horizontal: BorderSide(color: Color(0xFFF1F5F9))),
+        border: Border.symmetric(horizontal: BorderSide(color: AppColors.surfaceCanvas)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -1462,7 +1483,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
             children: [
               Text(
                 'Metode Pembayaran',
-                style: GoogleFonts.inter(fontSize: 12, fontWeight: FontWeight.w700, color: const Color(0xFF0F172A)),
+                style: GoogleFonts.inter(fontSize: 12, fontWeight: FontWeight.w700, color: AppColors.neutral),
               ),
               InkWell(
                 onTap: _openPaymentSelectionScreen,
@@ -1480,7 +1501,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
             subtitle: 'Saldo: Rp 2.500.000 / Simulasi Terpotong Otomatis',
             badge: 'Instan & Bebas Biaya',
             icon: LucideIcons.wallet,
-            iconBg: const Color(0xFFECFDF5),
+            iconBg: AppColors.primaryTint,
             iconColor: _tokopediaGreen,
           ),
           const SizedBox(height: 8),
@@ -1489,8 +1510,8 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
             title: 'BCA Virtual Account',
             subtitle: 'Verifikasi otomatis instan 24/7',
             icon: LucideIcons.creditCard,
-            iconBg: const Color(0xFFEFF6FF),
-            iconColor: const Color(0xFF2563EB),
+            iconBg: AppColors.secondaryTint,
+            iconColor: AppColors.secondary,
           ),
           const SizedBox(height: 8),
           _buildPaymentOption(
@@ -1498,8 +1519,8 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
             title: 'QRIS (Semua Bank & E-Wallet)',
             subtitle: 'Pindai kode QR via aplikasi perbankan / e-Wallet',
             icon: LucideIcons.qrCode,
-            iconBg: const Color(0xFFF0FDFA),
-            iconColor: const Color(0xFF0D9488),
+            iconBg: AppColors.primaryTint,
+            iconColor: AppColors.secondary,
           ),
           const SizedBox(height: 8),
           _buildPaymentOption(
@@ -1507,8 +1528,8 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
             title: 'Transfer Bank Manual',
             subtitle: 'Kirim ke rekening resmi LapakTani',
             icon: LucideIcons.banknote,
-            iconBg: const Color(0xFFF1F5F9),
-            iconColor: const Color(0xFF475569),
+            iconBg: AppColors.surfaceCanvas,
+            iconColor: AppColors.neutralMuted,
           ),
         ],
       ),
@@ -1537,65 +1558,73 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
       child: Container(
         padding: const EdgeInsets.all(10),
         decoration: BoxDecoration(
-          color: isSelected ? const Color(0xFFECFDF5) : Colors.white,
+          color: isSelected ? AppColors.primaryTint : Colors.white,
           borderRadius: BorderRadius.circular(10),
           border: Border.all(
-            color: isSelected ? _tokopediaGreen : const Color(0xFFE2E8F0),
+            color: isSelected ? _tokopediaGreen : AppColors.border,
             width: isSelected ? 1.5 : 1,
           ),
         ),
         child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            Row(
-              children: [
-                Container(
-                  width: 34,
-                  height: 34,
-                  decoration: BoxDecoration(
-                    color: iconBg,
-                    borderRadius: BorderRadius.circular(8),
+            Expanded(
+              child: Row(
+                children: [
+                  Container(
+                    width: 34,
+                    height: 34,
+                    decoration: BoxDecoration(
+                      color: iconBg,
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Icon(icon, size: 18, color: iconColor),
                   ),
-                  child: Icon(icon, size: 18, color: iconColor),
-                ),
-                const SizedBox(width: 10),
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text(
-                          title,
-                          style: GoogleFonts.inter(fontSize: 12, fontWeight: FontWeight.w700, color: const Color(0xFF0F172A)),
+                        Wrap(
+                          spacing: 6,
+                          runSpacing: 3,
+                          crossAxisAlignment: WrapCrossAlignment.center,
+                          children: [
+                            Text(
+                              title,
+                              style: GoogleFonts.inter(fontSize: 12, fontWeight: FontWeight.w700, color: AppColors.neutral),
+                            ),
+                            if (badge != null)
+                              Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
+                                decoration: BoxDecoration(
+                                  color: AppColors.primaryTint,
+                                  borderRadius: BorderRadius.circular(4),
+                                ),
+                                child: Text(
+                                  badge,
+                                  style: GoogleFonts.inter(fontSize: 9, fontWeight: FontWeight.w700, color: AppColors.primaryDark),
+                                ),
+                              ),
+                          ],
                         ),
-                        if (badge != null) ...[
-                          const SizedBox(width: 6),
-                          Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
-                            decoration: BoxDecoration(
-                              color: const Color(0xFFD1FAE5),
-                              borderRadius: BorderRadius.circular(4),
-                            ),
-                            child: Text(
-                              badge,
-                              style: GoogleFonts.inter(fontSize: 9, fontWeight: FontWeight.w700, color: const Color(0xFF065F46)),
-                            ),
-                          ),
-                        ],
+                        const SizedBox(height: 1),
+                        Text(
+                          subtitle,
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                          style: GoogleFonts.inter(fontSize: 10.5, color: AppColors.neutralMuted),
+                        ),
                       ],
                     ),
-                    Text(
-                      subtitle,
-                      style: GoogleFonts.inter(fontSize: 10.5, color: const Color(0xFF64748B)),
-                    ),
-                  ],
-                ),
-              ],
+                  ),
+                ],
+              ),
             ),
+            const SizedBox(width: 8),
             Icon(
               isSelected ? LucideIcons.checkCircle2 : LucideIcons.circle,
               size: 18,
-              color: isSelected ? _tokopediaGreen : const Color(0xFFCBD5E1),
+              color: isSelected ? _tokopediaGreen : AppColors.neutralBorder,
             ),
           ],
         ),
@@ -1609,14 +1638,14 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
       padding: const EdgeInsets.all(14),
       decoration: const BoxDecoration(
         color: Colors.white,
-        border: Border.symmetric(horizontal: BorderSide(color: Color(0xFFF1F5F9))),
+        border: Border.symmetric(horizontal: BorderSide(color: AppColors.surfaceCanvas)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
             'Rincian Pembayaran',
-            style: GoogleFonts.inter(fontSize: 12.5, fontWeight: FontWeight.w700, color: const Color(0xFF0F172A)),
+            style: GoogleFonts.inter(fontSize: 12.5, fontWeight: FontWeight.w700, color: AppColors.neutral),
           ),
           const SizedBox(height: 10),
           _buildBreakdownRow('Total Harga Barang (${_items.length} barang)', _formatRupiah(_itemsSubtotal)),
@@ -1698,14 +1727,14 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
             ),
           ],
           const SizedBox(height: 10),
-          const Divider(height: 1, color: Color(0xFFE2E8F0)),
+          const Divider(height: 1, color: AppColors.border),
           const SizedBox(height: 10),
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text(
                 'Total Tagihan',
-                style: GoogleFonts.inter(fontSize: 13, fontWeight: FontWeight.w700, color: const Color(0xFF0F172A)),
+                style: GoogleFonts.inter(fontSize: 13, fontWeight: FontWeight.w700, color: AppColors.neutral),
               ),
               Text(
                 _formatRupiah(_totalBilling),
@@ -1720,22 +1749,26 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
 
   Widget _buildBreakdownRow(String label, String value, {bool isHighlight = false}) {
     return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        Text(
-          label,
-          style: GoogleFonts.inter(
-            fontSize: 11.5,
-            color: isHighlight ? _tokopediaGreen : const Color(0xFF64748B),
-            fontWeight: isHighlight ? FontWeight.w600 : FontWeight.w400,
+        Expanded(
+          child: Text(
+            label,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: GoogleFonts.inter(
+              fontSize: 11.5,
+              color: isHighlight ? _tokopediaGreen : AppColors.neutralMuted,
+              fontWeight: isHighlight ? FontWeight.w600 : FontWeight.w400,
+            ),
           ),
         ),
+        const SizedBox(width: 8),
         Text(
           value,
           style: GoogleFonts.inter(
             fontSize: 11.5,
             fontWeight: FontWeight.w600,
-            color: isHighlight ? _tokopediaGreen : const Color(0xFF0F172A),
+            color: isHighlight ? _tokopediaGreen : AppColors.neutral,
           ),
         ),
       ],
@@ -1747,51 +1780,59 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
       decoration: const BoxDecoration(
         color: Colors.white,
-        border: Border(top: BorderSide(color: Color(0xFFE2E8F0))),
+        border: Border(top: BorderSide(color: AppColors.border)),
         boxShadow: [
           BoxShadow(
-            color: Color(0x14000000),
+            color: AppColors.shadowMedium,
             blurRadius: 10,
             offset: Offset(0, -3),
           ),
         ],
       ),
       child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Text(
-                'Total Tagihan',
-                style: GoogleFonts.inter(fontSize: 10, color: const Color(0xFF64748B)),
-              ),
-              Text(
-                _formatRupiah(_totalBilling),
-                style: GoogleFonts.inter(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w800,
-                  color: const Color(0xFF0F172A),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  'Total Tagihan',
+                  style: GoogleFonts.inter(fontSize: 10, color: AppColors.neutralMuted),
                 ),
-              ),
-              Row(
-                children: [
-                  const Icon(LucideIcons.lock, size: 10, color: _tokopediaGreen),
-                  const SizedBox(width: 4),
-                  Text(
-                    'Terenkripsi 256-bit • LapakTani Guarantee',
-                    style: GoogleFonts.inter(fontSize: 9, color: const Color(0xFF94A3B8)),
+                Text(
+                  _formatRupiah(_totalBilling),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: GoogleFonts.inter(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w800,
+                    color: AppColors.neutral,
                   ),
-                ],
-              ),
-            ],
+                ),
+                Row(
+                  children: [
+                    const Icon(LucideIcons.lock, size: 10, color: _tokopediaGreen),
+                    const SizedBox(width: 4),
+                    Flexible(
+                      child: Text(
+                        'Terenkripsi 256-bit • LapakTani Guarantee',
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: GoogleFonts.inter(fontSize: 9, color: AppColors.neutralSubtle),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
           ),
+          const SizedBox(width: 10),
           ElevatedButton(
             onPressed: _isSubmitting ? null : _handleCreateOrder,
             style: ElevatedButton.styleFrom(
               backgroundColor: _tokopediaGreen,
-              disabledBackgroundColor: const Color(0xFFCBD5E1),
+              disabledBackgroundColor: AppColors.neutralBorder,
               foregroundColor: Colors.white,
               elevation: 1,
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),

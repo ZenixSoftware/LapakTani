@@ -93,12 +93,12 @@ class _PoktanDashboardScreenState extends State<PoktanDashboardScreen>
         ),
         content: Text(
           'Mekanisme Zero-Waste: Sisa kuota borongan yang belum terserap akan langsung dialihkan menjadi stok retail di etalase Toko Mitra Tani dan penawaran partai akan ditutup.',
-          style: GoogleFonts.plusJakartaSans(fontSize: 13, color: const Color(0xFF475569)),
+          style: GoogleFonts.plusJakartaSans(fontSize: 13, color: AppColors.neutralMuted),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx, false),
-            child: Text('Batal', style: GoogleFonts.plusJakartaSans(color: const Color(0xFF64748B))),
+            child: Text('Batal', style: GoogleFonts.plusJakartaSans(color: AppColors.neutralMuted)),
           ),
           ElevatedButton(
             onPressed: () => Navigator.pop(ctx, true),
@@ -129,7 +129,7 @@ class _PoktanDashboardScreenState extends State<PoktanDashboardScreen>
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text('Gagal mengalihkan kuota ke retail.'),
-            backgroundColor: Color(0xFFEF4444),
+            backgroundColor: AppColors.error,
             behavior: SnackBarBehavior.floating,
           ),
         );
@@ -181,7 +181,7 @@ class _PoktanDashboardScreenState extends State<PoktanDashboardScreen>
             children: [
               Text(
                 'Input tonase aktual panen masuk dari petani untuk ${order.commodityName} (${order.buyerName}). Target kontrak: ${order.totalQuotaKg} kg.',
-                style: GoogleFonts.plusJakartaSans(fontSize: 12, color: const Color(0xFF64748B)),
+                style: GoogleFonts.plusJakartaSans(fontSize: 12, color: AppColors.neutralMuted),
               ),
               const SizedBox(height: 12),
               Text('Tonase Panen Masuk (kg)', style: GoogleFonts.plusJakartaSans(fontSize: 12, fontWeight: FontWeight.w600)),
@@ -227,7 +227,7 @@ class _PoktanDashboardScreenState extends State<PoktanDashboardScreen>
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx),
-            child: Text('Batal', style: GoogleFonts.plusJakartaSans(color: const Color(0xFF64748B))),
+            child: Text('Batal', style: GoogleFonts.plusJakartaSans(color: AppColors.neutralMuted)),
           ),
           ElevatedButton(
             onPressed: () async {
@@ -256,7 +256,7 @@ class _PoktanDashboardScreenState extends State<PoktanDashboardScreen>
                 scaffoldMessenger.showSnackBar(
                   SnackBar(
                     content: Text(result['message']?.toString() ?? 'Gagal memproses settlement.'),
-                    backgroundColor: const Color(0xFFDC2626),
+                    backgroundColor: AppColors.error,
                   ),
                 );
               }
@@ -279,7 +279,7 @@ class _PoktanDashboardScreenState extends State<PoktanDashboardScreen>
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
         gradient: const LinearGradient(
-          colors: [Color(0xFF0F5132), AppColors.primary],
+          colors: [AppColors.primaryDark, AppColors.primary],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
@@ -296,30 +296,36 @@ class _PoktanDashboardScreenState extends State<PoktanDashboardScreen>
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                decoration: BoxDecoration(
-                  color: Colors.white.withValues(alpha: 0.2),
-                  borderRadius: BorderRadius.circular(20),
-                ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    const Icon(LucideIcons.shieldCheck, color: Colors.white, size: 14),
-                    const SizedBox(width: 6),
-                    Text(
-                      'Panel Pengurus Poktan',
-                      style: GoogleFonts.plusJakartaSans(
-                        fontSize: 11,
-                        fontWeight: FontWeight.w600,
-                        color: Colors.white,
+              Flexible(
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: Colors.white.withValues(alpha: 0.2),
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const Icon(LucideIcons.shieldCheck, color: Colors.white, size: 14),
+                      const SizedBox(width: 6),
+                      Flexible(
+                        child: Text(
+                          'Panel Pengurus Poktan',
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: GoogleFonts.plusJakartaSans(
+                            fontSize: 11,
+                            fontWeight: FontWeight.w600,
+                            color: Colors.white,
+                          ),
+                        ),
                       ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
               ),
+              const SizedBox(width: 8),
               InkWell(
                 onTap: () {
                   Navigator.of(context).push(
@@ -359,7 +365,7 @@ class _PoktanDashboardScreenState extends State<PoktanDashboardScreen>
             style: GoogleFonts.plusJakartaSans(
               fontSize: 15,
               fontWeight: FontWeight.w600,
-              color: const Color(0xFFD1FAE5),
+              color: AppColors.primaryTint,
             ),
           ),
           const SizedBox(height: 4),
@@ -381,7 +387,7 @@ class _PoktanDashboardScreenState extends State<PoktanDashboardScreen>
                 style: GoogleFonts.plusJakartaSans(
                   fontSize: 16,
                   fontWeight: FontWeight.w600,
-                  color: const Color(0xFFE2E8F0),
+                  color: AppColors.border,
                 ),
               ),
             ],
@@ -390,35 +396,48 @@ class _PoktanDashboardScreenState extends State<PoktanDashboardScreen>
           const Divider(height: 1, color: Colors.white24),
           const SizedBox(height: 12),
           Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Row(
-                children: [
-                  const Icon(LucideIcons.users, size: 16, color: Color(0xFFD1FAE5)),
-                  const SizedBox(width: 6),
-                  Text(
-                    '${_members.length} Petani Terdaftar',
-                    style: GoogleFonts.plusJakartaSans(
-                      fontSize: 12,
-                      fontWeight: FontWeight.w600,
-                      color: Colors.white,
+              Expanded(
+                child: Row(
+                  children: [
+                    const Icon(LucideIcons.users, size: 16, color: AppColors.primaryTint),
+                    const SizedBox(width: 6),
+                    Flexible(
+                      child: Text(
+                        '${_members.length} Petani Terdaftar',
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: GoogleFonts.plusJakartaSans(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w600,
+                          color: Colors.white,
+                        ),
+                      ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
-              Row(
-                children: [
-                  const Icon(LucideIcons.briefcase, size: 16, color: Color(0xFFD1FAE5)),
-                  const SizedBox(width: 6),
-                  Text(
-                    '${_b2bOrders.length} Kontrak B2B',
-                    style: GoogleFonts.plusJakartaSans(
-                      fontSize: 12,
-                      fontWeight: FontWeight.w600,
-                      color: Colors.white,
+              const SizedBox(width: 8),
+              Flexible(
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Icon(LucideIcons.briefcase, size: 16, color: AppColors.primaryTint),
+                    const SizedBox(width: 6),
+                    Flexible(
+                      child: Text(
+                        '${_b2bOrders.length} Kontrak B2B',
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: GoogleFonts.plusJakartaSans(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w600,
+                          color: Colors.white,
+                        ),
+                      ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
             ],
           ),
@@ -444,7 +463,7 @@ class _PoktanDashboardScreenState extends State<PoktanDashboardScreen>
                     style: GoogleFonts.plusJakartaSans(
                       fontSize: 15,
                       fontWeight: FontWeight.w700,
-                      color: const Color(0xFF0F172A),
+                      color: AppColors.neutral,
                     ),
                   ),
                   const SizedBox(height: 2),
@@ -452,7 +471,7 @@ class _PoktanDashboardScreenState extends State<PoktanDashboardScreen>
                     'Forward pool konsolidasi panen anggota Mitra Tani.',
                     style: GoogleFonts.plusJakartaSans(
                       fontSize: 12,
-                      color: const Color(0xFF64748B),
+                      color: AppColors.neutralMuted,
                     ),
                   ),
                 ],
@@ -481,14 +500,14 @@ class _PoktanDashboardScreenState extends State<PoktanDashboardScreen>
             child: Center(
               child: Column(
                 children: [
-                  const Icon(LucideIcons.layers, size: 36, color: Color(0xFF94A3B8)),
+                  const Icon(LucideIcons.layers, size: 36, color: AppColors.neutralSubtle),
                   const SizedBox(height: 8),
                   Text(
                     'Belum ada bursa penawaran partai aktif',
                     style: GoogleFonts.plusJakartaSans(
                       fontSize: 13,
                       fontWeight: FontWeight.w600,
-                      color: const Color(0xFF475569),
+                      color: AppColors.neutralMuted,
                     ),
                   ),
                   const SizedBox(height: 4),
@@ -497,7 +516,7 @@ class _PoktanDashboardScreenState extends State<PoktanDashboardScreen>
                     textAlign: TextAlign.center,
                     style: GoogleFonts.plusJakartaSans(
                       fontSize: 11.5,
-                      color: const Color(0xFF94A3B8),
+                      color: AppColors.neutralSubtle,
                     ),
                   ),
                 ],
@@ -531,7 +550,7 @@ class _PoktanDashboardScreenState extends State<PoktanDashboardScreen>
                           width: 42,
                           height: 42,
                           decoration: BoxDecoration(
-                            color: const Color(0xFFDCFCE7),
+                            color: AppColors.primaryTint,
                             borderRadius: BorderRadius.circular(10),
                           ),
                           child: const Icon(LucideIcons.layers, color: AppColors.primary, size: 22),
@@ -546,7 +565,7 @@ class _PoktanDashboardScreenState extends State<PoktanDashboardScreen>
                                 style: GoogleFonts.plusJakartaSans(
                                   fontSize: 14.5,
                                   fontWeight: FontWeight.w700,
-                                  color: const Color(0xFF121C2A),
+                                  color: AppColors.neutral,
                                 ),
                               ),
                               const SizedBox(height: 2),
@@ -555,7 +574,7 @@ class _PoktanDashboardScreenState extends State<PoktanDashboardScreen>
                                 style: GoogleFonts.plusJakartaSans(
                                   fontSize: 11.5,
                                   fontWeight: FontWeight.w500,
-                                  color: const Color(0xFF64748B),
+                                  color: AppColors.neutralMuted,
                                 ),
                               ),
                             ],
@@ -565,10 +584,10 @@ class _PoktanDashboardScreenState extends State<PoktanDashboardScreen>
                           padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                           decoration: BoxDecoration(
                             color: isSpilled
-                                ? const Color(0xFFFEF3C7)
+                                ? AppColors.tertiaryTint
                                 : isSoldOut
-                                    ? const Color(0xFFDCFCE7)
-                                    : const Color(0xFFEFF6FF),
+                                    ? AppColors.primaryTint
+                                    : AppColors.secondaryTint,
                             borderRadius: BorderRadius.circular(8),
                           ),
                           child: Text(
@@ -581,10 +600,10 @@ class _PoktanDashboardScreenState extends State<PoktanDashboardScreen>
                               fontSize: 10.5,
                               fontWeight: FontWeight.w700,
                               color: isSpilled
-                                  ? const Color(0xFFB45309)
+                                  ? AppColors.tertiaryText
                                   : isSoldOut
-                                      ? const Color(0xFF16A34A)
-                                      : const Color(0xFF2563EB),
+                                      ? AppColors.primary
+                                      : AppColors.secondary,
                             ),
                           ),
                         ),
@@ -594,22 +613,31 @@ class _PoktanDashboardScreenState extends State<PoktanDashboardScreen>
 
                     // Progress Bar
                     Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        Text(
-                          'Terserap: ${_currencyFormat.format(takenKg)} / ${_currencyFormat.format(totalKg)} kg',
-                          style: GoogleFonts.plusJakartaSans(
-                            fontSize: 11.5,
-                            fontWeight: FontWeight.w700,
-                            color: const Color(0xFF1E293B),
+                        Expanded(
+                          child: Text(
+                            'Terserap: ${_currencyFormat.format(takenKg)} / ${_currencyFormat.format(totalKg)} kg',
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: GoogleFonts.plusJakartaSans(
+                              fontSize: 11.5,
+                              fontWeight: FontWeight.w700,
+                              color: AppColors.neutral,
+                            ),
                           ),
                         ),
-                        Text(
-                          'Sisa: ${_currencyFormat.format(remainingKg)} kg',
-                          style: GoogleFonts.plusJakartaSans(
-                            fontSize: 11.5,
-                            fontWeight: FontWeight.w600,
-                            color: isSoldOut ? const Color(0xFF16A34A) : const Color(0xFFD97706),
+                        const SizedBox(width: 8),
+                        Flexible(
+                          child: Text(
+                            'Sisa: ${_currencyFormat.format(remainingKg)} kg',
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            textAlign: TextAlign.right,
+                            style: GoogleFonts.plusJakartaSans(
+                              fontSize: 11.5,
+                              fontWeight: FontWeight.w600,
+                              color: isSoldOut ? AppColors.primary : AppColors.tertiaryText,
+                            ),
                           ),
                         ),
                       ],
@@ -620,9 +648,9 @@ class _PoktanDashboardScreenState extends State<PoktanDashboardScreen>
                       child: LinearProgressIndicator(
                         value: progress,
                         minHeight: 7,
-                        backgroundColor: const Color(0xFFE2E8F0),
+                        backgroundColor: AppColors.border,
                         valueColor: AlwaysStoppedAnimation<Color>(
-                          isSoldOut ? const Color(0xFF16A34A) : AppColors.primary,
+                          isSoldOut ? AppColors.primary : AppColors.primary,
                         ),
                       ),
                     ),
@@ -630,7 +658,7 @@ class _PoktanDashboardScreenState extends State<PoktanDashboardScreen>
 
                     Row(
                       children: [
-                        const Icon(LucideIcons.calendar, size: 13, color: Color(0xFF94A3B8)),
+                        const Icon(LucideIcons.calendar, size: 13, color: AppColors.neutralSubtle),
                         const SizedBox(width: 4),
                         Expanded(
                           child: Text(
@@ -639,7 +667,7 @@ class _PoktanDashboardScreenState extends State<PoktanDashboardScreen>
                             overflow: TextOverflow.ellipsis,
                             style: GoogleFonts.plusJakartaSans(
                               fontSize: 11,
-                              color: const Color(0xFF64748B),
+                              color: AppColors.neutralMuted,
                             ),
                           ),
                         ),
@@ -656,7 +684,7 @@ class _PoktanDashboardScreenState extends State<PoktanDashboardScreen>
 
                     if (remainingKg > 0 && !isSpilled) ...[
                       const SizedBox(height: 12),
-                      const Divider(height: 1, color: Color(0xFFF1F5F9)),
+                      const Divider(height: 1, color: AppColors.surfaceCanvas),
                       const SizedBox(height: 10),
                       Row(
                         mainAxisAlignment: MainAxisAlignment.end,
@@ -664,18 +692,18 @@ class _PoktanDashboardScreenState extends State<PoktanDashboardScreen>
                           OutlinedButton.icon(
                             onPressed: () => _handleSpillover(pool['id'].toString()),
                             style: OutlinedButton.styleFrom(
-                              side: const BorderSide(color: Color(0xFFD97706)),
+                              side: const BorderSide(color: AppColors.tertiaryText),
                               padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
                               minimumSize: const Size(40, 36),
                               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                             ),
-                            icon: const Icon(LucideIcons.arrowRightLeft, size: 14, color: Color(0xFFD97706)),
+                            icon: const Icon(LucideIcons.arrowRightLeft, size: 14, color: AppColors.tertiaryText),
                             label: Text(
                               'Alihkan Sisa ke Retail',
                               style: GoogleFonts.plusJakartaSans(
                                 fontSize: 11.5,
                                 fontWeight: FontWeight.w700,
-                                color: const Color(0xFFD97706),
+                                color: AppColors.tertiaryText,
                               ),
                             ),
                           ),
@@ -702,7 +730,7 @@ class _PoktanDashboardScreenState extends State<PoktanDashboardScreen>
                     style: GoogleFonts.plusJakartaSans(
                       fontSize: 15,
                       fontWeight: FontWeight.w700,
-                      color: const Color(0xFF0F172A),
+                      color: AppColors.neutral,
                     ),
                   ),
                   const SizedBox(height: 2),
@@ -710,7 +738,7 @@ class _PoktanDashboardScreenState extends State<PoktanDashboardScreen>
                     'Pesanan kontrak langsung dengan mitra horeka & offtaker.',
                     style: GoogleFonts.plusJakartaSans(
                       fontSize: 12,
-                      color: const Color(0xFF64748B),
+                      color: AppColors.neutralMuted,
                     ),
                   ),
                 ],
@@ -739,14 +767,14 @@ class _PoktanDashboardScreenState extends State<PoktanDashboardScreen>
             child: Center(
               child: Column(
                 children: [
-                  const Icon(LucideIcons.inbox, size: 36, color: Color(0xFF94A3B8)),
+                  const Icon(LucideIcons.inbox, size: 36, color: AppColors.neutralSubtle),
                   const SizedBox(height: 8),
                   Text(
                     'Belum ada kontrak pesanan B2B terjadwal',
                     style: GoogleFonts.plusJakartaSans(
                       fontSize: 13,
                       fontWeight: FontWeight.w600,
-                      color: const Color(0xFF475569),
+                      color: AppColors.neutralMuted,
                     ),
                   ),
                 ],
@@ -775,7 +803,7 @@ class _PoktanDashboardScreenState extends State<PoktanDashboardScreen>
                           width: 42,
                           height: 42,
                           decoration: BoxDecoration(
-                            color: const Color(0xFFDCFCE7),
+                            color: AppColors.primaryTint,
                             borderRadius: BorderRadius.circular(10),
                           ),
                           child: const Icon(LucideIcons.packageCheck, color: AppColors.primary, size: 22),
@@ -790,7 +818,7 @@ class _PoktanDashboardScreenState extends State<PoktanDashboardScreen>
                                 style: GoogleFonts.plusJakartaSans(
                                   fontSize: 15,
                                   fontWeight: FontWeight.w700,
-                                  color: const Color(0xFF121C2A),
+                                  color: AppColors.neutral,
                                 ),
                               ),
                               const SizedBox(height: 2),
@@ -799,7 +827,7 @@ class _PoktanDashboardScreenState extends State<PoktanDashboardScreen>
                                 style: GoogleFonts.plusJakartaSans(
                                   fontSize: 12,
                                   fontWeight: FontWeight.w500,
-                                  color: const Color(0xFF64748B),
+                                  color: AppColors.neutralMuted,
                                 ),
                               ),
                             ],
@@ -808,7 +836,7 @@ class _PoktanDashboardScreenState extends State<PoktanDashboardScreen>
                         Container(
                           padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                           decoration: BoxDecoration(
-                            color: isFullyAllocated ? const Color(0xFFDCFCE7) : const Color(0xFFEFF6FF),
+                            color: isFullyAllocated ? AppColors.primaryTint : AppColors.secondaryTint,
                             borderRadius: BorderRadius.circular(8),
                           ),
                           child: Text(
@@ -816,7 +844,7 @@ class _PoktanDashboardScreenState extends State<PoktanDashboardScreen>
                             style: GoogleFonts.plusJakartaSans(
                               fontSize: 11,
                               fontWeight: FontWeight.w700,
-                              color: isFullyAllocated ? const Color(0xFF16A34A) : const Color(0xFF2563EB),
+                              color: isFullyAllocated ? AppColors.primary : AppColors.secondary,
                             ),
                           ),
                         ),
@@ -829,22 +857,31 @@ class _PoktanDashboardScreenState extends State<PoktanDashboardScreen>
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
-                            Text(
-                              'Total: ${_currencyFormat.format(order.totalQuotaKg)} kg',
-                              style: GoogleFonts.plusJakartaSans(
-                                fontSize: 12,
-                                fontWeight: FontWeight.w700,
-                                color: const Color(0xFF1E293B),
+                            Expanded(
+                              child: Text(
+                                'Total: ${_currencyFormat.format(order.totalQuotaKg)} kg',
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: GoogleFonts.plusJakartaSans(
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w700,
+                                  color: AppColors.neutral,
+                                ),
                               ),
                             ),
-                            Text(
-                              'Sisa: ${_currencyFormat.format(order.remainingQuotaKg)} kg',
-                              style: GoogleFonts.plusJakartaSans(
-                                fontSize: 12,
-                                fontWeight: FontWeight.w600,
-                                color: isFullyAllocated ? const Color(0xFF16A34A) : const Color(0xFFD97706),
+                            const SizedBox(width: 8),
+                            Flexible(
+                              child: Text(
+                                'Sisa: ${_currencyFormat.format(order.remainingQuotaKg)} kg',
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                textAlign: TextAlign.right,
+                                style: GoogleFonts.plusJakartaSans(
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w600,
+                                  color: isFullyAllocated ? AppColors.primary : AppColors.tertiaryText,
+                                ),
                               ),
                             ),
                           ],
@@ -855,9 +892,9 @@ class _PoktanDashboardScreenState extends State<PoktanDashboardScreen>
                           child: LinearProgressIndicator(
                             value: progress,
                             minHeight: 8,
-                            backgroundColor: const Color(0xFFE2E8F0),
+                            backgroundColor: AppColors.border,
                             valueColor: AlwaysStoppedAnimation<Color>(
-                              isFullyAllocated ? const Color(0xFF16A34A) : AppColors.primary,
+                              isFullyAllocated ? AppColors.primary : AppColors.primary,
                             ),
                           ),
                         ),
@@ -871,7 +908,7 @@ class _PoktanDashboardScreenState extends State<PoktanDashboardScreen>
                       children: [
                         Row(
                           children: [
-                            const Icon(LucideIcons.calendar, size: 14, color: Color(0xFF94A3B8)),
+                            const Icon(LucideIcons.calendar, size: 14, color: AppColors.neutralSubtle),
                             const SizedBox(width: 6),
                             Expanded(
                               child: Text(
@@ -880,7 +917,7 @@ class _PoktanDashboardScreenState extends State<PoktanDashboardScreen>
                                 overflow: TextOverflow.ellipsis,
                                 style: GoogleFonts.plusJakartaSans(
                                   fontSize: 11,
-                                  color: const Color(0xFF64748B),
+                                  color: AppColors.neutralMuted,
                                 ),
                               ),
                             ),
@@ -916,8 +953,8 @@ class _PoktanDashboardScreenState extends State<PoktanDashboardScreen>
                             ElevatedButton.icon(
                               onPressed: () => _showAllocateQuotaSheet(order),
                               style: ElevatedButton.styleFrom(
-                                backgroundColor: isFullyAllocated ? const Color(0xFFF1F5F9) : AppColors.primary,
-                                foregroundColor: isFullyAllocated ? const Color(0xFF475569) : Colors.white,
+                                backgroundColor: isFullyAllocated ? AppColors.surfaceCanvas : AppColors.primary,
+                                foregroundColor: isFullyAllocated ? AppColors.neutralMuted : Colors.white,
                                 elevation: 0,
                                 padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                                 minimumSize: const Size(44, 36),
@@ -971,13 +1008,13 @@ class _PoktanDashboardScreenState extends State<PoktanDashboardScreen>
               CircleAvatar(
                 radius: 20,
                 backgroundColor: member.isChairman
-                    ? const Color(0xFFFEF3C7)
-                    : const Color(0xFFE2E8F0),
+                    ? AppColors.tertiaryTint
+                    : AppColors.border,
                 child: Icon(
                   member.isChairman ? Icons.star : Icons.person,
                   color: member.isChairman
-                      ? const Color(0xFFD97706)
-                      : const Color(0xFF475569),
+                      ? AppColors.tertiaryText
+                      : AppColors.neutralMuted,
                   size: 20,
                 ),
               ),
@@ -994,7 +1031,7 @@ class _PoktanDashboardScreenState extends State<PoktanDashboardScreen>
                             style: GoogleFonts.plusJakartaSans(
                               fontSize: 14,
                               fontWeight: FontWeight.w700,
-                              color: const Color(0xFF121C2A),
+                              color: AppColors.neutral,
                             ),
                           ),
                         ),
@@ -1003,7 +1040,7 @@ class _PoktanDashboardScreenState extends State<PoktanDashboardScreen>
                           Container(
                             padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                             decoration: BoxDecoration(
-                              color: const Color(0xFFFEF3C7),
+                              color: AppColors.tertiaryTint,
                               borderRadius: BorderRadius.circular(6),
                             ),
                             child: Text(
@@ -1011,7 +1048,7 @@ class _PoktanDashboardScreenState extends State<PoktanDashboardScreen>
                               style: GoogleFonts.plusJakartaSans(
                                 fontSize: 10,
                                 fontWeight: FontWeight.w700,
-                                color: const Color(0xFFB45309),
+                                color: AppColors.tertiaryText,
                               ),
                             ),
                           ),
@@ -1023,7 +1060,7 @@ class _PoktanDashboardScreenState extends State<PoktanDashboardScreen>
                       'NIK: ${member.nikNumber} | Telp: ${member.phone}',
                       style: GoogleFonts.plusJakartaSans(
                         fontSize: 11,
-                        color: const Color(0xFF64748B),
+                        color: AppColors.neutralMuted,
                       ),
                     ),
                     const SizedBox(height: 2),
@@ -1031,7 +1068,7 @@ class _PoktanDashboardScreenState extends State<PoktanDashboardScreen>
                       'Jenis Tanah: ${member.soilType}',
                       style: GoogleFonts.plusJakartaSans(
                         fontSize: 11,
-                        color: const Color(0xFF64748B),
+                        color: AppColors.neutralMuted,
                       ),
                     ),
                   ],
@@ -1053,7 +1090,7 @@ class _PoktanDashboardScreenState extends State<PoktanDashboardScreen>
                     style: GoogleFonts.plusJakartaSans(
                       fontSize: 10,
                       fontWeight: FontWeight.w600,
-                      color: const Color(0xFF94A3B8),
+                      color: AppColors.neutralSubtle,
                     ),
                   ),
                 ],
@@ -1080,7 +1117,7 @@ class _PoktanDashboardScreenState extends State<PoktanDashboardScreen>
           'Apakah Anda yakin ingin keluar dari akun Pengurus Poktan?',
           style: GoogleFonts.plusJakartaSans(
             fontSize: 13,
-            color: const Color(0xFF475569),
+            color: AppColors.neutralMuted,
           ),
         ),
         actions: [
@@ -1089,14 +1126,14 @@ class _PoktanDashboardScreenState extends State<PoktanDashboardScreen>
             child: Text(
               'Batal',
               style: GoogleFonts.plusJakartaSans(
-                color: const Color(0xFF64748B),
+                color: AppColors.neutralMuted,
               ),
             ),
           ),
           ElevatedButton(
             onPressed: () => Navigator.pop(ctx, true),
             style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFFDC2626),
+              backgroundColor: AppColors.error,
               foregroundColor: Colors.white,
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(8),
@@ -1127,13 +1164,13 @@ class _PoktanDashboardScreenState extends State<PoktanDashboardScreen>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF8F9FF),
+      backgroundColor: AppColors.surfaceCanvas,
       appBar: AppBar(
         backgroundColor: Colors.white,
         elevation: 0.5,
         leading: widget.showBackButton
             ? IconButton(
-                icon: const Icon(LucideIcons.arrowLeft, color: Color(0xFF121C2A), size: 22),
+                icon: const Icon(LucideIcons.arrowLeft, color: AppColors.neutral, size: 22),
                 onPressed: () => Navigator.of(context).pop(),
               )
             : null,
@@ -1142,17 +1179,17 @@ class _PoktanDashboardScreenState extends State<PoktanDashboardScreen>
           style: GoogleFonts.plusJakartaSans(
             fontSize: 16.5,
             fontWeight: FontWeight.w700,
-            color: const Color(0xFF121C2A),
+            color: AppColors.neutral,
           ),
         ),
         actions: [
           IconButton(
-            icon: const Icon(LucideIcons.refreshCw, color: Color(0xFF475569), size: 20),
+            icon: const Icon(LucideIcons.refreshCw, color: AppColors.neutralMuted, size: 20),
             tooltip: 'Segarkan',
             onPressed: _loadDashboardData,
           ),
           IconButton(
-            icon: const Icon(Icons.logout_rounded, color: Color(0xFFDC2626), size: 22),
+            icon: const Icon(Icons.logout_rounded, color: AppColors.error, size: 22),
             tooltip: 'Keluar',
             onPressed: _handleLogout,
           ),
@@ -1190,7 +1227,7 @@ class _PoktanDashboardScreenState extends State<PoktanDashboardScreen>
                         TabBar(
                           controller: _tabController,
                           labelColor: AppColors.primary,
-                          unselectedLabelColor: const Color(0xFF64748B),
+                          unselectedLabelColor: AppColors.neutralMuted,
                           indicatorColor: AppColors.primary,
                           indicatorWeight: 3,
                           labelStyle: GoogleFonts.plusJakartaSans(
@@ -1239,7 +1276,7 @@ class _SliverAppBarDelegate extends SliverPersistentHeaderDelegate {
       decoration: const BoxDecoration(
         color: Colors.white,
         border: Border(
-          bottom: BorderSide(color: Color(0xFFE2E8F0), width: 1),
+          bottom: BorderSide(color: AppColors.border, width: 1),
         ),
       ),
       child: _tabBar,

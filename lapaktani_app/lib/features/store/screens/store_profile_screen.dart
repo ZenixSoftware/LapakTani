@@ -159,14 +159,14 @@ class _StoreProfileScreenState extends State<StoreProfileScreen>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF8FAFC),
+      backgroundColor: AppColors.surfaceCanvas,
       body: NestedScrollView(
         headerSliverBuilder: (context, innerBoxIsScrolled) {
           return [
             SliverAppBar(
               expandedHeight: 250,
               pinned: true,
-              backgroundColor: const Color(0xFF006E04),
+              backgroundColor: AppColors.primary,
               foregroundColor: Colors.white,
               title: innerBoxIsScrolled
                   ? Text(
@@ -208,7 +208,7 @@ class _StoreProfileScreenState extends State<StoreProfileScreen>
                     Container(
                       decoration: const BoxDecoration(
                         gradient: LinearGradient(
-                          colors: [Color(0xFF004D02), Color(0xFF006E04), Color(0xFF028708)],
+                          colors: [AppColors.primaryDark, AppColors.primary, AppColors.primary],
                           begin: Alignment.topCenter,
                           end: Alignment.bottomCenter,
                         ),
@@ -244,7 +244,7 @@ class _StoreProfileScreenState extends State<StoreProfileScreen>
                                   border: Border.all(color: Colors.white, width: 2),
                                   boxShadow: const [
                                     BoxShadow(
-                                      color: Color(0x2A000000),
+                                      color: AppColors.shadowMedium,
                                       blurRadius: 8,
                                       offset: Offset(0, 3),
                                     ),
@@ -254,7 +254,7 @@ class _StoreProfileScreenState extends State<StoreProfileScreen>
                                   child: Icon(
                                     LucideIcons.store,
                                     size: 28,
-                                    color: Color(0xFF006E04),
+                                    color: AppColors.primary,
                                   ),
                                 ),
                               ),
@@ -281,7 +281,7 @@ class _StoreProfileScreenState extends State<StoreProfileScreen>
                                         const Icon(
                                           LucideIcons.badgeCheck,
                                           size: 18,
-                                          color: Color(0xFF68D391),
+                                          color: AppColors.primary,
                                         ),
                                       ],
                                     ),
@@ -291,7 +291,7 @@ class _StoreProfileScreenState extends State<StoreProfileScreen>
                                         const Icon(
                                           LucideIcons.mapPin,
                                           size: 13,
-                                          color: Color(0xFFD1FAE5),
+                                          color: AppColors.primaryTint,
                                         ),
                                         const SizedBox(width: 4),
                                         Expanded(
@@ -299,7 +299,7 @@ class _StoreProfileScreenState extends State<StoreProfileScreen>
                                             widget.location ?? 'Lembang, Jawa Barat',
                                             style: GoogleFonts.plusJakartaSans(
                                               fontSize: 12,
-                                              color: const Color(0xFFD1FAE5),
+                                              color: AppColors.primaryTint,
                                             ),
                                             maxLines: 1,
                                             overflow: TextOverflow.ellipsis,
@@ -331,7 +331,7 @@ class _StoreProfileScreenState extends State<StoreProfileScreen>
                                       : Colors.white,
                                   foregroundColor: _isFollowing
                                       ? Colors.white
-                                      : const Color(0xFF006E04),
+                                      : AppColors.primary,
                                   elevation: 0,
                                   padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
                                   shape: RoundedRectangleBorder(
@@ -384,10 +384,10 @@ class _StoreProfileScreenState extends State<StoreProfileScreen>
                   color: Colors.white,
                   child: TabBar(
                     controller: _tabController,
-                    indicatorColor: const Color(0xFF006E04),
+                    indicatorColor: AppColors.primary,
                     indicatorWeight: 3,
-                    labelColor: const Color(0xFF006E04),
-                    unselectedLabelColor: const Color(0xFF64748B),
+                    labelColor: AppColors.primary,
+                    unselectedLabelColor: AppColors.neutralMuted,
                     labelStyle: GoogleFonts.plusJakartaSans(
                       fontSize: 13.5,
                       fontWeight: FontWeight.w700,
@@ -442,7 +442,7 @@ class _StoreProfileScreenState extends State<StoreProfileScreen>
           label,
           style: GoogleFonts.plusJakartaSans(
             fontSize: 10,
-            color: const Color(0xFFD1FAE5),
+            color: AppColors.primaryTint,
           ),
         ),
       ],
@@ -462,7 +462,7 @@ class _StoreProfileScreenState extends State<StoreProfileScreen>
       return Center(
         child: Text(
           'Belum ada produk retail yang ditawarkan.',
-          style: GoogleFonts.plusJakartaSans(fontSize: 13, color: const Color(0xFF64748B)),
+          style: GoogleFonts.plusJakartaSans(fontSize: 13, color: AppColors.neutralMuted),
         ),
       );
     }
@@ -503,10 +503,10 @@ class _StoreProfileScreenState extends State<StoreProfileScreen>
             decoration: BoxDecoration(
               color: Colors.white,
               borderRadius: BorderRadius.circular(14),
-              border: Border.all(color: const Color(0xFFF1F5F9)),
+              border: Border.all(color: AppColors.surfaceCanvas),
               boxShadow: const [
                 BoxShadow(
-                  color: Color(0x08000000),
+                  color: AppColors.shadowFaint,
                   blurRadius: 6,
                   offset: Offset(0, 2),
                 ),
@@ -526,13 +526,13 @@ class _StoreProfileScreenState extends State<StoreProfileScreen>
                                 imageUrl,
                                 fit: BoxFit.cover,
                                 errorBuilder: (context, error, stackTrace) => Container(
-                                  color: const Color(0xFFE2E8F0),
-                                  child: const Icon(LucideIcons.image, color: Color(0xFF94A3B8)),
+                                  color: AppColors.border,
+                                  child: const Icon(LucideIcons.image, color: AppColors.neutralSubtle),
                                 ),
                               )
                             : Container(
-                                color: const Color(0xFFE2E8F0),
-                                child: const Icon(LucideIcons.image, color: Color(0xFF94A3B8)),
+                                color: AppColors.border,
+                                child: const Icon(LucideIcons.image, color: AppColors.neutralSubtle),
                               ),
                       ),
                     ),
@@ -542,7 +542,7 @@ class _StoreProfileScreenState extends State<StoreProfileScreen>
                       child: Container(
                         padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
                         decoration: BoxDecoration(
-                          color: const Color(0xFF006E04),
+                          color: AppColors.primary,
                           borderRadius: BorderRadius.circular(6),
                         ),
                         child: Text(
@@ -569,7 +569,7 @@ class _StoreProfileScreenState extends State<StoreProfileScreen>
                         style: GoogleFonts.plusJakartaSans(
                           fontSize: 12.5,
                           fontWeight: FontWeight.w700,
-                          color: const Color(0xFF0F172A),
+                          color: AppColors.neutral,
                           height: 1.25,
                         ),
                       ),
@@ -579,7 +579,7 @@ class _StoreProfileScreenState extends State<StoreProfileScreen>
                         style: GoogleFonts.plusJakartaSans(
                           fontSize: 13,
                           fontWeight: FontWeight.w800,
-                          color: const Color(0xFF006E04),
+                          color: AppColors.primary,
                         ),
                       ),
                       const SizedBox(height: 4),
@@ -587,7 +587,7 @@ class _StoreProfileScreenState extends State<StoreProfileScreen>
                         'Stok: ${stock.toStringAsFixed(0)} kg',
                         style: GoogleFonts.plusJakartaSans(
                           fontSize: 11,
-                          color: const Color(0xFF64748B),
+                          color: AppColors.neutralMuted,
                         ),
                       ),
                     ],
@@ -606,7 +606,7 @@ class _StoreProfileScreenState extends State<StoreProfileScreen>
       return Center(
         child: Text(
           'Belum ada bursa penawaran partai aktif dari mitra ini.',
-          style: GoogleFonts.plusJakartaSans(fontSize: 13, color: const Color(0xFF64748B)),
+          style: GoogleFonts.plusJakartaSans(fontSize: 13, color: AppColors.neutralMuted),
         ),
       );
     }
@@ -663,12 +663,12 @@ class _StoreProfileScreenState extends State<StoreProfileScreen>
                                   imageUrl,
                                   fit: BoxFit.cover,
                                   errorBuilder: (context, error, stackTrace) => Container(
-                                    color: const Color(0xFFDCFCE7),
+                                    color: AppColors.primaryTint,
                                     child: const Icon(LucideIcons.package, color: AppColors.primary),
                                   ),
                                 )
                               : Container(
-                                  color: const Color(0xFFDCFCE7),
+                                  color: AppColors.primaryTint,
                                   child: const Icon(LucideIcons.package, color: AppColors.primary),
                                 ),
                         ),
@@ -681,7 +681,7 @@ class _StoreProfileScreenState extends State<StoreProfileScreen>
                             Container(
                               padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                               decoration: BoxDecoration(
-                                color: const Color(0xFFDCFCE7),
+                                color: AppColors.primaryTint,
                                 borderRadius: BorderRadius.circular(6),
                               ),
                               child: Text(
@@ -689,7 +689,7 @@ class _StoreProfileScreenState extends State<StoreProfileScreen>
                                 style: GoogleFonts.plusJakartaSans(
                                   fontSize: 10,
                                   fontWeight: FontWeight.w700,
-                                  color: const Color(0xFF16A34A),
+                                  color: AppColors.primary,
                                 ),
                               ),
                             ),
@@ -699,7 +699,7 @@ class _StoreProfileScreenState extends State<StoreProfileScreen>
                               style: GoogleFonts.plusJakartaSans(
                                 fontSize: 14.5,
                                 fontWeight: FontWeight.w700,
-                                color: const Color(0xFF0F172A),
+                                color: AppColors.neutral,
                               ),
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
@@ -710,14 +710,14 @@ class _StoreProfileScreenState extends State<StoreProfileScreen>
                               style: GoogleFonts.plusJakartaSans(
                                 fontSize: 14,
                                 fontWeight: FontWeight.w800,
-                                color: const Color(0xFF006E04),
+                                color: AppColors.primary,
                               ),
                             ),
                             Text(
                               'Min. Pesanan ${minOrder.toStringAsFixed(0)} kg',
                               style: GoogleFonts.plusJakartaSans(
                                 fontSize: 11,
-                                color: const Color(0xFF64748B),
+                                color: AppColors.neutralMuted,
                               ),
                             ),
                           ],
@@ -735,7 +735,7 @@ class _StoreProfileScreenState extends State<StoreProfileScreen>
                         style: GoogleFonts.plusJakartaSans(
                           fontSize: 11,
                           fontWeight: FontWeight.w600,
-                          color: const Color(0xFF1E293B),
+                          color: AppColors.neutral,
                         ),
                       ),
                       Text(
@@ -743,7 +743,7 @@ class _StoreProfileScreenState extends State<StoreProfileScreen>
                         style: GoogleFonts.plusJakartaSans(
                           fontSize: 11,
                           fontWeight: FontWeight.w700,
-                          color: const Color(0xFFD97706),
+                          color: AppColors.tertiaryText,
                         ),
                       ),
                     ],
@@ -754,20 +754,20 @@ class _StoreProfileScreenState extends State<StoreProfileScreen>
                     child: LinearProgressIndicator(
                       value: progress,
                       minHeight: 6,
-                      backgroundColor: const Color(0xFFE2E8F0),
-                      valueColor: const AlwaysStoppedAnimation<Color>(Color(0xFF006E04)),
+                      backgroundColor: AppColors.border,
+                      valueColor: const AlwaysStoppedAnimation<Color>(AppColors.primary),
                     ),
                   ),
                   const SizedBox(height: 8),
                   Row(
                     children: [
-                      const Icon(LucideIcons.calendar, size: 13, color: Color(0xFF94A3B8)),
+                      const Icon(LucideIcons.calendar, size: 13, color: AppColors.neutralSubtle),
                       const SizedBox(width: 4),
                       Text(
                         'Estimasi Panen: $harvestDate',
                         style: GoogleFonts.plusJakartaSans(
                           fontSize: 11,
-                          color: const Color(0xFF64748B),
+                          color: AppColors.neutralMuted,
                         ),
                       ),
                       const Spacer(),
@@ -776,7 +776,7 @@ class _StoreProfileScreenState extends State<StoreProfileScreen>
                         style: GoogleFonts.plusJakartaSans(
                           fontSize: 11.5,
                           fontWeight: FontWeight.w700,
-                          color: const Color(0xFF006E04),
+                          color: AppColors.primary,
                         ),
                       ),
                     ],

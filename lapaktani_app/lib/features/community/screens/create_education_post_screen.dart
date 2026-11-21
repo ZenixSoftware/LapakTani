@@ -152,7 +152,7 @@ class _CreateEducationPostScreenState extends State<CreateEducationPostScreen> {
           content: Text(
             'Harap konfirmasi kesesuaian pedoman teknis penyuluhan BPP.',
           ),
-          backgroundColor: Color(0xFFDC2626),
+          backgroundColor: AppColors.error,
         ),
       );
       return;
@@ -169,7 +169,7 @@ class _CreateEducationPostScreenState extends State<CreateEducationPostScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('Minimal sertakan 1 langkah praktis budidaya.'),
-          backgroundColor: Color(0xFFDC2626),
+          backgroundColor: AppColors.error,
         ),
       );
       return;
@@ -226,7 +226,7 @@ class _CreateEducationPostScreenState extends State<CreateEducationPostScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text('Gagal menerbitkan materi: ${e.toString()}'),
-          backgroundColor: const Color(0xFFDC2626),
+          backgroundColor: AppColors.error,
         ),
       );
     } finally {
@@ -239,7 +239,7 @@ class _CreateEducationPostScreenState extends State<CreateEducationPostScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF8FAFC),
+      backgroundColor: AppColors.surfaceCanvas,
       appBar: AppBar(
         backgroundColor: Colors.white,
         elevation: 0,
@@ -249,11 +249,11 @@ class _CreateEducationPostScreenState extends State<CreateEducationPostScreen> {
           style: GoogleFonts.inter(
             fontSize: 16,
             fontWeight: FontWeight.w700,
-            color: const Color(0xFF0F172A),
+            color: AppColors.neutral,
           ),
         ),
         leading: IconButton(
-          icon: const Icon(LucideIcons.arrowLeft, color: Color(0xFF334155), size: 20),
+          icon: const Icon(LucideIcons.arrowLeft, color: AppColors.neutral, size: 20),
           onPressed: () => Navigator.of(context).pop(),
         ),
       ),
@@ -292,10 +292,10 @@ class _CreateEducationPostScreenState extends State<CreateEducationPostScreen> {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: const Color(0xFFE2E8F0)),
+        border: Border.all(color: AppColors.border),
         boxShadow: const [
           BoxShadow(
-            color: Color(0x06000000),
+            color: AppColors.shadowFaint,
             blurRadius: 4,
             offset: Offset(0, 1),
           ),
@@ -311,7 +311,7 @@ class _CreateEducationPostScreenState extends State<CreateEducationPostScreen> {
                 width: 44,
                 height: 44,
                 decoration: BoxDecoration(
-                  color: _isVerifiedPenyuluh ? const Color(0xFF14532D) : const Color(0xFF2563EB),
+                  color: _isVerifiedPenyuluh ? AppColors.primaryDark : AppColors.secondary,
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Center(
@@ -338,7 +338,7 @@ class _CreateEducationPostScreenState extends State<CreateEducationPostScreen> {
                             style: GoogleFonts.inter(
                               fontSize: 14.5,
                               fontWeight: FontWeight.w700,
-                              color: const Color(0xFF0F172A),
+                              color: AppColors.neutral,
                             ),
                             overflow: TextOverflow.ellipsis,
                           ),
@@ -359,7 +359,7 @@ class _CreateEducationPostScreenState extends State<CreateEducationPostScreen> {
                           : _authorRole,
                       style: GoogleFonts.inter(
                         fontSize: 11,
-                        color: const Color(0xFF64748B),
+                        color: AppColors.neutralMuted,
                       ),
                     ),
                     const SizedBox(height: 2),
@@ -380,16 +380,16 @@ class _CreateEducationPostScreenState extends State<CreateEducationPostScreen> {
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
             decoration: BoxDecoration(
-              color: const Color(0xFFF0FDF4),
+              color: AppColors.primaryTint,
               borderRadius: BorderRadius.circular(8),
-              border: Border.all(color: const Color(0xFFBBF7D0)),
+              border: Border.all(color: AppColors.primaryBorder),
             ),
             child: Row(
               children: [
                 const Icon(
                   LucideIcons.checkCircle2,
                   size: 15,
-                  color: Color(0xFF15803D),
+                  color: AppColors.primary,
                 ),
                 const SizedBox(width: 8),
                 Expanded(
@@ -399,7 +399,7 @@ class _CreateEducationPostScreenState extends State<CreateEducationPostScreen> {
                         : 'Artikel Anda akan dipublikasikan ke kanal komunitas petani terverifikasi.',
                     style: GoogleFonts.inter(
                       fontSize: 11,
-                      color: const Color(0xFF166534),
+                      color: AppColors.primary,
                       height: 1.35,
                     ),
                   ),
@@ -418,7 +418,7 @@ class _CreateEducationPostScreenState extends State<CreateEducationPostScreen> {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: const Color(0xFFE2E8F0)),
+        border: Border.all(color: AppColors.border),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -428,7 +428,7 @@ class _CreateEducationPostScreenState extends State<CreateEducationPostScreen> {
             style: GoogleFonts.inter(
               fontSize: 13.5,
               fontWeight: FontWeight.w700,
-              color: const Color(0xFF0F172A),
+              color: AppColors.neutral,
             ),
           ),
           const SizedBox(height: 14),
@@ -438,7 +438,7 @@ class _CreateEducationPostScreenState extends State<CreateEducationPostScreen> {
           TextFormField(
             controller: _titleController,
             decoration: _inputDecoration('Contoh: Panduan Pemupukan Berimbang Padi Sawah'),
-            style: GoogleFonts.inter(fontSize: 13, color: const Color(0xFF0F172A)),
+            style: GoogleFonts.inter(fontSize: 13, color: AppColors.neutral),
             validator: (val) {
               if (val == null || val.trim().isEmpty) {
                 return 'Judul materi wajib diisi.';
@@ -464,14 +464,14 @@ class _CreateEducationPostScreenState extends State<CreateEducationPostScreen> {
                   style: GoogleFonts.inter(
                     fontSize: 11.5,
                     fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
-                    color: isSelected ? Colors.white : const Color(0xFF334155),
+                    color: isSelected ? Colors.white : AppColors.neutral,
                   ),
                 ),
                 selected: isSelected,
                 selectedColor: AppColors.primary,
-                backgroundColor: const Color(0xFFF1F5F9),
+                backgroundColor: AppColors.surfaceCanvas,
                 side: BorderSide(
-                  color: isSelected ? AppColors.primary : const Color(0xFFE2E8F0),
+                  color: isSelected ? AppColors.primary : AppColors.border,
                 ),
                 onSelected: (selected) {
                   if (selected) {
@@ -516,7 +516,7 @@ class _CreateEducationPostScreenState extends State<CreateEducationPostScreen> {
                         suffixText: 'mnt',
                         suffixStyle: GoogleFonts.inter(
                           fontSize: 11,
-                          color: const Color(0xFF64748B),
+                          color: AppColors.neutralMuted,
                         ),
                       ),
                       style: GoogleFonts.inter(fontSize: 13),
@@ -575,7 +575,7 @@ class _CreateEducationPostScreenState extends State<CreateEducationPostScreen> {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: const Color(0xFFE2E8F0)),
+        border: Border.all(color: AppColors.border),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -591,7 +591,7 @@ class _CreateEducationPostScreenState extends State<CreateEducationPostScreen> {
                     style: GoogleFonts.inter(
                       fontSize: 13.5,
                       fontWeight: FontWeight.w700,
-                      color: const Color(0xFF0F172A),
+                      color: AppColors.neutral,
                     ),
                   ),
                   const SizedBox(height: 2),
@@ -599,7 +599,7 @@ class _CreateEducationPostScreenState extends State<CreateEducationPostScreen> {
                     'Panduan berurutan yang dapat langsung dipraktikkan petani',
                     style: GoogleFonts.inter(
                       fontSize: 11,
-                      color: const Color(0xFF64748B),
+                      color: AppColors.neutralMuted,
                     ),
                   ),
                 ],
@@ -633,9 +633,9 @@ class _CreateEducationPostScreenState extends State<CreateEducationPostScreen> {
                     height: 26,
                     margin: const EdgeInsets.only(top: 8),
                     decoration: BoxDecoration(
-                      color: const Color(0xFFE8F5E9),
+                      color: AppColors.primaryTint,
                       shape: BoxShape.circle,
-                      border: Border.all(color: const Color(0xFFA5D6A7)),
+                      border: Border.all(color: AppColors.primaryBorder),
                     ),
                     child: Center(
                       child: Text(
@@ -643,7 +643,7 @@ class _CreateEducationPostScreenState extends State<CreateEducationPostScreen> {
                         style: GoogleFonts.inter(
                           fontSize: 11,
                           fontWeight: FontWeight.w800,
-                          color: const Color(0xFF14532D),
+                          color: AppColors.primaryDark,
                         ),
                       ),
                     ),
@@ -659,7 +659,7 @@ class _CreateEducationPostScreenState extends State<CreateEducationPostScreen> {
                   ),
                   if (_stepControllers.length > 1)
                     IconButton(
-                      icon: const Icon(LucideIcons.trash2, size: 16, color: Color(0xFF94A3B8)),
+                      icon: const Icon(LucideIcons.trash2, size: 16, color: AppColors.neutralSubtle),
                       onPressed: () => _removeStepField(index),
                     ),
                 ],
@@ -677,7 +677,7 @@ class _CreateEducationPostScreenState extends State<CreateEducationPostScreen> {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: const Color(0xFFE2E8F0)),
+        border: Border.all(color: AppColors.border),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -687,7 +687,7 @@ class _CreateEducationPostScreenState extends State<CreateEducationPostScreen> {
             style: GoogleFonts.inter(
               fontSize: 13.5,
               fontWeight: FontWeight.w700,
-              color: const Color(0xFF0F172A),
+              color: AppColors.neutral,
             ),
           ),
           const SizedBox(height: 4),
@@ -695,7 +695,7 @@ class _CreateEducationPostScreenState extends State<CreateEducationPostScreen> {
             'Pilih salah satu preset foto berkualitas tinggi atau cantumkan tautan foto ladang Anda',
             style: GoogleFonts.inter(
               fontSize: 11,
-              color: const Color(0xFF64748B),
+              color: AppColors.neutralMuted,
             ),
           ),
           const SizedBox(height: 12),
@@ -720,7 +720,7 @@ class _CreateEducationPostScreenState extends State<CreateEducationPostScreen> {
                     decoration: BoxDecoration(
                       borderRadius: BorderRadius.circular(8),
                       border: Border.all(
-                        color: isSelected ? AppColors.primary : const Color(0xFFE2E8F0),
+                        color: isSelected ? AppColors.primary : AppColors.border,
                         width: isSelected ? 2 : 1,
                       ),
                       image: DecorationImage(
@@ -763,7 +763,7 @@ class _CreateEducationPostScreenState extends State<CreateEducationPostScreen> {
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: const Color(0xFFF1F5F9),
+        color: AppColors.surfaceCanvas,
         borderRadius: BorderRadius.circular(10),
       ),
       child: Row(
@@ -784,7 +784,7 @@ class _CreateEducationPostScreenState extends State<CreateEducationPostScreen> {
                 'Saya menyatakan materi ini disusun berdasarkan standar operasional prosedur pertanian yang sahih dan dapat dipertanggungjawabkan kepada petani.',
                 style: GoogleFonts.inter(
                   fontSize: 11,
-                  color: const Color(0xFF334155),
+                  color: AppColors.neutral,
                   height: 1.4,
                 ),
               ),
@@ -804,7 +804,7 @@ class _CreateEducationPostScreenState extends State<CreateEducationPostScreen> {
         style: ElevatedButton.styleFrom(
           backgroundColor: AppColors.primary,
           foregroundColor: Colors.white,
-          disabledBackgroundColor: const Color(0xFF94A3B8),
+          disabledBackgroundColor: AppColors.neutralSubtle,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(12),
           ),
@@ -845,7 +845,7 @@ class _CreateEducationPostScreenState extends State<CreateEducationPostScreen> {
         style: GoogleFonts.inter(
           fontSize: 11.5,
           fontWeight: FontWeight.w600,
-          color: const Color(0xFF334155),
+          color: AppColors.neutral,
         ),
       ),
     );
@@ -856,18 +856,18 @@ class _CreateEducationPostScreenState extends State<CreateEducationPostScreen> {
       hintText: hint,
       hintStyle: GoogleFonts.inter(
         fontSize: 12,
-        color: const Color(0xFF94A3B8),
+        color: AppColors.neutralSubtle,
       ),
       contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
       filled: true,
-      fillColor: const Color(0xFFF8FAFC),
+      fillColor: AppColors.surfaceCanvas,
       border: OutlineInputBorder(
         borderRadius: BorderRadius.circular(10),
-        borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
+        borderSide: const BorderSide(color: AppColors.border),
       ),
       enabledBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(10),
-        borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
+        borderSide: const BorderSide(color: AppColors.border),
       ),
       focusedBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(10),

@@ -4,6 +4,7 @@ import 'package:lucide_icons/lucide_icons.dart';
 import '../models/pest_report_model.dart';
 import '../screens/pest_alert_detail_screen.dart';
 import '../services/pest_alert_service.dart';
+import 'package:lapaktani_app/core/theme/app_colors.dart';
 
 /// Pest Alert Banner Component (US-19)
 /// Styled according to Stitch AI Design Guidelines:
@@ -71,9 +72,9 @@ class _PestAlertBannerState extends State<PestAlertBanner> {
     final isCritical = alert.severity.toLowerCase().contains('berat') ||
         alert.emergencyAlert;
 
-    final bgColor = isCritical ? const Color(0xFFFFEBEE) : const Color(0xFFFFF3E0);
-    final primaryAccent = isCritical ? const Color(0xFFC62828) : const Color(0xFFEF6C00);
-    final borderColor = isCritical ? const Color(0xFFFFCDD2) : const Color(0xFFFFE0B2);
+    final bgColor = isCritical ? AppColors.errorTint : AppColors.tertiaryTint;
+    final primaryAccent = isCritical ? AppColors.error : AppColors.tertiaryText;
+    final borderColor = isCritical ? AppColors.errorTint : AppColors.tertiaryTint;
 
     return Container(
       margin: const EdgeInsets.fromLTRB(14, 6, 14, 10),
@@ -150,7 +151,7 @@ class _PestAlertBannerState extends State<PestAlertBanner> {
                                 alert.timeAgo,
                                 style: GoogleFonts.inter(
                                   fontSize: 11,
-                                  color: const Color(0xFF64748B),
+                                  color: AppColors.neutralMuted,
                                 ),
                               ),
                             ],
@@ -161,7 +162,7 @@ class _PestAlertBannerState extends State<PestAlertBanner> {
                             style: GoogleFonts.inter(
                               fontSize: 14,
                               fontWeight: FontWeight.w700,
-                              color: const Color(0xFF0F172A),
+                              color: AppColors.neutral,
                             ),
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
@@ -170,7 +171,7 @@ class _PestAlertBannerState extends State<PestAlertBanner> {
                       ),
                     ),
                     IconButton(
-                      icon: const Icon(LucideIcons.x, size: 17, color: Color(0xFF94A3B8)),
+                      icon: const Icon(LucideIcons.x, size: 17, color: AppColors.neutralSubtle),
                       padding: EdgeInsets.zero,
                       constraints: const BoxConstraints(),
                       splashRadius: 18,
@@ -183,7 +184,7 @@ class _PestAlertBannerState extends State<PestAlertBanner> {
                   'Serangan menyerang komoditas ${alert.cropType} seluas ${alert.affectedArea} di ${alert.farmerGroupName} (${alert.villageName}). Waspadai penyebaran di lahan sekitar.',
                   style: GoogleFonts.inter(
                     fontSize: 12,
-                    color: const Color(0xFF334155),
+                    color: AppColors.neutral,
                     height: 1.4,
                   ),
                   maxLines: 2,
@@ -210,7 +211,7 @@ class _PestAlertBannerState extends State<PestAlertBanner> {
                             style: GoogleFonts.inter(
                               fontSize: 11,
                               fontWeight: FontWeight.w600,
-                              color: const Color(0xFF334155),
+                              color: AppColors.neutral,
                             ),
                           ),
                         ],

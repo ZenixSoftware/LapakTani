@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:lapaktani_app/core/theme/app_colors.dart';
 
 /// Model representing a Pest Attack Report and Early Warning (US-19)
 /// Aligned with Stitch AI Design Specifications
@@ -138,33 +139,33 @@ class PestReportModel {
   Color get severityColor {
     final lower = severity.toLowerCase();
     if (lower.contains('berat') || lower.contains('critical') || lower.contains('high')) {
-      return const Color(0xFFC62828); // Soft Red Dark Text
+      return AppColors.error; // Soft Red Dark Text
     } else if (lower.contains('sedang') || lower.contains('medium')) {
-      return const Color(0xFFEF6C00); // Soft Orange Dark Text
+      return AppColors.tertiaryText; // Soft Orange Dark Text
     } else {
-      return const Color(0xFF2E7D32); // Stitch Forest/Agri Green
+      return AppColors.primary; // Stitch Forest/Agri Green
     }
   }
 
   Color get severityBackgroundColor {
     final lower = severity.toLowerCase();
     if (lower.contains('berat') || lower.contains('critical') || lower.contains('high')) {
-      return const Color(0xFFFFEBEE); // Soft Red Tint Background
+      return AppColors.errorTint; // Soft Red Tint Background
     } else if (lower.contains('sedang') || lower.contains('medium')) {
-      return const Color(0xFFFFF3E0); // Soft Orange Tint Background
+      return AppColors.tertiaryTint; // Soft Orange Tint Background
     } else {
-      return const Color(0xFFE8F5E9); // Soft Green Tint Background
+      return AppColors.primaryTint; // Soft Green Tint Background
     }
   }
 
   Color get severityBorderColor {
     final lower = severity.toLowerCase();
     if (lower.contains('berat') || lower.contains('critical') || lower.contains('high')) {
-      return const Color(0xFFFFCDD2);
+      return AppColors.errorTint;
     } else if (lower.contains('sedang') || lower.contains('medium')) {
-      return const Color(0xFFFFE0B2);
+      return AppColors.tertiaryTint;
     } else {
-      return const Color(0xFFC8E6C9);
+      return AppColors.primaryBorder;
     }
   }
 

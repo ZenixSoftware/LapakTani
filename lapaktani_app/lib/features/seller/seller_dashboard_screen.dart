@@ -99,10 +99,10 @@ class _SellerDashboardScreenState extends State<SellerDashboardScreen> {
                       Container(
                         padding: const EdgeInsets.all(8),
                         decoration: BoxDecoration(
-                          color: const Color(0xFFDCFCE7),
+                          color: AppColors.primaryTint,
                           borderRadius: BorderRadius.circular(10),
                         ),
-                        child: const Icon(LucideIcons.bellRing, color: Color(0xFF006E04), size: 18),
+                        child: const Icon(LucideIcons.bellRing, color: AppColors.primary, size: 18),
                       ),
                       const SizedBox(width: 10),
                       Expanded(
@@ -114,7 +114,7 @@ class _SellerDashboardScreenState extends State<SellerDashboardScreen> {
                               style: GoogleFonts.plusJakartaSans(
                                 fontSize: 15,
                                 fontWeight: FontWeight.w700,
-                                color: const Color(0xFF121C2A),
+                                color: AppColors.neutral,
                               ),
                             ),
                             ValueListenableBuilder<int>(
@@ -124,7 +124,7 @@ class _SellerDashboardScreenState extends State<SellerDashboardScreen> {
                                   unread > 0 ? '$unread pesanan baru belum dibaca' : 'Semua notifikasi telah dibaca',
                                   style: GoogleFonts.plusJakartaSans(
                                     fontSize: 11,
-                                    color: unread > 0 ? const Color(0xFFEF4444) : const Color(0xFF64748B),
+                                    color: unread > 0 ? AppColors.error : AppColors.neutralMuted,
                                     fontWeight: unread > 0 ? FontWeight.w600 : FontWeight.w400,
                                   ),
                                 );
@@ -149,7 +149,7 @@ class _SellerDashboardScreenState extends State<SellerDashboardScreen> {
                     ],
                   ),
                 ),
-                const Divider(height: 1, color: Color(0xFFF1F5F9)),
+                const Divider(height: 1, color: AppColors.surfaceCanvas),
                 Expanded(
                   child: ValueListenableBuilder<List<NotificationModel>>(
                     valueListenable: NotificationService().notificationsNotifier,
@@ -161,14 +161,14 @@ class _SellerDashboardScreenState extends State<SellerDashboardScreen> {
                             child: Column(
                               mainAxisAlignment: MainAxisAlignment.center,
                               children: [
-                                const Icon(LucideIcons.bellOff, size: 48, color: Color(0xFF94A3B8)),
+                                const Icon(LucideIcons.bellOff, size: 48, color: AppColors.neutralSubtle),
                                 const SizedBox(height: 12),
                                 Text(
                                   'Belum Ada Notifikasi Pesanan',
                                   style: GoogleFonts.plusJakartaSans(
                                     fontSize: 14,
                                     fontWeight: FontWeight.w700,
-                                    color: const Color(0xFF121C2A),
+                                    color: AppColors.neutral,
                                   ),
                                 ),
                                 const SizedBox(height: 4),
@@ -177,7 +177,7 @@ class _SellerDashboardScreenState extends State<SellerDashboardScreen> {
                                   textAlign: TextAlign.center,
                                   style: GoogleFonts.plusJakartaSans(
                                     fontSize: 12,
-                                    color: const Color(0xFF64748B),
+                                    color: AppColors.neutralMuted,
                                   ),
                                 ),
                               ],
@@ -196,15 +196,15 @@ class _SellerDashboardScreenState extends State<SellerDashboardScreen> {
                           final isCourier = notif.type == 'courier_pickup';
 
                           final Color iconBg = isOrder
-                              ? const Color(0xFFDCFCE7)
+                              ? AppColors.primaryTint
                               : isCourier
-                                  ? const Color(0xFFEFF6FF)
-                                  : const Color(0xFFFEF3C7);
+                                  ? AppColors.secondaryTint
+                                  : AppColors.tertiaryTint;
                           final Color iconColor = isOrder
-                              ? const Color(0xFF006E04)
+                              ? AppColors.primary
                               : isCourier
-                                  ? const Color(0xFF2563EB)
-                                  : const Color(0xFFD97706);
+                                  ? AppColors.secondary
+                                  : AppColors.tertiaryText;
                           final IconData icon = isOrder
                               ? LucideIcons.sprout
                               : isCourier
@@ -214,10 +214,10 @@ class _SellerDashboardScreenState extends State<SellerDashboardScreen> {
                           return Container(
                             padding: const EdgeInsets.all(12),
                             decoration: BoxDecoration(
-                              color: notif.isRead ? Colors.white : const Color(0xFFF0FDF4),
+                              color: notif.isRead ? Colors.white : AppColors.primaryTint,
                               borderRadius: BorderRadius.circular(12),
                               border: Border.all(
-                                color: notif.isRead ? const Color(0xFFE2E8F0) : const Color(0xFF86EFAC),
+                                color: notif.isRead ? AppColors.border : AppColors.primaryBorder,
                                 width: notif.isRead ? 1 : 1.2,
                               ),
                             ),
@@ -250,7 +250,7 @@ class _SellerDashboardScreenState extends State<SellerDashboardScreen> {
                                                   style: GoogleFonts.plusJakartaSans(
                                                     fontSize: 13,
                                                     fontWeight: notif.isRead ? FontWeight.w600 : FontWeight.w800,
-                                                    color: const Color(0xFF121C2A),
+                                                    color: AppColors.neutral,
                                                   ),
                                                 ),
                                               ),
@@ -270,7 +270,7 @@ class _SellerDashboardScreenState extends State<SellerDashboardScreen> {
                                             _formatTimeAgo(notif.createdAt),
                                             style: GoogleFonts.plusJakartaSans(
                                               fontSize: 10,
-                                              color: const Color(0xFF94A3B8),
+                                              color: AppColors.neutralSubtle,
                                             ),
                                           ),
                                           const SizedBox(height: 6),
@@ -278,7 +278,7 @@ class _SellerDashboardScreenState extends State<SellerDashboardScreen> {
                                             notif.message,
                                             style: GoogleFonts.plusJakartaSans(
                                               fontSize: 12,
-                                              color: const Color(0xFF475569),
+                                              color: AppColors.neutralMuted,
                                               height: 1.35,
                                             ),
                                           ),
@@ -304,7 +304,7 @@ class _SellerDashboardScreenState extends State<SellerDashboardScreen> {
                                           'Tandai Dibaca',
                                           style: GoogleFonts.plusJakartaSans(
                                             fontSize: 11,
-                                            color: const Color(0xFF64748B),
+                                            color: AppColors.neutralMuted,
                                           ),
                                         ),
                                       ),
@@ -377,7 +377,7 @@ class _SellerDashboardScreenState extends State<SellerDashboardScreen> {
           'Apakah Anda yakin ingin keluar dari akun Penjual / Poktan?',
           style: GoogleFonts.plusJakartaSans(
             fontSize: 13,
-            color: const Color(0xFF475569),
+            color: AppColors.neutralMuted,
           ),
         ),
         actions: [
@@ -386,14 +386,14 @@ class _SellerDashboardScreenState extends State<SellerDashboardScreen> {
             child: Text(
               'Batal',
               style: GoogleFonts.plusJakartaSans(
-                color: const Color(0xFF64748B),
+                color: AppColors.neutralMuted,
               ),
             ),
           ),
           ElevatedButton(
             onPressed: () => Navigator.pop(ctx, true),
             style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFFDC2626),
+              backgroundColor: AppColors.error,
               foregroundColor: Colors.white,
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(8),
@@ -424,14 +424,14 @@ class _SellerDashboardScreenState extends State<SellerDashboardScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF8F9FF),
+      backgroundColor: AppColors.surfaceCanvas,
       appBar: AppBar(
         backgroundColor: Colors.white.withValues(alpha: 0.95),
         elevation: 0.5,
         automaticallyImplyLeading: false,
         leading: Navigator.canPop(context)
             ? IconButton(
-                icon: const Icon(LucideIcons.arrowLeft, color: Color(0xFF121C2A), size: 22),
+                icon: const Icon(LucideIcons.arrowLeft, color: AppColors.neutral, size: 22),
                 onPressed: () => Navigator.of(context, rootNavigator: true).pop(),
               )
             : null,
@@ -441,7 +441,7 @@ class _SellerDashboardScreenState extends State<SellerDashboardScreen> {
           children: [
             Row(
               children: [
-                const Icon(LucideIcons.sprout, color: Color(0xFF006E04), size: 14),
+                const Icon(LucideIcons.sprout, color: AppColors.primary, size: 14),
                 const SizedBox(width: 4),
                 Text(
                   'KEBUN MANIK SARI',
@@ -449,14 +449,14 @@ class _SellerDashboardScreenState extends State<SellerDashboardScreen> {
                     fontSize: 10,
                     fontWeight: FontWeight.w700,
                     letterSpacing: 0.8,
-                    color: const Color(0xFF2C694C),
+                    color: AppColors.primary,
                   ),
                 ),
                 const SizedBox(width: 6),
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
                   decoration: BoxDecoration(
-                    color: const Color(0xFFB0F1CB),
+                    color: AppColors.primaryTint,
                     borderRadius: BorderRadius.circular(10),
                   ),
                   child: Text(
@@ -464,7 +464,7 @@ class _SellerDashboardScreenState extends State<SellerDashboardScreen> {
                     style: GoogleFonts.plusJakartaSans(
                       fontSize: 8.5,
                       fontWeight: FontWeight.w800,
-                      color: const Color(0xFF327052),
+                      color: AppColors.primary,
                     ),
                   ),
                 ),
@@ -476,7 +476,7 @@ class _SellerDashboardScreenState extends State<SellerDashboardScreen> {
               style: GoogleFonts.plusJakartaSans(
                 fontSize: 15,
                 fontWeight: FontWeight.w700,
-                color: const Color(0xFF121C2A),
+                color: AppColors.neutral,
               ),
             ),
           ],
@@ -489,7 +489,7 @@ class _SellerDashboardScreenState extends State<SellerDashboardScreen> {
                 alignment: Alignment.center,
                 children: [
                   IconButton(
-                    icon: const Icon(LucideIcons.bell, color: Color(0xFF121C2A), size: 21),
+                    icon: const Icon(LucideIcons.bell, color: AppColors.neutral, size: 21),
                     onPressed: () => _showNotificationCenter(context),
                   ),
                   if (unreadCount > 0)
@@ -499,7 +499,7 @@ class _SellerDashboardScreenState extends State<SellerDashboardScreen> {
                       child: Container(
                         padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
                         decoration: BoxDecoration(
-                          color: const Color(0xFFEF4444),
+                          color: AppColors.error,
                           borderRadius: BorderRadius.circular(10),
                           border: Border.all(color: Colors.white, width: 1.2),
                         ),
@@ -534,19 +534,19 @@ class _SellerDashboardScreenState extends State<SellerDashboardScreen> {
             },
           ),
           IconButton(
-            icon: const Icon(LucideIcons.settings, color: Color(0xFF64748B), size: 20),
+            icon: const Icon(LucideIcons.settings, color: AppColors.neutralMuted, size: 20),
             onPressed: () {
               ScaffoldMessenger.of(context).showSnackBar(
                 const SnackBar(
                   content: Text('Pengaturan operasional kebun & integrasi kurir aktif.'),
-                  backgroundColor: Color(0xFF006E04),
+                  backgroundColor: AppColors.primary,
                   behavior: SnackBarBehavior.floating,
                 ),
               );
             },
           ),
           IconButton(
-            icon: const Icon(Icons.logout_rounded, color: Color(0xFFDC2626), size: 21),
+            icon: const Icon(Icons.logout_rounded, color: AppColors.error, size: 21),
             tooltip: 'Keluar',
             onPressed: _handleLogout,
           ),
@@ -555,7 +555,7 @@ class _SellerDashboardScreenState extends State<SellerDashboardScreen> {
       ),
       body: RefreshIndicator(
         onRefresh: _fetchFarmerOrders,
-        color: const Color(0xFF006E04),
+        color: AppColors.primary,
         child: SingleChildScrollView(
           physics: const AlwaysScrollableScrollPhysics(),
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
@@ -589,7 +589,7 @@ class _SellerDashboardScreenState extends State<SellerDashboardScreen> {
         borderRadius: BorderRadius.circular(16),
         boxShadow: const [
           BoxShadow(
-            color: Color(0x0A000000),
+            color: AppColors.shadowFaint,
             blurRadius: 8,
             offset: Offset(0, 2),
           ),
@@ -609,7 +609,7 @@ class _SellerDashboardScreenState extends State<SellerDashboardScreen> {
                     image: NetworkImage(_defaultFarmerPhoto),
                     fit: BoxFit.cover,
                   ),
-                  border: Border.all(color: const Color(0xFFD1F2D6), width: 1.5),
+                  border: Border.all(color: AppColors.primaryBorder, width: 1.5),
                 ),
               ),
               Positioned(
@@ -619,7 +619,7 @@ class _SellerDashboardScreenState extends State<SellerDashboardScreen> {
                   width: 16,
                   height: 16,
                   decoration: const BoxDecoration(
-                    color: Color(0xFF006E04),
+                    color: AppColors.primary,
                     shape: BoxShape.circle,
                   ),
                   child: const Icon(LucideIcons.check, size: 10, color: Colors.white),
@@ -639,7 +639,7 @@ class _SellerDashboardScreenState extends State<SellerDashboardScreen> {
                       style: GoogleFonts.plusJakartaSans(
                         fontSize: 15,
                         fontWeight: FontWeight.w700,
-                        color: const Color(0xFF121C2A),
+                        color: AppColors.neutral,
                       ),
                     ),
                     const SizedBox(width: 6),
@@ -663,13 +663,13 @@ class _SellerDashboardScreenState extends State<SellerDashboardScreen> {
                 const SizedBox(height: 2),
                 Row(
                   children: [
-                    const Icon(LucideIcons.mapPin, size: 13, color: Color(0xFF6D7B67)),
+                    const Icon(LucideIcons.mapPin, size: 13, color: AppColors.neutralMuted),
                     const SizedBox(width: 3),
                     Text(
                       'Lembang, Bandung Barat',
                       style: GoogleFonts.plusJakartaSans(
                         fontSize: 11.5,
-                        color: const Color(0xFF64748B),
+                        color: AppColors.neutralMuted,
                       ),
                     ),
                   ],
@@ -687,7 +687,7 @@ class _SellerDashboardScreenState extends State<SellerDashboardScreen> {
                   activeThumbColor: Colors.white,
                   activeTrackColor: AppColors.primary,
                   inactiveThumbColor: Colors.white,
-                  inactiveTrackColor: const Color(0xFFCBD5E1),
+                  inactiveTrackColor: AppColors.neutralBorder,
                   onChanged: (val) {
                     setState(() {
                       _isStoreOpen = val;
@@ -700,7 +700,7 @@ class _SellerDashboardScreenState extends State<SellerDashboardScreen> {
                 style: GoogleFonts.plusJakartaSans(
                   fontSize: 10,
                   fontWeight: FontWeight.w700,
-                  color: _isStoreOpen ? const Color(0xFF006E04) : const Color(0xFF94A3B8),
+                  color: _isStoreOpen ? AppColors.primary : AppColors.neutralSubtle,
                 ),
               ),
             ],
@@ -714,11 +714,11 @@ class _SellerDashboardScreenState extends State<SellerDashboardScreen> {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: const Color(0xFF084E33),
+        color: AppColors.primaryDark,
         borderRadius: BorderRadius.circular(16),
         boxShadow: const [
           BoxShadow(
-            color: Color(0x20084E33),
+            color: AppColors.shadowMedium,
             blurRadius: 10,
             offset: Offset(0, 4),
           ),
@@ -747,7 +747,7 @@ class _SellerDashboardScreenState extends State<SellerDashboardScreen> {
                     style: GoogleFonts.plusJakartaSans(
                       fontSize: 12,
                       fontWeight: FontWeight.w600,
-                      color: const Color(0xFFB0F1CB),
+                      color: AppColors.primaryTint,
                     ),
                   ),
                 ],
@@ -803,7 +803,7 @@ class _SellerDashboardScreenState extends State<SellerDashboardScreen> {
                   Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      const Icon(LucideIcons.trendingUp, size: 14, color: Color(0xFF76FF64)),
+                      const Icon(LucideIcons.trendingUp, size: 14, color: AppColors.primaryBorder),
                       const SizedBox(width: 6),
                       Text(
                         'Hasil Panen Terjual',
@@ -839,7 +839,7 @@ class _SellerDashboardScreenState extends State<SellerDashboardScreen> {
                     style: GoogleFonts.plusJakartaSans(
                       fontSize: 12,
                       fontWeight: FontWeight.w700,
-                      color: const Color(0xFF76FF64),
+                      color: AppColors.primaryBorder,
                     ),
                   ),
                 ],
@@ -885,10 +885,10 @@ class _SellerDashboardScreenState extends State<SellerDashboardScreen> {
                   child: Container(
                     padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
                     decoration: BoxDecoration(
-                      color: isSelected ? const Color(0xFF006E04) : Colors.white,
+                      color: isSelected ? AppColors.primary : Colors.white,
                       borderRadius: BorderRadius.circular(20),
                       border: Border.all(
-                        color: isSelected ? const Color(0xFF006E04) : const Color(0xFFE2E8F0),
+                        color: isSelected ? AppColors.primary : AppColors.border,
                       ),
                     ),
                     child: Row(
@@ -898,7 +898,7 @@ class _SellerDashboardScreenState extends State<SellerDashboardScreen> {
                           style: GoogleFonts.plusJakartaSans(
                             fontSize: 11.5,
                             fontWeight: isSelected ? FontWeight.w700 : FontWeight.w600,
-                            color: isSelected ? Colors.white : const Color(0xFF3E4A39),
+                            color: isSelected ? Colors.white : AppColors.neutral,
                           ),
                         ),
                         if (item['badge'] != null) ...[
@@ -906,7 +906,7 @@ class _SellerDashboardScreenState extends State<SellerDashboardScreen> {
                           Container(
                             padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
                             decoration: BoxDecoration(
-                              color: isSelected ? Colors.white : const Color(0xFFBA1A1A),
+                              color: isSelected ? Colors.white : AppColors.error,
                               borderRadius: BorderRadius.circular(10),
                             ),
                             child: Text(
@@ -914,7 +914,7 @@ class _SellerDashboardScreenState extends State<SellerDashboardScreen> {
                               style: GoogleFonts.plusJakartaSans(
                                 fontSize: 9,
                                 fontWeight: FontWeight.w800,
-                                color: isSelected ? const Color(0xFF006E04) : Colors.white,
+                                color: isSelected ? AppColors.primary : Colors.white,
                               ),
                             ),
                           ),
@@ -946,10 +946,10 @@ class _SellerDashboardScreenState extends State<SellerDashboardScreen> {
                     width: 32,
                     height: 32,
                     decoration: const BoxDecoration(
-                      color: Color(0xFFDCFCE7),
+                      color: AppColors.primaryTint,
                       shape: BoxShape.circle,
                     ),
-                    child: const Icon(LucideIcons.sprout, color: Color(0xFF006E04), size: 18),
+                    child: const Icon(LucideIcons.sprout, color: AppColors.primary, size: 18),
                   ),
                   const SizedBox(width: 10),
                   Expanded(
@@ -961,14 +961,14 @@ class _SellerDashboardScreenState extends State<SellerDashboardScreen> {
                           style: GoogleFonts.plusJakartaSans(
                             fontSize: 15,
                             fontWeight: FontWeight.w700,
-                            color: const Color(0xFF121C2A),
+                            color: AppColors.neutral,
                           ),
                         ),
                         Text(
                           'Pesanan ${order.id}',
                           style: GoogleFonts.plusJakartaSans(
                             fontSize: 11,
-                            color: const Color(0xFF64748B),
+                            color: AppColors.neutralMuted,
                           ),
                         ),
                       ],
@@ -986,7 +986,7 @@ class _SellerDashboardScreenState extends State<SellerDashboardScreen> {
                       style: GoogleFonts.plusJakartaSans(
                         fontSize: 12,
                         fontWeight: FontWeight.w700,
-                        color: const Color(0xFF121C2A),
+                        color: AppColors.neutral,
                       ),
                     ),
                     const SizedBox(height: 8),
@@ -995,9 +995,9 @@ class _SellerDashboardScreenState extends State<SellerDashboardScreen> {
                         margin: const EdgeInsets.only(bottom: 6),
                         padding: const EdgeInsets.all(8),
                         decoration: BoxDecoration(
-                          color: const Color(0xFFF8F9FF),
+                          color: AppColors.surfaceCanvas,
                           borderRadius: BorderRadius.circular(8),
-                          border: Border.all(color: const Color(0xFFE2E8F0)),
+                          border: Border.all(color: AppColors.border),
                         ),
                         child: Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -1011,7 +1011,7 @@ class _SellerDashboardScreenState extends State<SellerDashboardScreen> {
                             Container(
                               padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                               decoration: BoxDecoration(
-                                color: const Color(0xFFDCFCE7),
+                                color: AppColors.primaryTint,
                                 borderRadius: BorderRadius.circular(6),
                               ),
                               child: Text(
@@ -1019,7 +1019,7 @@ class _SellerDashboardScreenState extends State<SellerDashboardScreen> {
                                 style: GoogleFonts.plusJakartaSans(
                                   fontSize: 11,
                                   fontWeight: FontWeight.w700,
-                                  color: const Color(0xFF006E04),
+                                  color: AppColors.primary,
                                 ),
                               ),
                             ),
@@ -1032,10 +1032,10 @@ class _SellerDashboardScreenState extends State<SellerDashboardScreen> {
                       value: checkedQuality,
                       contentPadding: EdgeInsets.zero,
                       controlAffinity: ListTileControlAffinity.leading,
-                      activeColor: const Color(0xFF006E04),
+                      activeColor: AppColors.primary,
                       title: Text(
                         'Panen segar dipetik pagi & lolos sortir kualitas grade A.',
-                        style: GoogleFonts.plusJakartaSans(fontSize: 11.5, color: const Color(0xFF334155)),
+                        style: GoogleFonts.plusJakartaSans(fontSize: 11.5, color: AppColors.neutral),
                       ),
                       onChanged: (val) {
                         setModalState(() {
@@ -1047,10 +1047,10 @@ class _SellerDashboardScreenState extends State<SellerDashboardScreen> {
                       value: checkedCoolBox,
                       contentPadding: EdgeInsets.zero,
                       controlAffinity: ListTileControlAffinity.leading,
-                      activeColor: const Color(0xFF006E04),
+                      activeColor: AppColors.primary,
                       title: Text(
                         'Sudah dikemas rapi dalam insulated cool box dengan ice gel.',
-                        style: GoogleFonts.plusJakartaSans(fontSize: 11.5, color: const Color(0xFF334155)),
+                        style: GoogleFonts.plusJakartaSans(fontSize: 11.5, color: AppColors.neutral),
                       ),
                       onChanged: (val) {
                         setModalState(() {
@@ -1066,7 +1066,7 @@ class _SellerDashboardScreenState extends State<SellerDashboardScreen> {
                   onPressed: () => Navigator.pop(ctx),
                   child: Text(
                     'Batal',
-                    style: GoogleFonts.plusJakartaSans(color: const Color(0xFF64748B), fontWeight: FontWeight.w600),
+                    style: GoogleFonts.plusJakartaSans(color: AppColors.neutralMuted, fontWeight: FontWeight.w600),
                   ),
                 ),
                 ElevatedButton(
@@ -1120,10 +1120,10 @@ class _SellerDashboardScreenState extends State<SellerDashboardScreen> {
                 width: 32,
                 height: 32,
                 decoration: const BoxDecoration(
-                  color: Color(0xFFEFF6FF),
+                  color: AppColors.secondaryTint,
                   shape: BoxShape.circle,
                 ),
-                child: const Icon(LucideIcons.truck, color: Color(0xFF2563EB), size: 18),
+                child: const Icon(LucideIcons.truck, color: AppColors.secondary, size: 18),
               ),
               const SizedBox(width: 10),
               Expanded(
@@ -1135,14 +1135,14 @@ class _SellerDashboardScreenState extends State<SellerDashboardScreen> {
                       style: GoogleFonts.plusJakartaSans(
                         fontSize: 15,
                         fontWeight: FontWeight.w700,
-                        color: const Color(0xFF121C2A),
+                        color: AppColors.neutral,
                       ),
                     ),
                     Text(
                       order.courier.serviceName,
                       style: GoogleFonts.plusJakartaSans(
                         fontSize: 11,
-                        color: const Color(0xFF64748B),
+                        color: AppColors.neutralMuted,
                       ),
                     ),
                   ],
@@ -1157,9 +1157,9 @@ class _SellerDashboardScreenState extends State<SellerDashboardScreen> {
               Container(
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
-                  color: const Color(0xFFF8F9FF),
+                  color: AppColors.surfaceCanvas,
                   borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: const Color(0xFFE2E8F0)),
+                  border: Border.all(color: AppColors.border),
                 ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -1167,7 +1167,7 @@ class _SellerDashboardScreenState extends State<SellerDashboardScreen> {
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        Text('Nama Kurir', style: GoogleFonts.plusJakartaSans(fontSize: 11, color: const Color(0xFF64748B))),
+                        Text('Nama Kurir', style: GoogleFonts.plusJakartaSans(fontSize: 11, color: AppColors.neutralMuted)),
                         Text(order.courier.name, style: GoogleFonts.plusJakartaSans(fontSize: 12, fontWeight: FontWeight.w700)),
                       ],
                     ),
@@ -1175,7 +1175,7 @@ class _SellerDashboardScreenState extends State<SellerDashboardScreen> {
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        Text('Kendaraan', style: GoogleFonts.plusJakartaSans(fontSize: 11, color: const Color(0xFF64748B))),
+                        Text('Kendaraan', style: GoogleFonts.plusJakartaSans(fontSize: 11, color: AppColors.neutralMuted)),
                         Text(order.courier.vehicle, style: GoogleFonts.plusJakartaSans(fontSize: 11.5, fontWeight: FontWeight.w600)),
                       ],
                     ),
@@ -1183,7 +1183,7 @@ class _SellerDashboardScreenState extends State<SellerDashboardScreen> {
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        Text('Nomor Resi', style: GoogleFonts.plusJakartaSans(fontSize: 11, color: const Color(0xFF64748B))),
+                        Text('Nomor Resi', style: GoogleFonts.plusJakartaSans(fontSize: 11, color: AppColors.neutralMuted)),
                         Text(order.trackingNumber, style: GoogleFonts.plusJakartaSans(fontSize: 11.5, fontWeight: FontWeight.w700, color: AppColors.primary)),
                       ],
                     ),
@@ -1194,18 +1194,18 @@ class _SellerDashboardScreenState extends State<SellerDashboardScreen> {
               Container(
                 padding: const EdgeInsets.all(10),
                 decoration: BoxDecoration(
-                  color: const Color(0xFFF0FDF4),
+                  color: AppColors.primaryTint,
                   borderRadius: BorderRadius.circular(10),
-                  border: Border.all(color: const Color(0xFFBBF7D0)),
+                  border: Border.all(color: AppColors.primaryBorder),
                 ),
                 child: Row(
                   children: [
-                    const Icon(LucideIcons.thermometerSnowflake, size: 18, color: Color(0xFF059669)),
+                    const Icon(LucideIcons.thermometerSnowflake, size: 18, color: AppColors.primary),
                     const SizedBox(width: 8),
                     Expanded(
                       child: Text(
                         'Pastikan segel kotak dingin terpasang rapat dan suhu 4-8°C terverifikasi.',
-                        style: GoogleFonts.plusJakartaSans(fontSize: 11, color: const Color(0xFF065F46)),
+                        style: GoogleFonts.plusJakartaSans(fontSize: 11, color: AppColors.primaryDark),
                       ),
                     ),
                   ],
@@ -1218,7 +1218,7 @@ class _SellerDashboardScreenState extends State<SellerDashboardScreen> {
               onPressed: () => Navigator.pop(ctx),
               child: Text(
                 'Tutup',
-                style: GoogleFonts.plusJakartaSans(color: const Color(0xFF64748B), fontWeight: FontWeight.w600),
+                style: GoogleFonts.plusJakartaSans(color: AppColors.neutralMuted, fontWeight: FontWeight.w600),
               ),
             ),
             ElevatedButton(
@@ -1298,7 +1298,7 @@ class _SellerDashboardScreenState extends State<SellerDashboardScreen> {
                     width: 40,
                     height: 4,
                     decoration: BoxDecoration(
-                      color: const Color(0xFFE2E8F0),
+                      color: AppColors.border,
                       borderRadius: BorderRadius.circular(2),
                     ),
                   ),
@@ -1309,7 +1309,7 @@ class _SellerDashboardScreenState extends State<SellerDashboardScreen> {
                   style: GoogleFonts.plusJakartaSans(
                     fontSize: 15.5,
                     fontWeight: FontWeight.w700,
-                    color: const Color(0xFF121C2A),
+                    color: AppColors.neutral,
                   ),
                 ),
                 const SizedBox(height: 4),
@@ -1317,7 +1317,7 @@ class _SellerDashboardScreenState extends State<SellerDashboardScreen> {
                   'Alamat: ${order.buyerAddress}',
                   style: GoogleFonts.plusJakartaSans(
                     fontSize: 11.5,
-                    color: const Color(0xFF64748B),
+                    color: AppColors.neutralMuted,
                   ),
                 ),
                 const SizedBox(height: 16),
@@ -1327,13 +1327,13 @@ class _SellerDashboardScreenState extends State<SellerDashboardScreen> {
                     width: 40,
                     height: 40,
                     decoration: const BoxDecoration(
-                      color: Color(0xFFE8F8EC),
+                      color: AppColors.primaryTint,
                       shape: BoxShape.circle,
                     ),
                     child: const Icon(LucideIcons.phone, color: AppColors.primary, size: 20),
                   ),
                   title: Text(order.buyerPhone, style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w700, fontSize: 13.5)),
-                  subtitle: Text('Telepon Pembeli', style: GoogleFonts.plusJakartaSans(fontSize: 11, color: const Color(0xFF64748B))),
+                  subtitle: Text('Telepon Pembeli', style: GoogleFonts.plusJakartaSans(fontSize: 11, color: AppColors.neutralMuted)),
                   trailing: OutlinedButton(
                     onPressed: () {
                       Navigator.pop(ctx);
@@ -1361,14 +1361,14 @@ class _SellerDashboardScreenState extends State<SellerDashboardScreen> {
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: const Color(0xFFFEF3C7),
+        color: AppColors.tertiaryTint,
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: const Color(0xFFFDE68A)),
+        border: Border.all(color: AppColors.tertiaryBorder),
       ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Icon(LucideIcons.alarmClock, size: 20, color: Color(0xFFD97706)),
+          const Icon(LucideIcons.alarmClock, size: 20, color: AppColors.tertiaryText),
           const SizedBox(width: 10),
           Expanded(
             child: RichText(
@@ -1377,7 +1377,7 @@ class _SellerDashboardScreenState extends State<SellerDashboardScreen> {
                 style: GoogleFonts.plusJakartaSans(
                   fontSize: 11.5,
                   fontWeight: FontWeight.w700,
-                  color: const Color(0xFF92400E),
+                  color: AppColors.tertiaryText,
                 ),
                 children: [
                   TextSpan(
@@ -1385,7 +1385,7 @@ class _SellerDashboardScreenState extends State<SellerDashboardScreen> {
                     style: GoogleFonts.plusJakartaSans(
                       fontSize: 11.5,
                       fontWeight: FontWeight.w400,
-                      color: const Color(0xFFB45309),
+                      color: AppColors.tertiaryText,
                     ),
                   ),
                 ],
@@ -1425,8 +1425,8 @@ class _SellerDashboardScreenState extends State<SellerDashboardScreen> {
       children: [
         if (_isLoadingOrders) ...[
           const LinearProgressIndicator(
-            backgroundColor: Color(0xFFDCFCE7),
-            valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF006E04)),
+            backgroundColor: AppColors.primaryTint,
+            valueColor: AlwaysStoppedAnimation<Color>(AppColors.primary),
           ),
           const SizedBox(height: 10),
         ],
@@ -1436,7 +1436,7 @@ class _SellerDashboardScreenState extends State<SellerDashboardScreen> {
             Expanded(
               child: Row(
                 children: [
-                  const Icon(LucideIcons.checkSquare, size: 18, color: Color(0xFF006E04)),
+                  const Icon(LucideIcons.checkSquare, size: 18, color: AppColors.primary),
                   const SizedBox(width: 6),
                   Flexible(
                     child: Text(
@@ -1446,7 +1446,7 @@ class _SellerDashboardScreenState extends State<SellerDashboardScreen> {
                       style: GoogleFonts.plusJakartaSans(
                         fontSize: 14.5,
                         fontWeight: FontWeight.w700,
-                        color: const Color(0xFF121C2A),
+                        color: AppColors.neutral,
                       ),
                     ),
                   ),
@@ -1457,7 +1457,7 @@ class _SellerDashboardScreenState extends State<SellerDashboardScreen> {
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
               decoration: BoxDecoration(
-                color: const Color(0xFFB0F1CB),
+                color: AppColors.primaryTint,
                 borderRadius: BorderRadius.circular(12),
               ),
               child: Text(
@@ -1465,7 +1465,7 @@ class _SellerDashboardScreenState extends State<SellerDashboardScreen> {
                 style: GoogleFonts.plusJakartaSans(
                   fontSize: 10,
                   fontWeight: FontWeight.w700,
-                  color: const Color(0xFF005302),
+                  color: AppColors.primary,
                 ),
               ),
             ),
@@ -1479,17 +1479,17 @@ class _SellerDashboardScreenState extends State<SellerDashboardScreen> {
             decoration: BoxDecoration(
               color: Colors.white,
               borderRadius: BorderRadius.circular(16),
-              border: Border.all(color: const Color(0xFFE2E8F0)),
+              border: Border.all(color: AppColors.border),
             ),
             child: Column(
               children: [
-                const Icon(LucideIcons.inbox, size: 36, color: Color(0xFF94A3B8)),
+                const Icon(LucideIcons.inbox, size: 36, color: AppColors.neutralSubtle),
                 const SizedBox(height: 8),
                 Text(
                   'Tidak ada pesanan pada filter ini.',
                   style: GoogleFonts.plusJakartaSans(
                     fontSize: 13,
-                    color: const Color(0xFF64748B),
+                    color: AppColors.neutralMuted,
                     fontWeight: FontWeight.w600,
                   ),
                 ),
@@ -1515,20 +1515,20 @@ class _SellerDashboardScreenState extends State<SellerDashboardScreen> {
 
     switch (order.status) {
       case OrderStatus.needHarvest:
-        badgeColor = const Color(0xFFB0F1CB);
-        badgeTextColor = const Color(0xFF005302);
+        badgeColor = AppColors.primaryTint;
+        badgeTextColor = AppColors.primary;
         primaryText = 'Petik & Siapkan';
         onPrimaryPressed = () => _showHarvestProcessingDialog(order);
         break;
       case OrderStatus.readyToShip:
-        badgeColor = const Color(0xFFE0E7FF);
-        badgeTextColor = const Color(0xFF3730A3);
+        badgeColor = AppColors.secondaryTint;
+        badgeTextColor = AppColors.secondaryDark;
         primaryText = 'Serahkan ke Kurir';
         onPrimaryPressed = () => _showCourierHandoverDialog(order);
         break;
       case OrderStatus.inTransit:
-        badgeColor = const Color(0xFFEFF6FF);
-        badgeTextColor = const Color(0xFF1E40AF);
+        badgeColor = AppColors.secondaryTint;
+        badgeTextColor = AppColors.secondaryDark;
         primaryText = 'Lacak Logistik';
         onPrimaryPressed = () {
           Navigator.push(
@@ -1543,8 +1543,8 @@ class _SellerDashboardScreenState extends State<SellerDashboardScreen> {
         };
         break;
       case OrderStatus.completed:
-        badgeColor = const Color(0xFFDCFCE7);
-        badgeTextColor = const Color(0xFF166534);
+        badgeColor = AppColors.primaryTint;
+        badgeTextColor = AppColors.primary;
         primaryText = 'Lacak Riwayat';
         onPrimaryPressed = () {
           Navigator.push(
@@ -1559,14 +1559,14 @@ class _SellerDashboardScreenState extends State<SellerDashboardScreen> {
         };
         break;
       case OrderStatus.pendingPayment:
-        badgeColor = const Color(0xFFFFDEA8);
-        badgeTextColor = const Color(0xFF5E4200);
+        badgeColor = AppColors.tertiaryTint;
+        badgeTextColor = AppColors.tertiaryText;
         primaryText = 'Rincian';
         onPrimaryPressed = () => _showOrderChatModal(order);
         break;
       case OrderStatus.delivered:
-        badgeColor = const Color(0xFFDCFCE7);
-        badgeTextColor = const Color(0xFF166534);
+        badgeColor = AppColors.primaryTint;
+        badgeTextColor = AppColors.primary;
         primaryText = 'Lacak';
         onPrimaryPressed = () {
           Navigator.push(
@@ -1581,8 +1581,8 @@ class _SellerDashboardScreenState extends State<SellerDashboardScreen> {
         };
         break;
       case OrderStatus.cancelled:
-        badgeColor = const Color(0xFFFEE2E2);
-        badgeTextColor = const Color(0xFF991B1B);
+        badgeColor = AppColors.errorTint;
+        badgeTextColor = AppColors.error;
         primaryText = 'Dibatalkan';
         onPrimaryPressed = null;
         break;
@@ -1599,7 +1599,7 @@ class _SellerDashboardScreenState extends State<SellerDashboardScreen> {
         borderRadius: BorderRadius.circular(16),
         boxShadow: const [
           BoxShadow(
-            color: Color(0x0A000000),
+            color: AppColors.shadowFaint,
             blurRadius: 8,
             offset: Offset(0, 2),
           ),
@@ -1622,14 +1622,14 @@ class _SellerDashboardScreenState extends State<SellerDashboardScreen> {
                       style: GoogleFonts.plusJakartaSans(
                         fontSize: 14,
                         fontWeight: FontWeight.w700,
-                        color: const Color(0xFF121C2A),
+                        color: AppColors.neutral,
                       ),
                     ),
                     Text(
                       '${order.createdAt.hour.toString().padLeft(2, '0')}:${order.createdAt.minute.toString().padLeft(2, '0')} WIB',
                       style: GoogleFonts.plusJakartaSans(
                         fontSize: 11,
-                        color: const Color(0xFF94A3B8),
+                        color: AppColors.neutralSubtle,
                       ),
                     ),
                   ],
@@ -1664,12 +1664,12 @@ class _SellerDashboardScreenState extends State<SellerDashboardScreen> {
           Container(
             padding: const EdgeInsets.all(10),
             decoration: BoxDecoration(
-              color: const Color(0xFFF8F9FF),
+              color: AppColors.surfaceCanvas,
               borderRadius: BorderRadius.circular(10),
             ),
             child: Row(
               children: [
-                Icon(courierIcon, size: 18, color: const Color(0xFF2C694C)),
+                Icon(courierIcon, size: 18, color: AppColors.primary),
                 const SizedBox(width: 10),
                 Expanded(
                   child: Column(
@@ -1680,14 +1680,14 @@ class _SellerDashboardScreenState extends State<SellerDashboardScreen> {
                         style: GoogleFonts.plusJakartaSans(
                           fontSize: 12,
                           fontWeight: FontWeight.w700,
-                          color: const Color(0xFF121C2A),
+                          color: AppColors.neutral,
                         ),
                       ),
                       Text(
                         '${order.courier.serviceName} • Suhu ${order.temperature}',
                         style: GoogleFonts.plusJakartaSans(
                           fontSize: 10.5,
-                          color: const Color(0xFF64748B),
+                          color: AppColors.neutralMuted,
                         ),
                       ),
                     ],
@@ -1723,7 +1723,7 @@ class _SellerDashboardScreenState extends State<SellerDashboardScreen> {
                               overflow: TextOverflow.ellipsis,
                               style: GoogleFonts.plusJakartaSans(
                                 fontSize: 12,
-                                color: const Color(0xFF121C2A),
+                                color: AppColors.neutral,
                               ),
                             ),
                           ),
@@ -1732,7 +1732,7 @@ class _SellerDashboardScreenState extends State<SellerDashboardScreen> {
                             'x${item.qty} ${item.unit}',
                             style: GoogleFonts.plusJakartaSans(
                               fontSize: 11,
-                              color: const Color(0xFF94A3B8),
+                              color: AppColors.neutralSubtle,
                             ),
                           ),
                         ],
@@ -1744,7 +1744,7 @@ class _SellerDashboardScreenState extends State<SellerDashboardScreen> {
                       style: GoogleFonts.plusJakartaSans(
                         fontSize: 12,
                         fontWeight: FontWeight.w600,
-                        color: const Color(0xFF121C2A),
+                        color: AppColors.neutral,
                       ),
                     ),
                   ],
@@ -1753,7 +1753,7 @@ class _SellerDashboardScreenState extends State<SellerDashboardScreen> {
             }).toList(),
           ),
           const SizedBox(height: 12),
-          const Divider(height: 1, color: Color(0xFFF1F5F9)),
+          const Divider(height: 1, color: AppColors.surfaceCanvas),
           const SizedBox(height: 10),
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -1766,7 +1766,7 @@ class _SellerDashboardScreenState extends State<SellerDashboardScreen> {
                       'Total Belanja',
                       style: GoogleFonts.plusJakartaSans(
                         fontSize: 10.5,
-                        color: const Color(0xFF94A3B8),
+                        color: AppColors.neutralSubtle,
                       ),
                     ),
                     Text(
@@ -1776,7 +1776,7 @@ class _SellerDashboardScreenState extends State<SellerDashboardScreen> {
                       style: GoogleFonts.plusJakartaSans(
                         fontSize: 16,
                         fontWeight: FontWeight.w800,
-                        color: const Color(0xFF006E04),
+                        color: AppColors.primary,
                       ),
                     ),
                   ],
@@ -1791,8 +1791,8 @@ class _SellerDashboardScreenState extends State<SellerDashboardScreen> {
                       child: OutlinedButton(
                         onPressed: () => _showOrderChatModal(order),
                         style: OutlinedButton.styleFrom(
-                          side: const BorderSide(color: Color(0xFFE2E8F0)),
-                          backgroundColor: const Color(0xFFF8F9FF),
+                          side: const BorderSide(color: AppColors.border),
+                          backgroundColor: AppColors.surfaceCanvas,
                           minimumSize: const Size(0, 38),
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(10),
@@ -1806,7 +1806,7 @@ class _SellerDashboardScreenState extends State<SellerDashboardScreen> {
                           style: GoogleFonts.plusJakartaSans(
                             fontSize: 12,
                             fontWeight: FontWeight.w700,
-                            color: const Color(0xFF334155),
+                            color: AppColors.neutral,
                           ),
                         ),
                       ),
@@ -1850,9 +1850,9 @@ class _SellerDashboardScreenState extends State<SellerDashboardScreen> {
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: const Color(0xFFF0FDF4),
+        color: AppColors.primaryTint,
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: const Color(0xFFDCFCE7)),
+        border: Border.all(color: AppColors.primaryTint),
       ),
       child: Row(
         children: [
@@ -1860,10 +1860,10 @@ class _SellerDashboardScreenState extends State<SellerDashboardScreen> {
             width: 36,
             height: 36,
             decoration: const BoxDecoration(
-              color: Color(0xFFDCFCE7),
+              color: AppColors.primaryTint,
               shape: BoxShape.circle,
             ),
-            child: const Icon(LucideIcons.truck, size: 18, color: Color(0xFF006E04)),
+            child: const Icon(LucideIcons.truck, size: 18, color: AppColors.primary),
           ),
           const SizedBox(width: 12),
           Expanded(
@@ -1875,14 +1875,14 @@ class _SellerDashboardScreenState extends State<SellerDashboardScreen> {
                   style: GoogleFonts.plusJakartaSans(
                     fontSize: 12.5,
                     fontWeight: FontWeight.w700,
-                    color: const Color(0xFF14532D),
+                    color: AppColors.primaryDark,
                   ),
                 ),
                 Text(
                   'Siapkan panen dengan insulated cool box sebelum jam penjemputan.',
                   style: GoogleFonts.plusJakartaSans(
                     fontSize: 11,
-                    color: const Color(0xFF166534),
+                    color: AppColors.primary,
                   ),
                 ),
               ],

@@ -96,7 +96,7 @@ class _SoilTelemetryCardState extends State<SoilTelemetryCard> {
         border: Border.all(color: mintBorder, width: 1.2),
         boxShadow: const [
           BoxShadow(
-            color: Color(0x0A03AC0E),
+            color: AppColors.shadowFaint,
             blurRadius: 10,
             offset: Offset(0, 2),
           ),
@@ -119,7 +119,7 @@ class _SoilTelemetryCardState extends State<SoilTelemetryCard> {
                       decoration: BoxDecoration(
                         color: Colors.white,
                         borderRadius: BorderRadius.circular(6),
-                        border: Border.all(color: const Color(0xFFA5D6A7)),
+                        border: Border.all(color: AppColors.primaryBorder),
                       ),
                       child: Row(
                         mainAxisSize: MainAxisSize.min,
@@ -143,7 +143,7 @@ class _SoilTelemetryCardState extends State<SoilTelemetryCard> {
                       style: GoogleFonts.inter(
                         fontSize: 13,
                         fontWeight: FontWeight.w800,
-                        color: const Color(0xFF0F172A),
+                        color: AppColors.neutral,
                         letterSpacing: -0.2,
                       ),
                     ),
@@ -152,7 +152,7 @@ class _SoilTelemetryCardState extends State<SoilTelemetryCard> {
                       'Data telemetri real-time sensor tanah blok lahan budidaya',
                       style: GoogleFonts.inter(
                         fontSize: 10.5,
-                        color: const Color(0xFF64748B),
+                        color: AppColors.neutralMuted,
                       ),
                     ),
                   ],
@@ -191,7 +191,7 @@ class _SoilTelemetryCardState extends State<SoilTelemetryCard> {
               borderRadius: BorderRadius.circular(12),
               boxShadow: const [
                 BoxShadow(
-                  color: Color(0x1F2E7D32),
+                  color: AppColors.shadowMedium,
                   blurRadius: 8,
                   offset: Offset(0, 2),
                 ),
@@ -220,7 +220,7 @@ class _SoilTelemetryCardState extends State<SoilTelemetryCard> {
                           style: GoogleFonts.inter(
                             fontSize: 9.5,
                             fontWeight: FontWeight.w600,
-                            color: const Color(0xFFD1FAE5),
+                            color: AppColors.primaryTint,
                             letterSpacing: 0.4,
                           ),
                         ),
@@ -231,7 +231,7 @@ class _SoilTelemetryCardState extends State<SoilTelemetryCard> {
                               style: GoogleFonts.inter(
                                 fontSize: 14,
                                 fontWeight: FontWeight.w800,
-                                color: const Color(0xFFFDE047),
+                                color: AppColors.tertiary,
                               ),
                             ),
                             const SizedBox(width: 4),
@@ -337,7 +337,7 @@ class _SoilTelemetryCardState extends State<SoilTelemetryCard> {
             decoration: BoxDecoration(
               color: Colors.white,
               borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: const Color(0xFFE2E8F0)),
+              border: Border.all(color: AppColors.border),
             ),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -349,10 +349,10 @@ class _SoilTelemetryCardState extends State<SoilTelemetryCard> {
                         width: 30,
                         height: 30,
                         decoration: BoxDecoration(
-                          color: const Color(0xFFEFF6FF),
+                          color: AppColors.secondaryTint,
                           borderRadius: BorderRadius.circular(8),
                         ),
-                        child: const Icon(LucideIcons.droplets, color: Color(0xFF2563EB), size: 16),
+                        child: const Icon(LucideIcons.droplets, color: AppColors.secondary, size: 16),
                       ),
                       const SizedBox(width: 8),
                       Expanded(
@@ -366,7 +366,7 @@ class _SoilTelemetryCardState extends State<SoilTelemetryCard> {
                               style: GoogleFonts.inter(
                                 fontSize: 11,
                                 fontWeight: FontWeight.w700,
-                                color: const Color(0xFF0F172A),
+                                color: AppColors.neutral,
                               ),
                             ),
                             Text(
@@ -375,7 +375,7 @@ class _SoilTelemetryCardState extends State<SoilTelemetryCard> {
                               overflow: TextOverflow.ellipsis,
                               style: GoogleFonts.inter(
                                 fontSize: 10,
-                                color: const Color(0xFF64748B),
+                                color: AppColors.neutralMuted,
                               ),
                             ),
                           ],
@@ -395,14 +395,14 @@ class _SoilTelemetryCardState extends State<SoilTelemetryCard> {
                           style: GoogleFonts.inter(
                             fontSize: 15,
                             fontWeight: FontWeight.w800,
-                            color: const Color(0xFF0F172A),
+                            color: AppColors.neutral,
                           ),
                         ),
                         const SizedBox(width: 6),
                         Container(
                           padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                           decoration: BoxDecoration(
-                            color: const Color(0xFFDBEAFE),
+                            color: AppColors.secondaryTint,
                             borderRadius: BorderRadius.circular(6),
                           ),
                           child: Text(
@@ -410,7 +410,7 @@ class _SoilTelemetryCardState extends State<SoilTelemetryCard> {
                             style: GoogleFonts.inter(
                               fontSize: 9,
                               fontWeight: FontWeight.w700,
-                              color: const Color(0xFF1E40AF),
+                              color: AppColors.secondaryDark,
                             ),
                           ),
                         ),
@@ -420,7 +420,7 @@ class _SoilTelemetryCardState extends State<SoilTelemetryCard> {
                       'Rentang aman 60 – 75%',
                       style: GoogleFonts.inter(
                         fontSize: 9.5,
-                        color: const Color(0xFF64748B),
+                        color: AppColors.neutralMuted,
                       ),
                     ),
                   ],
@@ -578,11 +578,11 @@ class _SoilTelemetryCardState extends State<SoilTelemetryCard> {
                         style: GoogleFonts.inter(
                           fontSize: 10,
                           fontWeight: FontWeight.w500,
-                          color: const Color(0xFF334155),
+                          color: AppColors.neutral,
                         ),
                       ),
                       const SizedBox(height: 6),
-                      const Divider(height: 1, color: Color(0xFFF1F5F9)),
+                      const Divider(height: 1, color: AppColors.surfaceCanvas),
                       const SizedBox(height: 6),
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -602,7 +602,7 @@ class _SoilTelemetryCardState extends State<SoilTelemetryCard> {
                                 'Update: $lastUpdated',
                                 style: GoogleFonts.inter(
                                   fontSize: 9,
-                                  color: const Color(0xFF64748B),
+                                  color: AppColors.neutralMuted,
                                 ),
                               ),
                             ],
@@ -638,16 +638,16 @@ class _SoilTelemetryCardState extends State<SoilTelemetryCard> {
     required double progress,
     required bool isPrimaryGreen,
   }) {
-    const forestPrimary = Color(0xFF2E7D32);
-    const mintBorder = Color(0xFFC8E6C9);
+    const forestPrimary = AppColors.primary;
+    const mintBorder = AppColors.primaryBorder;
 
     return Container(
       padding: const EdgeInsets.all(9),
       decoration: BoxDecoration(
-        color: isPrimaryGreen ? const Color(0xFFF0FDF4) : Colors.white,
+        color: isPrimaryGreen ? AppColors.primaryTint : Colors.white,
         borderRadius: BorderRadius.circular(12),
         border: Border.all(
-          color: isPrimaryGreen ? mintBorder : const Color(0xFFE2E8F0),
+          color: isPrimaryGreen ? mintBorder : AppColors.border,
         ),
       ),
       child: Column(
@@ -663,7 +663,7 @@ class _SoilTelemetryCardState extends State<SoilTelemetryCard> {
                   style: GoogleFonts.inter(
                     fontSize: 10.5,
                     fontWeight: FontWeight.w700,
-                    color: const Color(0xFF0F172A),
+                    color: AppColors.neutral,
                   ),
                 ),
               ),
@@ -671,7 +671,7 @@ class _SoilTelemetryCardState extends State<SoilTelemetryCard> {
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1.5),
                 decoration: BoxDecoration(
-                  color: isBadgeActive ? forestPrimary : const Color(0xFFECFDF5),
+                  color: isBadgeActive ? forestPrimary : AppColors.primaryTint,
                   borderRadius: BorderRadius.circular(6),
                   border: isBadgeActive ? null : Border.all(color: mintBorder),
                 ),
@@ -699,7 +699,7 @@ class _SoilTelemetryCardState extends State<SoilTelemetryCard> {
                     style: GoogleFonts.inter(
                       fontSize: 16,
                       fontWeight: FontWeight.w800,
-                      color: isPrimaryGreen ? forestPrimary : const Color(0xFF0F172A),
+                      color: isPrimaryGreen ? forestPrimary : AppColors.neutral,
                     ),
                   ),
                   if (unit.isNotEmpty) ...[
@@ -708,7 +708,7 @@ class _SoilTelemetryCardState extends State<SoilTelemetryCard> {
                       unit,
                       style: GoogleFonts.inter(
                         fontSize: 9.5,
-                        color: const Color(0xFF64748B),
+                        color: AppColors.neutralMuted,
                       ),
                     ),
                   ],
@@ -720,7 +720,7 @@ class _SoilTelemetryCardState extends State<SoilTelemetryCard> {
                   overflow: TextOverflow.ellipsis,
                   style: GoogleFonts.inter(
                     fontSize: 9,
-                    color: const Color(0xFF64748B),
+                    color: AppColors.neutralMuted,
                   ),
                 ),
               ),
@@ -732,7 +732,7 @@ class _SoilTelemetryCardState extends State<SoilTelemetryCard> {
             child: LinearProgressIndicator(
               value: progress,
               minHeight: 4.5,
-              backgroundColor: const Color(0xFFE2E8F0),
+              backgroundColor: AppColors.border,
               valueColor: const AlwaysStoppedAnimation<Color>(forestPrimary),
             ),
           ),

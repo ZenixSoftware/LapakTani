@@ -328,7 +328,7 @@ class _CompleteFarmerProfileScreenState
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text('Gagal memilih foto KTP: ${e.toString()}'),
-          backgroundColor: const Color(0xFFDC2626),
+          backgroundColor: AppColors.error,
         ),
       );
     }
@@ -373,7 +373,7 @@ class _CompleteFarmerProfileScreenState
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text('Gagal memilih swafoto: ${e.toString()}'),
-          backgroundColor: const Color(0xFFDC2626),
+          backgroundColor: AppColors.error,
         ),
       );
     }
@@ -384,7 +384,7 @@ class _CompleteFarmerProfileScreenState
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('Wajib mengunggah foto e-KTP untuk verifikasi petani.'),
-          backgroundColor: Color(0xFFDC2626),
+          backgroundColor: AppColors.error,
         ),
       );
       return;
@@ -394,7 +394,7 @@ class _CompleteFarmerProfileScreenState
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('Wajib mengunggah swafoto dengan KTP untuk verifikasi.'),
-          backgroundColor: Color(0xFFDC2626),
+          backgroundColor: AppColors.error,
         ),
       );
       return;
@@ -404,7 +404,7 @@ class _CompleteFarmerProfileScreenState
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('Silakan pilih Provinsi domisili kebun Anda.'),
-          backgroundColor: Color(0xFFDC2626),
+          backgroundColor: AppColors.error,
         ),
       );
       return;
@@ -414,7 +414,7 @@ class _CompleteFarmerProfileScreenState
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('Silakan pilih Kabupaten / Kota domisili kebun Anda.'),
-          backgroundColor: Color(0xFFDC2626),
+          backgroundColor: AppColors.error,
         ),
       );
       return;
@@ -424,7 +424,7 @@ class _CompleteFarmerProfileScreenState
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('Silakan pilih Kecamatan domisili kebun Anda.'),
-          backgroundColor: Color(0xFFDC2626),
+          backgroundColor: AppColors.error,
         ),
       );
       return;
@@ -434,7 +434,7 @@ class _CompleteFarmerProfileScreenState
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('Silakan pilih Desa / Kelurahan domisili kebun Anda.'),
-          backgroundColor: Color(0xFFDC2626),
+          backgroundColor: AppColors.error,
         ),
       );
       return;
@@ -445,7 +445,7 @@ class _CompleteFarmerProfileScreenState
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('Silakan pilih kelompok tani (Poktan) binaan Anda.'),
-          backgroundColor: Color(0xFFDC2626),
+          backgroundColor: AppColors.error,
         ),
       );
       return;
@@ -455,7 +455,7 @@ class _CompleteFarmerProfileScreenState
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('Silakan pilih tanggal lahir Anda sesuai KTP.'),
-          backgroundColor: Color(0xFFDC2626),
+          backgroundColor: AppColors.error,
         ),
       );
       return;
@@ -476,7 +476,7 @@ class _CompleteFarmerProfileScreenState
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('Sesi pengguna tidak valid. Silakan login kembali.'),
-          backgroundColor: Color(0xFFDC2626),
+          backgroundColor: AppColors.error,
         ),
       );
       return;
@@ -560,7 +560,7 @@ class _CompleteFarmerProfileScreenState
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text('Gagal mengirim verifikasi: ${e.toString()}'),
-          backgroundColor: const Color(0xFFDC2626),
+          backgroundColor: AppColors.error,
         ),
       );
     } finally {
@@ -615,7 +615,7 @@ class _CompleteFarmerProfileScreenState
                         width: 40,
                         height: 4,
                         decoration: BoxDecoration(
-                          color: const Color(0xFFE2E8F0),
+                          color: AppColors.border,
                           borderRadius: BorderRadius.circular(2),
                         ),
                       ),
@@ -632,7 +632,7 @@ class _CompleteFarmerProfileScreenState
                                 style: const TextStyle(
                                   fontSize: 16,
                                   fontWeight: FontWeight.w800,
-                                  color: Color(0xFF0F172A),
+                                  color: AppColors.neutral,
                                 ),
                               ),
                               const SizedBox(height: 2),
@@ -640,7 +640,7 @@ class _CompleteFarmerProfileScreenState
                                 subtitle,
                                 style: const TextStyle(
                                   fontSize: 12,
-                                  color: Color(0xFF64748B),
+                                  color: AppColors.neutralMuted,
                                 ),
                               ),
                             ],
@@ -650,8 +650,8 @@ class _CompleteFarmerProfileScreenState
                           onPressed: () => Navigator.of(context).pop(),
                           icon: const Icon(LucideIcons.x, size: 18),
                           style: IconButton.styleFrom(
-                            backgroundColor: const Color(0xFFF1F5F9),
-                            foregroundColor: const Color(0xFF64748B),
+                            backgroundColor: AppColors.surfaceCanvas,
+                            foregroundColor: AppColors.neutralMuted,
                             padding: const EdgeInsets.all(8),
                           ),
                         ),
@@ -660,10 +660,10 @@ class _CompleteFarmerProfileScreenState
                     const SizedBox(height: 14),
                     Container(
                       decoration: BoxDecoration(
-                        color: const Color(0xFFF8FAFC),
+                        color: AppColors.surfaceCanvas,
                         borderRadius: BorderRadius.circular(12),
                         border: Border.all(
-                          color: const Color(0xFFE2E8F0),
+                          color: AppColors.border,
                           width: 1,
                         ),
                       ),
@@ -673,18 +673,18 @@ class _CompleteFarmerProfileScreenState
                         },
                         style: const TextStyle(
                           fontSize: 13,
-                          color: Color(0xFF0F172A),
+                          color: AppColors.neutral,
                         ),
                         decoration: InputDecoration(
                           hintText: 'Cari wilayah...',
                           hintStyle: const TextStyle(
                             fontSize: 13,
-                            color: Color(0xFF94A3B8),
+                            color: AppColors.neutralSubtle,
                           ),
                           prefixIcon: const Icon(
                             LucideIcons.search,
                             size: 16,
-                            color: Color(0xFF64748B),
+                            color: AppColors.neutralMuted,
                           ),
                           suffixIcon: searchQuery.isNotEmpty
                               ? IconButton(
@@ -715,7 +715,7 @@ class _CompleteFarmerProfileScreenState
                                   Icon(
                                     LucideIcons.mapPinOff,
                                     size: 36,
-                                    color: const Color(0xFF94A3B8)
+                                    color: AppColors.neutralSubtle
                                         .withValues(alpha: 0.5),
                                   ),
                                   const SizedBox(height: 8),
@@ -724,7 +724,7 @@ class _CompleteFarmerProfileScreenState
                                     style: TextStyle(
                                       fontSize: 13,
                                       fontWeight: FontWeight.w600,
-                                      color: Color(0xFF64748B),
+                                      color: AppColors.neutralMuted,
                                     ),
                                   ),
                                 ],
@@ -736,7 +736,7 @@ class _CompleteFarmerProfileScreenState
                               separatorBuilder: (context, index) =>
                                   const Divider(
                                 height: 1,
-                                color: Color(0xFFF1F5F9),
+                                color: AppColors.surfaceCanvas,
                               ),
                               itemBuilder: (context, index) {
                                 final item = filteredItems[index];
@@ -755,14 +755,14 @@ class _CompleteFarmerProfileScreenState
                                       color: isSelected
                                           ? AppColors.primary
                                               .withValues(alpha: 0.12)
-                                          : const Color(0xFFF1F5F9),
+                                          : AppColors.surfaceCanvas,
                                     ),
                                     child: Icon(
                                       icon,
                                       size: 16,
                                       color: isSelected
                                           ? AppColors.primary
-                                          : const Color(0xFF64748B),
+                                          : AppColors.neutralMuted,
                                     ),
                                   ),
                                   title: Text(
@@ -774,7 +774,7 @@ class _CompleteFarmerProfileScreenState
                                           : FontWeight.w500,
                                       color: isSelected
                                           ? AppColors.primary
-                                          : const Color(0xFF1E293B),
+                                          : AppColors.neutral,
                                     ),
                                   ),
                                   trailing: isSelected
@@ -840,7 +840,7 @@ class _CompleteFarmerProfileScreenState
                     width: 40,
                     height: 4,
                     decoration: BoxDecoration(
-                      color: const Color(0xFFE2E8F0),
+                      color: AppColors.border,
                       borderRadius: BorderRadius.circular(2),
                     ),
                   ),
@@ -851,7 +851,7 @@ class _CompleteFarmerProfileScreenState
                   style: const TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.w800,
-                    color: Color(0xFF0F172A),
+                    color: AppColors.neutral,
                   ),
                 ),
                 const SizedBox(height: 4),
@@ -859,7 +859,7 @@ class _CompleteFarmerProfileScreenState
                   'Kecamatan ${_selectedDistrict?.displayName ?? ''}, ${_selectedRegency?.displayName ?? ''}',
                   style: const TextStyle(
                     fontSize: 12,
-                    color: Color(0xFF64748B),
+                    color: AppColors.neutralMuted,
                   ),
                 ),
                 const SizedBox(height: 12),
@@ -868,7 +868,7 @@ class _CompleteFarmerProfileScreenState
                     shrinkWrap: true,
                     itemCount: _filteredFarmerGroups.length,
                     separatorBuilder: (context, index) =>
-                        const Divider(height: 1, color: Color(0xFFF1F5F9)),
+                        const Divider(height: 1, color: AppColors.surfaceCanvas),
                     itemBuilder: (context, index) {
                       final group = _filteredFarmerGroups[index];
                       final isSelected = group['id'] == _selectedFarmerGroupId;
@@ -888,14 +888,14 @@ class _CompleteFarmerProfileScreenState
                             shape: BoxShape.circle,
                             color: isSelected
                                 ? AppColors.primary.withValues(alpha: 0.12)
-                                : const Color(0xFFF1F5F9),
+                                : AppColors.surfaceCanvas,
                           ),
                           child: Icon(
                             LucideIcons.users,
                             size: 18,
                             color: isSelected
                                 ? AppColors.primary
-                                : const Color(0xFF64748B),
+                                : AppColors.neutralMuted,
                           ),
                         ),
                         title: Text(
@@ -907,7 +907,7 @@ class _CompleteFarmerProfileScreenState
                                 : FontWeight.w500,
                             color: isSelected
                                 ? AppColors.primary
-                                : const Color(0xFF1E293B),
+                                : AppColors.neutral,
                           ),
                         ),
                         subtitle: address.toString().isNotEmpty
@@ -915,7 +915,7 @@ class _CompleteFarmerProfileScreenState
                                 address.toString(),
                                 style: const TextStyle(
                                   fontSize: 12,
-                                  color: Color(0xFF64748B),
+                                  color: AppColors.neutralMuted,
                                 ),
                                 maxLines: 1,
                                 overflow: TextOverflow.ellipsis,
@@ -962,14 +962,14 @@ class _CompleteFarmerProfileScreenState
         duration: const Duration(milliseconds: 200),
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
         decoration: BoxDecoration(
-          color: isEnabled ? const Color(0xFFF8FAFC) : const Color(0xFFF1F5F9),
+          color: isEnabled ? AppColors.surfaceCanvas : AppColors.surfaceCanvas,
           borderRadius: BorderRadius.circular(14),
           border: Border.all(
             color: hasValue
                 ? AppColors.primary.withValues(alpha: 0.3)
                 : (isEnabled
-                    ? const Color(0xFFE2E8F0)
-                    : const Color(0xFFCBD5E1)),
+                    ? AppColors.border
+                    : AppColors.neutralBorder),
             width: 1.2,
           ),
         ),
@@ -982,12 +982,12 @@ class _CompleteFarmerProfileScreenState
                 shape: BoxShape.circle,
                 color: hasValue
                     ? AppColors.primary.withValues(alpha: 0.1)
-                    : const Color(0xFFE2E8F0),
+                    : AppColors.border,
               ),
               child: Icon(
                 icon,
                 size: 16,
-                color: hasValue ? AppColors.primary : const Color(0xFF64748B),
+                color: hasValue ? AppColors.primary : AppColors.neutralMuted,
               ),
             ),
             const SizedBox(width: 12),
@@ -1001,7 +1001,7 @@ class _CompleteFarmerProfileScreenState
                     style: const TextStyle(
                       fontSize: 11,
                       fontWeight: FontWeight.w600,
-                      color: Color(0xFF64748B),
+                      color: AppColors.neutralMuted,
                     ),
                   ),
                   const SizedBox(height: 2),
@@ -1011,10 +1011,10 @@ class _CompleteFarmerProfileScreenState
                       fontSize: 14,
                       fontWeight: hasValue ? FontWeight.w700 : FontWeight.w500,
                       color: hasValue
-                          ? const Color(0xFF0F172A)
+                          ? AppColors.neutral
                           : (isEnabled
-                              ? const Color(0xFF94A3B8)
-                              : const Color(0xFFCBD5E1)),
+                              ? AppColors.neutralSubtle
+                              : AppColors.neutralBorder),
                     ),
                     overflow: TextOverflow.ellipsis,
                   ),
@@ -1035,7 +1035,7 @@ class _CompleteFarmerProfileScreenState
                 LucideIcons.chevronDown,
                 size: 16,
                 color:
-                    isEnabled ? const Color(0xFF64748B) : const Color(0xFFCBD5E1),
+                    isEnabled ? AppColors.neutralMuted : AppColors.neutralBorder,
               ),
           ],
         ),
@@ -1057,7 +1057,7 @@ class _CompleteFarmerProfileScreenState
     )['group_name'] as String;
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF1F5F9),
+      backgroundColor: AppColors.surfaceCanvas,
       body: Stack(
         children: [
           Positioned(
@@ -1068,10 +1068,10 @@ class _CompleteFarmerProfileScreenState
               height: 320,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                color: const Color(0xFFD1FAE5).withValues(alpha: 0.6),
+                color: AppColors.primaryTint.withValues(alpha: 0.6),
                 boxShadow: [
                   BoxShadow(
-                    color: const Color(0xFFD1FAE5).withValues(alpha: 0.6),
+                    color: AppColors.primaryTint.withValues(alpha: 0.6),
                     blurRadius: 90,
                     spreadRadius: 40,
                   ),
@@ -1087,10 +1087,10 @@ class _CompleteFarmerProfileScreenState
               height: 288,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                color: const Color(0xFFECFCCB).withValues(alpha: 0.4),
+                color: AppColors.primaryTint.withValues(alpha: 0.4),
                 boxShadow: [
                   BoxShadow(
-                    color: const Color(0xFFECFCCB).withValues(alpha: 0.4),
+                    color: AppColors.primaryTint.withValues(alpha: 0.4),
                     blurRadius: 80,
                     spreadRadius: 35,
                   ),
@@ -1115,7 +1115,7 @@ class _CompleteFarmerProfileScreenState
                           onPressed: () => Navigator.of(context).pop(),
                           style: IconButton.styleFrom(
                             backgroundColor: Colors.white,
-                            foregroundColor: const Color(0xFF1E293B),
+                            foregroundColor: AppColors.neutral,
                             padding: const EdgeInsets.all(10),
                             elevation: 0,
                           ),
@@ -1126,10 +1126,10 @@ class _CompleteFarmerProfileScreenState
                             vertical: 5,
                           ),
                           decoration: BoxDecoration(
-                            color: const Color(0xFFECFDF5),
+                            color: AppColors.primaryTint,
                             borderRadius: BorderRadius.circular(16),
                             border: Border.all(
-                              color: const Color(0xFFA7F3D0),
+                              color: AppColors.primaryBorder,
                               width: 1,
                             ),
                           ),
@@ -1149,7 +1149,7 @@ class _CompleteFarmerProfileScreenState
                                 _selectedRegency?.displayName ??
                                     'Wilayah Indonesia',
                                 style: const TextStyle(
-                                  color: Color(0xFF065F46),
+                                  color: AppColors.primaryDark,
                                   fontSize: 11,
                                   fontWeight: FontWeight.w700,
                                 ),
@@ -1165,7 +1165,7 @@ class _CompleteFarmerProfileScreenState
                       style: TextStyle(
                         fontSize: 24,
                         fontWeight: FontWeight.w800,
-                        color: Color(0xFF0F172A),
+                        color: AppColors.neutral,
                         letterSpacing: -0.5,
                       ),
                     ),
@@ -1174,7 +1174,7 @@ class _CompleteFarmerProfileScreenState
                       'Unggah e-KTP dan tentukan domisili kebun Anda melalui hierarki wilayah terpadu.',
                       style: TextStyle(
                         fontSize: 13,
-                        color: Color(0xFF64748B),
+                        color: AppColors.neutralMuted,
                         height: 1.4,
                       ),
                     ),
@@ -1198,12 +1198,12 @@ class _CompleteFarmerProfileScreenState
                               child: Container(
                                 height: 180,
                                 decoration: BoxDecoration(
-                                  color: const Color(0xFFF8FAFC),
+                                  color: AppColors.surfaceCanvas,
                                   borderRadius: BorderRadius.circular(16),
                                 ),
                                 child: CustomPaint(
                                   painter: _DashedBorderPainter(
-                                    color: const Color(0xFFCBD5E1),
+                                    color: AppColors.neutralBorder,
                                     strokeWidth: 1.6,
                                     dashLength: 8,
                                     dashGap: 5,
@@ -1234,7 +1234,7 @@ class _CompleteFarmerProfileScreenState
                                           style: TextStyle(
                                             fontSize: 14,
                                             fontWeight: FontWeight.w700,
-                                            color: Color(0xFF1E293B),
+                                            color: AppColors.neutral,
                                           ),
                                         ),
                                         const SizedBox(height: 4),
@@ -1242,7 +1242,7 @@ class _CompleteFarmerProfileScreenState
                                           'Format JPG/PNG, maks. 10MB',
                                           style: TextStyle(
                                             fontSize: 11,
-                                            color: Color(0xFF64748B),
+                                            color: AppColors.neutralMuted,
                                           ),
                                         ),
                                       ],
@@ -1283,7 +1283,7 @@ class _CompleteFarmerProfileScreenState
                                             children: [
                                               Icon(
                                                 LucideIcons.checkCircle2,
-                                                color: Color(0xFF34D399),
+                                                color: AppColors.primary,
                                                 size: 14,
                                               ),
                                               SizedBox(width: 4),
@@ -1315,10 +1315,10 @@ class _CompleteFarmerProfileScreenState
                                       const Icon(LucideIcons.camera, size: 16),
                                   label: const Text('Kamera'),
                                   style: OutlinedButton.styleFrom(
-                                    foregroundColor: const Color(0xFF1E293B),
-                                    backgroundColor: const Color(0xFFF8FAFC),
+                                    foregroundColor: AppColors.neutral,
+                                    backgroundColor: AppColors.surfaceCanvas,
                                     side: const BorderSide(
-                                      color: Color(0xFFE2E8F0),
+                                      color: AppColors.border,
                                     ),
                                     padding:
                                         const EdgeInsets.symmetric(vertical: 12),
@@ -1336,10 +1336,10 @@ class _CompleteFarmerProfileScreenState
                                   icon: const Icon(LucideIcons.image, size: 16),
                                   label: const Text('Galeri'),
                                   style: OutlinedButton.styleFrom(
-                                    foregroundColor: const Color(0xFF1E293B),
-                                    backgroundColor: const Color(0xFFF8FAFC),
+                                    foregroundColor: AppColors.neutral,
+                                    backgroundColor: AppColors.surfaceCanvas,
                                     side: const BorderSide(
-                                      color: Color(0xFFE2E8F0),
+                                      color: AppColors.border,
                                     ),
                                     padding:
                                         const EdgeInsets.symmetric(vertical: 12),
@@ -1374,12 +1374,12 @@ class _CompleteFarmerProfileScreenState
                               child: Container(
                                 height: 180,
                                 decoration: BoxDecoration(
-                                  color: const Color(0xFFF8FAFC),
+                                  color: AppColors.surfaceCanvas,
                                   borderRadius: BorderRadius.circular(16),
                                 ),
                                 child: CustomPaint(
                                   painter: _DashedBorderPainter(
-                                    color: const Color(0xFFCBD5E1),
+                                    color: AppColors.neutralBorder,
                                     strokeWidth: 1.6,
                                     dashLength: 8,
                                     dashGap: 5,
@@ -1410,7 +1410,7 @@ class _CompleteFarmerProfileScreenState
                                           style: TextStyle(
                                             fontSize: 14,
                                             fontWeight: FontWeight.w700,
-                                            color: Color(0xFF1E293B),
+                                            color: AppColors.neutral,
                                           ),
                                         ),
                                         const SizedBox(height: 4),
@@ -1418,7 +1418,7 @@ class _CompleteFarmerProfileScreenState
                                           'Wajah & KTP terlihat jelas dalam satu bingkai',
                                           style: TextStyle(
                                             fontSize: 11,
-                                            color: Color(0xFF64748B),
+                                            color: AppColors.neutralMuted,
                                           ),
                                         ),
                                       ],
@@ -1459,7 +1459,7 @@ class _CompleteFarmerProfileScreenState
                                             children: [
                                               Icon(
                                                 LucideIcons.checkCircle2,
-                                                color: Color(0xFF34D399),
+                                                color: AppColors.primary,
                                                 size: 14,
                                               ),
                                               SizedBox(width: 4),
@@ -1491,10 +1491,10 @@ class _CompleteFarmerProfileScreenState
                                       const Icon(LucideIcons.camera, size: 16),
                                   label: const Text('Kamera'),
                                   style: OutlinedButton.styleFrom(
-                                    foregroundColor: const Color(0xFF1E293B),
-                                    backgroundColor: const Color(0xFFF8FAFC),
+                                    foregroundColor: AppColors.neutral,
+                                    backgroundColor: AppColors.surfaceCanvas,
                                     side: const BorderSide(
-                                      color: Color(0xFFE2E8F0),
+                                      color: AppColors.border,
                                     ),
                                     padding:
                                         const EdgeInsets.symmetric(vertical: 12),
@@ -1512,10 +1512,10 @@ class _CompleteFarmerProfileScreenState
                                   icon: const Icon(LucideIcons.image, size: 16),
                                   label: const Text('Galeri'),
                                   style: OutlinedButton.styleFrom(
-                                    foregroundColor: const Color(0xFF1E293B),
-                                    backgroundColor: const Color(0xFFF8FAFC),
+                                    foregroundColor: AppColors.neutral,
+                                    backgroundColor: AppColors.surfaceCanvas,
                                     side: const BorderSide(
-                                      color: Color(0xFFE2E8F0),
+                                      color: AppColors.border,
                                     ),
                                     padding:
                                         const EdgeInsets.symmetric(vertical: 12),
@@ -1550,10 +1550,10 @@ class _CompleteFarmerProfileScreenState
                               vertical: 8,
                             ),
                             decoration: BoxDecoration(
-                              color: const Color(0xFFF0FDF4),
+                              color: AppColors.primaryTint,
                               borderRadius: BorderRadius.circular(12),
                               border: Border.all(
-                                color: const Color(0xFFBBF7D0),
+                                color: AppColors.primaryBorder,
                                 width: 1,
                               ),
                             ),
@@ -1571,7 +1571,7 @@ class _CompleteFarmerProfileScreenState
                                     style: TextStyle(
                                       fontSize: 12,
                                       fontWeight: FontWeight.w700,
-                                      color: Color(0xFF166534),
+                                      color: AppColors.primary,
                                     ),
                                   ),
                                 ),
@@ -1698,7 +1698,7 @@ class _CompleteFarmerProfileScreenState
                                   vertical: 6,
                                 ),
                                 decoration: BoxDecoration(
-                                  color: const Color(0xFFF0FDF4),
+                                  color: AppColors.primaryTint,
                                   borderRadius: BorderRadius.circular(8),
                                 ),
                                 child: Row(
@@ -1706,7 +1706,7 @@ class _CompleteFarmerProfileScreenState
                                     const Icon(
                                       LucideIcons.checkCircle2,
                                       size: 14,
-                                      color: Color(0xFF16A34A),
+                                      color: AppColors.primary,
                                     ),
                                     const SizedBox(width: 6),
                                     Expanded(
@@ -1715,7 +1715,7 @@ class _CompleteFarmerProfileScreenState
                                         style: const TextStyle(
                                           fontSize: 11,
                                           fontWeight: FontWeight.w600,
-                                          color: Color(0xFF166534),
+                                          color: AppColors.primary,
                                         ),
                                       ),
                                     ),
@@ -1729,10 +1729,10 @@ class _CompleteFarmerProfileScreenState
                                   vertical: 8,
                                 ),
                                 decoration: BoxDecoration(
-                                  color: const Color(0xFFFFFBEB),
+                                  color: AppColors.tertiaryTint,
                                   borderRadius: BorderRadius.circular(8),
                                   border: Border.all(
-                                    color: const Color(0xFFFDE68A),
+                                    color: AppColors.tertiaryBorder,
                                     width: 1,
                                   ),
                                 ),
@@ -1742,7 +1742,7 @@ class _CompleteFarmerProfileScreenState
                                     Icon(
                                       LucideIcons.info,
                                       size: 14,
-                                      color: Color(0xFFD97706),
+                                      color: AppColors.tertiaryText,
                                     ),
                                     SizedBox(width: 6),
                                     Expanded(
@@ -1750,7 +1750,7 @@ class _CompleteFarmerProfileScreenState
                                         'Belum ada Poktan terdaftar di desa ini. Dinas pertanian akan mengarahkan penempatan saat verifikasi berkas.',
                                         style: TextStyle(
                                           fontSize: 11,
-                                          color: Color(0xFF92400E),
+                                          color: AppColors.tertiaryText,
                                           height: 1.3,
                                         ),
                                       ),
@@ -1807,14 +1807,14 @@ class _CompleteFarmerProfileScreenState
                                     style: TextStyle(
                                       fontSize: 13,
                                       fontWeight: FontWeight.w600,
-                                      color: Color(0xFF1E293B),
+                                      color: AppColors.neutral,
                                     ),
                                   ),
                                   const SizedBox(width: 4),
                                   const Text(
                                     '*',
                                     style: TextStyle(
-                                      color: Color(0xFFDC2626),
+                                      color: AppColors.error,
                                       fontWeight: FontWeight.bold,
                                     ),
                                   ),
@@ -1848,10 +1848,10 @@ class _CompleteFarmerProfileScreenState
                                     vertical: 14,
                                   ),
                                   decoration: BoxDecoration(
-                                    color: const Color(0xFFF8FAFC),
+                                    color: AppColors.surfaceCanvas,
                                     borderRadius: BorderRadius.circular(14),
                                     border: Border.all(
-                                      color: const Color(0xFFE2E8F0),
+                                      color: AppColors.border,
                                       width: 1,
                                     ),
                                   ),
@@ -1860,7 +1860,7 @@ class _CompleteFarmerProfileScreenState
                                       const Icon(
                                         LucideIcons.calendar,
                                         size: 18,
-                                        color: Color(0xFF64748B),
+                                        color: AppColors.neutralMuted,
                                       ),
                                       const SizedBox(width: 10),
                                       Expanded(
@@ -1875,15 +1875,15 @@ class _CompleteFarmerProfileScreenState
                                                     ? FontWeight.w600
                                                     : FontWeight.w400,
                                             color: _selectedBirthDate != null
-                                                ? const Color(0xFF0F172A)
-                                                : const Color(0xFF94A3B8),
+                                                ? AppColors.neutral
+                                                : AppColors.neutralSubtle,
                                           ),
                                         ),
                                       ),
                                       const Icon(
                                         LucideIcons.chevronDown,
                                         size: 16,
-                                        color: Color(0xFF94A3B8),
+                                        color: AppColors.neutralSubtle,
                                       ),
                                     ],
                                   ),
@@ -2002,7 +2002,7 @@ class _CompleteFarmerProfileScreenState
           style: const TextStyle(
             fontSize: 14,
             fontWeight: FontWeight.w800,
-            color: Color(0xFF0F172A),
+            color: AppColors.neutral,
           ),
         ),
         if (isRequired) ...[
@@ -2010,13 +2010,13 @@ class _CompleteFarmerProfileScreenState
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
             decoration: BoxDecoration(
-              color: const Color(0xFFFEE2E2),
+              color: AppColors.errorTint,
               borderRadius: BorderRadius.circular(6),
             ),
             child: const Text(
               'Wajib',
               style: TextStyle(
-                color: Color(0xFFDC2626),
+                color: AppColors.error,
                 fontSize: 10,
                 fontWeight: FontWeight.w700,
               ),

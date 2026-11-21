@@ -15,12 +15,12 @@ class PlaceholderScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF8F9FF),
+      backgroundColor: AppColors.surfaceCanvas,
       appBar: AppBar(
         backgroundColor: Colors.white,
         elevation: 0.5,
         leading: IconButton(
-          icon: const Icon(LucideIcons.arrowLeft, color: Color(0xFF121C2A), size: 22),
+          icon: const Icon(LucideIcons.arrowLeft, color: AppColors.neutral, size: 22),
           onPressed: () => Navigator.of(context, rootNavigator: true).pop(),
         ),
         title: Text(
@@ -28,7 +28,7 @@ class PlaceholderScreen extends StatelessWidget {
           style: GoogleFonts.plusJakartaSans(
             fontSize: 16,
             fontWeight: FontWeight.w700,
-            color: const Color(0xFF121C2A),
+            color: AppColors.neutral,
           ),
         ),
       ),
@@ -42,10 +42,10 @@ class PlaceholderScreen extends StatelessWidget {
                 width: 72,
                 height: 72,
                 decoration: const BoxDecoration(
-                  color: Color(0xFFB0F1CB),
+                  color: AppColors.primaryTint,
                   shape: BoxShape.circle,
                 ),
-                child: const Icon(Icons.storefront, color: Color(0xFF006E04), size: 36),
+                child: const Icon(Icons.storefront, color: AppColors.primary, size: 36),
               ),
               const SizedBox(height: 18),
               Text(
@@ -54,7 +54,7 @@ class PlaceholderScreen extends StatelessWidget {
                 style: GoogleFonts.plusJakartaSans(
                   fontSize: 18,
                   fontWeight: FontWeight.w700,
-                  color: const Color(0xFF121C2A),
+                  color: AppColors.neutral,
                 ),
               ),
               const SizedBox(height: 8),
@@ -63,7 +63,7 @@ class PlaceholderScreen extends StatelessWidget {
                 textAlign: TextAlign.center,
                 style: GoogleFonts.plusJakartaSans(
                   fontSize: 13,
-                  color: const Color(0xFF64748B),
+                  color: AppColors.neutralMuted,
                 ),
               ),
             ],
@@ -150,7 +150,7 @@ class _SellerMainNavScreenState extends State<SellerMainNavScreen> {
                         child: Container(
                           padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1.5),
                           decoration: BoxDecoration(
-                            color: const Color(0xFFEF4444),
+                            color: AppColors.error,
                             borderRadius: BorderRadius.circular(10),
                             border: Border.all(color: Colors.white, width: 1.5),
                           ),
@@ -196,11 +196,11 @@ class _SellerMainNavScreenState extends State<SellerMainNavScreen> {
       decoration: BoxDecoration(
         color: Colors.white,
         border: const Border(
-          top: BorderSide(color: Color(0xFFE2E8F0), width: 0.8),
+          top: BorderSide(color: AppColors.border, width: 0.8),
         ),
         boxShadow: const [
           BoxShadow(
-            color: Color(0x14084E33),
+            color: AppColors.shadowMedium,
             blurRadius: 16,
             offset: Offset(0, -4),
           ),
@@ -248,7 +248,7 @@ class _SellerMainNavScreenState extends State<SellerMainNavScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF8F9FF),
+      backgroundColor: AppColors.surfaceCanvas,
       body: _buildBodyForCurrentTab(),
       bottomNavigationBar: _buildBottomNavigationBar(),
     );

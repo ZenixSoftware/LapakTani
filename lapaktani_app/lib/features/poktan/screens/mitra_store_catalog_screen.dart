@@ -202,7 +202,7 @@ class _MitraStoreCatalogScreenState extends State<MitraStoreCatalogScreen>
           'Mekanisme Zero-Waste: Sisa kuota borongan yang belum terserap akan langsung dialihkan menjadi stok retail di etalase Toko Mitra Tani dan penawaran partai akan ditutup.',
           style: GoogleFonts.plusJakartaSans(
             fontSize: 13,
-            color: const Color(0xFF475569),
+            color: AppColors.neutralMuted,
           ),
         ),
         actions: [
@@ -210,7 +210,7 @@ class _MitraStoreCatalogScreenState extends State<MitraStoreCatalogScreen>
             onPressed: () => Navigator.pop(ctx, false),
             child: Text(
               'Batal',
-              style: GoogleFonts.plusJakartaSans(color: const Color(0xFF64748B)),
+              style: GoogleFonts.plusJakartaSans(color: AppColors.neutralMuted),
             ),
           ),
           ElevatedButton(
@@ -245,7 +245,7 @@ class _MitraStoreCatalogScreenState extends State<MitraStoreCatalogScreen>
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text('Gagal mengalihkan kuota ke retail.'),
-            backgroundColor: Color(0xFFEF4444),
+            backgroundColor: AppColors.error,
             behavior: SnackBarBehavior.floating,
           ),
         );
@@ -272,13 +272,13 @@ class _MitraStoreCatalogScreenState extends State<MitraStoreCatalogScreen>
               style: GoogleFonts.plusJakartaSans(
                 fontSize: 17,
                 fontWeight: FontWeight.w800,
-                color: const Color(0xFF0F172A),
+                color: AppColors.neutral,
               ),
             ),
             const SizedBox(height: 6),
             Text(
               'Pilih jenis penjualan produk pertanian untuk etalase Anda:',
-              style: GoogleFonts.plusJakartaSans(fontSize: 12.5, color: const Color(0xFF64748B)),
+              style: GoogleFonts.plusJakartaSans(fontSize: 12.5, color: AppColors.neutralMuted),
             ),
             const SizedBox(height: 18),
             ListTile(
@@ -292,7 +292,7 @@ class _MitraStoreCatalogScreenState extends State<MitraStoreCatalogScreen>
               leading: Container(
                 padding: const EdgeInsets.all(10),
                 decoration: BoxDecoration(
-                  color: const Color(0xFFDCFCE7),
+                  color: AppColors.primaryTint,
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: const Icon(LucideIcons.shoppingBag, color: AppColors.primary),
@@ -303,7 +303,7 @@ class _MitraStoreCatalogScreenState extends State<MitraStoreCatalogScreen>
               ),
               subtitle: Text(
                 'Atur harga normal, promo diskon %, batas minimal Partai (kg) & harga grosir.',
-                style: GoogleFonts.plusJakartaSans(fontSize: 11.5, color: const Color(0xFF64748B)),
+                style: GoogleFonts.plusJakartaSans(fontSize: 11.5, color: AppColors.neutralMuted),
               ),
               trailing: const Icon(LucideIcons.chevronRight, size: 18),
             ),
@@ -327,7 +327,7 @@ class _MitraStoreCatalogScreenState extends State<MitraStoreCatalogScreen>
               ),
               subtitle: Text(
                 'Catat pembelian hasil panen petani langsung di toko tanpa aplikasi.',
-                style: GoogleFonts.plusJakartaSans(fontSize: 11.5, color: const Color(0xFF64748B)),
+                style: GoogleFonts.plusJakartaSans(fontSize: 11.5, color: AppColors.neutralMuted),
               ),
               trailing: const Icon(LucideIcons.chevronRight, size: 18),
             ),
@@ -344,10 +344,10 @@ class _MitraStoreCatalogScreenState extends State<MitraStoreCatalogScreen>
               leading: Container(
                 padding: const EdgeInsets.all(10),
                 decoration: BoxDecoration(
-                  color: const Color(0xFFFEF3C7),
+                  color: AppColors.tertiaryTint,
                   borderRadius: BorderRadius.circular(12),
                 ),
-                child: const Icon(LucideIcons.layers, color: Color(0xFFB45309)),
+                child: const Icon(LucideIcons.layers, color: AppColors.tertiaryText),
               ),
               title: Text(
                 'Buka Penawaran Partai (B2B)',
@@ -355,7 +355,7 @@ class _MitraStoreCatalogScreenState extends State<MitraStoreCatalogScreen>
               ),
               subtitle: Text(
                 'Buka bursa forward pool hasil konsolidasi panen borongan skala besar.',
-                style: GoogleFonts.plusJakartaSans(fontSize: 11.5, color: const Color(0xFF64748B)),
+                style: GoogleFonts.plusJakartaSans(fontSize: 11.5, color: AppColors.neutralMuted),
               ),
               trailing: const Icon(LucideIcons.chevronRight, size: 18),
             ),
@@ -616,7 +616,7 @@ class _MitraStoreCatalogScreenState extends State<MitraStoreCatalogScreen>
               child: Text(
                 'Batal',
                 style: GoogleFonts.plusJakartaSans(
-                  color: const Color(0xFF64748B),
+                  color: AppColors.neutralMuted,
                 ),
               ),
             ),
@@ -705,10 +705,10 @@ class _MitraStoreCatalogScreenState extends State<MitraStoreCatalogScreen>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF8FAFC),
+      backgroundColor: AppColors.surfaceCanvas,
       appBar: AppBar(
         backgroundColor: Colors.white,
-        foregroundColor: const Color(0xFF0F172A),
+        foregroundColor: AppColors.neutral,
         elevation: 0.5,
         automaticallyImplyLeading: false,
         title: Text(
@@ -774,7 +774,7 @@ class _MitraStoreCatalogScreenState extends State<MitraStoreCatalogScreen>
             padding: const EdgeInsets.all(16),
             decoration: const BoxDecoration(
               color: Colors.white,
-              border: Border(bottom: BorderSide(color: Color(0xFFE2E8F0))),
+              border: Border(bottom: BorderSide(color: AppColors.border)),
             ),
             child: Row(
               children: [
@@ -782,7 +782,7 @@ class _MitraStoreCatalogScreenState extends State<MitraStoreCatalogScreen>
                   width: 50,
                   height: 50,
                   decoration: BoxDecoration(
-                    color: const Color(0xFFDCFCE7),
+                    color: AppColors.primaryTint,
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: const Center(
@@ -802,7 +802,7 @@ class _MitraStoreCatalogScreenState extends State<MitraStoreCatalogScreen>
                               style: GoogleFonts.plusJakartaSans(
                                 fontSize: 15,
                                 fontWeight: FontWeight.w800,
-                                color: const Color(0xFF0F172A),
+                                color: AppColors.neutral,
                               ),
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
@@ -822,8 +822,8 @@ class _MitraStoreCatalogScreenState extends State<MitraStoreCatalogScreen>
                             padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
                             decoration: BoxDecoration(
                               color: _adminTier == 'RETAIL_MERCHANT'
-                                  ? const Color(0xFFFEF3C7)
-                                  : const Color(0xFFDCFCE7),
+                                  ? AppColors.tertiaryTint
+                                  : AppColors.primaryTint,
                               borderRadius: BorderRadius.circular(6),
                             ),
                             child: Text(
@@ -834,7 +834,7 @@ class _MitraStoreCatalogScreenState extends State<MitraStoreCatalogScreen>
                                 fontSize: 10,
                                 fontWeight: FontWeight.w800,
                                 color: _adminTier == 'RETAIL_MERCHANT'
-                                    ? const Color(0xFFB45309)
+                                    ? AppColors.tertiaryText
                                     : AppColors.primaryDark,
                               ),
                             ),
@@ -843,7 +843,7 @@ class _MitraStoreCatalogScreenState extends State<MitraStoreCatalogScreen>
                             'Performa Toko: 98%',
                             style: GoogleFonts.plusJakartaSans(
                               fontSize: 11,
-                              color: const Color(0xFF64748B),
+                              color: AppColors.neutralMuted,
                             ),
                           ),
                         ],
@@ -859,7 +859,7 @@ class _MitraStoreCatalogScreenState extends State<MitraStoreCatalogScreen>
                       style: GoogleFonts.plusJakartaSans(
                         fontSize: 11,
                         fontWeight: FontWeight.w700,
-                        color: _isStoreOpen ? const Color(0xFF16A34A) : const Color(0xFFEF4444),
+                        color: _isStoreOpen ? AppColors.primary : AppColors.error,
                       ),
                     ),
                     Switch(
@@ -891,7 +891,7 @@ class _MitraStoreCatalogScreenState extends State<MitraStoreCatalogScreen>
               indicatorColor: AppColors.primary,
               indicatorWeight: 3,
               labelColor: AppColors.primary,
-              unselectedLabelColor: const Color(0xFF64748B),
+              unselectedLabelColor: AppColors.neutralMuted,
               labelStyle: GoogleFonts.plusJakartaSans(fontSize: 13.5, fontWeight: FontWeight.w700),
               unselectedLabelStyle: GoogleFonts.plusJakartaSans(fontSize: 13.5, fontWeight: FontWeight.w500),
               tabs: const [
@@ -925,7 +925,7 @@ class _MitraStoreCatalogScreenState extends State<MitraStoreCatalogScreen>
       return Center(
         child: Text(
           'Belum ada produk retail di etalase.',
-          style: GoogleFonts.plusJakartaSans(color: const Color(0xFF64748B)),
+          style: GoogleFonts.plusJakartaSans(color: AppColors.neutralMuted),
         ),
       );
     }
@@ -966,13 +966,13 @@ class _MitraStoreCatalogScreenState extends State<MitraStoreCatalogScreen>
                           imageUrl,
                           fit: BoxFit.cover,
                           errorBuilder: (context, error, stackTrace) => Container(
-                            color: const Color(0xFFE2E8F0),
-                            child: const Icon(LucideIcons.image, color: Color(0xFF94A3B8)),
+                            color: AppColors.border,
+                            child: const Icon(LucideIcons.image, color: AppColors.neutralSubtle),
                           ),
                         )
                       : Container(
-                          color: const Color(0xFFE2E8F0),
-                          child: const Icon(LucideIcons.image, color: Color(0xFF94A3B8)),
+                          color: AppColors.border,
+                          child: const Icon(LucideIcons.image, color: AppColors.neutralSubtle),
                         ),
                 ),
               ),
@@ -986,7 +986,7 @@ class _MitraStoreCatalogScreenState extends State<MitraStoreCatalogScreen>
                       style: GoogleFonts.plusJakartaSans(
                         fontSize: 13.5,
                         fontWeight: FontWeight.w700,
-                        color: const Color(0xFF0F172A),
+                        color: AppColors.neutral,
                       ),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
@@ -1000,8 +1000,8 @@ class _MitraStoreCatalogScreenState extends State<MitraStoreCatalogScreen>
                           padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
                           decoration: BoxDecoration(
                             color: (item['processing_state']?.toString() == 'MENTAH')
-                                ? const Color(0xFFFEF3C7)
-                                : const Color(0xFFDCFCE7),
+                                ? AppColors.tertiaryTint
+                                : AppColors.primaryTint,
                             borderRadius: BorderRadius.circular(4),
                           ),
                           child: Text(
@@ -1012,7 +1012,7 @@ class _MitraStoreCatalogScreenState extends State<MitraStoreCatalogScreen>
                               fontSize: 9,
                               fontWeight: FontWeight.w800,
                               color: (item['processing_state']?.toString() == 'MENTAH')
-                                  ? const Color(0xFFB45309)
+                                  ? AppColors.tertiaryText
                                   : AppColors.primaryDark,
                             ),
                           ),
@@ -1021,7 +1021,7 @@ class _MitraStoreCatalogScreenState extends State<MitraStoreCatalogScreen>
                           Container(
                             padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
                             decoration: BoxDecoration(
-                              color: const Color(0xFFF1F5F9),
+                              color: AppColors.surfaceCanvas,
                               borderRadius: BorderRadius.circular(4),
                             ),
                             child: Text(
@@ -1029,7 +1029,7 @@ class _MitraStoreCatalogScreenState extends State<MitraStoreCatalogScreen>
                               style: GoogleFonts.plusJakartaSans(
                                 fontSize: 9,
                                 fontWeight: FontWeight.w700,
-                                color: const Color(0xFF475569),
+                                color: AppColors.neutralMuted,
                               ),
                             ),
                           ),
@@ -1078,7 +1078,7 @@ class _MitraStoreCatalogScreenState extends State<MitraStoreCatalogScreen>
                       overflow: TextOverflow.ellipsis,
                       style: GoogleFonts.plusJakartaSans(
                         fontSize: 10.5,
-                        color: const Color(0xFF64748B),
+                        color: AppColors.neutralMuted,
                       ),
                     ),
                     if (_adminTier != 'RETAIL_MERCHANT' &&
@@ -1479,8 +1479,8 @@ class _MitraStoreCatalogScreenState extends State<MitraStoreCatalogScreen>
                       }
                     },
               style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.accent,
-                foregroundColor: Colors.white,
+                backgroundColor: AppColors.tertiary,
+                foregroundColor: AppColors.neutral,
               ),
               child: Text(saving ? 'Menyimpan...' : 'Tambahkan ke Toko Retail'),
             ),
@@ -1495,7 +1495,7 @@ class _MitraStoreCatalogScreenState extends State<MitraStoreCatalogScreen>
       return Center(
         child: Text(
           'Belum ada lot Open-Bid B2B maupun bursa partai aktif.',
-          style: GoogleFonts.plusJakartaSans(color: const Color(0xFF64748B)),
+          style: GoogleFonts.plusJakartaSans(color: AppColors.neutralMuted),
         ),
       );
     }
@@ -1588,9 +1588,9 @@ class _MitraStoreCatalogScreenState extends State<MitraStoreCatalogScreen>
                         width: double.infinity,
                         padding: const EdgeInsets.all(8),
                         decoration: BoxDecoration(
-                          color: const Color(0xFFF0FDF4),
+                          color: AppColors.primaryTint,
                           borderRadius: BorderRadius.circular(8),
-                          border: Border.all(color: const Color(0xFFBBF7D0)),
+                          border: Border.all(color: AppColors.primaryBorder),
                         ),
                         child: Text(
                           'Ketertelusuran Sumber Asli (Post-Escrow): Petani $srcFarmer • ${srcVillage ?? 'Sumenep'} • Panen ${srcDate ?? '-'}',
@@ -1640,7 +1640,7 @@ class _MitraStoreCatalogScreenState extends State<MitraStoreCatalogScreen>
                           ElevatedButton(
                             onPressed: () => _updateBidStatusAction(bidId, 'COMPLETED'),
                             style: ElevatedButton.styleFrom(
-                              backgroundColor: const Color(0xFF166534),
+                              backgroundColor: AppColors.primary,
                               foregroundColor: Colors.white,
                             ),
                             child: const Text('Selesaikan Serah Terima'),
@@ -1667,8 +1667,8 @@ class _MitraStoreCatalogScreenState extends State<MitraStoreCatalogScreen>
                               ),
                             ),
                             style: ElevatedButton.styleFrom(
-                              backgroundColor: AppColors.accent,
-                              foregroundColor: Colors.white,
+                              backgroundColor: AppColors.tertiary,
+                              foregroundColor: AppColors.neutral,
                             ),
                           ),
                       ],
@@ -1720,8 +1720,8 @@ class _MitraStoreCatalogScreenState extends State<MitraStoreCatalogScreen>
                           padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                           decoration: BoxDecoration(
                             color: state == 'MENTAH'
-                                ? const Color(0xFFFEF3C7)
-                                : const Color(0xFFDCFCE7),
+                                ? AppColors.tertiaryTint
+                                : AppColors.primaryTint,
                             borderRadius: BorderRadius.circular(6),
                           ),
                           child: Text(
@@ -1730,7 +1730,7 @@ class _MitraStoreCatalogScreenState extends State<MitraStoreCatalogScreen>
                               fontSize: 10,
                               fontWeight: FontWeight.w800,
                               color: state == 'MENTAH'
-                                  ? const Color(0xFFB45309)
+                                  ? AppColors.tertiaryText
                                   : AppColors.primaryDark,
                             ),
                           ),
@@ -1787,24 +1787,26 @@ class _MitraStoreCatalogScreenState extends State<MitraStoreCatalogScreen>
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     Expanded(
                       child: Text(
                         commodity,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
                         style: GoogleFonts.plusJakartaSans(
                           fontSize: 14.5,
                           fontWeight: FontWeight.w700,
-                          color: const Color(0xFF0F172A),
+                          color: AppColors.neutral,
                         ),
                       ),
                     ),
+                    const SizedBox(width: 8),
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                       decoration: BoxDecoration(
                         color: isSpilled
-                            ? const Color(0xFFFEF3C7)
-                            : const Color(0xFFDCFCE7),
+                            ? AppColors.tertiaryTint
+                            : AppColors.primaryTint,
                         borderRadius: BorderRadius.circular(6),
                       ),
                       child: Text(
@@ -1812,7 +1814,7 @@ class _MitraStoreCatalogScreenState extends State<MitraStoreCatalogScreen>
                         style: GoogleFonts.plusJakartaSans(
                           fontSize: 10.5,
                           fontWeight: FontWeight.w700,
-                          color: isSpilled ? const Color(0xFFB45309) : const Color(0xFF16A34A),
+                          color: isSpilled ? AppColors.tertiaryText : AppColors.primary,
                         ),
                       ),
                     ),
@@ -1823,28 +1825,37 @@ class _MitraStoreCatalogScreenState extends State<MitraStoreCatalogScreen>
                   'Harga Borongan: Rp ${_currencyFormat.format(priceKg)} / kg • Target: $harvestDate',
                   style: GoogleFonts.plusJakartaSans(
                     fontSize: 12,
-                    color: const Color(0xFF64748B),
+                    color: AppColors.neutralMuted,
                   ),
                 ),
                 const SizedBox(height: 12),
                 // Progress Bar
                 Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Text(
-                      'Terserap: ${_currencyFormat.format(takenKg)} / ${_currencyFormat.format(totalKg)} kg',
-                      style: GoogleFonts.plusJakartaSans(
-                        fontSize: 11.5,
-                        fontWeight: FontWeight.w700,
-                        color: const Color(0xFF1E293B),
+                    Expanded(
+                      child: Text(
+                        'Terserap: ${_currencyFormat.format(takenKg)} / ${_currencyFormat.format(totalKg)} kg',
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: GoogleFonts.plusJakartaSans(
+                          fontSize: 11.5,
+                          fontWeight: FontWeight.w700,
+                          color: AppColors.neutral,
+                        ),
                       ),
                     ),
-                    Text(
-                      'Sisa: ${_currencyFormat.format(remainingKg)} kg',
-                      style: GoogleFonts.plusJakartaSans(
-                        fontSize: 11.5,
-                        fontWeight: FontWeight.w700,
-                        color: const Color(0xFFD97706),
+                    const SizedBox(width: 8),
+                    Flexible(
+                      child: Text(
+                        'Sisa: ${_currencyFormat.format(remainingKg)} kg',
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        textAlign: TextAlign.right,
+                        style: GoogleFonts.plusJakartaSans(
+                          fontSize: 11.5,
+                          fontWeight: FontWeight.w700,
+                          color: AppColors.tertiaryText,
+                        ),
                       ),
                     ),
                   ],
@@ -1855,49 +1866,54 @@ class _MitraStoreCatalogScreenState extends State<MitraStoreCatalogScreen>
                   child: LinearProgressIndicator(
                     value: progress,
                     minHeight: 6,
-                    backgroundColor: const Color(0xFFE2E8F0),
+                    backgroundColor: AppColors.border,
                     valueColor: const AlwaysStoppedAnimation<Color>(AppColors.primary),
                   ),
                 ),
                 const SizedBox(height: 12),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.end,
-                  children: [
-                    TextButton(
-                      onPressed: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (_) => WholesaleDetailScreen(pool: pool),
+                Align(
+                  alignment: Alignment.centerRight,
+                  child: Wrap(
+                    alignment: WrapAlignment.end,
+                    crossAxisAlignment: WrapCrossAlignment.center,
+                    spacing: 8,
+                    runSpacing: 8,
+                    children: [
+                      TextButton(
+                        onPressed: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (_) => WholesaleDetailScreen(pool: pool),
+                            ),
+                          );
+                        },
+                        child: Text(
+                          'Pratinjau Pembeli',
+                          style: GoogleFonts.plusJakartaSans(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w600,
+                            color: AppColors.neutralMuted,
                           ),
-                        );
-                      },
-                      child: Text(
-                        'Pratinjau Pembeli',
-                        style: GoogleFonts.plusJakartaSans(
-                          fontSize: 12,
-                          fontWeight: FontWeight.w600,
-                          color: const Color(0xFF64748B),
                         ),
                       ),
-                    ),
-                    const SizedBox(width: 8),
-                    if (remainingKg > 0 && !isSpilled)
-                      ElevatedButton.icon(
-                        onPressed: () => _handleSpillover(pool['id'].toString()),
-                        icon: const Icon(LucideIcons.arrowRightLeft, size: 14),
-                        label: Text(
-                          'Alihkan Sisa ke Retail',
-                          style: GoogleFonts.plusJakartaSans(fontSize: 12, fontWeight: FontWeight.w700),
+                      if (remainingKg > 0 && !isSpilled)
+                        ElevatedButton.icon(
+                          onPressed: () => _handleSpillover(pool['id'].toString()),
+                          icon: const Icon(LucideIcons.arrowRightLeft, size: 14),
+                          label: Text(
+                            'Alihkan Sisa ke Retail',
+                            style: GoogleFonts.plusJakartaSans(fontSize: 12, fontWeight: FontWeight.w700),
+                          ),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: AppColors.tertiaryText,
+                            foregroundColor: Colors.white,
+                            elevation: 0,
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                          ),
                         ),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: const Color(0xFFD97706),
-                          foregroundColor: Colors.white,
-                          elevation: 0,
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                        ),
-                      ),
-                  ],
+                    ],
+                  ),
                 ),
               ],
             ),
@@ -1945,8 +1961,8 @@ class _MitraStoreCatalogScreenState extends State<MitraStoreCatalogScreen>
               ElevatedButton(
                 onPressed: _showWalkInPurchaseModal,
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.accent,
-                  foregroundColor: Colors.white,
+                  backgroundColor: AppColors.tertiary,
+                  foregroundColor: AppColors.neutral,
                   elevation: 0,
                   padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
                 ),

@@ -182,7 +182,7 @@ class _ChatListScreenState extends State<ChatListScreen> {
                           _QuickRoleChip(
                             icon: LucideIcons.landmark,
                             label: 'DM Dinas Pertanian',
-                            color: AppColors.accent,
+                            color: AppColors.tertiaryText,
                             onTap: () => _openQuickRoleChat(
                               'dinas',
                               'Koordinasi Dinas Pertanian Sumenep',
@@ -214,7 +214,7 @@ class _ChatListScreenState extends State<ChatListScreen> {
                         _QuickRoleChip(
                           icon: LucideIcons.store,
                           label: 'Chat Admin Toko',
-                          color: AppColors.accent,
+                          color: AppColors.tertiaryText,
                           onTap: () => _openQuickRoleChat(
                             'admin',
                             'Koordinasi Toko Mitra Tani',
@@ -340,7 +340,7 @@ class _ChatListScreenState extends State<ChatListScreen> {
             conv.isOrderChat
                 ? LucideIcons.shoppingBag
                 : LucideIcons.messageCircle,
-            color: conv.isOrderChat ? AppColors.accent : AppColors.primary,
+            color: conv.isOrderChat ? AppColors.tertiaryText : AppColors.primary,
             size: 20,
           ),
         ),

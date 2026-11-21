@@ -105,7 +105,7 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
                     width: 40,
                     height: 4,
                     decoration: BoxDecoration(
-                      color: const Color(0xFFE2E8F0),
+                      color: AppColors.border,
                       borderRadius: BorderRadius.circular(2),
                     ),
                   ),
@@ -117,7 +117,7 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
                       width: 48,
                       height: 48,
                       decoration: const BoxDecoration(
-                        color: Color(0xFFE8F8EC),
+                        color: AppColors.primaryTint,
                         shape: BoxShape.circle,
                       ),
                       child: const Icon(LucideIcons.user, color: AppColors.primary, size: 24),
@@ -132,14 +132,14 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
                             style: GoogleFonts.plusJakartaSans(
                               fontSize: 16,
                               fontWeight: FontWeight.w700,
-                              color: const Color(0xFF121C2A),
+                              color: AppColors.neutral,
                             ),
                           ),
                           Text(
                             courier.serviceName,
                             style: GoogleFonts.plusJakartaSans(
                               fontSize: 12,
-                              color: const Color(0xFF64748B),
+                              color: AppColors.neutralMuted,
                             ),
                           ),
                         ],
@@ -151,9 +151,9 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
                 Container(
                   padding: const EdgeInsets.all(12),
                   decoration: BoxDecoration(
-                    color: const Color(0xFFF8F9FF),
+                    color: AppColors.surfaceCanvas,
                     borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: const Color(0xFFE2E8F0)),
+                    border: Border.all(color: AppColors.border),
                   ),
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -165,7 +165,7 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
                             'Nomor Telepon / WhatsApp',
                             style: GoogleFonts.plusJakartaSans(
                               fontSize: 11,
-                              color: const Color(0xFF94A3B8),
+                              color: AppColors.neutralSubtle,
                             ),
                           ),
                           const SizedBox(height: 2),
@@ -174,7 +174,7 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
                             style: GoogleFonts.plusJakartaSans(
                               fontSize: 14,
                               fontWeight: FontWeight.w700,
-                              color: const Color(0xFF121C2A),
+                              color: AppColors.neutral,
                             ),
                           ),
                         ],
@@ -268,14 +268,14 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
         ),
         content: Text(
           'Apakah sayuran dan hasil panen sudah Anda terima dalam kondisi segar?',
-          style: GoogleFonts.plusJakartaSans(fontSize: 13, color: const Color(0xFF475569)),
+          style: GoogleFonts.plusJakartaSans(fontSize: 13, color: AppColors.neutralMuted),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx, false),
             child: Text(
               'Belum',
-              style: GoogleFonts.plusJakartaSans(color: const Color(0xFF94A3B8), fontWeight: FontWeight.w600),
+              style: GoogleFonts.plusJakartaSans(color: AppColors.neutralSubtle, fontWeight: FontWeight.w600),
             ),
           ),
           ElevatedButton(
@@ -323,14 +323,14 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
         ),
         content: Text(
           'Pastikan seluruh komoditas telah selesai dipetik, dikemas rapi, dan diserahkan kepada kurir ${order.courier.serviceName}. Lanjutkan?',
-          style: GoogleFonts.plusJakartaSans(fontSize: 13, color: const Color(0xFF475569)),
+          style: GoogleFonts.plusJakartaSans(fontSize: 13, color: AppColors.neutralMuted),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx, false),
             child: Text(
               'Batal',
-              style: GoogleFonts.plusJakartaSans(color: const Color(0xFF94A3B8), fontWeight: FontWeight.w600),
+              style: GoogleFonts.plusJakartaSans(color: AppColors.neutralSubtle, fontWeight: FontWeight.w600),
             ),
           ),
           ElevatedButton(
@@ -369,7 +369,7 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text('Gagal memperbarui status: $e'),
-              backgroundColor: const Color(0xFFDC2626),
+              backgroundColor: AppColors.error,
             ),
           );
         }
@@ -383,7 +383,7 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
   Widget build(BuildContext context) {
     if (_isLoading) {
       return const Scaffold(
-        backgroundColor: Color(0xFFF8F9FF),
+        backgroundColor: AppColors.surfaceCanvas,
         body: Center(
           child: CircularProgressIndicator(color: AppColors.primary),
         ),
@@ -394,7 +394,7 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
 
     if (order == null) {
           return Scaffold(
-            backgroundColor: const Color(0xFFF8F9FF),
+            backgroundColor: AppColors.surfaceCanvas,
             appBar: AppBar(
               backgroundColor: Colors.white,
               elevation: 0.5,
@@ -403,7 +403,7 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
                 style: GoogleFonts.plusJakartaSans(
                   fontWeight: FontWeight.w700,
                   fontSize: 16,
-                  color: const Color(0xFF121C2A),
+                  color: AppColors.neutral,
                 ),
               ),
             ),
@@ -411,14 +411,14 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  const Icon(LucideIcons.packageX, size: 48, color: Color(0xFF94A3B8)),
+                  const Icon(LucideIcons.packageX, size: 48, color: AppColors.neutralSubtle),
                   const SizedBox(height: 12),
                   Text(
                     'Pesanan tidak ditemukan',
                     style: GoogleFonts.plusJakartaSans(
                       fontSize: 14,
                       fontWeight: FontWeight.w600,
-                      color: const Color(0xFF475569),
+                      color: AppColors.neutralMuted,
                     ),
                   ),
                   const SizedBox(height: 12),
@@ -433,12 +433,12 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
         }
 
         return Scaffold(
-          backgroundColor: const Color(0xFFF8F9FF),
+          backgroundColor: AppColors.surfaceCanvas,
           appBar: AppBar(
             backgroundColor: Colors.white,
             elevation: 0.5,
             leading: IconButton(
-              icon: const Icon(LucideIcons.arrowLeft, color: Color(0xFF121C2A), size: 22),
+              icon: const Icon(LucideIcons.arrowLeft, color: AppColors.neutral, size: 22),
               onPressed: () => Navigator.pop(context),
             ),
             title: Column(
@@ -449,7 +449,7 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
                   style: GoogleFonts.plusJakartaSans(
                     fontSize: 15,
                     fontWeight: FontWeight.w700,
-                    color: const Color(0xFF121C2A),
+                    color: AppColors.neutral,
                   ),
                 ),
                 Text(
@@ -464,7 +464,7 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
             ),
             actions: [
               IconButton(
-                icon: const Icon(LucideIcons.refreshCw, color: Color(0xFF64748B), size: 18),
+                icon: const Icon(LucideIcons.refreshCw, color: AppColors.neutralMuted, size: 18),
                 onPressed: () {
                   ScaffoldMessenger.of(context).showSnackBar(
                     const SnackBar(
@@ -513,34 +513,34 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
 
     switch (order.status) {
       case OrderStatus.pendingPayment:
-        badgeBg = const Color(0xFFFEF3C7);
-        badgeTextColor = const Color(0xFF92400E);
+        badgeBg = AppColors.tertiaryTint;
+        badgeTextColor = AppColors.tertiaryText;
         statusIcon = LucideIcons.clock;
         break;
       case OrderStatus.needHarvest:
-        badgeBg = const Color(0xFFE8F8EC);
-        badgeTextColor = const Color(0xFF006E04);
+        badgeBg = AppColors.primaryTint;
+        badgeTextColor = AppColors.primary;
         statusIcon = LucideIcons.sprout;
         break;
       case OrderStatus.readyToShip:
-        badgeBg = const Color(0xFFE0E7FF);
-        badgeTextColor = const Color(0xFF3730A3);
+        badgeBg = AppColors.secondaryTint;
+        badgeTextColor = AppColors.secondaryDark;
         statusIcon = LucideIcons.package;
         break;
       case OrderStatus.inTransit:
-        badgeBg = const Color(0xFFEFF6FF);
-        badgeTextColor = const Color(0xFF1E40AF);
+        badgeBg = AppColors.secondaryTint;
+        badgeTextColor = AppColors.secondaryDark;
         statusIcon = LucideIcons.truck;
         break;
       case OrderStatus.delivered:
       case OrderStatus.completed:
-        badgeBg = const Color(0xFFDCFCE7);
-        badgeTextColor = const Color(0xFF166534);
+        badgeBg = AppColors.primaryTint;
+        badgeTextColor = AppColors.primary;
         statusIcon = LucideIcons.checkCircle2;
         break;
       case OrderStatus.cancelled:
-        badgeBg = const Color(0xFFFEE2E2);
-        badgeTextColor = const Color(0xFF991B1B);
+        badgeBg = AppColors.errorTint;
+        badgeTextColor = AppColors.error;
         statusIcon = LucideIcons.xCircle;
         break;
     }
@@ -552,7 +552,7 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
         borderRadius: BorderRadius.circular(16),
         boxShadow: const [
           BoxShadow(
-            color: Color(0x0A000000),
+            color: AppColors.shadowFaint,
             blurRadius: 10,
             offset: Offset(0, 3),
           ),
@@ -595,7 +595,7 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
                       'No. Resi:',
                       style: GoogleFonts.plusJakartaSans(
                         fontSize: 11,
-                        color: const Color(0xFF94A3B8),
+                        color: AppColors.neutralSubtle,
                       ),
                     ),
                     const SizedBox(width: 4),
@@ -613,7 +613,7 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
                                 style: GoogleFonts.plusJakartaSans(
                                   fontSize: 11,
                                   fontWeight: FontWeight.w700,
-                                  color: const Color(0xFF121C2A),
+                                  color: AppColors.neutral,
                                 ),
                               ),
                             ),
@@ -636,7 +636,7 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
             style: GoogleFonts.plusJakartaSans(
               fontSize: 16,
               fontWeight: FontWeight.w800,
-              color: const Color(0xFF121C2A),
+              color: AppColors.neutral,
             ),
           ),
           const SizedBox(height: 4),
@@ -646,7 +646,7 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
                 : 'Pesanan sedang diproses dalam jaringan rantai pasok LapakTani.',
             style: GoogleFonts.plusJakartaSans(
               fontSize: 12,
-              color: const Color(0xFF64748B),
+              color: AppColors.neutralMuted,
               height: 1.4,
             ),
           ),
@@ -659,9 +659,9 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: const Color(0xFFF0FDF4),
+        color: AppColors.primaryTint,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: const Color(0xFFBBF7D0)),
+        border: Border.all(color: AppColors.primaryBorder),
       ),
       child: Row(
         children: [
@@ -669,10 +669,10 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
             width: 36,
             height: 36,
             decoration: const BoxDecoration(
-              color: Color(0xFFDCFCE7),
+              color: AppColors.primaryTint,
               shape: BoxShape.circle,
             ),
-            child: const Icon(LucideIcons.thermometerSnowflake, size: 20, color: Color(0xFF059669)),
+            child: const Icon(LucideIcons.thermometerSnowflake, size: 20, color: AppColors.primary),
           ),
           const SizedBox(width: 12),
           Expanded(
@@ -681,19 +681,23 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
               children: [
                 Row(
                   children: [
-                    Text(
-                      'Suhu Terjaga: ${order.temperature}',
-                      style: GoogleFonts.plusJakartaSans(
-                        fontSize: 12,
-                        fontWeight: FontWeight.w700,
-                        color: const Color(0xFF065F46),
+                    Flexible(
+                      child: Text(
+                        'Suhu Terjaga: ${order.temperature}',
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: GoogleFonts.plusJakartaSans(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w700,
+                          color: AppColors.primaryDark,
+                        ),
                       ),
                     ),
                     const SizedBox(width: 6),
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
                       decoration: BoxDecoration(
-                        color: const Color(0xFF059669),
+                        color: AppColors.primary,
                         borderRadius: BorderRadius.circular(6),
                       ),
                       child: Text(
@@ -712,7 +716,7 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
                   'Sayuran dan panen terlindungi dari layu dengan insulated box dingin.',
                   style: GoogleFonts.plusJakartaSans(
                     fontSize: 10.5,
-                    color: const Color(0xFF047857),
+                    color: AppColors.primaryDark,
                   ),
                 ),
               ],
@@ -729,7 +733,7 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: const Color(0xFFE2E8F0)),
+        border: Border.all(color: AppColors.border),
       ),
       child: Row(
         children: [
@@ -737,10 +741,10 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
             width: 44,
             height: 44,
             decoration: BoxDecoration(
-              color: const Color(0xFFEFF6FF),
+              color: AppColors.secondaryTint,
               borderRadius: BorderRadius.circular(10),
             ),
-            child: const Icon(LucideIcons.truck, color: Color(0xFF2563EB), size: 22),
+            child: const Icon(LucideIcons.truck, color: AppColors.secondary, size: 22),
           ),
           const SizedBox(width: 12),
           Expanded(
@@ -752,14 +756,14 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
                   style: GoogleFonts.plusJakartaSans(
                     fontSize: 13.5,
                     fontWeight: FontWeight.w700,
-                    color: const Color(0xFF121C2A),
+                    color: AppColors.neutral,
                   ),
                 ),
                 Text(
                   '${order.courier.serviceName} • ${order.courier.vehicle}',
                   style: GoogleFonts.plusJakartaSans(
                     fontSize: 11,
-                    color: const Color(0xFF64748B),
+                    color: AppColors.neutralMuted,
                   ),
                 ),
               ],
@@ -781,7 +785,7 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: const Color(0xFFE2E8F0)),
+        border: Border.all(color: AppColors.border),
       ),
       child: Column(
         children: [
@@ -792,10 +796,10 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
                 width: 28,
                 height: 28,
                 decoration: const BoxDecoration(
-                  color: Color(0xFFDCFCE7),
+                  color: AppColors.primaryTint,
                   shape: BoxShape.circle,
                 ),
-                child: const Icon(LucideIcons.sprout, size: 14, color: Color(0xFF006E04)),
+                child: const Icon(LucideIcons.sprout, size: 14, color: AppColors.primary),
               ),
               const SizedBox(width: 10),
               Expanded(
@@ -806,7 +810,7 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
                       'Asal Kebun Petani',
                       style: GoogleFonts.plusJakartaSans(
                         fontSize: 10.5,
-                        color: const Color(0xFF94A3B8),
+                        color: AppColors.neutralSubtle,
                         fontWeight: FontWeight.w600,
                       ),
                     ),
@@ -815,14 +819,14 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
                       style: GoogleFonts.plusJakartaSans(
                         fontSize: 12.5,
                         fontWeight: FontWeight.w700,
-                        color: const Color(0xFF121C2A),
+                        color: AppColors.neutral,
                       ),
                     ),
                     Text(
                       order.sellerLocation,
                       style: GoogleFonts.plusJakartaSans(
                         fontSize: 11,
-                        color: const Color(0xFF64748B),
+                        color: AppColors.neutralMuted,
                       ),
                     ),
                   ],
@@ -837,7 +841,7 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
               child: Container(
                 width: 2,
                 height: 18,
-                color: const Color(0xFFE2E8F0),
+                color: AppColors.border,
               ),
             ),
           ),
@@ -848,10 +852,10 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
                 width: 28,
                 height: 28,
                 decoration: const BoxDecoration(
-                  color: Color(0xFFEFF6FF),
+                  color: AppColors.secondaryTint,
                   shape: BoxShape.circle,
                 ),
-                child: const Icon(LucideIcons.mapPin, size: 14, color: Color(0xFF2563EB)),
+                child: const Icon(LucideIcons.mapPin, size: 14, color: AppColors.secondary),
               ),
               const SizedBox(width: 10),
               Expanded(
@@ -862,7 +866,7 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
                       'Alamat Pengantaran Pembeli',
                       style: GoogleFonts.plusJakartaSans(
                         fontSize: 10.5,
-                        color: const Color(0xFF94A3B8),
+                        color: AppColors.neutralSubtle,
                         fontWeight: FontWeight.w600,
                       ),
                     ),
@@ -871,14 +875,14 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
                       style: GoogleFonts.plusJakartaSans(
                         fontSize: 12.5,
                         fontWeight: FontWeight.w700,
-                        color: const Color(0xFF121C2A),
+                        color: AppColors.neutral,
                       ),
                     ),
                     Text(
                       order.buyerAddress,
                       style: GoogleFonts.plusJakartaSans(
                         fontSize: 11,
-                        color: const Color(0xFF64748B),
+                        color: AppColors.neutralMuted,
                       ),
                     ),
                   ],
@@ -899,7 +903,7 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
         borderRadius: BorderRadius.circular(16),
         boxShadow: const [
           BoxShadow(
-            color: Color(0x08000000),
+            color: AppColors.shadowFaint,
             blurRadius: 8,
             offset: Offset(0, 2),
           ),
@@ -916,7 +920,7 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
                 style: GoogleFonts.plusJakartaSans(
                   fontSize: 14.5,
                   fontWeight: FontWeight.w700,
-                  color: const Color(0xFF121C2A),
+                  color: AppColors.neutral,
                 ),
               ),
               Text(
@@ -952,7 +956,7 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
                             shape: BoxShape.circle,
                             color: isLatest ? AppColors.primary : Colors.white,
                             border: Border.all(
-                              color: isLatest ? AppColors.primary : const Color(0xFF94A3B8),
+                              color: isLatest ? AppColors.primary : AppColors.neutralSubtle,
                               width: 2,
                             ),
                           ),
@@ -966,7 +970,7 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
                           Expanded(
                             child: Container(
                               width: 2,
-                              color: const Color(0xFFE2E8F0),
+                              color: AppColors.border,
                             ),
                           ),
                       ],
@@ -983,7 +987,7 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
                               style: GoogleFonts.plusJakartaSans(
                                 fontSize: 13,
                                 fontWeight: isLatest ? FontWeight.w700 : FontWeight.w600,
-                                color: isLatest ? AppColors.primary : const Color(0xFF121C2A),
+                                color: isLatest ? AppColors.primary : AppColors.neutral,
                               ),
                             ),
                             const SizedBox(height: 2),
@@ -991,7 +995,7 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
                               cp.description,
                               style: GoogleFonts.plusJakartaSans(
                                 fontSize: 11.5,
-                                color: const Color(0xFF475569),
+                                color: AppColors.neutralMuted,
                                 height: 1.35,
                               ),
                             ),
@@ -1002,7 +1006,7 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
                                   cp.timestamp,
                                   style: GoogleFonts.plusJakartaSans(
                                     fontSize: 10,
-                                    color: const Color(0xFF94A3B8),
+                                    color: AppColors.neutralSubtle,
                                   ),
                                 ),
                                 if (cp.location.isNotEmpty) ...[
@@ -1014,7 +1018,7 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
                                       overflow: TextOverflow.ellipsis,
                                       style: GoogleFonts.plusJakartaSans(
                                         fontSize: 10,
-                                        color: const Color(0xFF94A3B8),
+                                        color: AppColors.neutralSubtle,
                                       ),
                                     ),
                                   ),
@@ -1041,7 +1045,7 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: const Color(0xFFE2E8F0)),
+        border: Border.all(color: AppColors.border),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -1054,7 +1058,7 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
                 style: GoogleFonts.plusJakartaSans(
                   fontSize: 13,
                   fontWeight: FontWeight.w700,
-                  color: const Color(0xFF121C2A),
+                  color: AppColors.neutral,
                 ),
               ),
               Text(
@@ -1062,7 +1066,7 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
                 style: GoogleFonts.plusJakartaSans(
                   fontSize: 13,
                   fontWeight: FontWeight.w800,
-                  color: const Color(0xFF006E04),
+                  color: AppColors.primary,
                 ),
               ),
             ],
@@ -1077,7 +1081,7 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
                     width: 38,
                     height: 38,
                     decoration: BoxDecoration(
-                      color: const Color(0xFFF1F5F9),
+                      color: AppColors.surfaceCanvas,
                       borderRadius: BorderRadius.circular(8),
                     ),
                     clipBehavior: Clip.antiAlias,
@@ -1101,14 +1105,14 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
                           style: GoogleFonts.plusJakartaSans(
                             fontSize: 12,
                             fontWeight: FontWeight.w600,
-                            color: const Color(0xFF121C2A),
+                            color: AppColors.neutral,
                           ),
                         ),
                         Text(
                           '${item.qty} ${item.unit} • ${item.grade ?? 'Pilihan Petani'}',
                           style: GoogleFonts.plusJakartaSans(
                             fontSize: 10.5,
-                            color: const Color(0xFF64748B),
+                            color: AppColors.neutralMuted,
                           ),
                         ),
                       ],
@@ -1119,7 +1123,7 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
                     style: GoogleFonts.plusJakartaSans(
                       fontSize: 11.5,
                       fontWeight: FontWeight.w600,
-                      color: const Color(0xFF121C2A),
+                      color: AppColors.neutral,
                     ),
                   ),
                 ],
@@ -1140,7 +1144,7 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
           decoration: const BoxDecoration(
             color: Colors.white,
-            border: Border(top: BorderSide(color: Color(0xFFE2E8F0))),
+            border: Border(top: BorderSide(color: AppColors.border)),
           ),
           child: SizedBox(
             width: double.infinity,
@@ -1176,18 +1180,18 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
           decoration: const BoxDecoration(
             color: Colors.white,
-            border: Border(top: BorderSide(color: Color(0xFFE2E8F0))),
+            border: Border(top: BorderSide(color: AppColors.border)),
           ),
           child: Container(
             padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
             decoration: BoxDecoration(
-              color: const Color(0xFFEFF6FF),
+              color: AppColors.secondaryTint,
               borderRadius: BorderRadius.circular(10),
-              border: Border.all(color: const Color(0xFFBFDBFE)),
+              border: Border.all(color: AppColors.secondaryBorder),
             ),
             child: Row(
               children: [
-                const Icon(LucideIcons.packageCheck, size: 20, color: Color(0xFF2563EB)),
+                const Icon(LucideIcons.packageCheck, size: 20, color: AppColors.secondary),
                 const SizedBox(width: 10),
                 Expanded(
                   child: Column(
@@ -1199,14 +1203,14 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
                         style: GoogleFonts.plusJakartaSans(
                           fontSize: 13,
                           fontWeight: FontWeight.w700,
-                          color: const Color(0xFF1E40AF),
+                          color: AppColors.secondaryDark,
                         ),
                       ),
                       Text(
                         'Kurir logistik sedang mengantarkan pesanan panen ke pembeli.',
                         style: GoogleFonts.plusJakartaSans(
                           fontSize: 11,
-                          color: const Color(0xFF3B82F6),
+                          color: AppColors.secondary,
                         ),
                       ),
                     ],
@@ -1215,7 +1219,7 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
                 OutlinedButton(
                   onPressed: () => _showCourierContactModal(order.courier),
                   style: OutlinedButton.styleFrom(
-                    side: const BorderSide(color: Color(0xFF2563EB)),
+                    side: const BorderSide(color: AppColors.secondary),
                     padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
                     minimumSize: Size.zero,
                   ),
@@ -1224,7 +1228,7 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
                     style: GoogleFonts.plusJakartaSans(
                       fontSize: 11.5,
                       fontWeight: FontWeight.w700,
-                      color: const Color(0xFF2563EB),
+                      color: AppColors.secondary,
                     ),
                   ),
                 ),
@@ -1239,7 +1243,7 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
         decoration: const BoxDecoration(
           color: Colors.white,
-          border: Border(top: BorderSide(color: Color(0xFFE2E8F0))),
+          border: Border(top: BorderSide(color: AppColors.border)),
         ),
         child: Row(
           children: [
@@ -1271,7 +1275,7 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
                 child: ElevatedButton(
                   onPressed: () => Navigator.pop(context),
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFF0F172A),
+                    backgroundColor: AppColors.neutral,
                     foregroundColor: Colors.white,
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                   ),
@@ -1297,7 +1301,7 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
           decoration: const BoxDecoration(
             color: Colors.white,
-            border: Border(top: BorderSide(color: Color(0xFFE2E8F0))),
+            border: Border(top: BorderSide(color: AppColors.border)),
           ),
           child: SizedBox(
             width: double.infinity,

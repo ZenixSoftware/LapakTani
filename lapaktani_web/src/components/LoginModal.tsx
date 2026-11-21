@@ -70,21 +70,21 @@ export const LoginModal: React.FC<LoginModalProps> = ({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-in fade-in duration-200">
-      <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full border border-gray-100 overflow-hidden">
+      <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full border border-lt-surface-canvas overflow-hidden">
         {/* Header */}
-        <div className="bg-gradient-to-r from-[#0D5136] to-[#166534] p-6 text-white">
+        <div className="bg-lt-surface-card border-b border-lt-border border-l-4 border-l-lt-primary p-6">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2.5">
-              <div className="w-9 h-9 rounded-xl bg-white/10 flex items-center justify-center">
-                <span className="material-symbols-outlined text-[22px] text-emerald-300">
+              <div className="w-9 h-9 rounded-xl bg-lt-primary-tint text-lt-primary flex items-center justify-center">
+                <span className="material-symbols-outlined text-[22px]">
                   verified_user
                 </span>
               </div>
               <div>
-                <h3 className="font-extrabold text-[17px] tracking-tight text-white leading-tight">
+                <h3 className="font-extrabold text-[17px] tracking-tight text-lt-neutral leading-tight">
                   Portal Web Sumenep
                 </h3>
-                <p className="text-[12px] text-emerald-200">
+                <p className="text-[12px] text-lt-neutral-muted">
                   Penyuluh BPP, Dinas Pertanian &amp; Super Admin
                 </p>
               </div>
@@ -92,7 +92,7 @@ export const LoginModal: React.FC<LoginModalProps> = ({
             {onClose && (
               <button
                 onClick={onClose}
-                className="text-white/70 hover:text-white p-1 rounded-lg transition-colors"
+                className="text-lt-neutral-muted hover:text-lt-neutral p-1 rounded-lg transition-colors"
               >
                 <span className="material-symbols-outlined text-[20px]">close</span>
               </button>
@@ -104,7 +104,7 @@ export const LoginModal: React.FC<LoginModalProps> = ({
         <form onSubmit={handleSubmit} className="p-6 space-y-4">
           {/* Quick Role Switcher */}
           <div>
-            <span className="block text-[11px] font-bold text-gray-500 uppercase tracking-wider mb-1.5">
+            <span className="block text-[11px] font-bold text-lt-neutral-muted uppercase tracking-wider mb-1.5">
               Pilih Peran Demo Web Portal (6-Role Governance)
             </span>
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
@@ -117,12 +117,12 @@ export const LoginModal: React.FC<LoginModalProps> = ({
                     onClick={() => selectDemoRole(acc)}
                     className={`p-2.5 rounded-xl border text-left transition-all ${
                       active
-                        ? 'bg-emerald-50 border-[#166534] ring-2 ring-[#22C55E]/25'
-                        : 'bg-[#F8FAF9] border-[#E2E8F0] hover:border-gray-300'
+                        ? 'bg-lt-primary-tint border-lt-primary ring-2 ring-lt-primary/25'
+                        : 'bg-lt-surface-canvas border-lt-border hover:border-lt-neutral-border'
                     }`}
                   >
-                    <div className="text-[12px] font-extrabold text-[#0D5136]">{acc.label}</div>
-                    <div className="text-[10px] text-gray-500 leading-tight mt-0.5">{acc.sub}</div>
+                    <div className="text-[12px] font-extrabold text-lt-neutral">{acc.label}</div>
+                    <div className="text-[10px] text-lt-neutral-muted leading-tight mt-0.5">{acc.sub}</div>
                   </button>
                 );
               })}
@@ -130,18 +130,18 @@ export const LoginModal: React.FC<LoginModalProps> = ({
           </div>
 
           {errorMessage && (
-            <div className="p-3 rounded-xl bg-red-50 border border-red-200 text-red-700 text-[12px] font-semibold flex items-center gap-2">
+            <div className="p-3 rounded-xl bg-lt-error-tint border border-lt-error-border text-lt-error text-[12px] font-semibold flex items-center gap-2">
               <span className="material-symbols-outlined text-[18px]">error</span>
               <span>{errorMessage}</span>
             </div>
           )}
 
           <div>
-            <label className="block text-[12px] font-bold text-gray-700 uppercase tracking-wider mb-1">
+            <label className="block text-[12px] font-bold text-lt-neutral uppercase tracking-wider mb-1">
               Email Petugas / Instansi
             </label>
             <div className="relative">
-              <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-[18px]">
+              <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-lt-neutral-subtle text-[18px]">
                 mail
               </span>
               <input
@@ -150,17 +150,17 @@ export const LoginModal: React.FC<LoginModalProps> = ({
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="nama@lapaktani.id"
-                className="w-full pl-10 pr-3 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-[13px] text-gray-800 focus:bg-white focus:border-emerald-600 focus:ring-2 focus:ring-emerald-600/20 outline-none transition-all"
+                className="w-full pl-10 pr-3 py-2.5 bg-lt-surface-canvas border border-lt-border rounded-xl text-[13px] text-lt-neutral focus:bg-white focus:border-lt-primary focus:ring-2 focus:ring-lt-primary/20 outline-none transition-all"
               />
             </div>
           </div>
 
           <div>
-            <label className="block text-[12px] font-bold text-gray-700 uppercase tracking-wider mb-1">
+            <label className="block text-[12px] font-bold text-lt-neutral uppercase tracking-wider mb-1">
               Kata Sandi
             </label>
             <div className="relative">
-              <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-[18px]">
+              <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-lt-neutral-subtle text-[18px]">
                 lock
               </span>
               <input
@@ -169,12 +169,12 @@ export const LoginModal: React.FC<LoginModalProps> = ({
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="••••••••"
-                className="w-full pl-10 pr-3 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-[13px] text-gray-800 focus:bg-white focus:border-emerald-600 focus:ring-2 focus:ring-emerald-600/20 outline-none transition-all"
+                className="w-full pl-10 pr-3 py-2.5 bg-lt-surface-canvas border border-lt-border rounded-xl text-[13px] text-lt-neutral focus:bg-white focus:border-lt-primary focus:ring-2 focus:ring-lt-primary/20 outline-none transition-all"
               />
             </div>
           </div>
 
-          <div className="p-3 rounded-xl bg-emerald-50/60 border border-emerald-100 text-[11px] text-emerald-900 leading-relaxed space-y-1">
+          <div className="p-3 rounded-xl bg-lt-primary-tint/60 border border-lt-primary-tint text-[11px] text-lt-primary-dark leading-relaxed space-y-1">
             <div className="flex items-center justify-between font-mono">
               <span><strong>Penyuluh:</strong> penyuluh@lapaktani.id</span>
               <span>penyuluh123</span>
@@ -189,7 +189,7 @@ export const LoginModal: React.FC<LoginModalProps> = ({
             <button
               type="submit"
               disabled={isLoading}
-              className="w-full py-2.5 px-4 bg-[#166534] hover:bg-[#0D5136] text-white font-bold text-[13px] rounded-xl shadow-md shadow-emerald-900/20 transition-all flex items-center justify-center gap-2 disabled:opacity-50"
+              className="w-full py-2.5 px-4 bg-lt-primary hover:bg-lt-primary-dark text-white font-bold text-[13px] rounded-xl shadow-md transition-all flex items-center justify-center gap-2 disabled:opacity-50"
             >
               {isLoading ? (
                 <>

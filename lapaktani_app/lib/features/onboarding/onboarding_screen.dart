@@ -74,7 +74,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
       primaryBadgeColor: AppColors.primary,
       secondaryBadge: 'Hemat s/d 40%',
       secondaryBadgeIcon: LucideIcons.trendingDown,
-      secondaryBadgeColor: Color(0xFF16A34A),
+      secondaryBadgeColor: AppColors.primary,
       chips: ['100% Panen Lokal', 'Grade A Pilihan', 'Rantai Pasok Singkat'],
     ),
     OnboardingSlideData(
@@ -86,7 +86,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
           'https://lh3.googleusercontent.com/aida-public/AB6AXuDWJdQ052JOxGbNEEE0RHW1wg5i9HWybt2k5ROuEHVRa3eK5wyb8niTEW0_op8VS68PgJijfxxbMrJxcvgn3jPPcPlJKiZ0C-czLe3UQND_JLHIgyhPw2Yi0YKTb7Kh0P_mR6JHr_01D9c_lllgw2g5eHDejs1ieo7MIcArHWgAxlPyXCVnNLFdJW7pipmXy7bNAHEKkeaBurb7TPvE3Kb4QBT0PJxgWLinvekxoKIaDMx_NPIViQHr',
       primaryBadge: 'Express 2 Jam',
       primaryBadgeIcon: LucideIcons.zap,
-      primaryBadgeColor: Color(0xFFD97706),
+      primaryBadgeColor: AppColors.tertiaryText,
       secondaryBadge: 'Gratis Ongkir Rp0',
       secondaryBadgeIcon: LucideIcons.truck,
       secondaryBadgeColor: AppColors.primary,
@@ -104,7 +104,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
       primaryBadgeColor: AppColors.primary,
       secondaryBadge: 'Petani Mitra 4.9 ★',
       secondaryBadgeIcon: LucideIcons.star,
-      secondaryBadgeColor: Color(0xFFD97706),
+      secondaryBadgeColor: AppColors.tertiaryText,
       chips: ['Garansi Ganti Baru', '100% Panen Lokal', 'Petani Terverifikasi'],
     ),
   ];
@@ -147,7 +147,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
     final activeSlide = _slides[_currentPage];
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF4F7F4),
+      backgroundColor: AppColors.surfaceCanvas,
       body: SafeArea(
         child: Column(
           children: [
@@ -171,7 +171,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                               style: TextStyle(
                                 fontSize: 18,
                                 fontWeight: FontWeight.w900,
-                                color: Color(0xFF111827),
+                                color: AppColors.neutral,
                                 letterSpacing: -0.4,
                               ),
                             ),
@@ -196,7 +196,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                         horizontal: 14,
                         vertical: 6,
                       ),
-                      foregroundColor: const Color(0xFF4B5563),
+                      foregroundColor: AppColors.neutralMuted,
                     ),
                     child: const Text(
                       'Lewati',
@@ -272,7 +272,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                           style: const TextStyle(
                             fontSize: 22,
                             fontWeight: FontWeight.w800,
-                            color: Color(0xFF111827),
+                            color: AppColors.neutral,
                             height: 1.25,
                             letterSpacing: -0.3,
                           ),
@@ -285,7 +285,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                           style: const TextStyle(
                             fontSize: 14,
                             fontWeight: FontWeight.w400,
-                            color: Color(0xFF4B5563),
+                            color: AppColors.neutralMuted,
                             height: 1.45,
                           ),
                           maxLines: 3,
@@ -310,7 +310,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                         count: _slides.length,
                         effect: const ExpandingDotsEffect(
                           activeDotColor: AppColors.primary,
-                          dotColor: Color(0xFFE5E7EB),
+                          dotColor: AppColors.border,
                           dotHeight: 8,
                           dotWidth: 8,
                           expansionFactor: 3.5,
@@ -445,7 +445,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                         ),
                       ],
                       border: Border.all(
-                        color: const Color(0xFFE5E7EB),
+                        color: AppColors.border,
                         width: 1,
                       ),
                     ),
@@ -454,7 +454,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                       style: const TextStyle(
                         fontSize: 11,
                         fontWeight: FontWeight.w600,
-                        color: Color(0xFF374151),
+                        color: AppColors.neutral,
                       ),
                     ),
                   );
@@ -485,7 +485,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
           ),
         ],
         border: Border.all(
-          color: const Color(0xFFF3F4F6),
+          color: AppColors.surfaceCanvas,
           width: 1,
         ),
       ),
@@ -506,7 +506,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
             style: const TextStyle(
               fontSize: 12,
               fontWeight: FontWeight.w700,
-              color: Color(0xFF1F2937),
+              color: AppColors.neutral,
             ),
           ),
         ],
@@ -544,7 +544,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
               style: const TextStyle(
                 fontSize: 12,
                 fontWeight: FontWeight.w600,
-                color: Color(0xFF4B5563),
+                color: AppColors.neutralMuted,
               ),
             ),
           ],

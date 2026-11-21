@@ -123,7 +123,7 @@ class _SplashScreenState extends State<SplashScreen> {
                 shape: BoxShape.circle,
                 gradient: RadialGradient(
                   colors: [
-                    const Color(0xFFFEF08A).withValues(alpha: 0.12),
+                    AppColors.tertiaryTint.withValues(alpha: 0.12),
                     Colors.transparent,
                   ],
                 ),
@@ -156,7 +156,7 @@ class _SplashScreenState extends State<SplashScreen> {
                         style: TextStyle(
                           fontSize: 38,
                           fontWeight: FontWeight.w900,
-                          color: Color(0xFFFEF08A),
+                          color: AppColors.tertiaryTint,
                           letterSpacing: -0.6,
                         ),
                       ),
@@ -268,7 +268,7 @@ class _SplashScreenState extends State<SplashScreen> {
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(icon, size: 14, color: const Color(0xFFFEF08A)),
+          Icon(icon, size: 14, color: AppColors.tertiaryTint),
           const SizedBox(width: 6),
           Text(
             label,
