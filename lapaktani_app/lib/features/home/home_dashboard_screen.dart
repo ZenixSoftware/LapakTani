@@ -14,13 +14,11 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 import 'package:lucide_icons/lucide_icons.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 import '../../core/services/api_service.dart';
 import '../../core/services/user_session.dart';
 import '../../core/theme/app_colors.dart';
 import '../auth/auth_repository.dart';
 import '../auth/login_screen.dart';
-import '../auth/store_registration_screen.dart';
 import '../cart/cart_screen.dart';
 import '../buyer/screens/wholesale_detail_screen.dart';
 import '../order/order_history_screen.dart';
@@ -44,8 +42,6 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen> {
   List<Map<String, dynamic>> _b2bHarvestPools = [];
   bool _isLoading = true;
   bool _isLoadingB2BPools = false;
-  bool _hasFrozenStoreDraft = false;
-  String _frozenStoreName = 'Toko Mitra';
   final NumberFormat _currencyFormat = NumberFormat('#,###', 'id_ID');
 
   String _searchQuery = '';
@@ -179,38 +175,6 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen> {
     super.initState();
     fetchProducts();
     _fetchB2BHarvestPools();
-    _checkFrozenStoreApplication();
-  }
-
-  Future<void> _checkFrozenStoreApplication() async {
-    try {
-      final prefs = await SharedPreferences.getInstance();
-      bool hasFrozen = prefs.getBool('frozen_store_draft') ?? false;
-      String storeName = prefs.getString('frozen_store_name') ?? 'Toko Anda';
-
-      final token = await _apiService.getToken();
-      if (token != null && token.isNotEmpty) {
-        try {
-          final res = await _apiService.getMyStoreApplication();
-          final app = res['data'] is Map ? res['data']['application'] : null;
-          if (app is Map) {
-            final status = (app['status'] ?? '').toString().toUpperCase();
-            hasFrozen = status == 'DRAFT_FROZEN';
-            if (app['nama_toko'] != null) {
-              storeName = app['nama_toko'].toString();
-            }
-            await prefs.setBool('frozen_store_draft', hasFrozen);
-          }
-        } catch (_) {}
-      }
-
-      if (mounted) {
-        setState(() {
-          _hasFrozenStoreDraft = hasFrozen;
-          _frozenStoreName = storeName;
-        });
-      }
-    } catch (_) {}
   }
 
   Future<void> _fetchB2BHarvestPools() async {
@@ -618,66 +582,6 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    if (_hasFrozenStoreDraft)
-                      Container(
-                        margin: const EdgeInsets.fromLTRB(12, 10, 12, 2),
-                        padding: const EdgeInsets.all(12),
-                        decoration: BoxDecoration(
-                          color: AppColors.warningSoft,
-                          borderRadius: BorderRadius.circular(12),
-                          border: Border.all(
-                            color: AppColors.accent.withValues(alpha: 0.5),
-                          ),
-                        ),
-                        child: Row(
-                          children: [
-                            const Icon(
-                              LucideIcons.pauseCircle,
-                              size: 20,
-                              color: AppColors.warning,
-                            ),
-                            const SizedBox(width: 10),
-                            Expanded(
-                              child: Text(
-                                'Pengajuan toko "$_frozenStoreName" dibekukan (Draft). Lanjutkan kapan saja.',
-                                style: GoogleFonts.inter(
-                                  fontSize: 11.5,
-                                  fontWeight: FontWeight.w700,
-                                  color: AppColors.textPrimary,
-                                ),
-                              ),
-                            ),
-                            const SizedBox(width: 8),
-                            ElevatedButton(
-                              onPressed: () {
-                                Navigator.push(
-                                  context,
-                                  MaterialPageRoute(
-                                    builder: (_) =>
-                                        const StoreRegistrationScreen(),
-                                  ),
-                                ).then((_) => _checkFrozenStoreApplication());
-                              },
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: AppColors.primary,
-                                foregroundColor: Colors.white,
-                                elevation: 0,
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 10,
-                                  vertical: 6,
-                                ),
-                              ),
-                              child: Text(
-                                'Lanjutkan',
-                                style: GoogleFonts.inter(
-                                  fontSize: 11,
-                                  fontWeight: FontWeight.w700,
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
                     _buildQuickActionServices(),
                     _buildRecentlyViewedSection(),
                     _buildCategoryTabBar(),

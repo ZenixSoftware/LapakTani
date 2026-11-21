@@ -503,9 +503,11 @@ export interface StoreApplicationRecord {
   id: string;
   user_id: string;
   nama_toko: string;
-  tipe_pengelola: 'POKTAN' | 'KOPERASI' | 'PENGEPUL_DESA';
+  admin_tier?: 'B2B_OFFTAKER' | 'RETAIL_MERCHANT' | string;
+  tipe_pengelola: 'POKTAN' | 'KOPERASI' | 'PENGEPUL_DESA' | 'PEDAGANG_PASAR' | 'WARUNG_SEMBAKO' | string;
   nik?: string | null;
   no_hp?: string | null;
+  kapasitas_gudang_kg?: number | null;
   village_id: number;
   village_name: string;
   resolved_village_name?: string;
@@ -514,6 +516,8 @@ export interface StoreApplicationRecord {
   dokumen_syarat_url?: string | null;
   default_min_wholesale_kg: number;
   status: 'DRAFT_FROZEN' | 'PENDING_PPL' | 'APPROVED' | 'REJECTED';
+  b2b_status?: 'NONE' | 'PENDING_PPL' | 'APPROVED' | 'REJECTED';
+  is_b2b_verified?: boolean | number;
   rejection_reason?: string | null;
   applicant_name?: string | null;
   applicant_email?: string | null;
@@ -651,22 +655,24 @@ export const fetchStoreApplications = async (): Promise<{
   };
 };
 
-export const verifyStoreApplication = async (
+export const verifyB2BUpgrade = async (
   id: string,
   status: 'APPROVED' | 'REJECTED',
   rejection_reason?: string
 ): Promise<StoreApplicationRecord> => {
-  const response = await authFetch(`${API_BASE_URL}/penyuluh/store-applications/${id}/verify`, {
+  const response = await authFetch(`${API_BASE_URL}/penyuluh/stores/${id}/verify-b2b`, {
     method: 'PUT',
     body: JSON.stringify({ status, rejection_reason }),
   });
   if (!response.ok) {
     const err = await response.json().catch(() => ({}));
-    throw new Error(err.message || `Gagal memverifikasi toko (${response.status})`);
+    throw new Error(err.message || `Gagal memverifikasi upgrade Penjual B2B (${response.status})`);
   }
   const result = await response.json();
   return result.data as StoreApplicationRecord;
 };
+
+export const verifyStoreApplication = verifyB2BUpgrade;
 
 export const updateVillageStoreQuota = async (payload: {
   village_id: number;

@@ -49,6 +49,7 @@ router.post(
 // Store approval, village store quota, scoped forums & village fertilizer coordination
 router.get('/store-applications', requireRole('penyuluh', 'dinas'), agroController.getStoreApplicationsForPpl);
 router.put('/store-applications/:id/verify', requireRole('penyuluh'), agroController.verifyStoreApplication);
+router.put('/stores/:id/verify-b2b', requireRole('penyuluh'), agroController.verifyB2BUpgrade);
 router.put('/village-store-quota', requireRole('penyuluh'), agroController.updateVillageStoreQuota);
 
 router.get('/inter-ppl-forum', requireRole('penyuluh', 'dinas'), agroController.getInterPplForum);

@@ -41,10 +41,15 @@ class _MitraStoreCatalogScreenState extends State<MitraStoreCatalogScreen>
   late TabController _tabController;
   bool _isLoading = true;
   bool _isStoreOpen = true;
-  String _storeName = 'Koperasi Tani Sumber Lestari';
-  String _adminTier = 'B2B_OFFTAKER';
+  String _storeName = 'Toko Mitra Tani';
+  String _adminTier = 'RETAIL_MERCHANT';
+  bool _isB2bVerified = false;
+  String _b2bStatus = 'NONE';
   int _defaultMinWholesaleKg = 30;
-  String _storeBanner = 'Promo Panen Raya Hemat s/d 15% & Harga Partai B2B';
+  String _storeBanner = 'Promo Panen Raya Hemat s/d 15%';
+
+  bool get _canAccessB2b =>
+      _isB2bVerified || _adminTier == 'B2B_OFFTAKER';
 
   List<dynamic> _retailProducts = [];
   List<Map<String, dynamic>> _harvestPools = [];
@@ -109,13 +114,29 @@ class _MitraStoreCatalogScreenState extends State<MitraStoreCatalogScreen>
       final b2bLots = results[5] as List<Map<String, dynamic>>;
       final b2bBids = results[6] as List<Map<String, dynamic>>;
 
-      final storeApp = storeRes['data'] is Map ? storeRes['data']['application'] : null;
+      final dataMap = storeRes['data'] is Map
+          ? Map<String, dynamic>.from(storeRes['data'] as Map)
+          : <String, dynamic>{};
+      final storeApp = dataMap['application'];
+      bool nextIsB2b = dataMap['is_b2b_verified'] == true ||
+          dataMap['is_b2b_verified'] == 1 ||
+          dataMap['admin_tier']?.toString() == 'B2B_OFFTAKER';
+      String nextB2bStatus = dataMap['b2b_status']?.toString() ?? 'NONE';
+
       if (storeApp is Map) {
         if (storeApp['nama_toko'] != null) {
           _storeName = storeApp['nama_toko'].toString();
         }
         if (storeApp['admin_tier'] != null) {
           _adminTier = storeApp['admin_tier'].toString();
+        }
+        if (storeApp['is_b2b_verified'] == true ||
+            storeApp['is_b2b_verified'] == 1 ||
+            storeApp['admin_tier']?.toString() == 'B2B_OFFTAKER') {
+          nextIsB2b = true;
+        }
+        if (storeApp['b2b_status'] != null) {
+          nextB2bStatus = storeApp['b2b_status'].toString();
         }
         if (storeApp['default_min_wholesale_kg'] != null) {
           _defaultMinWholesaleKg =
@@ -130,10 +151,17 @@ class _MitraStoreCatalogScreenState extends State<MitraStoreCatalogScreen>
               storeApp['is_store_open'] == true;
         }
       }
-      if (AuthRepository().currentUser?.adminTier != null &&
-          AuthRepository().currentUser!.adminTier!.isNotEmpty) {
-        _adminTier = AuthRepository().currentUser!.adminTier!;
+      final currentUser = AuthRepository().currentUser;
+      if (currentUser?.adminTier != null &&
+          currentUser!.adminTier!.isNotEmpty) {
+        _adminTier = currentUser.adminTier!;
+        if (_adminTier == 'B2B_OFFTAKER') nextIsB2b = true;
       }
+      if (currentUser?.isB2bVerified == true) {
+        nextIsB2b = true;
+      }
+      _isB2bVerified = nextIsB2b;
+      _b2bStatus = nextIsB2b ? 'APPROVED' : nextB2bStatus;
 
       if (!mounted) return;
       setState(() {
@@ -298,69 +326,347 @@ class _MitraStoreCatalogScreenState extends State<MitraStoreCatalogScreen>
                 child: const Icon(LucideIcons.shoppingBag, color: AppColors.primary),
               ),
               title: Text(
-                'Tambah Produk (Retail, Diskon & Partai B2B)',
+                _canAccessB2b
+                    ? 'Tambah Produk (Retail, Diskon & Partai B2B)'
+                    : 'Tambah Produk Retail',
                 style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w700, fontSize: 14),
               ),
               subtitle: Text(
-                'Atur harga normal, promo diskon %, batas minimal Partai (kg) & harga grosir.',
+                _canAccessB2b
+                    ? 'Atur harga normal, promo diskon %, batas minimal Partai (kg) & harga grosir.'
+                    : 'Atur harga jual eceran, stok & promo diskon toko Anda.',
                 style: GoogleFonts.plusJakartaSans(fontSize: 11.5, color: AppColors.neutralMuted),
               ),
               trailing: const Icon(LucideIcons.chevronRight, size: 18),
             ),
-            const Divider(height: 16),
-            ListTile(
-              onTap: () {
-                Navigator.pop(ctx);
-                _showWalkInPurchaseModal();
-              },
-              leading: Container(
-                padding: const EdgeInsets.all(10),
-                decoration: BoxDecoration(
-                  color: AppColors.infoSoft,
-                  borderRadius: BorderRadius.circular(12),
+            if (_canAccessB2b) ...[
+              const Divider(height: 16),
+              ListTile(
+                onTap: () {
+                  Navigator.pop(ctx);
+                  _showWalkInPurchaseModal();
+                },
+                leading: Container(
+                  padding: const EdgeInsets.all(10),
+                  decoration: BoxDecoration(
+                    color: AppColors.infoSoft,
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: const Icon(LucideIcons.scale, color: AppColors.info),
                 ),
-                child: const Icon(LucideIcons.scale, color: AppColors.info),
-              ),
-              title: Text(
-                'Input Beli Petani Tradisional (Walk-in)',
-                style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w700, fontSize: 14),
-              ),
-              subtitle: Text(
-                'Catat pembelian hasil panen petani langsung di toko tanpa aplikasi.',
-                style: GoogleFonts.plusJakartaSans(fontSize: 11.5, color: AppColors.neutralMuted),
-              ),
-              trailing: const Icon(LucideIcons.chevronRight, size: 18),
-            ),
-            const Divider(height: 16),
-            ListTile(
-              onTap: () {
-                Navigator.pop(ctx);
-                CreateWholesalePoolSheet.show(
-                  context,
-                  mitraName: _storeName,
-                  onCreated: _loadCatalog,
-                );
-              },
-              leading: Container(
-                padding: const EdgeInsets.all(10),
-                decoration: BoxDecoration(
-                  color: AppColors.tertiaryTint,
-                  borderRadius: BorderRadius.circular(12),
+                title: Text(
+                  'Input Beli Petani Tradisional (Walk-in)',
+                  style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w700, fontSize: 14),
                 ),
-                child: const Icon(LucideIcons.layers, color: AppColors.tertiaryText),
+                subtitle: Text(
+                  'Catat pembelian hasil panen petani langsung di toko tanpa aplikasi.',
+                  style: GoogleFonts.plusJakartaSans(fontSize: 11.5, color: AppColors.neutralMuted),
+                ),
+                trailing: const Icon(LucideIcons.chevronRight, size: 18),
               ),
-              title: Text(
-                'Buka Penawaran Partai (B2B)',
-                style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w700, fontSize: 14),
+              const Divider(height: 16),
+              ListTile(
+                onTap: () {
+                  Navigator.pop(ctx);
+                  CreateWholesalePoolSheet.show(
+                    context,
+                    mitraName: _storeName,
+                    onCreated: _loadCatalog,
+                  );
+                },
+                leading: Container(
+                  padding: const EdgeInsets.all(10),
+                  decoration: BoxDecoration(
+                    color: AppColors.tertiaryTint,
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: const Icon(LucideIcons.layers, color: AppColors.tertiaryText),
+                ),
+                title: Text(
+                  'Buka Penawaran Partai (B2B)',
+                  style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w700, fontSize: 14),
+                ),
+                subtitle: Text(
+                  'Buka bursa forward pool hasil konsolidasi panen borongan skala besar.',
+                  style: GoogleFonts.plusJakartaSans(fontSize: 11.5, color: AppColors.neutralMuted),
+                ),
+                trailing: const Icon(LucideIcons.chevronRight, size: 18),
               ),
-              subtitle: Text(
-                'Buka bursa forward pool hasil konsolidasi panen borongan skala besar.',
-                style: GoogleFonts.plusJakartaSans(fontSize: 11.5, color: AppColors.neutralMuted),
+            ] else ...[
+              const Divider(height: 16),
+              ListTile(
+                onTap: () {
+                  Navigator.pop(ctx);
+                  _showB2BUpgradeModal();
+                },
+                leading: Container(
+                  padding: const EdgeInsets.all(10),
+                  decoration: BoxDecoration(
+                    color: AppColors.tertiaryTint,
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: const Icon(LucideIcons.badgeCheck, color: AppColors.tertiaryText),
+                ),
+                title: Text(
+                  'Upgrade ke Penjual B2B',
+                  style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w700, fontSize: 14),
+                ),
+                subtitle: Text(
+                  _b2bStatus == 'PENDING_PPL'
+                      ? 'Pengajuan upgrade B2B Anda sedang ditinjau Penyuluh BPP.'
+                      : 'Buka serapan langsung panen Petani & penjualan Lot Partai B2B.',
+                  style: GoogleFonts.plusJakartaSans(fontSize: 11.5, color: AppColors.neutralMuted),
+                ),
+                trailing: const Icon(LucideIcons.chevronRight, size: 18),
               ),
-              trailing: const Icon(LucideIcons.chevronRight, size: 18),
-            ),
+            ],
             const SizedBox(height: 12),
           ],
+        ),
+      ),
+    );
+  }
+
+  void _showB2BUpgradeModal() {
+    final nikCtrl = TextEditingController();
+    final phoneCtrl = TextEditingController();
+    final capCtrl = TextEditingController(text: '2000');
+    final docCtrl = TextEditingController(
+      text: 'uploads/docs/sk_poktan_izin_b2b.pdf',
+    );
+    String managerType = 'POKTAN';
+    bool submitting = false;
+
+    showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.white,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(22)),
+      ),
+      builder: (ctx) => StatefulBuilder(
+        builder: (ctx, setModalState) => Padding(
+          padding: EdgeInsets.only(
+            left: 20,
+            right: 20,
+            top: 20,
+            bottom: MediaQuery.of(ctx).viewInsets.bottom + 20,
+          ),
+          child: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Ajukan Upgrade ke Penjual B2B',
+                  style: GoogleFonts.plusJakartaSans(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w800,
+                    color: AppColors.neutral,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  'Setelah diverifikasi Penyuluh BPP, toko Anda dapat menyerap panen petani & menjual Lot Partai B2B.',
+                  style: GoogleFonts.plusJakartaSans(
+                    fontSize: 12,
+                    color: AppColors.neutralMuted,
+                  ),
+                ),
+                const SizedBox(height: 14),
+                DropdownButtonFormField<String>(
+                  initialValue: managerType,
+                  decoration: const InputDecoration(
+                    labelText: 'Jenis Usaha / Pengelola B2B',
+                    border: OutlineInputBorder(),
+                  ),
+                  items: const [
+                    DropdownMenuItem(value: 'POKTAN', child: Text('Kelompok Tani (Poktan)')),
+                    DropdownMenuItem(value: 'KOPERASI', child: Text('Koperasi Tani')),
+                    DropdownMenuItem(value: 'PENGEPUL_DESA', child: Text('Pengepul / Gudang Desa')),
+                  ],
+                  onChanged: (v) {
+                    if (v != null) setModalState(() => managerType = v);
+                  },
+                ),
+                const SizedBox(height: 10),
+                TextField(
+                  controller: nikCtrl,
+                  keyboardType: TextInputType.number,
+                  decoration: const InputDecoration(
+                    labelText: 'NIK KTP 16 Digit (Opsional)',
+                    hintText: 'Contoh: 3529172207880003',
+                    border: OutlineInputBorder(),
+                  ),
+                ),
+                const SizedBox(height: 10),
+                TextField(
+                  controller: phoneCtrl,
+                  keyboardType: TextInputType.phone,
+                  decoration: const InputDecoration(
+                    labelText: 'Nomor HP / WhatsApp Aktif',
+                    hintText: 'Contoh: 081357902468',
+                    border: OutlineInputBorder(),
+                  ),
+                ),
+                const SizedBox(height: 10),
+                TextField(
+                  controller: capCtrl,
+                  keyboardType: TextInputType.number,
+                  decoration: const InputDecoration(
+                    labelText: 'Kapasitas Gudang Penyimpanan (kg)',
+                    border: OutlineInputBorder(),
+                  ),
+                ),
+                const SizedBox(height: 10),
+                TextField(
+                  controller: docCtrl,
+                  decoration: const InputDecoration(
+                    labelText: 'Nomor / Tautan SK Poktan / Izin Usaha',
+                    border: OutlineInputBorder(),
+                  ),
+                ),
+                const SizedBox(height: 16),
+                SizedBox(
+                  width: double.infinity,
+                  height: 46,
+                  child: ElevatedButton(
+                    onPressed: submitting
+                        ? null
+                        : () async {
+                            final cap = int.tryParse(capCtrl.text.trim()) ?? 0;
+                            if (cap <= 0) {
+                              ScaffoldMessenger.of(ctx).showSnackBar(
+                                const SnackBar(
+                                  content: Text('Masukkan kapasitas gudang (kg) yang valid.'),
+                                  backgroundColor: AppColors.error,
+                                ),
+                              );
+                              return;
+                            }
+                            setModalState(() => submitting = true);
+                            try {
+                              final res = await _apiService.requestB2BUpgrade({
+                                'tipe_pengelola': managerType,
+                                if (nikCtrl.text.trim().isNotEmpty) 'nik': nikCtrl.text.trim(),
+                                if (phoneCtrl.text.trim().isNotEmpty) 'no_hp': phoneCtrl.text.trim(),
+                                'kapasitas_gudang_kg': cap,
+                                'sk_poktan_url': docCtrl.text.trim(),
+                              });
+                              if (ctx.mounted) Navigator.pop(ctx);
+                              if (!mounted) return;
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                  content: Text(
+                                    res['message']?.toString() ??
+                                        'Pengajuan upgrade Penjual B2B dikirim ke Penyuluh!',
+                                  ),
+                                  backgroundColor: AppColors.primary,
+                                ),
+                              );
+                              await _loadCatalog();
+                            } catch (e) {
+                              setModalState(() => submitting = false);
+                              if (ctx.mounted) {
+                                ScaffoldMessenger.of(ctx).showSnackBar(
+                                  SnackBar(
+                                    content: Text('Gagal: $e'),
+                                    backgroundColor: AppColors.error,
+                                  ),
+                                );
+                              }
+                            }
+                          },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppColors.primary,
+                      foregroundColor: Colors.white,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                    ),
+                    child: Text(
+                      submitting ? 'Mengirim Pengajuan...' : 'Kirim Pengajuan Upgrade B2B',
+                      style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w800),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildB2BLockedCard(String featureTitle) {
+    final bool isPending = _b2bStatus == 'PENDING_PPL';
+    return Center(
+      child: SingleChildScrollView(
+        padding: const EdgeInsets.all(20),
+        child: Container(
+          padding: const EdgeInsets.all(20),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: AppColors.border),
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                padding: const EdgeInsets.all(14),
+                decoration: BoxDecoration(
+                  color: isPending ? AppColors.primaryTint : AppColors.tertiaryTint,
+                  shape: BoxShape.circle,
+                ),
+                child: Icon(
+                  isPending ? LucideIcons.clock : LucideIcons.lock,
+                  size: 28,
+                  color: isPending ? AppColors.primaryDark : AppColors.tertiaryText,
+                ),
+              ),
+              const SizedBox(height: 14),
+              Text(
+                '$featureTitle — Khusus Penjual B2B',
+                textAlign: TextAlign.center,
+                style: GoogleFonts.plusJakartaSans(
+                  fontSize: 15,
+                  fontWeight: FontWeight.w800,
+                  color: AppColors.neutral,
+                ),
+              ),
+              const SizedBox(height: 6),
+              Text(
+                isPending
+                    ? 'Pengajuan upgrade Penjual B2B Anda sedang diperiksa oleh Penyuluh BPP. Etalase Retail Anda tetap berjalan normal.'
+                    : 'Akun Anda saat ini berstatus Penjual Retail. Ajukan verifikasi SK Poktan & kapasitas gudang untuk membuka fitur ini.',
+                textAlign: TextAlign.center,
+                style: GoogleFonts.plusJakartaSans(
+                  fontSize: 12,
+                  color: AppColors.neutralMuted,
+                  height: 1.45,
+                ),
+              ),
+              const SizedBox(height: 16),
+              if (!isPending)
+                ElevatedButton.icon(
+                  onPressed: _showB2BUpgradeModal,
+                  icon: const Icon(LucideIcons.badgeCheck, size: 16),
+                  label: Text(
+                    'Ajukan Upgrade ke Penjual B2B',
+                    style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w800),
+                  ),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.primary,
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
+                ),
+            ],
+          ),
         ),
       ),
     );
@@ -821,21 +1127,21 @@ class _MitraStoreCatalogScreenState extends State<MitraStoreCatalogScreen>
                           Container(
                             padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
                             decoration: BoxDecoration(
-                              color: _adminTier == 'RETAIL_MERCHANT'
-                                  ? AppColors.tertiaryTint
-                                  : AppColors.primaryTint,
+                              color: _canAccessB2b
+                                  ? AppColors.primaryTint
+                                  : AppColors.tertiaryTint,
                               borderRadius: BorderRadius.circular(6),
                             ),
                             child: Text(
-                              _adminTier == 'RETAIL_MERCHANT'
-                                  ? 'Retail Merchant Auto-KYC'
-                                  : 'B2B Offtaker / Koperasi',
+                              _canAccessB2b
+                                  ? 'Penjual B2B Terverifikasi'
+                                  : 'Penjual Retail',
                               style: GoogleFonts.plusJakartaSans(
                                 fontSize: 10,
                                 fontWeight: FontWeight.w800,
-                                color: _adminTier == 'RETAIL_MERCHANT'
-                                    ? AppColors.tertiaryText
-                                    : AppColors.primaryDark,
+                                color: _canAccessB2b
+                                    ? AppColors.primaryDark
+                                    : AppColors.tertiaryText,
                               ),
                             ),
                           ),
@@ -882,6 +1188,100 @@ class _MitraStoreCatalogScreenState extends State<MitraStoreCatalogScreen>
               ],
             ),
           ),
+
+          if (!_canAccessB2b)
+            Container(
+              width: double.infinity,
+              margin: const EdgeInsets.fromLTRB(12, 10, 12, 4),
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 11),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(
+                  color: _b2bStatus == 'PENDING_PPL'
+                      ? AppColors.primaryBorder
+                      : AppColors.tertiaryBorder,
+                ),
+              ),
+              child: Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: _b2bStatus == 'PENDING_PPL'
+                          ? AppColors.primaryTint
+                          : AppColors.tertiaryTint,
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: Icon(
+                      _b2bStatus == 'PENDING_PPL'
+                          ? LucideIcons.clock
+                          : LucideIcons.badgeCheck,
+                      size: 18,
+                      color: _b2bStatus == 'PENDING_PPL'
+                          ? AppColors.primaryDark
+                          : AppColors.tertiaryText,
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          _b2bStatus == 'PENDING_PPL'
+                              ? 'Upgrade Penjual B2B Sedang Diverifikasi PPL'
+                              : _b2bStatus == 'REJECTED'
+                                  ? 'Pengajuan B2B Ditolak — Ajukan Ulang'
+                                  : 'Upgrade ke Penjual B2B',
+                          style: GoogleFonts.plusJakartaSans(
+                            fontSize: 12.5,
+                            fontWeight: FontWeight.w800,
+                            color: AppColors.neutral,
+                          ),
+                        ),
+                        const SizedBox(height: 2),
+                        Text(
+                          _b2bStatus == 'PENDING_PPL'
+                              ? 'Menunggu verifikasi SK Poktan/izin & gudang oleh Penyuluh.'
+                              : 'Buka serapan langsung panen Petani & jualan Lot Partai B2B.',
+                          style: GoogleFonts.plusJakartaSans(
+                            fontSize: 11,
+                            color: AppColors.neutralMuted,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  if (_b2bStatus != 'PENDING_PPL')
+                    ElevatedButton(
+                      onPressed: _showB2BUpgradeModal,
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppColors.primary,
+                        foregroundColor: Colors.white,
+                        elevation: 0,
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 12,
+                          vertical: 8,
+                        ),
+                        minimumSize: Size.zero,
+                        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                      ),
+                      child: Text(
+                        'Upgrade B2B',
+                        style: GoogleFonts.plusJakartaSans(
+                          fontSize: 11.5,
+                          fontWeight: FontWeight.w800,
+                        ),
+                      ),
+                    ),
+                ],
+              ),
+            ),
 
           // Tab Bar
           Container(
@@ -1081,7 +1481,7 @@ class _MitraStoreCatalogScreenState extends State<MitraStoreCatalogScreen>
                         color: AppColors.neutralMuted,
                       ),
                     ),
-                    if (_adminTier != 'RETAIL_MERCHANT' &&
+                    if (_canAccessB2b &&
                         stock > 0 &&
                         (item['catalog_channel']?.toString() == 'B2B_BID_LOT' ||
                             item['catalog_channel']?.toString() == 'BOTH'))
@@ -1227,270 +1627,11 @@ class _MitraStoreCatalogScreenState extends State<MitraStoreCatalogScreen>
     }
   }
 
-  void _showPlaceB2BBidModal(Map<String, dynamic> lot) {
-    final stockKg = _toDouble(lot['stock_kg'] ?? lot['stock'], 100);
-    final wholesalePrice = _toDouble(
-      lot['wholesale_price'],
-      _toDouble(lot['price_per_kg'] ?? lot['price'], 20000),
-    );
-    final minQty = _toDouble(lot['min_wholesale_qty'], 20);
-    final qtyCtrl = TextEditingController(
-      text: minQty.clamp(1, stockKg > 0 ? stockKg : 1000).toStringAsFixed(0),
-    );
-    final priceCtrl = TextEditingController(text: wholesalePrice.toStringAsFixed(0));
-    String fulfillment = 'DIANTAR_PENJUAL';
-    bool payNow = false;
-    bool sending = false;
-
-    showModalBottomSheet<void>(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.white,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-      ),
-      builder: (ctx) => StatefulBuilder(
-        builder: (ctx, setModalState) => Padding(
-          padding: EdgeInsets.only(
-            left: 20,
-            right: 20,
-            top: 20,
-            bottom: MediaQuery.of(ctx).viewInsets.bottom + 20,
-          ),
-          child: SingleChildScrollView(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'Ajukan Tawaran Lot B2B: ${lot['title'] ?? 'Lot Komoditas'}',
-                  style: GoogleFonts.plusJakartaSans(
-                    fontSize: 15,
-                    fontWeight: FontWeight.w800,
-                  ),
-                ),
-                const SizedBox(height: 10),
-                Row(
-                  children: [
-                    Expanded(
-                      child: TextField(
-                        controller: qtyCtrl,
-                        keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                        decoration: const InputDecoration(
-                          labelText: 'Qty Lot (kg)',
-                          border: OutlineInputBorder(),
-                        ),
-                      ),
-                    ),
-                    const SizedBox(width: 8),
-                    Expanded(
-                      child: TextField(
-                        controller: priceCtrl,
-                        keyboardType: TextInputType.number,
-                        decoration: const InputDecoration(
-                          labelText: 'Harga Tawar (Rp/kg)',
-                          border: OutlineInputBorder(),
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 10),
-                DropdownButtonFormField<String>(
-                  initialValue: fulfillment,
-                  decoration: const InputDecoration(
-                    labelText: 'Metode Serah Terima B2B',
-                    border: OutlineInputBorder(),
-                  ),
-                  items: const [
-                    DropdownMenuItem(
-                      value: 'DIANTAR_PENJUAL',
-                      child: Text('Diantar Penjual (Delivery Gudang/Toko)'),
-                    ),
-                    DropdownMenuItem(
-                      value: 'DIAMBIL_SENDIRI',
-                      child: Text('Diambil Sendiri (Self-Pickup)'),
-                    ),
-                  ],
-                  onChanged: (v) {
-                    if (v != null) setModalState(() => fulfillment = v);
-                  },
-                ),
-                const SizedBox(height: 8),
-                SwitchListTile(
-                  contentPadding: EdgeInsets.zero,
-                  value: payNow,
-                  activeThumbColor: AppColors.primary,
-                  title: Text(
-                    'Bayar Escrow Langsung (PAID_ESCROW)',
-                    style: GoogleFonts.plusJakartaSans(
-                      fontSize: 12.5,
-                      fontWeight: FontWeight.w700,
-                    ),
-                  ),
-                  subtitle: Text(
-                    'Mengunci stok lot dan membuka identitas petani sumber panen secara otomatis.',
-                    style: GoogleFonts.plusJakartaSans(fontSize: 11),
-                  ),
-                  onChanged: (v) => setModalState(() => payNow = v),
-                ),
-                const SizedBox(height: 12),
-                SizedBox(
-                  width: double.infinity,
-                  height: 46,
-                  child: ElevatedButton(
-                    onPressed: sending
-                        ? null
-                        : () async {
-                            final q = double.tryParse(qtyCtrl.text.trim()) ?? 0;
-                            final p = double.tryParse(priceCtrl.text.trim());
-                            if (q <= 0) return;
-                            setModalState(() => sending = true);
-                            try {
-                              final res = await _apiService.placeB2BLotBid(
-                                lot['id'].toString(),
-                                bidQtyKg: q,
-                                bidPricePerKg: p,
-                                fulfillmentMethod: fulfillment,
-                                payImmediately: payNow,
-                              );
-                              if (ctx.mounted) Navigator.pop(ctx);
-                              if (!mounted) return;
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                SnackBar(
-                                  content: Text(
-                                    res['message']?.toString() ??
-                                        'Tawaran lot B2B berhasil dikirim!',
-                                  ),
-                                  backgroundColor: AppColors.primary,
-                                ),
-                              );
-                              await _loadCatalog();
-                            } catch (e) {
-                              setModalState(() => sending = false);
-                              if (ctx.mounted) {
-                                ScaffoldMessenger.of(ctx).showSnackBar(
-                                  SnackBar(
-                                    content: Text('Gagal: $e'),
-                                    backgroundColor: AppColors.error,
-                                  ),
-                                );
-                              }
-                            }
-                          },
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: AppColors.primary,
-                      foregroundColor: Colors.white,
-                    ),
-                    child: Text(
-                      sending ? 'Mengirim...' : 'Kirim Tawaran Lot B2B',
-                      style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w700),
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-
-  void _showRestockToRetailModal(Map<String, dynamic> bid) {
-    final unitBuy = _toDouble(bid['bid_price_per_kg'], 20000);
-    final suggestedRetail = (unitBuy * 1.18).roundToDouble();
-    final priceCtrl = TextEditingController(text: suggestedRetail.toStringAsFixed(0));
-    final discCtrl = TextEditingController(text: '5');
-    bool saving = false;
-
-    showDialog<void>(
-      context: context,
-      builder: (ctx) => StatefulBuilder(
-        builder: (ctx, setDlgState) => AlertDialog(
-          title: Text(
-            '1-Click Restock ke Toko Retail Saya',
-            style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w800, fontSize: 15),
-          ),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Text(
-                'Lot ${bid['bid_qty_kg']} kg (${bid['product_title'] ?? 'Komoditas'}) akan disinkronkan ke katalog retail toko Anda dengan jejak sumber petani yang tetap terjaga.',
-                style: GoogleFonts.plusJakartaSans(fontSize: 12),
-              ),
-              const SizedBox(height: 12),
-              TextField(
-                controller: priceCtrl,
-                keyboardType: TextInputType.number,
-                decoration: const InputDecoration(
-                  labelText: 'Harga Jual Eceran Retail (Rp/kg)',
-                  border: OutlineInputBorder(),
-                ),
-              ),
-              const SizedBox(height: 10),
-              TextField(
-                controller: discCtrl,
-                keyboardType: TextInputType.number,
-                decoration: const InputDecoration(
-                  labelText: 'Diskon Etalase (%)',
-                  border: OutlineInputBorder(),
-                ),
-              ),
-            ],
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(ctx),
-              child: const Text('Batal'),
-            ),
-            ElevatedButton(
-              onPressed: saving
-                  ? null
-                  : () async {
-                      setDlgState(() => saving = true);
-                      try {
-                        final res = await _apiService.restockB2BBidToRetail(
-                          bid['id'].toString(),
-                          retailPricePerKg: double.tryParse(priceCtrl.text.trim()),
-                          discountPercent: int.tryParse(discCtrl.text.trim()) ?? 0,
-                        );
-                        if (ctx.mounted) Navigator.pop(ctx);
-                        if (!mounted) return;
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(
-                            content: Text(
-                              res['message']?.toString() ??
-                                  'Lot berhasil ditambahkan ke Katalog Retail!',
-                            ),
-                            backgroundColor: AppColors.primary,
-                          ),
-                        );
-                        await _loadCatalog();
-                      } catch (e) {
-                        setDlgState(() => saving = false);
-                        if (ctx.mounted) {
-                          ScaffoldMessenger.of(ctx).showSnackBar(
-                            SnackBar(
-                              content: Text('Gagal: $e'),
-                              backgroundColor: AppColors.error,
-                            ),
-                          );
-                        }
-                      }
-                    },
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.tertiary,
-                foregroundColor: AppColors.neutral,
-              ),
-              child: Text(saving ? 'Menyimpan...' : 'Tambahkan ke Toko Retail'),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
   Widget _buildWholesalePoolsView() {
+    if (!_canAccessB2b) {
+      return _buildB2BLockedCard('Bursa Lot & Partai B2B');
+    }
+
     if (_b2bLots.isEmpty && _b2bBids.isEmpty && _harvestPools.isEmpty) {
       return Center(
         child: Text(
@@ -1505,9 +1646,7 @@ class _MitraStoreCatalogScreenState extends State<MitraStoreCatalogScreen>
       children: [
         if (_b2bBids.isNotEmpty) ...[
           Text(
-            _adminTier == 'RETAIL_MERCHANT'
-                ? 'Kontrak Pengadaan Partai Saya (Retail Merchant)'
-                : 'Penawaran Lot B2B Masuk (Open-Bid & Escrow)',
+            'Penawaran Lot B2B Masuk (Open-Bid & Escrow)',
             style: GoogleFonts.plusJakartaSans(
               fontSize: 13.5,
               fontWeight: FontWeight.w800,
@@ -1607,8 +1746,7 @@ class _MitraStoreCatalogScreenState extends State<MitraStoreCatalogScreen>
                       spacing: 8,
                       runSpacing: 6,
                       children: [
-                        if (_adminTier != 'RETAIL_MERCHANT' &&
-                            (status == 'BID_PLACED' || status == 'PENDING_BID'))
+                        if (status == 'BID_PLACED' || status == 'PENDING_BID')
                           ElevatedButton(
                             onPressed: () =>
                                 _updateBidStatusAction(bidId, 'ACCEPTED_READY_TO_PAY'),
@@ -1618,7 +1756,7 @@ class _MitraStoreCatalogScreenState extends State<MitraStoreCatalogScreen>
                             ),
                             child: const Text('Terima Tawaran'),
                           ),
-                        if (_adminTier != 'RETAIL_MERCHANT' && status == 'PAID_ESCROW')
+                        if (status == 'PAID_ESCROW')
                           ElevatedButton(
                             onPressed: () => _updateBidStatusAction(
                               bidId,
@@ -1636,7 +1774,7 @@ class _MitraStoreCatalogScreenState extends State<MitraStoreCatalogScreen>
                                   : 'Konfirmasi Siap Dikirim',
                             ),
                           ),
-                        if ((status == 'READY_FOR_DELIVERY' || status == 'READY_FOR_PICKUP'))
+                        if (status == 'READY_FOR_DELIVERY' || status == 'READY_FOR_PICKUP')
                           ElevatedButton(
                             onPressed: () => _updateBidStatusAction(bidId, 'COMPLETED'),
                             style: ElevatedButton.styleFrom(
@@ -1644,32 +1782,6 @@ class _MitraStoreCatalogScreenState extends State<MitraStoreCatalogScreen>
                               foregroundColor: Colors.white,
                             ),
                             child: const Text('Selesaikan Serah Terima'),
-                          ),
-                        if (_adminTier == 'RETAIL_MERCHANT' &&
-                            status == 'ACCEPTED_READY_TO_PAY')
-                          ElevatedButton(
-                            onPressed: () => _updateBidStatusAction(bidId, 'PAID_ESCROW'),
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: AppColors.primary,
-                              foregroundColor: Colors.white,
-                            ),
-                            child: const Text('Bayar Escrow Sekarang'),
-                          ),
-                        if (_adminTier == 'RETAIL_MERCHANT' && status == 'COMPLETED')
-                          ElevatedButton.icon(
-                            onPressed: () => _showRestockToRetailModal(bid),
-                            icon: const Icon(LucideIcons.plusCircle, size: 14),
-                            label: Text(
-                              '+ Tambahkan ke Daftar Toko Retail Saya',
-                              style: GoogleFonts.plusJakartaSans(
-                                fontSize: 11.5,
-                                fontWeight: FontWeight.w800,
-                              ),
-                            ),
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: AppColors.tertiary,
-                              foregroundColor: AppColors.neutral,
-                            ),
                           ),
                       ],
                     ),
@@ -1682,7 +1794,7 @@ class _MitraStoreCatalogScreenState extends State<MitraStoreCatalogScreen>
         ],
         if (_b2bLots.isNotEmpty) ...[
           Text(
-            'Lot Bursa Partai B2B Aktif (Mentah & Siap Pakai)',
+            'Lot Bursa Partai B2B Aktif (Etalase Partai)',
             style: GoogleFonts.plusJakartaSans(
               fontSize: 13.5,
               fontWeight: FontWeight.w800,
@@ -1739,27 +1851,12 @@ class _MitraStoreCatalogScreenState extends State<MitraStoreCatalogScreen>
                     ),
                     const SizedBox(height: 4),
                     Text(
-                      'Toko: ${lot['store_name'] ?? 'B2B Offtaker'} • Tersedia: ${stock.toStringAsFixed(0)} kg @ Rp ${_currencyFormat.format(wholesale)}/kg',
+                      'Toko: ${lot['store_name'] ?? 'Penjual B2B Terverifikasi'} • Tersedia: ${stock.toStringAsFixed(0)} kg @ Rp ${_currencyFormat.format(wholesale)}/kg',
                       style: GoogleFonts.plusJakartaSans(
                         fontSize: 11.5,
                         color: AppColors.textSecondary,
                       ),
                     ),
-                    if (_adminTier == 'RETAIL_MERCHANT' && stock > 0) ...[
-                      const SizedBox(height: 8),
-                      Align(
-                        alignment: Alignment.centerRight,
-                        child: ElevatedButton.icon(
-                          onPressed: () => _showPlaceB2BBidModal(lot),
-                          icon: const Icon(LucideIcons.gavel, size: 14),
-                          label: const Text('Ajukan Tawaran Partai'),
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: AppColors.primary,
-                            foregroundColor: Colors.white,
-                          ),
-                        ),
-                      ),
-                    ],
                   ],
                 ),
               ),
@@ -1925,6 +2022,10 @@ class _MitraStoreCatalogScreenState extends State<MitraStoreCatalogScreen>
   }
 
   Widget _buildHarvestAbsorptionView() {
+    if (!_canAccessB2b) {
+      return _buildB2BLockedCard('Serapan Panen Petani & Walk-in');
+    }
+
     return ListView(
       padding: const EdgeInsets.fromLTRB(16, 14, 16, 90),
       children: [

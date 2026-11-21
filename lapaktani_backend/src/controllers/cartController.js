@@ -106,6 +106,15 @@ const addToCart = async (req, res) => {
         message: 'Akses tidak sah. Token otentikasi diperlukan.'
       });
     }
+    const callerRole = String(req.user?.role || '').toLowerCase();
+    const callerRoleId = Number(req.user?.role_id || 0);
+    if (callerRole === 'admin' || callerRoleId === 3) {
+      return res.status(403).json({
+        success: false,
+        code: 'SELLER_CANNOT_BUY',
+        message: 'Akun Penjual tidak dapat melakukan pembelian. Silakan beralih ke akun Pembeli.'
+      });
+    }
 
     const rawProductId = req.body.product_id || req.body.productId || req.body.id;
     const rawQty = req.body.quantity !== undefined ? req.body.quantity : (req.body.qty !== undefined ? req.body.qty : 1);
@@ -212,6 +221,15 @@ const updateCartItem = async (req, res) => {
       return res.status(401).json({
         success: false,
         message: 'Akses tidak sah.'
+      });
+    }
+    const callerRole = String(req.user?.role || '').toLowerCase();
+    const callerRoleId = Number(req.user?.role_id || 0);
+    if (callerRole === 'admin' || callerRoleId === 3) {
+      return res.status(403).json({
+        success: false,
+        code: 'SELLER_CANNOT_BUY',
+        message: 'Akun Penjual tidak dapat melakukan pembelian. Silakan beralih ke akun Pembeli.'
       });
     }
 

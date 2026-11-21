@@ -9,7 +9,7 @@ import {
   markFertilizerReceivedByPpl,
   proposeFertilizerSubsidy,
   updateVillageStoreQuota,
-  verifyStoreApplication,
+  verifyB2BUpgrade,
   type FertilizerAllocationRecord,
   type PplForumPost,
   type StoreApplicationRecord,
@@ -122,21 +122,33 @@ export const PenyuluhStoreAndForumHub: React.FC<PenyuluhStoreAndForumHubProps> =
   const handleVerifyStore = async (id: string, status: 'APPROVED' | 'REJECTED') => {
     setBusyId(id);
     try {
-      const updated = await verifyStoreApplication(
+      const updated = await verifyB2BUpgrade(
         id,
         status,
-        status === 'REJECTED' ? 'Perlu kelengkapan berkas pengelola toko desa.' : undefined
+        status === 'REJECTED' ? 'Perlu kelengkapan berkas verifikasi Penjual B2B.' : undefined
       );
-      setApplications((prev) => prev.map((a) => (a.id === id ? { ...a, status: updated.status } : a)));
+      setApplications((prev) =>
+        prev.map((a) =>
+          a.id === id
+            ? {
+                ...a,
+                status: updated.status,
+                b2b_status: updated.b2b_status,
+                is_b2b_verified: updated.is_b2b_verified,
+                admin_tier: updated.admin_tier,
+              }
+            : a
+        )
+      );
       onShowToast?.(
         status === 'APPROVED'
-          ? 'Pembukaan toko disetujui! Pemilik kini menjadi Admin Toko.'
-          : 'Pengajuan pembukaan toko ditolak.',
+          ? 'Upgrade disetujui! Akun kini berstatus Penjual B2B Terverifikasi.'
+          : 'Pengajuan upgrade Penjual B2B ditolak (Penjual tetap aktif di etalase Retail).',
         'success'
       );
       void loadAll();
     } catch (err) {
-      onShowToast?.(err instanceof Error ? err.message : 'Gagal memverifikasi toko.', 'error');
+      onShowToast?.(err instanceof Error ? err.message : 'Gagal memverifikasi upgrade B2B.', 'error');
     } finally {
       setBusyId(null);
     }
@@ -234,13 +246,13 @@ export const PenyuluhStoreAndForumHub: React.FC<PenyuluhStoreAndForumHubProps> =
       <div className="bg-lt-surface-card border border-lt-border border-l-4 border-l-lt-primary rounded-2xl p-6 shadow-sm flex flex-wrap items-center justify-between gap-4">
         <div>
           <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-lt-primary-tint text-lt-primary border border-lt-primary-border text-[11px] font-bold tracking-wide uppercase mb-2">
-            BPP Kabupaten Sumenep · Tata Kelola Toko &amp; Forum
+            BPP Kabupaten Sumenep · Verifikasi B2B &amp; Forum
           </span>
           <h1 className="text-[20px] font-extrabold tracking-tight text-lt-neutral">
-            ACC Pembukaan Toko, Kuota Desa, Info Pupuk &amp; Forum Penyuluh
+            Verifikasi Upgrade Penjual B2B, Pupuk &amp; Forum Penyuluh
           </h1>
           <p className="text-[12.5px] text-lt-neutral-muted mt-1">
-            Kelola kuota toko per desa, verifikasi calon Admin Toko, umumkan titik ambil pupuk di forum privat desa, dan koordinasi antar-PPL.
+            Tinjau pengajuan upgrade Penjual B2B Terverifikasi (SK Poktan &amp; kapasitas gudang), umumkan titik ambil pupuk, dan koordinasi antar-PPL.
           </p>
         </div>
         <div className="flex flex-wrap gap-2">
@@ -253,7 +265,13 @@ export const PenyuluhStoreAndForumHub: React.FC<PenyuluhStoreAndForumHubProps> =
                 : 'bg-lt-surface-canvas text-lt-neutral-muted border border-lt-border hover:text-lt-neutral'
             }`}
           >
-            ACC Toko &amp; Kuota ({applications.filter((a) => a.status === 'PENDING_PPL').length})
+            Verifikasi Upgrade Penjual B2B (
+            {
+              applications.filter(
+                (a) => a.b2b_status === 'PENDING_PPL' || a.status === 'PENDING_PPL'
+              ).length
+            }
+            )
           </button>
           <button
             type="button"
@@ -286,15 +304,120 @@ export const PenyuluhStoreAndForumHub: React.FC<PenyuluhStoreAndForumHubProps> =
         </div>
       )}
 
-      {/* TAB 1: ACC Toko & Batas Kuota Toko Desa */}
+      {/* TAB 1: Verifikasi Upgrade Penjual B2B */}
       {!isLoading && activeSubTab === 'toko' && (
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-          <div className="lg:col-span-4 bg-white rounded-2xl border border-lt-border p-5 space-y-4 shadow-sm">
-            <h2 className="text-[15px] font-extrabold text-lt-neutral">
-              Pengaturan Kuota Toko Per Desa
+          <div className="lg:col-span-8 bg-white rounded-2xl border border-lt-border shadow-sm overflow-hidden">
+            <div className="px-5 py-4 border-b border-lt-border bg-lt-surface-canvas flex items-center justify-between">
+              <div>
+                <h2 className="text-[14.5px] font-extrabold text-lt-neutral">
+                  Verifikasi Upgrade Penjual B2B
+                </h2>
+                <p className="text-[11.5px] text-lt-neutral-muted">
+                  Penjual Retail aktif instan; persetujuan B2B membuka akses serapan panen petani &amp; lelang lot partai.
+                </p>
+              </div>
+              <span className="px-2.5 py-1 rounded-full bg-lt-primary-tint text-lt-primary text-[11px] font-bold">
+                {
+                  applications.filter(
+                    (a) => a.b2b_status === 'PENDING_PPL' || a.status === 'PENDING_PPL'
+                  ).length
+                }{' '}
+                Menunggu
+              </span>
+            </div>
+            <div className="divide-y divide-lt-surface-canvas">
+              {applications.length === 0 ? (
+                <div className="p-8 text-center text-[12.5px] text-lt-neutral-muted">
+                  Belum ada pengajuan upgrade Penjual B2B saat ini.
+                </div>
+              ) : (
+                applications.map((app) => {
+                  const isPending =
+                    app.b2b_status === 'PENDING_PPL' || app.status === 'PENDING_PPL';
+                  const displayB2bStatus =
+                    app.b2b_status && app.b2b_status !== 'NONE'
+                      ? app.b2b_status
+                      : app.admin_tier === 'B2B_OFFTAKER' && app.status === 'APPROVED'
+                        ? 'APPROVED'
+                        : 'RETAIL_ONLY';
+
+                  return (
+                    <div
+                      key={app.id}
+                      className="p-4 flex flex-wrap items-center justify-between gap-4 hover:bg-lt-surface-canvas/50 transition-colors"
+                    >
+                      <div className="space-y-1 flex-1 min-w-[240px]">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <span className="font-extrabold text-[14px] text-lt-neutral">
+                            {app.nama_toko}
+                          </span>
+                          <span className="px-2 py-0.5 rounded-md bg-lt-primary-tint text-lt-primary text-[10px] font-extrabold">
+                            {app.tipe_pengelola}
+                          </span>
+                          <span
+                            className={`px-2 py-0.5 rounded-full text-[10px] font-extrabold ${
+                              displayB2bStatus === 'APPROVED'
+                                ? 'bg-lt-primary-tint text-lt-primary-dark'
+                                : displayB2bStatus === 'REJECTED'
+                                  ? 'bg-lt-error-tint text-lt-error'
+                                  : isPending
+                                    ? 'bg-lt-tertiary-tint text-lt-tertiary-text'
+                                    : 'bg-lt-surface-canvas text-lt-neutral-muted border border-lt-border'
+                            }`}
+                          >
+                            {displayB2bStatus === 'APPROVED'
+                              ? 'PENJUAL B2B TERVERIFIKASI'
+                              : displayB2bStatus === 'REJECTED'
+                                ? 'B2B DITOLAK (TETAP RETAIL)'
+                                : isPending
+                                  ? 'PENDING VERIFIKASI B2B'
+                                  : 'PENJUAL RETAIL'}
+                          </span>
+                        </div>
+                        <p className="text-[12px] text-lt-neutral-muted">
+                          Pemilik: {app.applicant_name || app.user_id} · Desa{' '}
+                          {app.resolved_village_name || app.village_name} ({app.postal_code || '69471'}) · Gudang:{' '}
+                          {Number(app.kapasitas_gudang_kg || 0).toLocaleString('id-ID')} kg
+                        </p>
+                        <p className="text-[11px] text-lt-neutral-muted">
+                          NIK: {app.nik || '-'} · HP: {app.no_hp || '-'} · Berkas:{' '}
+                          {app.dokumen_syarat_url || '-'}
+                        </p>
+                      </div>
+                      {isPending && (
+                        <div className="flex items-center gap-2">
+                          <button
+                            type="button"
+                            disabled={busyId === app.id}
+                            onClick={() => void handleVerifyStore(app.id, 'REJECTED')}
+                            className="px-3 py-1.5 rounded-xl border border-lt-error-border text-lt-error text-[12px] font-bold hover:bg-lt-error-tint"
+                          >
+                            Tolak B2B
+                          </button>
+                          <button
+                            type="button"
+                            disabled={busyId === app.id}
+                            onClick={() => void handleVerifyStore(app.id, 'APPROVED')}
+                            className="px-3.5 py-1.5 rounded-xl bg-lt-primary-dark hover:bg-lt-primary text-white text-[12px] font-extrabold"
+                          >
+                            ACC Penjual B2B
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                  );
+                })
+              )}
+            </div>
+          </div>
+
+          <div className="lg:col-span-4 bg-white rounded-2xl border border-lt-border p-5 space-y-4 shadow-sm self-start">
+            <h2 className="text-[14.5px] font-extrabold text-lt-neutral">
+              Konfigurasi Wilayah Desa (Opsional)
             </h2>
             <p className="text-[12px] text-lt-neutral-muted">
-              Aktifkan pembatasan jumlah toko per desa agar persaingan sehat &amp; logistik tertata.
+              Penjual Retail bebas membuka toko tanpa batas kuota. Atur parameter desa binaan di bawah ini bila diperlukan.
             </p>
             <div>
               <label className="block text-[11px] font-bold text-lt-neutral-muted mb-1">Pilih Desa Binaan</label>
@@ -305,8 +428,7 @@ export const PenyuluhStoreAndForumHub: React.FC<PenyuluhStoreAndForumHubProps> =
               >
                 {villages.map((v) => (
                   <option key={v.id} value={v.id}>
-                    Desa {v.name} (Kec. {v.district_name}) — {v.approved_stores_count}/
-                    {v.is_store_quota_enabled ? v.max_stores_quota : '∞'} Toko
+                    Desa {v.name} (Kec. {v.district_name}) — {v.approved_stores_count} Penjual
                   </option>
                 ))}
               </select>
@@ -314,10 +436,10 @@ export const PenyuluhStoreAndForumHub: React.FC<PenyuluhStoreAndForumHubProps> =
             <label className="flex items-center justify-between p-3 rounded-xl bg-lt-surface-canvas border border-lt-border cursor-pointer">
               <div>
                 <div className="text-[12.5px] font-bold text-lt-neutral">
-                  Aktifkan Batas Kuota Toko
+                  Catatan Batas Kuota B2B
                 </div>
                 <div className="text-[11px] text-lt-neutral-muted">
-                  Blokir pengajuan jika toko aktif mencapai batas
+                  Tampilkan referensi kuota B2B desa
                 </div>
               </div>
               <input
@@ -329,7 +451,7 @@ export const PenyuluhStoreAndForumHub: React.FC<PenyuluhStoreAndForumHubProps> =
             </label>
             <div>
               <label className="block text-[11px] font-bold text-lt-neutral-muted mb-1">
-                Maksimal Toko Aktif di Desa
+                Target Kuota B2B Referensi
               </label>
               <input
                 type="number"
@@ -346,73 +468,8 @@ export const PenyuluhStoreAndForumHub: React.FC<PenyuluhStoreAndForumHubProps> =
               onClick={() => void handleSaveQuota()}
               className="w-full py-2.5 rounded-xl bg-lt-primary-dark hover:bg-lt-primary text-white text-[12.5px] font-extrabold"
             >
-              {busyId === 'quota' ? 'Menyimpan...' : 'Simpan Pengaturan Kuota'}
+              {busyId === 'quota' ? 'Menyimpan...' : 'Simpan Konfigurasi Desa'}
             </button>
-          </div>
-
-          <div className="lg:col-span-8 bg-white rounded-2xl border border-lt-border shadow-sm overflow-hidden">
-            <div className="px-5 py-4 border-b border-lt-border bg-lt-surface-canvas flex items-center justify-between">
-              <h2 className="text-[14.5px] font-extrabold text-lt-neutral">
-                Antrean Pengajuan Pembukaan Toko (2 Tahap)
-              </h2>
-              <span className="text-[11px] font-bold text-lt-primary">
-                {applications.length} Pengajuan
-              </span>
-            </div>
-            <div className="divide-y divide-lt-surface-canvas">
-              {applications.map((app) => (
-                <div key={app.id} className="p-4 flex flex-wrap items-center justify-between gap-4">
-                  <div className="space-y-1 flex-1 min-w-[240px]">
-                    <div className="flex items-center gap-2 flex-wrap">
-                      <span className="font-extrabold text-[14px] text-lt-neutral">
-                        {app.nama_toko}
-                      </span>
-                      <span className="px-2 py-0.5 rounded-md bg-lt-primary-tint text-lt-primary text-[10px] font-extrabold">
-                        {app.tipe_pengelola}
-                      </span>
-                      <span
-                        className={`px-2 py-0.5 rounded-full text-[10px] font-extrabold ${
-                          app.status === 'APPROVED'
-                            ? 'bg-lt-primary-tint text-lt-primary-dark'
-                            : app.status === 'REJECTED'
-                              ? 'bg-lt-error-tint text-lt-error'
-                              : 'bg-lt-tertiary-tint text-lt-tertiary-text'
-                        }`}
-                      >
-                        {app.status}
-                      </span>
-                    </div>
-                    <p className="text-[12px] text-lt-neutral-muted">
-                      Pemohon: {app.applicant_name || app.user_id} · Desa{' '}
-                      {app.resolved_village_name || app.village_name} ({app.postal_code || '69471'}) · Min. Partai Default: {app.default_min_wholesale_kg} kg
-                    </p>
-                    <p className="text-[11px] text-lt-neutral-muted">
-                      NIK: {app.nik || '-'} · HP: {app.no_hp || '-'} · {app.alamat_lengkap || ''}
-                    </p>
-                  </div>
-                  {app.status === 'PENDING_PPL' && (
-                    <div className="flex items-center gap-2">
-                      <button
-                        type="button"
-                        disabled={busyId === app.id}
-                        onClick={() => void handleVerifyStore(app.id, 'REJECTED')}
-                        className="px-3 py-1.5 rounded-xl border border-lt-error-border text-lt-error text-[12px] font-bold hover:bg-lt-error-tint"
-                      >
-                        Tolak
-                      </button>
-                      <button
-                        type="button"
-                        disabled={busyId === app.id}
-                        onClick={() => void handleVerifyStore(app.id, 'APPROVED')}
-                        className="px-3.5 py-1.5 rounded-xl bg-lt-primary-dark hover:bg-lt-primary text-white text-[12px] font-extrabold"
-                      >
-                        ACC Buka Toko
-                      </button>
-                    </div>
-                  )}
-                </div>
-              ))}
-            </div>
           </div>
         </div>
       )}

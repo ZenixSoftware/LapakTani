@@ -401,36 +401,81 @@ class _PetaniSimpleScreenState extends State<PetaniSimpleScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // CARD 0: Arahan & Keputusan Penyuluh Desa
-                    _buildCardPenyuluhAdvisories(),
-                    const SizedBox(height: 14),
-
-                    // CARD 0B: Tawaran Beli & Kontrak Panen Offtaker (Transparan)
-                    _buildCardPurchaseOffers(),
-                    const SizedBox(height: 14),
-
-                    // CARD 0C: Forum Privat Desa & Info Titik Ambil Pupuk
-                    _buildCardVillageForumAndFertilizer(),
-                    const SizedBox(height: 14),
-
-                    // CARD 0D: Siaran Status Tanam & Estimasi Panen ke Toko Sekitar
+                    // 1. Siaran Tanam & Panen
                     _buildCardHarvestBroadcast(),
                     const SizedBox(height: 14),
 
-                    // CARD 1: Status Lahan & Prediksi Panen
-                    _buildCardLandStatus(),
+                    // 2. Tawaran Penjual B2B Masuk (Transparan)
+                    _buildCardPurchaseOffers(),
                     const SizedBox(height: 14),
 
-                    // CARD 2: Tugas Penyerapan Kontrak Poktan
-                    _buildCardContractQuota(),
-                    const SizedBox(height: 14),
-
-                    // CARD 3B: Laporan Harian Kondisi Lahan ke Penyuluh
-                    _buildCardDailyLogs(),
-                    const SizedBox(height: 14),
-
-                    // CARD 4: Tombol Cepat Lapor Serangan Hama (US-19)
-                    _buildCardPestAlertAction(),
+                    // 3. Konsultasi & Info Penyuluh (Sekunder, Dapat Diciutkan)
+                    Container(
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(16),
+                        border: Border.all(color: AppColors.outline),
+                        boxShadow: AppColors.softShadow,
+                      ),
+                      child: Theme(
+                        data: Theme.of(context).copyWith(
+                          dividerColor: Colors.transparent,
+                        ),
+                        child: ExpansionTile(
+                          initiallyExpanded: false,
+                          tilePadding: const EdgeInsets.symmetric(
+                            horizontal: 16,
+                            vertical: 6,
+                          ),
+                          childrenPadding: const EdgeInsets.fromLTRB(
+                            12,
+                            0,
+                            12,
+                            14,
+                          ),
+                          leading: Container(
+                            padding: const EdgeInsets.all(8),
+                            decoration: BoxDecoration(
+                              color: AppColors.surfaceSoft,
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                            child: const Icon(
+                              LucideIcons.stethoscope,
+                              size: 18,
+                              color: AppColors.primary,
+                            ),
+                          ),
+                          title: Text(
+                            'Konsultasi & Info Penyuluh',
+                            style: GoogleFonts.plusJakartaSans(
+                              fontSize: 14,
+                              fontWeight: FontWeight.w800,
+                              color: AppColors.textPrimary,
+                            ),
+                          ),
+                          subtitle: Text(
+                            'Arahan PPL, info pupuk desa, status lahan & lapor hama',
+                            style: GoogleFonts.plusJakartaSans(
+                              fontSize: 11.5,
+                              color: AppColors.textMuted,
+                            ),
+                          ),
+                          children: [
+                            _buildCardPenyuluhAdvisories(),
+                            const SizedBox(height: 12),
+                            _buildCardVillageForumAndFertilizer(),
+                            const SizedBox(height: 12),
+                            _buildCardLandStatus(),
+                            const SizedBox(height: 12),
+                            _buildCardContractQuota(),
+                            const SizedBox(height: 12),
+                            _buildCardDailyLogs(),
+                            const SizedBox(height: 12),
+                            _buildCardPestAlertAction(),
+                          ],
+                        ),
+                      ),
+                    ),
                     const SizedBox(height: 24),
                   ],
                 ),
@@ -1359,7 +1404,7 @@ class _PetaniSimpleScreenState extends State<PetaniSimpleScreen> {
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  'Mulai Tanam, Hampir Panen, dan Siap Panen otomatis disiarkan ke Penyuluh & Admin Toko sekitar.',
+                  'Mulai Tanam, Hampir Panen, dan Siap Panen otomatis disiarkan ke Penyuluh & Penjual B2B sekitar.',
                   style: GoogleFonts.plusJakartaSans(
                     fontSize: 11.5,
                     color: AppColors.textMuted,
@@ -1929,7 +1974,7 @@ class _PetaniSimpleScreenState extends State<PetaniSimpleScreen> {
               const SizedBox(width: 8),
               Expanded(
                 child: Text(
-                  'Tawaran Beli & Kontrak Panen Offtaker',
+                  'Tawaran Penjual B2B Masuk',
                   style: GoogleFonts.plusJakartaSans(
                     fontSize: 14,
                     fontWeight: FontWeight.w800,
@@ -1950,7 +1995,7 @@ class _PetaniSimpleScreenState extends State<PetaniSimpleScreen> {
           const SizedBox(height: 8),
           if (_purchaseOffers.isEmpty)
             Text(
-              'Belum ada tawaran pembelian masuk dari Admin Toko sekitar.',
+              'Belum ada tawaran pembelian masuk dari Penjual B2B sekitar.',
               style: GoogleFonts.plusJakartaSans(
                 fontSize: 11.5,
                 color: AppColors.textSecondary,
@@ -2037,7 +2082,7 @@ class _PetaniSimpleScreenState extends State<PetaniSimpleScreen> {
                           onPressed: () => _openDirectChat(
                             targetUserId: offer['store_admin_id']?.toString(),
                             targetRole: 'admin',
-                            title: 'DM — ${offer['store_name'] ?? 'Admin Toko'}',
+                            title: 'DM — ${offer['store_name'] ?? 'Penjual B2B'}',
                           ),
                           icon: const Icon(LucideIcons.messageSquare, size: 13),
                           label: Text(

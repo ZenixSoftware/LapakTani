@@ -431,7 +431,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                         AppColors.info,
                                       ),
                                       _buildDemoRoleChip(
-                                        'Admin Toko',
+                                        'Penjual',
                                         'admin@lapaktani.id',
                                         'admin123',
                                         AppColors.warning,

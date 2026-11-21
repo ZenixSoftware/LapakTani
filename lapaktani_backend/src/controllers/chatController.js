@@ -315,7 +315,7 @@ const openDirectConversation = async (req, res) => {
     if (wantsOrderConv && !['pembeli', 'admin'].includes(callerRole)) {
       return res.status(403).json({
         success: false,
-        message: 'Chat penjualan (ORDER) hanya tersedia untuk Pembeli dan Admin Toko.'
+        message: 'Chat penjualan (ORDER) hanya tersedia untuk Pembeli dan Penjual.'
       });
     }
 
@@ -438,7 +438,7 @@ const getConversationMessages = async (req, res) => {
     if (memberRows[0].type === 'ORDER' && !['pembeli', 'admin'].includes(callerRole)) {
       return res.status(403).json({
         success: false,
-        message: 'Chat penjualan hanya dapat diakses oleh Pembeli dan Admin Toko.'
+        message: 'Chat penjualan hanya dapat diakses oleh Pembeli dan Penjual.'
       });
     }
 

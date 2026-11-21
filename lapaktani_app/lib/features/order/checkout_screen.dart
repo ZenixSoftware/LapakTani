@@ -53,7 +53,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
   late bool _protectionActive;
   bool _wholesaleAgreementAccepted = true;
   final TextEditingController _wholesaleNoteCtrl = TextEditingController(
-    text: 'Pembeli & Admin Toko menyepakati kuantitas Partai (B2B), harga grosir per kg, serta protokol kirim segar.',
+    text: 'Pembeli & Penjual menyepakati kuantitas Partai (B2B), harga grosir per kg, serta protokol kirim segar.',
   );
 
   late List<CartItemModel> _items;
@@ -850,7 +850,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                           orderId: 'PRE-$firstPid',
                           title: 'Chat Penjual • $_recipientName',
                           initialMessage:
-                              'Halo Admin Toko, saya ingin menanyakan detail pesanan sebelum pembayaran.',
+                              'Halo Penjual, saya ingin menanyakan detail pesanan sebelum pembayaran.',
                         );
                         if (!mounted) return;
                         await Navigator.push(

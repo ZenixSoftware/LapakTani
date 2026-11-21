@@ -27,7 +27,7 @@ const ROLE_BADGE_MAP: Record<string, { label: string; cls: string }> = {
   superadmin: { label: 'Super Admin', cls: 'bg-lt-tertiary-tint text-lt-tertiary-text border border-lt-tertiary-border' },
   dinas: { label: 'Dinas Pertanian', cls: 'bg-lt-tertiary-tint text-lt-tertiary-text' },
   penyuluh: { label: 'Penyuluh BPP', cls: 'bg-lt-primary-tint text-lt-primary' },
-  admin: { label: 'Admin Toko', cls: 'bg-lt-secondary-tint text-lt-secondary-dark' },
+  admin: { label: 'Penjual', cls: 'bg-lt-secondary-tint text-lt-secondary-dark' },
   petani: { label: 'Petani', cls: 'bg-lt-primary-tint text-lt-primary-dark' },
   pembeli: { label: 'Pembeli / B2B', cls: 'bg-lt-surface-canvas text-lt-neutral' },
 };
@@ -539,10 +539,10 @@ export const SuperAdminGovernanceHub: React.FC<SuperAdminGovernanceHubProps> = (
           <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3">
             <div>
               <h2 className="text-[16px] font-extrabold text-lt-neutral">
-                Pengawasan Toko 2-Tier (B2B Offtaker &amp; Retail Auto-KYC)
+                Pengawasan Penjual (Retail Instan &amp; B2B Terverifikasi)
               </h2>
               <p className="text-[12px] text-lt-neutral-muted">
-                B2B_OFFTAKER wajib verifikasi PPL + kuota desa, sedangkan RETAIL_MERCHANT disetujui otomatis oleh sistem Auto-KYC dan dapat dibekukan jika melanggar.
+                Penjual Retail langsung aktif saat mendaftar, dan dapat mengajukan upgrade menjadi Penjual B2B Terverifikasi melalui verifikasi Penyuluh BPP.
               </p>
             </div>
             <div className="flex flex-wrap gap-2">
@@ -551,9 +551,9 @@ export const SuperAdminGovernanceHub: React.FC<SuperAdminGovernanceHubProps> = (
                 onChange={(e) => setStoreTierFilter(e.target.value)}
                 className="h-9 px-3 rounded-xl border border-lt-border text-[12px] font-bold bg-lt-surface-canvas"
               >
-                <option value="ALL">Semua Tier</option>
-                <option value="B2B_OFFTAKER">B2B Offtaker / Koperasi</option>
-                <option value="RETAIL_MERCHANT">Retail Merchant (Auto-KYC)</option>
+                <option value="ALL">Semua Level Penjual</option>
+                <option value="B2B_OFFTAKER">Penjual B2B Terverifikasi</option>
+                <option value="RETAIL_MERCHANT">Penjual Retail</option>
               </select>
               <select
                 value={storeStatusFilter}
@@ -605,11 +605,11 @@ export const SuperAdminGovernanceHub: React.FC<SuperAdminGovernanceHubProps> = (
                               : 'bg-lt-secondary-tint text-lt-secondary-dark border border-lt-secondary-border'
                           }`}
                         >
-                          {tier === 'RETAIL_MERCHANT' ? 'RETAIL MERCHANT' : 'B2B OFFTAKER'}
+                          {tier === 'RETAIL_MERCHANT' ? 'PENJUAL RETAIL' : 'PENJUAL B2B TERVERIFIKASI'}
                         </span>
                         {store.auto_kyc_passed && (
                           <div className="text-[10.5px] text-lt-primary-dark font-bold mt-1">
-                            ✓ Auto-KYC Lolos
+                            ✓ Retail Aktif Instan
                           </div>
                         )}
                       </td>

@@ -976,7 +976,17 @@ class ApiService {
     final response = await _post('/store/apply', payload);
     return _decodeResponseMap(
       response,
-      'Gagal mengirim pengajuan pembukaan toko',
+      'Gagal mengaktifkan toko Penjual',
+    );
+  }
+
+  Future<Map<String, dynamic>> requestB2BUpgrade(
+    Map<String, dynamic> payload,
+  ) async {
+    final response = await _post('/store/upgrade-b2b', payload);
+    return _decodeResponseMap(
+      response,
+      'Gagal mengajukan upgrade ke Penjual B2B',
     );
   }
 
@@ -1056,18 +1066,25 @@ class ApiService {
     return _decodeResponseMap(response, 'Gagal memuat antrean pembukaan toko');
   }
 
-  Future<Map<String, dynamic>> verifyStoreApplicationByPpl(
+  Future<Map<String, dynamic>> verifyB2BUpgradeByPpl(
     String id,
     String status, {
     String? reason,
   }) async {
-    final response = await _put('/penyuluh/store-applications/$id/verify', {
+    final response = await _put('/penyuluh/stores/$id/verify-b2b', {
       'status': status,
       if (reason != null && reason.trim().isNotEmpty)
         'rejection_reason': reason.trim(),
     });
-    return _decodeResponseMap(response, 'Gagal memverifikasi pengajuan toko');
+    return _decodeResponseMap(response, 'Gagal memverifikasi upgrade Penjual B2B');
   }
+
+  Future<Map<String, dynamic>> verifyStoreApplicationByPpl(
+    String id,
+    String status, {
+    String? reason,
+  }) =>
+      verifyB2BUpgradeByPpl(id, status, reason: reason);
 
   Future<Map<String, dynamic>> updateVillageStoreQuota(
     Map<String, dynamic> payload,
@@ -1186,24 +1203,6 @@ class ApiService {
   ) async {
     final response = await _put('/b2b/bids/$bidId/status', {'status': status});
     return _decodeResponseMap(response, 'Gagal memperbarui status tawaran B2B');
-  }
-
-  Future<Map<String, dynamic>> restockB2BBidToRetail(
-    String bidId, {
-    double? retailPricePerKg,
-    int? discountPercent,
-    String? retailTitle,
-  }) async {
-    final response = await _post('/b2b/bids/$bidId/restock-to-retail', {
-      'retail_price_per_kg': ?retailPricePerKg,
-      'discount_percent': ?discountPercent,
-      if (retailTitle != null && retailTitle.trim().isNotEmpty)
-        'retail_title': retailTitle.trim(),
-    });
-    return _decodeResponseMap(
-      response,
-      'Gagal menyinkronkan lot ke katalog retail',
-    );
   }
 
   Future<Map<String, dynamic>> convertProductRemainderToRetail(

@@ -8,6 +8,7 @@ router.use(verifyToken);
 router.get('/villages', agro.getSumenepRegionsAndVillages);
 router.get('/my-application', agro.getMyStoreApplication);
 router.post('/apply', agro.applyForStore);
+router.post('/upgrade-b2b', agro.requestB2BUpgrade);
 router.put('/settings', requireRole('admin'), agro.updateStoreSettings);
 router.get('/nearby-harvests', requireRole('admin', 'penyuluh'), agro.getNearbyHarvests);
 router.get('/purchase-offers', requireRole('admin'), agro.getStorePurchaseOffers);

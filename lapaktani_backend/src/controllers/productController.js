@@ -373,12 +373,36 @@ const createProduct = async (req, res) => {
       source_farmer_phone
     } = req.body;
 
+    // Check B2B seller verification before allowing B2B_BID_LOT publishing
+    let sellerIsB2bVerified = false;
+    try {
+      const [uTierRows] = await pool.query(
+        'SELECT admin_tier, is_b2b_verified FROM users WHERE id = ? LIMIT 1',
+        [farmerId]
+      );
+      sellerIsB2bVerified =
+        Boolean(uTierRows[0]?.is_b2b_verified) ||
+        uTierRows[0]?.admin_tier === 'B2B_OFFTAKER' ||
+        String(req.user?.role || '').toLowerCase() !== 'admin';
+    } catch (_) {
+      sellerIsB2bVerified = Boolean(req.user?.is_b2b_verified);
+    }
+
+    const requestedChannel = String(catalog_channel || '').toUpperCase();
+    if (requestedChannel === 'B2B_BID_LOT' && !sellerIsB2bVerified) {
+      return res.status(403).json({
+        success: false,
+        code: 'B2B_VERIFICATION_REQUIRED',
+        message: 'Penjualan lot B2B khusus untuk Penjual B2B Terverifikasi. Ajukan upgrade B2B terlebih dahulu.',
+      });
+    }
+
     const cleanProcessingState = ['MENTAH', 'SIAP_PAKAI'].includes(String(processing_state || '').toUpperCase())
       ? String(processing_state).toUpperCase()
       : 'SIAP_PAKAI';
-    const cleanCatalogChannel = ['B2B_BID_LOT', 'RETAIL_CATALOG', 'BOTH'].includes(String(catalog_channel || '').toUpperCase())
-      ? String(catalog_channel).toUpperCase()
-      : 'BOTH';
+    const cleanCatalogChannel = ['B2B_BID_LOT', 'RETAIL_CATALOG', 'BOTH'].includes(requestedChannel)
+      ? (sellerIsB2bVerified ? requestedChannel : 'RETAIL_CATALOG')
+      : (sellerIsB2bVerified ? 'BOTH' : 'RETAIL_CATALOG');
     const cleanFulfillmentOpts = ['DELIVERY_ONLY', 'PICKUP_ONLY', 'BOTH'].includes(String(fulfillment_options || '').toUpperCase())
       ? String(fulfillment_options).toUpperCase()
       : 'BOTH';

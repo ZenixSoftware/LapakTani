@@ -363,21 +363,22 @@ const dispatchFertilizerSubsidy = async (req, res) => {
 
 const getStoreApplicationsForPpl = async (req, res) => {
   try {
-    const { village_id, include_frozen } = req.query;
-    const conditions = [];
+    const { village_id, b2b_only } = req.query;
+    const conditions = ["sa.status != 'DRAFT_FROZEN'"];
     const params = [];
 
-    if (include_frozen !== 'true') {
-      conditions.push("sa.status != 'DRAFT_FROZEN'");
-    }
     if (village_id) {
       conditions.push('sa.village_id = ?');
       params.push(Number(village_id));
+    }
+    if (b2b_only === 'true') {
+      conditions.push("(sa.b2b_status != 'NONE' OR sa.admin_tier = 'B2B_OFFTAKER' OR sa.status = 'PENDING_PPL')");
     }
 
     const where = conditions.length > 0 ? `WHERE ${conditions.join(' AND ')}` : '';
     const [rows] = await pool.query(
       `SELECT sa.*, u.full_name AS applicant_name, u.email AS applicant_email,
+              COALESCE(u.is_b2b_verified, sa.is_b2b_verified, 0) AS user_is_b2b_verified,
               COALESCE(v.name, sa.village_name) AS resolved_village_name,
               COALESCE(v.is_store_quota_enabled, 0) AS is_store_quota_enabled,
               COALESCE(v.max_stores_quota, 5) AS max_stores_quota
@@ -385,7 +386,8 @@ const getStoreApplicationsForPpl = async (req, res) => {
        LEFT JOIN users u ON sa.user_id = u.id
        LEFT JOIN villages v ON sa.village_id = v.id
        ${where}
-       ORDER BY CASE WHEN sa.status = 'PENDING_PPL' THEN 0 ELSE 1 END, sa.updated_at DESC`,
+       ORDER BY CASE WHEN sa.b2b_status = 'PENDING_PPL' OR sa.status = 'PENDING_PPL' THEN 0
+                     WHEN sa.b2b_status = 'APPROVED' THEN 1 ELSE 2 END, sa.updated_at DESC`,
       params
     );
 
@@ -400,88 +402,116 @@ const getStoreApplicationsForPpl = async (req, res) => {
     });
   } catch (error) {
     console.error('[PPL_STORE] Error listing applications:', error.message);
-    return res.status(500).json({ success: false, message: 'Gagal memuat pengajuan pembukaan toko.' });
+    return res.status(500).json({ success: false, message: 'Gagal memuat daftar verifikasi Penjual.' });
   }
 };
 
-const verifyStoreApplication = async (req, res) => {
+const processB2BVerification = async ({ id, actionOrStatus, rejection_reason, reviewerId }) => {
+  const normalized = String(actionOrStatus || '').trim().toUpperCase();
+  const nextStatus = normalized === 'APPROVE' ? 'APPROVED' : (normalized === 'REJECT' ? 'REJECTED' : normalized);
+
+  if (!['APPROVED', 'REJECTED'].includes(nextStatus)) {
+    const err = new Error('Status verifikasi harus APPROVED atau REJECTED.');
+    err.statusCode = 400;
+    throw err;
+  }
+
   let connection;
   try {
-    const { id } = req.params;
-    const { status, rejection_reason } = req.body || {};
-    const nextStatus = String(status || '').toUpperCase();
-
-    if (!['APPROVED', 'REJECTED'].includes(nextStatus)) {
-      return res.status(400).json({
-        success: false,
-        message: 'Status verifikasi harus APPROVED atau REJECTED.',
-      });
-    }
-
     connection = await pool.getConnection();
     await connection.beginTransaction();
 
-    const [appRows] = await connection.query('SELECT * FROM store_applications WHERE id = ? FOR UPDATE', [id]);
+    const [appRows] = await connection.query(
+      'SELECT * FROM store_applications WHERE id = ? OR user_id = ? LIMIT 1 FOR UPDATE',
+      [id, id]
+    );
     if (appRows.length === 0) {
       await connection.rollback();
-      return res.status(404).json({ success: false, message: 'Pengajuan toko tidak ditemukan.' });
+      const err = new Error('Data pengajuan Penjual tidak ditemukan.');
+      err.statusCode = 404;
+      throw err;
     }
     const appRow = appRows[0];
 
     if (nextStatus === 'APPROVED') {
-      const [vRows] = await connection.query(
-        'SELECT is_store_quota_enabled, max_stores_quota, name FROM villages WHERE id = ? LIMIT 1',
-        [appRow.village_id]
-      );
-      if (vRows.length > 0 && Number(vRows[0].is_store_quota_enabled) === 1) {
-        const [cntRows] = await connection.query(
-          "SELECT COUNT(*) AS cnt FROM store_applications WHERE village_id = ? AND status = 'APPROVED' AND id != ?",
-          [appRow.village_id, id]
-        );
-        const currentApproved = Number(cntRows[0]?.cnt || 0);
-        const maxQuota = Number(vRows[0].max_stores_quota || 5);
-        if (currentApproved >= maxQuota) {
-          await connection.rollback();
-          return res.status(409).json({
-            success: false,
-            code: 'VILLAGE_STORE_QUOTA_FULL',
-            message: `Kuota toko di Desa ${vRows[0].name} sudah penuh (${currentApproved}/${maxQuota}). Nonaktifkan atau naikkan kuota terlebih dahulu.`,
-          });
-        }
-      }
-
-      // Promote applicant to role admin (Admin Toko) preserving tier
-      const resolvedTier = appRow.admin_tier || 'B2B_OFFTAKER';
       await connection.query(
-        "UPDATE users SET role_id = 3, role = 'admin', admin_tier = ?, is_verified = 1 WHERE id = ?",
-        [resolvedTier, appRow.user_id]
+        "UPDATE users SET role_id = 3, role = 'admin', admin_tier = 'B2B_OFFTAKER', is_verified = 1, is_b2b_verified = 1 WHERE id = ?",
+        [appRow.user_id]
+      );
+      await connection.query(
+        `UPDATE store_applications
+         SET status = 'APPROVED',
+             admin_tier = 'B2B_OFFTAKER',
+             b2b_status = 'APPROVED',
+             is_b2b_verified = 1,
+             reviewed_by_ppl = ?,
+             rejection_reason = NULL
+         WHERE id = ?`,
+        [reviewerId, appRow.id]
+      );
+    } else {
+      // Penolakan upgrade B2B mempertahankan status Penjual Retail agar toko tetap aktif
+      await connection.query(
+        "UPDATE users SET role_id = 3, role = 'admin', admin_tier = 'RETAIL_MERCHANT', is_verified = 1, is_b2b_verified = 0 WHERE id = ?",
+        [appRow.user_id]
+      );
+      await connection.query(
+        `UPDATE store_applications
+         SET status = 'APPROVED',
+             admin_tier = 'RETAIL_MERCHANT',
+             b2b_status = 'REJECTED',
+             is_b2b_verified = 0,
+             reviewed_by_ppl = ?,
+             rejection_reason = ?
+         WHERE id = ?`,
+        [reviewerId, rejection_reason ? String(rejection_reason).trim() : null, appRow.id]
       );
     }
 
-    await connection.query(
-      'UPDATE store_applications SET status = ?, reviewed_by_ppl = ?, rejection_reason = ? WHERE id = ?',
-      [nextStatus, req.user.id, rejection_reason ? String(rejection_reason).trim() : null, id]
-    );
-
     await connection.commit();
     invalidateSumenepNodeCaches();
-    const [updated] = await pool.query('SELECT * FROM store_applications WHERE id = ?', [id]);
-    return res.status(200).json({
-      success: true,
-      message:
-        nextStatus === 'APPROVED'
-          ? `Toko '${appRow.nama_toko}' disetujui! Pemilik kini aktif sebagai Admin Toko.`
-          : `Pengajuan toko '${appRow.nama_toko}' ditolak.`,
-      data: enrichStoreSecurityFields(updated[0]),
-    });
+    const [updated] = await pool.query('SELECT * FROM store_applications WHERE id = ?', [appRow.id]);
+    return {
+      appRow,
+      nextStatus,
+      updated: enrichStoreSecurityFields(updated[0]),
+    };
   } catch (error) {
     if (connection) await connection.rollback().catch(() => {});
-    console.error('[PPL_STORE] Error verifying store:', error.message);
-    return res.status(500).json({ success: false, message: 'Gagal memproses verifikasi toko.' });
+    throw error;
   } finally {
     if (connection) connection.release();
   }
 };
+
+const verifyStoreApplication = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { status, action, rejection_reason } = req.body || {};
+    const result = await processB2BVerification({
+      id,
+      actionOrStatus: status || action,
+      rejection_reason,
+      reviewerId: req.user.id,
+    });
+    return res.status(200).json({
+      success: true,
+      message:
+        result.nextStatus === 'APPROVED'
+          ? `Upgrade Penjual B2B '${result.appRow.nama_toko}' disetujui! Akun kini berstatus Penjual B2B Terverifikasi.`
+          : `Pengajuan upgrade B2B '${result.appRow.nama_toko}' ditolak. Toko tetap aktif sebagai Penjual Retail.`,
+      data: result.updated,
+    });
+  } catch (error) {
+    console.error('[PPL_STORE] Error verifying store:', error.message);
+    return res.status(error.statusCode || 500).json({
+      success: false,
+      message: error.statusCode ? error.message : 'Gagal memproses verifikasi upgrade Penjual B2B.',
+    });
+  }
+};
+
+const verifyB2BUpgrade = verifyStoreApplication;
 
 const updateVillageStoreQuota = async (req, res) => {
   try {
@@ -704,7 +734,7 @@ const createFarmerHarvestReport = async (req, res) => {
       return res.status(409).json({
         success: false,
         code: 'MAX_ONE_POKTAN',
-        message: 'Setiap petani maksimal terdaftar pada 1 Poktan resmi, namun bebas menjual panen ke banyak Admin Toko.',
+        message: 'Setiap petani maksimal terdaftar pada 1 Poktan resmi, namun bebas menjual panen ke banyak Penjual B2B.',
       });
     }
     if (!resolvedPoktanId && poktan_id) {
@@ -763,7 +793,7 @@ const createFarmerHarvestReport = async (req, res) => {
     const [created] = await pool.query('SELECT * FROM harvest_reports WHERE id = ?', [reportId]);
     return res.status(201).json({
       success: true,
-      message: 'Laporan tanam & estimasi panen berhasil disiarkan ke Penyuluh dan Admin Toko sekitar.',
+      message: 'Laporan tanam & estimasi panen berhasil disiarkan ke Penyuluh dan Penjual sekitar.',
       queued_job_id: queuedJob ? queuedJob.id : null,
       data: created[0],
     });
@@ -812,7 +842,7 @@ const respondToPurchaseOffer = async (req, res) => {
       success: true,
       message:
         nextStatus === 'ACCEPTED_CONTRACT'
-          ? 'Kontrak panen berhasil disepakati! Admin Toko akan melakukan penimbangan ulang di lokasi.'
+          ? 'Kontrak panen berhasil disepakati! Penjual B2B akan melakukan penimbangan ulang di lokasi.'
           : 'Tawaran pembelian ditolak.',
       data: updated[0],
     });
@@ -996,31 +1026,146 @@ const getMyStoreApplication = async (req, res) => {
       'SELECT * FROM store_applications WHERE user_id = ? ORDER BY updated_at DESC LIMIT 1',
       [req.user.id]
     );
-    const [uRows] = await pool.query('SELECT role, role_id, admin_tier FROM users WHERE id = ? LIMIT 1', [req.user.id]);
+    const [uRows] = await pool.query(
+      'SELECT role, role_id, admin_tier, is_b2b_verified FROM users WHERE id = ? LIMIT 1',
+      [req.user.id]
+    );
     const villages = await resolveVillagesWithQuota();
+
+    const appRow = apps[0] || null;
+    const resolvedTier = uRows[0]?.admin_tier || appRow?.admin_tier || null;
+    const isB2bVerified =
+      Boolean(uRows[0]?.is_b2b_verified) ||
+      Boolean(appRow?.is_b2b_verified) ||
+      resolvedTier === 'B2B_OFFTAKER';
+    const b2bStatus = appRow?.b2b_status || (isB2bVerified ? 'APPROVED' : 'NONE');
 
     return res.status(200).json({
       success: true,
       data: {
-        application: apps[0] ? enrichStoreSecurityFields(apps[0]) : null,
-        admin_tier: apps[0]?.admin_tier || uRows[0]?.admin_tier || null,
+        application: appRow ? enrichStoreSecurityFields(appRow) : null,
+        admin_tier: resolvedTier,
+        is_b2b_verified: isB2bVerified,
+        b2b_status: b2bStatus,
         user_role: uRows[0]?.role || req.user.role,
         villages,
       },
     });
   } catch (error) {
     console.error('[STORE] Error fetching my store application:', error.message);
-    return res.status(500).json({ success: false, message: 'Gagal memuat status pengajuan toko.' });
+    return res.status(500).json({ success: false, message: 'Gagal memuat status toko.' });
   }
 };
+
+async function resolveOrCreateVillage({
+  province_id = 35,
+  province_name = 'Jawa Timur',
+  regency_id = 3529,
+  regency_name = 'Kabupaten Sumenep',
+  district_id = 352901,
+  district_name = '',
+  village_id = 109,
+  village_name = '',
+  postal_code,
+}) {
+  const parsedProvId = parseInt(province_id, 10) || 35;
+  const parsedRegId = parseInt(regency_id, 10) || 3529;
+  let parsedDistId = parseInt(district_id, 10) || 352917;
+  if (parsedDistId > 2147483647) {
+    parsedDistId = 352917;
+  }
+
+  const rawVillageNum = Number(village_id);
+  const cleanVillageName = String(village_name || '').trim();
+  const cleanDistrictName = String(district_name || '').trim();
+
+  let village = null;
+  if (Number.isInteger(rawVillageNum) && rawVillageNum > 0 && rawVillageNum <= 2147483647) {
+    const [byId] = await pool.query(
+      'SELECT id, district_id, name, postal_code, is_store_quota_enabled, max_stores_quota FROM villages WHERE id = ? LIMIT 1',
+      [rawVillageNum]
+    );
+    if (byId.length > 0) village = byId[0];
+  }
+
+  if (!village && cleanVillageName) {
+    const [byName] = await pool.query(
+      `SELECT id, district_id, name, postal_code, is_store_quota_enabled, max_stores_quota
+       FROM villages WHERE LOWER(name) LIKE ? LIMIT 1`,
+      [`%${cleanVillageName.toLowerCase()}%`]
+    );
+    if (byName.length > 0) village = byName[0];
+  }
+
+  if (!village) {
+    try {
+      await pool.query(
+        'INSERT IGNORE INTO provinces (id, name) VALUES (?, ?)',
+        [parsedProvId, String(province_name || 'Jawa Timur').trim()]
+      );
+      await pool.query(
+        'INSERT IGNORE INTO regencies (id, province_id, name) VALUES (?, ?, ?)',
+        [parsedRegId, parsedProvId, String(regency_name || 'Kabupaten Sumenep').trim()]
+      );
+
+      let resolvedDistId = parsedDistId;
+      if (cleanDistrictName) {
+        const [dByName] = await pool.query(
+          'SELECT id FROM districts WHERE regency_id = ? AND LOWER(name) LIKE ? LIMIT 1',
+          [parsedRegId, `%${cleanDistrictName.toLowerCase()}%`]
+        );
+        if (dByName.length > 0) {
+          resolvedDistId = Number(dByName[0].id);
+        }
+      }
+      await pool.query(
+        'INSERT IGNORE INTO districts (id, regency_id, name) VALUES (?, ?, ?)',
+        [resolvedDistId, parsedRegId, cleanDistrictName || 'Dungkek']
+      );
+
+      const [maxRows] = await pool.query(
+        'SELECT COALESCE(MAX(id), 1000) AS max_id FROM villages WHERE id >= 1000 AND id < 2147483647'
+      );
+      const nextVillageId = Math.max(1001, Number(maxRows[0]?.max_id || 1000) + 1);
+      const displayName = cleanVillageName
+        ? (cleanDistrictName ? `${cleanVillageName} (Kec. ${cleanDistrictName})` : cleanVillageName)
+        : 'Dungkek';
+
+      await pool.query(
+        `INSERT INTO villages (id, district_id, name, postal_code, is_store_quota_enabled, max_stores_quota)
+         VALUES (?, ?, ?, ?, 0, 5)`,
+        [nextVillageId, resolvedDistId, displayName, postal_code || '69471']
+      );
+      village = {
+        id: nextVillageId,
+        district_id: resolvedDistId,
+        name: displayName,
+        postal_code: postal_code || '69471',
+        is_store_quota_enabled: 0,
+        max_stores_quota: 5,
+      };
+    } catch (insErr) {
+      console.warn('[STORE] Dynamic region upsert notice:', insErr.message);
+      village = {
+        id: 109,
+        district_id: 352917,
+        name: cleanVillageName || 'Dungkek',
+        postal_code: postal_code || '69474',
+        is_store_quota_enabled: 0,
+        max_stores_quota: 5,
+      };
+    }
+  }
+
+  return { village, parsedProvId, parsedRegId, parsedDistId };
+}
 
 const applyForStore = async (req, res) => {
   try {
     const userId = req.user.id;
     const {
       nama_toko,
-      admin_tier,
-      tipe_pengelola = 'POKTAN',
+      tipe_pengelola = 'WARUNG_SEMBAKO',
       nik,
       no_hp,
       kapasitas_gudang_kg,
@@ -1035,184 +1180,73 @@ const applyForStore = async (req, res) => {
       postal_code,
       alamat_lengkap,
       dokumen_syarat_url,
-      default_min_wholesale_kg = 30,
+      default_min_wholesale_kg = 10,
       store_discount_banner,
-      mode = 'SUBMIT_TO_PPL',
     } = req.body || {};
-
-    const cleanMode = String(mode || 'SUBMIT_TO_PPL').toUpperCase();
-    const isFreeze = cleanMode === 'FREEZE_AS_BUYER' || cleanMode === 'DRAFT_FROZEN';
 
     if (!nama_toko || String(nama_toko).trim().length === 0) {
       return res.status(400).json({ success: false, message: 'Nama toko wajib diisi.' });
     }
 
-    const cleanManagerType = String(tipe_pengelola || 'POKTAN').toUpperCase();
-    const inferredRetail = ['PEDAGANG_PASAR', 'WARUNG_SEMBAKO'].includes(cleanManagerType);
-    const resolvedTier = ['RETAIL_MERCHANT', 'B2B_OFFTAKER'].includes(String(admin_tier || '').toUpperCase())
-      ? String(admin_tier).toUpperCase()
-      : (inferredRetail ? 'RETAIL_MERCHANT' : 'B2B_OFFTAKER');
-
     const cleanNik = nik ? String(nik).trim() : '';
-    if (!isFreeze && resolvedTier === 'RETAIL_MERCHANT') {
-      if (cleanNik.length !== 16 || !/^\d{16}$/.test(cleanNik)) {
-        return res.status(400).json({
-          success: false,
-          message: 'Auto-KYC Toko Retail membutuhkan NIK 16 digit yang valid.',
-        });
-      }
-      if (!no_hp || String(no_hp).trim().length < 8) {
-        return res.status(400).json({
-          success: false,
-          message: 'Nomor HP aktif wajib diisi untuk Auto-KYC Toko Retail.',
-        });
-      }
+    if (cleanNik && (cleanNik.length !== 16 || !/^\d{16}$/.test(cleanNik))) {
+      return res.status(400).json({
+        success: false,
+        message: 'Jika diisi, NIK harus terdiri dari 16 digit angka.',
+      });
     }
 
-    const parsedProvId = parseInt(province_id, 10) || 35;
-    const parsedRegId = parseInt(regency_id, 10) || 3529;
-    let parsedDistId = parseInt(district_id, 10) || 352917;
-    if (parsedDistId > 2147483647) {
-      parsedDistId = 352917;
-    }
+    const { village, parsedProvId, parsedRegId, parsedDistId } = await resolveOrCreateVillage({
+      province_id,
+      province_name,
+      regency_id,
+      regency_name,
+      district_id,
+      district_name,
+      village_id,
+      village_name,
+      postal_code,
+    });
 
-    const rawVillageNum = Number(village_id);
-    const cleanVillageName = String(village_name || '').trim();
-    const cleanDistrictName = String(district_name || '').trim();
-
-    let village = null;
-    if (Number.isInteger(rawVillageNum) && rawVillageNum > 0 && rawVillageNum <= 2147483647) {
-      const [byId] = await pool.query(
-        'SELECT id, district_id, name, postal_code, is_store_quota_enabled, max_stores_quota FROM villages WHERE id = ? LIMIT 1',
-        [rawVillageNum]
-      );
-      if (byId.length > 0) village = byId[0];
-    }
-
-    if (!village && cleanVillageName) {
-      const [byName] = await pool.query(
-        `SELECT id, district_id, name, postal_code, is_store_quota_enabled, max_stores_quota
-         FROM villages WHERE LOWER(name) LIKE ? LIMIT 1`,
-        [`%${cleanVillageName.toLowerCase()}%`]
-      );
-      if (byName.length > 0) village = byName[0];
-    }
-
-    if (!village) {
-      // Ensure province -> regency -> district hierarchy exists before inserting dynamic village
-      try {
-        await pool.query(
-          'INSERT IGNORE INTO provinces (id, name) VALUES (?, ?)',
-          [parsedProvId, String(province_name || 'Jawa Timur').trim()]
-        );
-        await pool.query(
-          'INSERT IGNORE INTO regencies (id, province_id, name) VALUES (?, ?, ?)',
-          [parsedRegId, parsedProvId, String(regency_name || 'Kabupaten Sumenep').trim()]
-        );
-
-        let resolvedDistId = parsedDistId;
-        if (cleanDistrictName) {
-          const [dByName] = await pool.query(
-            'SELECT id FROM districts WHERE regency_id = ? AND LOWER(name) LIKE ? LIMIT 1',
-            [parsedRegId, `%${cleanDistrictName.toLowerCase()}%`]
-          );
-          if (dByName.length > 0) {
-            resolvedDistId = Number(dByName[0].id);
-          }
-        }
-        await pool.query(
-          'INSERT IGNORE INTO districts (id, regency_id, name) VALUES (?, ?, ?)',
-          [resolvedDistId, parsedRegId, cleanDistrictName || 'Dungkek']
-        );
-
-        const [maxRows] = await pool.query(
-          'SELECT COALESCE(MAX(id), 1000) AS max_id FROM villages WHERE id >= 1000 AND id < 2147483647'
-        );
-        const nextVillageId = Math.max(1001, Number(maxRows[0]?.max_id || 1000) + 1);
-        const displayName = cleanVillageName
-          ? (cleanDistrictName ? `${cleanVillageName} (Kec. ${cleanDistrictName})` : cleanVillageName)
-          : 'Dungkek';
-
-        await pool.query(
-          `INSERT INTO villages (id, district_id, name, postal_code, is_store_quota_enabled, max_stores_quota)
-           VALUES (?, ?, ?, ?, 0, 5)`,
-          [nextVillageId, resolvedDistId, displayName, postal_code || '69471']
-        );
-        village = {
-          id: nextVillageId,
-          district_id: resolvedDistId,
-          name: displayName,
-          postal_code: postal_code || '69471',
-          is_store_quota_enabled: 0,
-          max_stores_quota: 5,
-        };
-      } catch (insErr) {
-        console.warn('[STORE] Dynamic region upsert notice:', insErr.message);
-        village = {
-          id: 109,
-          district_id: 352917,
-          name: cleanVillageName || 'Dungkek',
-          postal_code: postal_code || '69474',
-          is_store_quota_enabled: 1,
-          max_stores_quota: 3,
-        };
-      }
-    }
-
-    // Only B2B_OFFTAKER stores enforce village store quota limits; RETAIL_MERCHANT bypasses quota via Auto-KYC
-    if (!isFreeze && resolvedTier === 'B2B_OFFTAKER' && Number(village.is_store_quota_enabled) === 1) {
-      const [cntRows] = await pool.query(
-        "SELECT COUNT(*) AS cnt FROM store_applications WHERE village_id = ? AND status = 'APPROVED' AND COALESCE(admin_tier, 'B2B_OFFTAKER') = 'B2B_OFFTAKER' AND user_id != ?",
-        [village.id, userId]
-      );
-      const currentCount = Number(cntRows[0]?.cnt || 0);
-      const maxQuota = Number(village.max_stores_quota || 5);
-      if (currentCount >= maxQuota) {
-        return res.status(409).json({
-          success: false,
-          code: 'VILLAGE_STORE_QUOTA_FULL',
-          message: `Kuota toko B2B di Desa ${village.name} telah penuh (${currentCount}/${maxQuota}). Silakan pilih desa sekitar yang masih memiliki kuota tersedia atau daftar sebagai Admin Retail (Bebas Kuota).`,
-        });
-      }
-    }
-
-    const isAutoKycRetail = !isFreeze && resolvedTier === 'RETAIL_MERCHANT';
-    const nextStatus = isFreeze
-      ? 'DRAFT_FROZEN'
-      : (isAutoKycRetail ? 'APPROVED' : 'PENDING_PPL');
-    const autoKycPassed = isAutoKycRetail ? 1 : 0;
-    const reviewedBy = isAutoKycRetail ? 'SYSTEM_AUTO_KYC' : null;
+    // Penjual Retail langsung aktif tanpa blokir kuota desa dan tanpa persetujuan Penyuluh
+    const resolvedTier = 'RETAIL_MERCHANT';
+    const nextStatus = 'APPROVED';
     const parsedWarehouseCap =
       kapasitas_gudang_kg !== undefined && Number(kapasitas_gudang_kg) > 0
         ? parseInt(kapasitas_gudang_kg, 10)
-        : (resolvedTier === 'RETAIL_MERCHANT' ? 250 : 2000);
+        : 250;
 
-    const [existing] = await pool.query('SELECT id FROM store_applications WHERE user_id = ? LIMIT 1', [userId]);
+    const [existing] = await pool.query('SELECT id, admin_tier, b2b_status, is_b2b_verified FROM store_applications WHERE user_id = ? LIMIT 1', [userId]);
     const appId = existing[0]?.id || `store-${uuidv4().slice(0, 10)}`;
 
     const validTypes = ['POKTAN', 'KOPERASI', 'PENGEPUL_DESA', 'PEDAGANG_PASAR', 'WARUNG_SEMBAKO'];
-    const resolvedType = validTypes.includes(cleanManagerType)
-      ? cleanManagerType
-      : (resolvedTier === 'RETAIL_MERCHANT' ? 'WARUNG_SEMBAKO' : 'POKTAN');
+    const cleanManagerType = String(tipe_pengelola || 'WARUNG_SEMBAKO').toUpperCase();
+    const resolvedType = validTypes.includes(cleanManagerType) ? cleanManagerType : 'WARUNG_SEMBAKO';
+
+    const alreadyB2b = existing[0]?.admin_tier === 'B2B_OFFTAKER' || Number(existing[0]?.is_b2b_verified) === 1;
+    const finalTier = alreadyB2b ? 'B2B_OFFTAKER' : resolvedTier;
+    const finalB2bStatus = alreadyB2b ? 'APPROVED' : 'NONE';
+    const finalB2bVerified = alreadyB2b ? 1 : 0;
 
     if (existing.length > 0) {
       await pool.query(
         `UPDATE store_applications
-         SET nama_toko = ?, admin_tier = ?, tipe_pengelola = ?, nik = ?, no_hp = ?,
-             kapasitas_gudang_kg = ?, auto_kyc_passed = ?,
+         SET nama_toko = ?, admin_tier = ?, tipe_pengelola = ?, nik = COALESCE(?, nik), no_hp = COALESCE(?, no_hp),
+             kapasitas_gudang_kg = ?, auto_kyc_passed = 1,
              province_id = ?, regency_id = ?, district_id = ?, village_id = ?, village_name = ?,
-             postal_code = ?, alamat_lengkap = ?, dokumen_syarat_url = COALESCE(?, dokumen_syarat_url),
+             postal_code = ?, alamat_lengkap = COALESCE(?, alamat_lengkap),
+             dokumen_syarat_url = COALESCE(?, dokumen_syarat_url),
              default_min_wholesale_kg = ?, store_discount_banner = COALESCE(?, store_discount_banner),
-             status = ?, reviewed_by_ppl = COALESCE(?, reviewed_by_ppl)
+             status = 'APPROVED', b2b_status = ?, is_b2b_verified = ?, is_store_open = 1,
+             reviewed_by_ppl = COALESCE(reviewed_by_ppl, 'SYSTEM_AUTO_ACTIVATE')
          WHERE id = ?`,
         [
           String(nama_toko).trim(),
-          resolvedTier,
+          finalTier,
           resolvedType,
           cleanNik || null,
-          no_hp || null,
+          no_hp ? String(no_hp).trim() : null,
           parsedWarehouseCap,
-          autoKycPassed,
           parsedProvId,
           parsedRegId,
           Number(village.district_id || parsedDistId),
@@ -1221,28 +1255,26 @@ const applyForStore = async (req, res) => {
           postal_code || village.postal_code || '69472',
           alamat_lengkap || null,
           dokumen_syarat_url || null,
-          Math.max(1, parseInt(default_min_wholesale_kg || 30, 10)),
+          Math.max(1, parseInt(default_min_wholesale_kg || 10, 10)),
           store_discount_banner || null,
-          nextStatus,
-          reviewedBy,
+          finalB2bStatus,
+          finalB2bVerified,
           appId,
         ]
       );
     } else {
       await pool.query(
         `INSERT INTO store_applications
-         (id, user_id, nama_toko, admin_tier, tipe_pengelola, nik, no_hp, kapasitas_gudang_kg, auto_kyc_passed, province_id, regency_id, district_id, village_id, village_name, postal_code, alamat_lengkap, dokumen_syarat_url, default_min_wholesale_kg, store_discount_banner, status, reviewed_by_ppl)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+         (id, user_id, nama_toko, admin_tier, tipe_pengelola, nik, no_hp, kapasitas_gudang_kg, auto_kyc_passed, province_id, regency_id, district_id, village_id, village_name, postal_code, alamat_lengkap, dokumen_syarat_url, default_min_wholesale_kg, store_discount_banner, status, b2b_status, is_b2b_verified, is_store_open, reviewed_by_ppl)
+         VALUES (?, ?, ?, 'RETAIL_MERCHANT', ?, ?, ?, ?, 1, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'APPROVED', 'NONE', 0, 1, 'SYSTEM_AUTO_ACTIVATE')`,
         [
           appId,
           userId,
           String(nama_toko).trim(),
-          resolvedTier,
           resolvedType,
           cleanNik || null,
-          no_hp || null,
+          no_hp ? String(no_hp).trim() : null,
           parsedWarehouseCap,
-          autoKycPassed,
           parsedProvId,
           parsedRegId,
           Number(village.district_id || parsedDistId),
@@ -1250,39 +1282,36 @@ const applyForStore = async (req, res) => {
           village.name,
           postal_code || village.postal_code || '69472',
           alamat_lengkap || null,
-          dokumen_syarat_url || (resolvedTier === 'RETAIL_MERCHANT' ? 'uploads/kyc/ktp_auto_kyc.jpg' : 'uploads/docs/syarat_toko.pdf'),
-          Math.max(1, parseInt(default_min_wholesale_kg || 30, 10)),
+          dokumen_syarat_url || 'uploads/kyc/retail_auto_activate.jpg',
+          Math.max(1, parseInt(default_min_wholesale_kg || 10, 10)),
           store_discount_banner || null,
-          nextStatus,
-          reviewedBy,
         ]
       );
     }
 
+    await pool.query(
+      "UPDATE users SET role_id = 3, role = 'admin', admin_tier = ?, is_verified = 1, is_b2b_verified = ? WHERE id = ?",
+      [finalTier, finalB2bVerified, userId]
+    );
+    const [uRows] = await pool.query(
+      'SELECT id, full_name, email, role_id, role, admin_tier, is_verified, is_b2b_verified FROM users WHERE id = ? LIMIT 1',
+      [userId]
+    );
     let upgradedToken = null;
     let upgradedUser = null;
-    if (isAutoKycRetail) {
-      await pool.query(
-        "UPDATE users SET role_id = 3, role = 'admin', admin_tier = 'RETAIL_MERCHANT', is_verified = 1 WHERE id = ?",
-        [userId]
-      );
-      const [uRows] = await pool.query(
-        'SELECT id, full_name, email, role_id, role, admin_tier, is_verified FROM users WHERE id = ? LIMIT 1',
-        [userId]
-      );
-      if (uRows[0]) {
-        upgradedUser = {
-          id: uRows[0].id,
-          full_name: uRows[0].full_name,
-          email: uRows[0].email,
-          role_id: 3,
-          role: 'admin',
-          admin_tier: 'RETAIL_MERCHANT',
-          is_chairman: true,
-          is_verified: true,
-        };
-        upgradedToken = signUserToken(upgradedUser);
-      }
+    if (uRows[0]) {
+      upgradedUser = {
+        id: uRows[0].id,
+        full_name: uRows[0].full_name,
+        email: uRows[0].email,
+        role_id: 3,
+        role: 'admin',
+        admin_tier: uRows[0].admin_tier || finalTier,
+        is_b2b_verified: Boolean(uRows[0].is_b2b_verified),
+        is_chairman: Boolean(uRows[0].is_b2b_verified),
+        is_verified: true,
+      };
+      upgradedToken = signUserToken(upgradedUser);
     }
 
     invalidateSumenepNodeCaches();
@@ -1290,20 +1319,148 @@ const applyForStore = async (req, res) => {
     return res.status(200).json({
       success: true,
       status: nextStatus,
-      admin_tier: resolvedTier,
-      auto_kyc_passed: Boolean(autoKycPassed),
+      admin_tier: finalTier,
+      is_b2b_verified: Boolean(finalB2bVerified),
+      b2b_status: finalB2bStatus,
+      auto_kyc_passed: true,
       token: upgradedToken,
       user: upgradedUser,
-      message: isFreeze
-        ? 'Pengajuan toko dibekukan (Draft). Anda tetap dapat berbelanja sebagai Pembeli dan melanjutkan pengajuan kapan saja.'
-        : isAutoKycRetail
-          ? `Toko Retail '${String(nama_toko).trim()}' langsung disetujui via Auto-KYC Sistem! Anda kini aktif sebagai Admin Retail (Bebas Kuota).`
-          : `Pengajuan Toko B2B berhasil dikirim ke Penyuluh Desa ${village.name} untuk diverifikasi.`,
+      message: `Toko '${String(nama_toko).trim()}' langsung aktif sebagai Penjual Retail! Anda dapat mulai berjualan atau mengajukan upgrade Penjual B2B kapan saja.`,
       data: enrichStoreSecurityFields(saved[0]),
     });
   } catch (error) {
-    console.error('[STORE] Error applying for store:', error.message);
-    return res.status(500).json({ success: false, message: 'Gagal menyimpan pengajuan pembukaan toko.' });
+    console.error('[STORE] Error activating retail store:', error.message);
+    return res.status(500).json({ success: false, message: 'Gagal mengaktifkan toko Penjual.' });
+  }
+};
+
+const requestB2BUpgrade = async (req, res) => {
+  try {
+    const userId = req.user.id;
+    const callerRole = String(req.user?.role || '').toLowerCase();
+    const callerRoleId = Number(req.user?.role_id || 0);
+
+    if (callerRole !== 'admin' && callerRoleId !== 3) {
+      return res.status(403).json({
+        success: false,
+        message: 'Aktifkan akun Penjual Retail terlebih dahulu sebelum mengajukan upgrade ke Penjual B2B.',
+      });
+    }
+
+    const {
+      nama_toko,
+      tipe_pengelola = 'POKTAN',
+      nik,
+      no_hp,
+      kapasitas_gudang_kg,
+      dokumen_syarat_url,
+      sk_poktan_url,
+      alamat_lengkap,
+      village_id,
+      village_name,
+    } = req.body || {};
+
+    const cleanNik = nik ? String(nik).trim() : '';
+    if (cleanNik && (cleanNik.length !== 16 || !/^\d{16}$/.test(cleanNik))) {
+      return res.status(400).json({
+        success: false,
+        message: 'NIK harus terdiri dari 16 digit angka yang valid.',
+      });
+    }
+
+    const [uRows] = await pool.query(
+      'SELECT full_name, admin_tier, is_b2b_verified FROM users WHERE id = ? LIMIT 1',
+      [userId]
+    );
+    const [existing] = await pool.query(
+      'SELECT * FROM store_applications WHERE user_id = ? LIMIT 1',
+      [userId]
+    );
+
+    if (Boolean(uRows[0]?.is_b2b_verified) || uRows[0]?.admin_tier === 'B2B_OFFTAKER') {
+      return res.status(200).json({
+        success: true,
+        b2b_status: 'APPROVED',
+        is_b2b_verified: true,
+        message: 'Toko Anda sudah berstatus Penjual B2B Terverifikasi.',
+        data: existing[0] ? enrichStoreSecurityFields(existing[0]) : null,
+      });
+    }
+
+    const validTypes = ['POKTAN', 'KOPERASI', 'PENGEPUL_DESA', 'PEDAGANG_PASAR', 'WARUNG_SEMBAKO'];
+    const cleanManagerType = String(tipe_pengelola || 'POKTAN').toUpperCase();
+    const resolvedType = validTypes.includes(cleanManagerType) ? cleanManagerType : 'POKTAN';
+    const docUrl = sk_poktan_url || dokumen_syarat_url || null;
+    const parsedWarehouseCap =
+      kapasitas_gudang_kg !== undefined && Number(kapasitas_gudang_kg) > 0
+        ? parseInt(kapasitas_gudang_kg, 10)
+        : Math.max(1000, Number(existing[0]?.kapasitas_gudang_kg || 2000));
+
+    let appId = existing[0]?.id;
+    if (existing.length > 0) {
+      await pool.query(
+        `UPDATE store_applications
+         SET nama_toko = COALESCE(NULLIF(?, ''), nama_toko),
+             tipe_pengelola = ?,
+             nik = COALESCE(NULLIF(?, ''), nik),
+             no_hp = COALESCE(NULLIF(?, ''), no_hp),
+             kapasitas_gudang_kg = ?,
+             alamat_lengkap = COALESCE(NULLIF(?, ''), alamat_lengkap),
+             dokumen_syarat_url = COALESCE(NULLIF(?, ''), dokumen_syarat_url),
+             village_id = COALESCE(?, village_id),
+             village_name = COALESCE(NULLIF(?, ''), village_name),
+             b2b_status = 'PENDING_PPL',
+             is_b2b_verified = 0,
+             rejection_reason = NULL
+         WHERE id = ?`,
+        [
+          nama_toko ? String(nama_toko).trim() : '',
+          resolvedType,
+          cleanNik,
+          no_hp ? String(no_hp).trim() : '',
+          parsedWarehouseCap,
+          alamat_lengkap ? String(alamat_lengkap).trim() : '',
+          docUrl ? String(docUrl).trim() : '',
+          village_id ? Number(village_id) : null,
+          village_name ? String(village_name).trim() : '',
+          appId,
+        ]
+      );
+    } else {
+      appId = `store-${uuidv4().slice(0, 10)}`;
+      const fallbackStoreName = (nama_toko && String(nama_toko).trim()) || `Lapak ${uRows[0]?.full_name || 'Mitra'}`;
+      await pool.query(
+        `INSERT INTO store_applications
+         (id, user_id, nama_toko, admin_tier, tipe_pengelola, nik, no_hp, kapasitas_gudang_kg, auto_kyc_passed, village_id, village_name, alamat_lengkap, dokumen_syarat_url, status, b2b_status, is_b2b_verified, is_store_open)
+         VALUES (?, ?, ?, 'RETAIL_MERCHANT', ?, ?, ?, ?, 1, ?, ?, ?, ?, 'APPROVED', 'PENDING_PPL', 0, 1)`,
+        [
+          appId,
+          userId,
+          fallbackStoreName,
+          resolvedType,
+          cleanNik || null,
+          no_hp ? String(no_hp).trim() : null,
+          parsedWarehouseCap,
+          village_id ? Number(village_id) : 109,
+          village_name ? String(village_name).trim() : 'Dungkek',
+          alamat_lengkap ? String(alamat_lengkap).trim() : null,
+          docUrl || 'uploads/docs/sk_poktan_upgrade.pdf',
+        ]
+      );
+    }
+
+    invalidateSumenepNodeCaches();
+    const [saved] = await pool.query('SELECT * FROM store_applications WHERE id = ?', [appId]);
+    return res.status(200).json({
+      success: true,
+      b2b_status: 'PENDING_PPL',
+      is_b2b_verified: false,
+      message: 'Pengajuan upgrade ke Penjual B2B Terverifikasi berhasil dikirim ke Penyuluh untuk diperiksa.',
+      data: enrichStoreSecurityFields(saved[0]),
+    });
+  } catch (error) {
+    console.error('[STORE_B2B_UPGRADE] Error requesting B2B upgrade:', error.message);
+    return res.status(500).json({ success: false, message: 'Gagal mengajukan upgrade ke Penjual B2B.' });
   }
 };
 
@@ -1358,8 +1515,30 @@ const updateStoreSettings = async (req, res) => {
   }
 };
 
+async function isVerifiedB2BSeller(user) {
+  if (!user || !user.id) return false;
+  const [rows] = await pool.query(
+    `SELECT u.role, u.role_id, u.admin_tier, COALESCE(u.is_b2b_verified, sa.is_b2b_verified, 0) AS is_b2b_verified
+     FROM users u
+     LEFT JOIN store_applications sa ON sa.user_id = u.id
+     WHERE u.id = ? LIMIT 1`,
+    [user.id]
+  );
+  const row = rows[0];
+  if (!row) return false;
+  return Boolean(row.is_b2b_verified) || row.admin_tier === 'B2B_OFFTAKER';
+}
+
 const getNearbyHarvests = async (req, res) => {
   try {
+    const callerRole = String(req.user?.role || '').toLowerCase();
+    if (callerRole === 'admin' && !(await isVerifiedB2BSeller(req.user))) {
+      return res.status(403).json({
+        success: false,
+        code: 'B2B_VERIFICATION_REQUIRED',
+        message: 'Serapan panen langsung dari petani khusus untuk Penjual B2B Terverifikasi. Ajukan upgrade B2B terlebih dahulu.',
+      });
+    }
     const [rows] = await pool.query(
       `SELECT * FROM harvest_reports
        WHERE status_tanam IN ('HAMPIR_PANEN','SIAP_PANEN','MULAI_TANAM')
@@ -1389,6 +1568,13 @@ const getStorePurchaseOffers = async (req, res) => {
 
 const createPurchaseOffer = async (req, res) => {
   try {
+    if (!(await isVerifiedB2BSeller(req.user))) {
+      return res.status(403).json({
+        success: false,
+        code: 'B2B_VERIFICATION_REQUIRED',
+        message: 'Fitur penawaran & serapan panen petani khusus untuk Penjual B2B Terverifikasi.',
+      });
+    }
     const storeAdminId = req.user.id;
     const {
       harvest_report_id,
@@ -1478,6 +1664,13 @@ const createPurchaseOffer = async (req, res) => {
 
 const weighAndPayOffer = async (req, res) => {
   try {
+    if (!(await isVerifiedB2BSeller(req.user))) {
+      return res.status(403).json({
+        success: false,
+        code: 'B2B_VERIFICATION_REQUIRED',
+        message: 'Fitur penimbangan & pembayaran serapan panen khusus untuk Penjual B2B Terverifikasi.',
+      });
+    }
     const { id } = req.params;
     const { berat_timbang_riil_kg, notes } = req.body || {};
     const realWeight = Number(berat_timbang_riil_kg);
@@ -1526,6 +1719,7 @@ module.exports = {
   dispatchFertilizerSubsidy,
   getStoreApplicationsForPpl,
   verifyStoreApplication,
+  verifyB2BUpgrade,
   updateVillageStoreQuota,
   getInterPplForum,
   createInterPplForumPost,
@@ -1538,6 +1732,7 @@ module.exports = {
   respondToPurchaseOffer,
   getMyStoreApplication,
   applyForStore,
+  requestB2BUpgrade,
   updateStoreSettings,
   getNearbyHarvests,
   getStorePurchaseOffers,

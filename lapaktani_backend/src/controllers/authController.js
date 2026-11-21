@@ -41,8 +41,12 @@ const register = async (req, res) => {
     const passwordHash = await bcrypt.hash(password, salt);
 
     const userId = uuidv4();
-    const roleId = (role && role.toLowerCase() === 'petani') ? 1 : 4;
-    const assignedRole = roleId === 1 ? 'petani' : 'pembeli';
+    const normalizedRole = role ? String(role).trim().toLowerCase() : 'pembeli';
+    const isSellerRole = ['admin', 'penjual', 'seller'].includes(normalizedRole);
+    const roleId = normalizedRole === 'petani' ? 1 : (isSellerRole ? 3 : 4);
+    const assignedRole = roleId === 1 ? 'petani' : (roleId === 3 ? 'admin' : 'pembeli');
+    const adminTier = roleId === 3 ? 'RETAIL_MERCHANT' : null;
+    const isB2bVerified = false;
     const userName = full_name ? full_name.trim() : email.split('@')[0];
 
     const connection = await pool.getConnection();
@@ -50,8 +54,9 @@ const register = async (req, res) => {
       await connection.beginTransaction();
 
       await connection.query(
-        'INSERT INTO users (id, email, password_hash, role_id, full_name, role) VALUES (?, ?, ?, ?, ?, ?)',
-        [userId, email.trim().toLowerCase(), passwordHash, roleId, userName, assignedRole]
+        `INSERT INTO users (id, email, password_hash, role_id, full_name, role, admin_tier, is_b2b_verified${roleId === 3 ? ', is_verified' : ''})
+         VALUES (?, ?, ?, ?, ?, ?, ?, 0${roleId === 3 ? ', 1' : ''})`,
+        [userId, email.trim().toLowerCase(), passwordHash, roleId, userName, assignedRole, adminTier]
       );
 
       const profileId = uuidv4();
@@ -59,6 +64,22 @@ const register = async (req, res) => {
         'INSERT INTO user_profiles (id, user_id, full_name) VALUES (?, ?, ?)',
         [profileId, userId, userName]
       );
+
+      if (roleId === 3) {
+        const storeId = `store-${uuidv4().slice(0, 10)}`;
+        const resolvedStoreName = (req.body?.nama_toko && String(req.body.nama_toko).trim())
+          ? String(req.body.nama_toko).trim()
+          : `Lapak ${userName}`;
+        const resolvedAddress = (req.body?.alamat_gudang && String(req.body.alamat_gudang).trim())
+          ? String(req.body.alamat_gudang).trim()
+          : 'Indonesia';
+        await connection.query(
+          `INSERT INTO store_applications
+           (id, user_id, nama_toko, alamat_lengkap, status, admin_tier, auto_kyc_passed, b2b_status, is_b2b_verified, is_store_open)
+           VALUES (?, ?, ?, ?, 'APPROVED', 'RETAIL_MERCHANT', 1, 'NONE', 0, 1)`,
+          [storeId, userId, resolvedStoreName, resolvedAddress]
+        );
+      }
 
       await connection.commit();
     } catch (dbErr) {
@@ -73,19 +94,26 @@ const register = async (req, res) => {
       email: email.trim().toLowerCase(),
       role_id: roleId,
       role: assignedRole,
+      admin_tier: adminTier,
+      is_b2b_verified: isB2bVerified,
       is_chairman: false
     });
 
     return res.status(201).json({
       success: true,
-      message: 'Registrasi berhasil.',
+      message: roleId === 3
+        ? 'Registrasi berhasil! Akun Penjual Retail Anda langsung aktif.'
+        : 'Registrasi berhasil.',
       token,
       user: {
         id: userId,
         full_name: userName,
         email: email.trim().toLowerCase(),
         role_id: roleId,
-        role: assignedRole
+        role: assignedRole,
+        admin_tier: adminTier,
+        is_b2b_verified: isB2bVerified,
+        is_verified: roleId === 3
       }
     });
   } catch (error) {
@@ -188,12 +216,14 @@ const login = async (req, res) => {
       isChairman = chairmanRows.length > 0;
     }
 
+    const isB2bVerified = Boolean(user.is_b2b_verified) || (userRole === 'admin' && adminTier === 'B2B_OFFTAKER');
     const token = signUserToken({
       id: user.id,
       email: user.email,
       role_id: user.role_id,
       role: userRole,
       admin_tier: adminTier,
+      is_b2b_verified: isB2bVerified,
       is_chairman: isChairman
     });
 
@@ -221,6 +251,7 @@ const login = async (req, res) => {
         role_id: user.role_id,
         role: userRole,
         admin_tier: adminTier,
+        is_b2b_verified: isB2bVerified,
         is_chairman: isChairman,
         is_verified: Boolean(user.is_verified)
       }

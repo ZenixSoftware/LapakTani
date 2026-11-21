@@ -64,6 +64,7 @@ const runStreamlinedAgroFlowMigration = async () => {
 
     await addColumnIfMissing(connection, 'users', 'admin_tier', "ENUM('B2B_OFFTAKER','RETAIL_MERCHANT') NULL DEFAULT NULL");
     await addColumnIfMissing(connection, 'users', 'is_active', 'TINYINT(1) NOT NULL DEFAULT 1');
+    await addColumnIfMissing(connection, 'users', 'is_b2b_verified', 'TINYINT(1) NOT NULL DEFAULT 0');
 
     const superadminHash = await bcrypt.hash('superadmin123', 10);
     const retailAdminHash = await bcrypt.hash('admin123', 10);
@@ -267,9 +268,11 @@ const runStreamlinedAgroFlowMigration = async () => {
       ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
     `);
 
-    await addColumnIfMissing(connection, 'store_applications', 'admin_tier', "ENUM('B2B_OFFTAKER','RETAIL_MERCHANT') NOT NULL DEFAULT 'B2B_OFFTAKER'");
+    await addColumnIfMissing(connection, 'store_applications', 'admin_tier', "ENUM('B2B_OFFTAKER','RETAIL_MERCHANT') NOT NULL DEFAULT 'RETAIL_MERCHANT'");
     await addColumnIfMissing(connection, 'store_applications', 'kapasitas_gudang_kg', 'INT NULL DEFAULT 1000');
     await addColumnIfMissing(connection, 'store_applications', 'auto_kyc_passed', 'TINYINT(1) NOT NULL DEFAULT 0');
+    await addColumnIfMissing(connection, 'store_applications', 'b2b_status', "ENUM('NONE','PENDING_PPL','APPROVED','REJECTED') NOT NULL DEFAULT 'NONE'");
+    await addColumnIfMissing(connection, 'store_applications', 'is_b2b_verified', 'TINYINT(1) NOT NULL DEFAULT 0');
 
     try {
       await connection.query(`
@@ -637,6 +640,29 @@ const runStreamlinedAgroFlowMigration = async () => {
       `INSERT IGNORE INTO chat_messages (id, conversation_id, sender_id, message_type, body, metadata_json)
        VALUES ('msg-dinas-ppl-01', 'conv-dinas-ppl-01', ?, 'TEXT', 'Selamat pagi BPP Sumenep. Silakan laporkan kebutuhan pupuk subsidi dan kondisi lahan kritis melalui DM atau AI RAG Dispatch.', NULL)`,
       [dinasId]
+    );
+
+    // Idempotent backfill for B2B upgrade flags (Phase 2 single Seller role with optional B2B verification)
+    await connection.query(
+      `UPDATE store_applications
+       SET b2b_status = 'APPROVED', is_b2b_verified = 1
+       WHERE admin_tier = 'B2B_OFFTAKER' AND status = 'APPROVED'
+         AND (b2b_status <> 'APPROVED' OR is_b2b_verified <> 1)`
+    );
+    await connection.query(
+      `UPDATE store_applications
+       SET b2b_status = 'PENDING_PPL'
+       WHERE status = 'PENDING_PPL' AND b2b_status = 'NONE'`
+    );
+    await connection.query(
+      `UPDATE store_applications
+       SET b2b_status = 'REJECTED', is_b2b_verified = 0
+       WHERE admin_tier = 'B2B_OFFTAKER' AND status = 'REJECTED' AND b2b_status = 'NONE'`
+    );
+    await connection.query(
+      `UPDATE users
+       SET is_b2b_verified = 1
+       WHERE role = 'admin' AND admin_tier = 'B2B_OFFTAKER' AND is_b2b_verified = 0`
     );
 
     console.log('[MIGRATION_AGRO_FLOW] Completed streamlined 5-role agro flow migration.');

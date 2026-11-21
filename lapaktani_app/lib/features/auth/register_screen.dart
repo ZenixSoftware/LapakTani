@@ -8,6 +8,7 @@ import '../../core/widgets/lapaktani_logo.dart';
 import '../../core/widgets/lapaktani_text_field.dart';
 import '../profile/complete_farmer_profile_screen.dart';
 import '../home/home_dashboard_screen.dart';
+import '../navigation/role_based_app_shell.dart';
 import 'auth_repository.dart';
 import 'store_registration_screen.dart';
 
@@ -21,6 +22,7 @@ class RegisterScreen extends StatefulWidget {
 class _RegisterScreenState extends State<RegisterScreen> {
   final _formKey = GlobalKey<FormState>();
   final _nameController = TextEditingController();
+  final _storeNameController = TextEditingController();
   final _emailController = TextEditingController();
   final _phoneController = TextEditingController();
   final _passwordController = TextEditingController();
@@ -32,6 +34,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
   @override
   void dispose() {
     _nameController.dispose();
+    _storeNameController.dispose();
     _emailController.dispose();
     _phoneController.dispose();
     _passwordController.dispose();
@@ -59,6 +62,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
         'email': _emailController.text.trim(),
         'password': _passwordController.text,
         'role': _selectedRole.toLowerCase(),
+        if (_selectedRole == 'admin' && _storeNameController.text.trim().isNotEmpty)
+          'nama_toko': _storeNameController.text.trim(),
       });
 
       final Map<String, dynamic> data =
@@ -83,7 +88,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
             content: Text(
               _selectedRole == 'petani'
                   ? 'Akun berhasil dibuat. Silakan lengkapi data legalitas kebun.'
-                  : 'Registrasi berhasil! Selamat datang di LapakTani.',
+                  : _selectedRole == 'admin'
+                      ? 'Toko Penjual Retail langsung aktif! Selamat datang di LapakTani.'
+                      : 'Registrasi berhasil! Selamat datang di LapakTani.',
             ),
             backgroundColor: AppColors.primary,
             duration: const Duration(seconds: 2),
@@ -96,6 +103,11 @@ class _RegisterScreenState extends State<RegisterScreen> {
             MaterialPageRoute(
               builder: (_) => const CompleteFarmerProfileScreen(),
             ),
+          );
+        } else if (_selectedRole == 'admin') {
+          Navigator.of(context).pushAndRemoveUntil(
+            MaterialPageRoute(builder: (_) => const RoleBasedAppShell()),
+            (route) => false,
           );
         } else {
           Navigator.of(context).pushAndRemoveUntil(
@@ -326,11 +338,11 @@ class _RegisterScreenState extends State<RegisterScreen> {
                               curve: Curves.easeOutCubic,
                               padding: const EdgeInsets.symmetric(vertical: 10),
                               decoration: BoxDecoration(
-                                color: !isFarmer
+                                color: _selectedRole == 'pembeli'
                                     ? Colors.white
                                     : Colors.transparent,
                                 borderRadius: BorderRadius.circular(26),
-                                boxShadow: !isFarmer
+                                boxShadow: _selectedRole == 'pembeli'
                                     ? [
                                         BoxShadow(
                                           color: Colors.black
@@ -346,22 +358,83 @@ class _RegisterScreenState extends State<RegisterScreen> {
                                 children: [
                                   Icon(
                                     LucideIcons.shoppingBag,
-                                    size: 16,
-                                    color: !isFarmer
+                                    size: 15,
+                                    color: _selectedRole == 'pembeli'
                                         ? AppColors.primary
                                         : AppColors.neutralMuted,
                                   ),
-                                  const SizedBox(width: 8),
-                                  Text(
-                                    'Pembeli',
-                                    style: TextStyle(
-                                      fontSize: 13,
-                                      fontWeight: !isFarmer
-                                          ? FontWeight.w800
-                                          : FontWeight.w600,
-                                      color: !isFarmer
-                                          ? AppColors.neutral
-                                          : AppColors.neutralMuted,
+                                  const SizedBox(width: 5),
+                                  Flexible(
+                                    child: Text(
+                                      'Pembeli',
+                                      overflow: TextOverflow.ellipsis,
+                                      style: TextStyle(
+                                        fontSize: 12.5,
+                                        fontWeight: _selectedRole == 'pembeli'
+                                            ? FontWeight.w800
+                                            : FontWeight.w600,
+                                        color: _selectedRole == 'pembeli'
+                                            ? AppColors.neutral
+                                            : AppColors.neutralMuted,
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ),
+                        Expanded(
+                          child: GestureDetector(
+                            onTap: () {
+                              if (_selectedRole != 'admin') {
+                                setState(() => _selectedRole = 'admin');
+                              }
+                            },
+                            child: AnimatedContainer(
+                              duration: const Duration(milliseconds: 220),
+                              curve: Curves.easeOutCubic,
+                              padding: const EdgeInsets.symmetric(vertical: 10),
+                              decoration: BoxDecoration(
+                                color: _selectedRole == 'admin'
+                                    ? AppColors.primary
+                                    : Colors.transparent,
+                                borderRadius: BorderRadius.circular(26),
+                                boxShadow: _selectedRole == 'admin'
+                                    ? [
+                                        BoxShadow(
+                                          color: AppColors.primary
+                                              .withValues(alpha: 0.25),
+                                          blurRadius: 10,
+                                          offset: const Offset(0, 2),
+                                        ),
+                                      ]
+                                    : null,
+                              ),
+                              child: Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Icon(
+                                    LucideIcons.store,
+                                    size: 15,
+                                    color: _selectedRole == 'admin'
+                                        ? Colors.white
+                                        : AppColors.neutralMuted,
+                                  ),
+                                  const SizedBox(width: 5),
+                                  Flexible(
+                                    child: Text(
+                                      'Penjual',
+                                      overflow: TextOverflow.ellipsis,
+                                      style: TextStyle(
+                                        fontSize: 12.5,
+                                        fontWeight: _selectedRole == 'admin'
+                                            ? FontWeight.w800
+                                            : FontWeight.w600,
+                                        color: _selectedRole == 'admin'
+                                            ? Colors.white
+                                            : AppColors.neutralMuted,
+                                      ),
                                     ),
                                   ),
                                 ],
@@ -400,23 +473,26 @@ class _RegisterScreenState extends State<RegisterScreen> {
                                 mainAxisAlignment: MainAxisAlignment.center,
                                 children: [
                                   Icon(
-                                    LucideIcons.store,
-                                    size: 16,
+                                    LucideIcons.sprout,
+                                    size: 15,
                                     color: isFarmer
                                         ? Colors.white
                                         : AppColors.neutralMuted,
                                   ),
-                                  const SizedBox(width: 8),
-                                  Text(
-                                    'Petani Mitra',
-                                    style: TextStyle(
-                                      fontSize: 13,
-                                      fontWeight: isFarmer
-                                          ? FontWeight.w800
-                                          : FontWeight.w600,
-                                      color: isFarmer
-                                          ? Colors.white
-                                          : AppColors.neutralMuted,
+                                  const SizedBox(width: 5),
+                                  Flexible(
+                                    child: Text(
+                                      'Petani',
+                                      overflow: TextOverflow.ellipsis,
+                                      style: TextStyle(
+                                        fontSize: 12.5,
+                                        fontWeight: isFarmer
+                                            ? FontWeight.w800
+                                            : FontWeight.w600,
+                                        color: isFarmer
+                                            ? Colors.white
+                                            : AppColors.neutralMuted,
+                                      ),
                                     ),
                                   ),
                                 ],
@@ -431,18 +507,18 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   AnimatedSwitcher(
                     duration: const Duration(milliseconds: 250),
                     child: Container(
-                      key: ValueKey(isFarmer),
+                      key: ValueKey(_selectedRole),
                       padding: const EdgeInsets.symmetric(
                         horizontal: 14,
                         vertical: 9,
                       ),
                       decoration: BoxDecoration(
-                        color: isFarmer
+                        color: isFarmer || _selectedRole == 'admin'
                             ? AppColors.tertiaryTint
                             : AppColors.primaryTint,
                         borderRadius: BorderRadius.circular(14),
                         border: Border.all(
-                          color: isFarmer
+                          color: isFarmer || _selectedRole == 'admin'
                               ? AppColors.tertiaryBorder
                               : AppColors.primaryBorder,
                           width: 1,
@@ -452,10 +528,12 @@ class _RegisterScreenState extends State<RegisterScreen> {
                         children: [
                           Icon(
                             isFarmer
-                                ? LucideIcons.store
-                                : LucideIcons.checkCircle2,
+                                ? LucideIcons.sprout
+                                : _selectedRole == 'admin'
+                                    ? LucideIcons.store
+                                    : LucideIcons.checkCircle2,
                             size: 16,
-                            color: isFarmer
+                            color: isFarmer || _selectedRole == 'admin'
                                 ? AppColors.tertiaryText
                                 : AppColors.primaryDark,
                           ),
@@ -463,12 +541,14 @@ class _RegisterScreenState extends State<RegisterScreen> {
                           Expanded(
                             child: Text(
                               isFarmer
-                                  ? 'Akses pasar luas tanpa tengkulak dengan pembayaran transparan.'
-                                  : 'Akses produk panen subuh segar dan harga adil dari petani.',
+                                  ? 'Siarkan jadwal panen langsung ke Penyuluh dan Penjual B2B tanpa tengkulak.'
+                                  : _selectedRole == 'admin'
+                                      ? 'Toko Penjual Retail langsung aktif! Anda dapat mengajukan upgrade B2B kapan saja.'
+                                      : 'Akses belanja eceran & kontrak partai B2B langsung dari kebun petani.',
                               style: TextStyle(
                                 fontSize: 11,
                                 fontWeight: FontWeight.w600,
-                                color: isFarmer
+                                color: isFarmer || _selectedRole == 'admin'
                                     ? AppColors.tertiaryText
                                     : AppColors.primaryDark,
                               ),
@@ -534,6 +614,10 @@ class _RegisterScreenState extends State<RegisterScreen> {
                                 child: Text('Pembeli'),
                               ),
                               DropdownMenuItem(
+                                value: 'admin',
+                                child: Text('Penjual (Toko Retail)'),
+                              ),
+                              DropdownMenuItem(
                                 value: 'petani',
                                 child: Text('Petani'),
                               ),
@@ -544,6 +628,16 @@ class _RegisterScreenState extends State<RegisterScreen> {
                               }
                             },
                           ),
+                          if (_selectedRole == 'admin') ...[
+                            const SizedBox(height: 14),
+                            LapaktaniTextField(
+                              controller: _storeNameController,
+                              label: 'Nama Lapak / Toko (Opsional)',
+                              hintText: 'Contoh: Lapak Sayur Segar Ibu Rina',
+                              prefixIcon: LucideIcons.store,
+                              textInputAction: TextInputAction.next,
+                            ),
+                          ],
                           const SizedBox(height: 14),
                           LapaktaniTextField(
                             controller: _nameController,
@@ -732,7 +826,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
                                             Text(
                                               isFarmer
                                                   ? 'Lanjut ke Profil Petani'
-                                                  : 'Daftar Sekarang',
+                                                  : _selectedRole == 'admin'
+                                                      ? 'Daftar & Aktifkan Toko'
+                                                      : 'Daftar Sekarang',
                                               style: const TextStyle(
                                                 fontSize: 15,
                                                 fontWeight: FontWeight.w700,
@@ -809,7 +905,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                         color: AppColors.primary,
                       ),
                       label: const Text(
-                        'Daftar Pengajuan Buka Toko Desa (2 Tahap)',
+                        'Aktivasi Lapak Penjual Retail (Dengan Alamat Desa)',
                         style: TextStyle(
                           fontSize: 12.5,
                           fontWeight: FontWeight.w700,

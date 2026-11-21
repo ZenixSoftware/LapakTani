@@ -1400,18 +1400,18 @@ class _PenyuluhHubScreenState extends State<PenyuluhHubScreen> {
   Future<void> _verifyStoreApp(String id, String storeName, String status) async {
     setState(() => _busyStoreId = id);
     try {
-      await _apiService.verifyStoreApplicationByPpl(
+      await _apiService.verifyB2BUpgradeByPpl(
         id,
         status,
-        reason: status == 'REJECTED' ? 'Lengkapi syarat toko desa.' : null,
+        reason: status == 'REJECTED' ? 'Lengkapi syarat verifikasi B2B.' : null,
       );
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
             status == 'APPROVED'
-                ? 'Toko $storeName disetujui menjadi Admin Toko!'
-                : 'Pengajuan toko $storeName ditolak.',
+                ? 'Toko $storeName disetujui menjadi Penjual B2B Terverifikasi!'
+                : 'Pengajuan upgrade B2B $storeName ditolak (tetap aktif sebagai Penjual Retail).',
           ),
           backgroundColor:
               status == 'APPROVED' ? AppColors.primary : AppColors.warning,
@@ -1767,9 +1767,11 @@ class _PenyuluhHubScreenState extends State<PenyuluhHubScreen> {
   }
 
   Widget _buildStoreApprovalAndQuotaSection() {
-    final pendingStores = _storeApps
-        .where((s) => (s['status'] ?? '').toString().toUpperCase() == 'PENDING_PPL')
-        .toList();
+    final pendingStores = _storeApps.where((s) {
+      final st = (s['status'] ?? '').toString().toUpperCase();
+      final b2bSt = (s['b2b_status'] ?? '').toString().toUpperCase();
+      return b2bSt == 'PENDING_PPL' || st == 'PENDING_PPL';
+    }).toList();
 
     return Container(
       padding: const EdgeInsets.all(16),
@@ -1784,11 +1786,11 @@ class _PenyuluhHubScreenState extends State<PenyuluhHubScreen> {
         children: [
           Row(
             children: [
-              const Icon(LucideIcons.store, color: AppColors.primary, size: 18),
+              const Icon(LucideIcons.badgeCheck, color: AppColors.primary, size: 18),
               const SizedBox(width: 8),
               Expanded(
                 child: Text(
-                  'ACC Toko & Kuota Toko Desa',
+                  'Verifikasi Upgrade Penjual B2B',
                   style: GoogleFonts.plusJakartaSans(
                     fontSize: 14.5,
                     fontWeight: FontWeight.w700,
@@ -1800,7 +1802,7 @@ class _PenyuluhHubScreenState extends State<PenyuluhHubScreen> {
                 onPressed: _showVillageQuotaDialog,
                 icon: const Icon(LucideIcons.slidersHorizontal, size: 13),
                 label: Text(
-                  'Atur Kuota',
+                  'Atur Desa',
                   style: GoogleFonts.plusJakartaSans(
                     fontSize: 11,
                     fontWeight: FontWeight.w700,
@@ -1812,16 +1814,16 @@ class _PenyuluhHubScreenState extends State<PenyuluhHubScreen> {
           const SizedBox(height: 6),
           if (pendingStores.isEmpty)
             Text(
-              'Tidak ada pengajuan pembukaan toko baru yang menunggu ACC.',
+              'Tidak ada pengajuan upgrade Penjual B2B yang menunggu verifikasi.',
               style: GoogleFonts.plusJakartaSans(
                 fontSize: 11.5,
                 color: AppColors.textMuted,
               ),
             )
           else
-            ...pendingStores.take(3).map((app) {
+            ...pendingStores.take(5).map((app) {
               final id = app['id'].toString();
-              final name = (app['nama_toko'] ?? 'Toko Baru').toString();
+              final name = (app['nama_toko'] ?? 'Toko Penjual').toString();
               final village =
                   (app['resolved_village_name'] ?? app['village_name'] ?? 'Sumenep')
                       .toString();
@@ -1839,7 +1841,7 @@ class _PenyuluhHubScreenState extends State<PenyuluhHubScreen> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      '$name (${app['tipe_pengelola']})',
+                      '$name (${app['tipe_pengelola'] ?? 'POKTAN'})',
                       style: GoogleFonts.plusJakartaSans(
                         fontSize: 13,
                         fontWeight: FontWeight.w700,
@@ -1852,6 +1854,15 @@ class _PenyuluhHubScreenState extends State<PenyuluhHubScreen> {
                         color: AppColors.textMuted,
                       ),
                     ),
+                    if (app['kapasitas_gudang_kg'] != null)
+                      Text(
+                        'Kapasitas Gudang: ${app['kapasitas_gudang_kg']} kg',
+                        style: GoogleFonts.plusJakartaSans(
+                          fontSize: 11,
+                          color: AppColors.primaryDark,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
                     const SizedBox(height: 8),
                     Row(
                       children: [
@@ -1860,7 +1871,7 @@ class _PenyuluhHubScreenState extends State<PenyuluhHubScreen> {
                             onPressed: isBusy
                                 ? null
                                 : () => _verifyStoreApp(id, name, 'REJECTED'),
-                            child: const Text('Tolak'),
+                            child: const Text('Tolak B2B'),
                           ),
                         ),
                         const SizedBox(width: 8),
@@ -1873,7 +1884,7 @@ class _PenyuluhHubScreenState extends State<PenyuluhHubScreen> {
                               backgroundColor: AppColors.primary,
                               foregroundColor: Colors.white,
                             ),
-                            child: Text(isBusy ? 'Memproses...' : 'ACC Buka Toko'),
+                            child: Text(isBusy ? 'Memproses...' : 'ACC Penjual B2B'),
                           ),
                         ),
                       ],

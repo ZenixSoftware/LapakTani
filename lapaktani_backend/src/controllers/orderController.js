@@ -123,6 +123,15 @@ const checkoutOrder = async (req, res) => {
       message: 'Akses ditolak. Pengguna belum diautentikasi.'
     });
   }
+  const callerRole = String(req.user?.role || '').toLowerCase();
+  const callerRoleId = Number(req.user?.role_id || 0);
+  if (callerRole === 'admin' || callerRoleId === 3) {
+    return res.status(403).json({
+      success: false,
+      code: 'SELLER_CANNOT_BUY',
+      message: 'Akun Penjual tidak dapat melakukan pembelian. Silakan beralih ke akun Pembeli.'
+    });
+  }
 
   const {
     items,

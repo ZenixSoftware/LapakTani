@@ -355,6 +355,13 @@ const spilloverToRetail = async (req, res) => {
  * Buyer takes wholesale quota from open harvest pool
  */
 const takeQuota = async (req, res) => {
+  if (req.user && (String(req.user.role || '').toLowerCase() === 'admin' || Number(req.user.role_id || 0) === 3)) {
+    return res.status(403).json({
+      success: false,
+      code: 'SELLER_CANNOT_BUY',
+      message: 'Akun Penjual tidak dapat melakukan pembelian. Silakan beralih ke akun Pembeli.'
+    });
+  }
   await ensureTables();
   const poolId = req.params.id || req.body.pool_id;
   const { quantity_kg, buyer_name } = req.body;

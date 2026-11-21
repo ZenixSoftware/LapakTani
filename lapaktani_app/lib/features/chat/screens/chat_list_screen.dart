@@ -213,11 +213,11 @@ class _ChatListScreenState extends State<ChatListScreen> {
                         ],
                         _QuickRoleChip(
                           icon: LucideIcons.store,
-                          label: 'Chat Admin Toko',
+                          label: 'Chat Penjual',
                           color: AppColors.tertiaryText,
                           onTap: () => _openQuickRoleChat(
                             'admin',
-                            'Koordinasi Toko Mitra Tani',
+                            'Koordinasi Penjual Mitra Tani',
                           ),
                         ),
                         ..._contacts.take(6).map(

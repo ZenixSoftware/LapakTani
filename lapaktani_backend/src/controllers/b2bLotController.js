@@ -27,7 +27,7 @@ async function resolveCallerAdminTier(user) {
   } catch (_) {}
 
   const role = String(user.role || '').toLowerCase();
-  return role === 'admin' || Number(user.role_id) === 3 ? 'B2B_OFFTAKER' : null;
+  return role === 'admin' || Number(user.role_id) === 3 ? 'RETAIL_MERCHANT' : null;
 }
 
 function serializeBidRow(row) {
@@ -168,20 +168,19 @@ const placeB2BLotBid = async (req, res) => {
 
   const callerRole = String(req.user?.role || '').toLowerCase();
   const callerRoleId = Number(req.user?.role_id || 4);
-  const callerTier = await resolveCallerAdminTier(req.user);
 
-  if ((callerRole === 'admin' || callerRoleId === 3) && callerTier === 'B2B_OFFTAKER') {
+  if (callerRole === 'admin' || callerRoleId === 3) {
     return res.status(403).json({
       success: false,
-      code: 'B2B_OFFTAKER_CANNOT_BUY',
-      message: 'Admin B2B (Offtaker) tidak memiliki fitur membeli atau menawar produk dari toko lain.',
+      code: 'SELLER_CANNOT_BUY',
+      message: 'Akun Penjual tidak dapat melakukan pembelian. Silakan beralih ke akun Pembeli.',
     });
   }
 
-  if (!['pembeli', 'admin'].includes(callerRole) && ![3, 4].includes(callerRoleId)) {
+  if (callerRole !== 'pembeli' && callerRoleId !== 4) {
     return res.status(403).json({
       success: false,
-      message: 'Hanya Pembeli Bisnis/Hotel atau Admin Retail yang dapat menawar lot B2B.',
+      message: 'Hanya akun Pembeli yang dapat menawar lot B2B.',
     });
   }
 
@@ -202,7 +201,7 @@ const placeB2BLotBid = async (req, res) => {
   const method = ['DIANTAR_PENJUAL', 'DIAMBIL_SENDIRI'].includes(String(fulfillment_method).toUpperCase())
     ? String(fulfillment_method).toUpperCase()
     : 'DIANTAR_PENJUAL';
-  const bidderType = callerRole === 'admin' || callerRoleId === 3 ? 'RETAIL_MERCHANT' : 'HOTEL_B2B';
+  const bidderType = 'HOTEL_B2B';
 
   let connection;
   try {
@@ -458,152 +457,6 @@ const updateB2BLotBidStatus = async (req, res) => {
 
 /**
  * POST /api/b2b/bids/:bidId/restock-to-retail
- * 1-Click Restock for RETAIL_MERCHANT once their B2B purchase reaches COMPLETED
- */
-const restockB2BBidToRetail = async (req, res) => {
-  let connection;
-  try {
-    const userId = req.user.id;
-    const { bidId } = req.params;
-    const { retail_price_per_kg, discount_percent = 0, retail_title } = req.body || {};
-
-    connection = await pool.getConnection();
-    await connection.beginTransaction();
-
-    const [rows] = await connection.query(
-      `SELECT b.*, p.commodity_id, p.grade_id, p.unit_id, p.image_url, p.description,
-              p.source_farmer_id, p.source_farmer_name, p.source_farmer_phone, p.store_village_id
-       FROM b2b_lot_bids b
-       LEFT JOIN products p ON b.product_id = p.id
-       WHERE b.id = ? LIMIT 1 FOR UPDATE`,
-      [bidId]
-    );
-
-    if (rows.length === 0) {
-      await connection.rollback();
-      return res.status(404).json({ success: false, message: 'Transaksi B2B tidak ditemukan.' });
-    }
-
-    const bid = rows[0];
-    if (String(bid.bidder_user_id) !== String(userId)) {
-      await connection.rollback();
-      return res.status(403).json({ success: false, message: 'Hanya pembeli B2B terkait yang dapat merestock ke tokonya.' });
-    }
-
-    if (bid.bidder_type !== 'RETAIL_MERCHANT') {
-      await connection.rollback();
-      return res.status(403).json({ success: false, message: 'Fitur 1-Click Restock khusus untuk Admin Retail.' });
-    }
-
-    if (String(bid.status).toUpperCase() !== 'COMPLETED') {
-      await connection.rollback();
-      return res.status(400).json({
-        success: false,
-        message: 'Konfirmasi penerimaan barang (COMPLETED) terlebih dahulu sebelum memindahkan ke etalase Retail.',
-      });
-    }
-
-    if (Number(bid.restocked_to_retail) === 1) {
-      await connection.rollback();
-      return res.status(409).json({
-        success: false,
-        message: 'Item pembelian B2B ini sudah dimasukkan ke daftar toko retail Anda.',
-      });
-    }
-
-    const costPrice = Number(bid.bid_price_per_kg || 10000);
-    const retailPrice =
-      retail_price_per_kg !== undefined && Number(retail_price_per_kg) > 0
-        ? Number(retail_price_per_kg)
-        : Math.round(costPrice * 1.15);
-    const discPct = Math.max(0, Math.min(80, Number(discount_percent) || 0));
-    const discPrice = discPct > 0 ? Math.round(retailPrice * (1 - discPct / 100)) : null;
-
-    const newProductId = `prod-rtl-${uuidv4().slice(0, 8)}`;
-    const qty = Number(bid.bid_qty_kg || 1);
-    const productTitle = retail_title ? String(retail_title).trim() : `${bid.product_title} (Eceran Retail)`;
-
-    // Ensure farmer_profiles FK exists for retail merchant owner before inserting into products
-    const [fpRows] = await connection.query(
-      'SELECT user_id FROM farmer_profiles WHERE user_id = ? LIMIT 1',
-      [userId]
-    );
-    if (fpRows.length === 0) {
-      const [groups] = await connection.query('SELECT id FROM farmer_groups LIMIT 1');
-      const fallbackGroupId = groups[0]?.id || '3be588df-b4b6-496b-aeac-efa43e3a7735';
-      await connection.query(
-        'INSERT INTO farmer_profiles (user_id, farmer_group_id) VALUES (?, ?) ON DUPLICATE KEY UPDATE farmer_group_id = VALUES(farmer_group_id)',
-        [userId, fallbackGroupId]
-      );
-    }
-
-    let resolvedCommodityId = bid.commodity_id;
-    if (!resolvedCommodityId) {
-      const [comms] = await connection.query('SELECT id FROM commodities LIMIT 1');
-      resolvedCommodityId = comms[0]?.id || 'com-tomat';
-    }
-    let resolvedGradeId = bid.grade_id;
-    if (!resolvedGradeId) {
-      const [grds] = await connection.query('SELECT id FROM product_grades LIMIT 1');
-      resolvedGradeId = grds[0]?.id || 'grade-1';
-    }
-    let resolvedUnitId = bid.unit_id;
-    if (!resolvedUnitId) {
-      const [units] = await connection.query('SELECT id FROM commodity_units LIMIT 1');
-      resolvedUnitId = units[0]?.id || 'unit-kg';
-    }
-
-    await connection.query(
-      `INSERT INTO products
-       (id, farmer_id, commodity_id, grade_id, unit_id, title, description, price_per_kg, stock_kg, price, stock, image_url, discount_percent, discount_price, is_wholesale_enabled, min_wholesale_qty, wholesale_price, store_village_id, processing_state, catalog_channel, fulfillment_options, source_farmer_id, source_farmer_name, source_farmer_phone, created_at)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0, 30, ?, ?, 'SIAP_PAKAI', 'RETAIL_CATALOG', 'BOTH', ?, ?, ?, NOW())`,
-      [
-        newProductId,
-        userId,
-        resolvedCommodityId,
-        resolvedGradeId,
-        resolvedUnitId,
-        productTitle,
-        bid.description || `Stok kulakan B2B siap pakai (${qty} kg) tersedia di etalase Admin Retail.`,
-        retailPrice,
-        qty,
-        retailPrice,
-        Math.floor(qty),
-        bid.image_url || 'uploads/products/tomat.jpg',
-        discPct,
-        discPrice,
-        retailPrice,
-        bid.store_village_id || 109,
-        bid.source_farmer_id || null,
-        bid.source_farmer_name || 'Pak Supardi (Poktan Harapan Sumenep)',
-        bid.source_farmer_phone || '081234567890',
-      ]
-    );
-
-    await connection.query('UPDATE b2b_lot_bids SET restocked_to_retail = 1, updated_at = NOW() WHERE id = ?', [bidId]);
-    await connection.commit();
-    await redisClient.delCache('lapaktani_catalog').catch(() => {});
-
-    const [createdProd] = await pool.query('SELECT * FROM products WHERE id = ?', [newProductId]);
-    return res.status(201).json({
-      success: true,
-      message: `${productTitle} (${qty} kg) berhasil ditambahkan ke etalase Toko Retail Anda (1-Click Restock)!`,
-      data: {
-        bid_id: bidId,
-        restocked_to_retail: true,
-        retail_product: createdProd[0],
-      },
-    });
-  } catch (error) {
-    if (connection) await connection.rollback().catch(() => {});
-    console.error('[B2B_RESTOCK] Error restocking to retail:', error.message);
-    return res.status(500).json({ success: false, message: 'Gagal menambahkan produk ke daftar toko retail.' });
-  } finally {
-    if (connection) connection.release();
-  }
-};
-
-/**
  * POST /api/b2b/bids/:bidId/cancel-with-refund
  * Capped Hybrid Refund Fee on B2B Bid cancellation
  */
@@ -697,6 +550,5 @@ module.exports = {
   getB2BLotBids,
   placeB2BLotBid,
   updateB2BLotBidStatus,
-  restockB2BBidToRetail,
   cancelB2BBidWithRefund,
 };

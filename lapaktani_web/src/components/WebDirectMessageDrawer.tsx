@@ -22,7 +22,7 @@ const ROLE_LABELS: Record<string, string> = {
   superadmin: 'Super Admin',
   dinas: 'Dinas Pertanian',
   penyuluh: 'Penyuluh BPP',
-  admin: 'Admin Toko / Koperasi',
+  admin: 'Penjual / Mitra Tani',
   petani: 'Petani Desa',
   pembeli: 'Pembeli',
 };
@@ -169,10 +169,10 @@ export const WebDirectMessageDrawer: React.FC<WebDirectMessageDrawerProps> = ({
               </h2>
               <p className="text-[11px] text-lt-neutral-muted">
                 {isSuperAdmin
-                  ? 'Komando langsung Super Admin ↔ Dinas Pertanian, Penyuluh BPP, & Admin Toko'
+                  ? 'Komando langsung Super Admin ↔ Dinas Pertanian, Penyuluh BPP, & Penjual'
                   : isDinas
                     ? 'Koordinasi langsung Dinas Pertanian ↔ Penyuluh BPP Kab. Sumenep & Super Admin'
-                    : 'Koordinasi langsung Penyuluh ↔ Dinas Pertanian, Petani Desa, & Admin Toko'}
+                    : 'Koordinasi langsung Penyuluh ↔ Dinas Pertanian, Petani Desa, & Penjual'}
               </p>
             </div>
           </div>
@@ -235,13 +235,13 @@ export const WebDirectMessageDrawer: React.FC<WebDirectMessageDrawerProps> = ({
                   onClick={() =>
                     void handleOpenContact({
                       target_role: 'admin',
-                      title: 'Audit Super Admin ↔ Admin Toko',
+                      title: 'Audit Super Admin ↔ Penjual',
                     })
                   }
                   className="px-3 py-1.5 rounded-xl bg-white border border-lt-border text-lt-neutral text-[11.5px] font-bold flex items-center gap-1.5 hover:border-lt-primary"
                 >
                   <span className="material-symbols-outlined text-[15px]">storefront</span>
-                  DM Admin Toko
+                  DM Penjual
                 </button>
               </>
             ) : isDinas ? (
@@ -291,13 +291,13 @@ export const WebDirectMessageDrawer: React.FC<WebDirectMessageDrawerProps> = ({
                   onClick={() =>
                     void handleOpenContact({
                       target_role: 'admin',
-                      title: 'Koordinasi Penyuluh ↔ Admin Toko',
+                      title: 'Koordinasi Penyuluh ↔ Penjual',
                     })
                   }
                   className="px-3 py-1.5 rounded-xl bg-white border border-lt-border text-lt-neutral text-[11.5px] font-bold flex items-center gap-1.5 hover:border-lt-primary"
                 >
                   <span className="material-symbols-outlined text-[15px]">storefront</span>
-                  DM Admin Toko
+                  DM Penjual
                 </button>
               </>
             )}

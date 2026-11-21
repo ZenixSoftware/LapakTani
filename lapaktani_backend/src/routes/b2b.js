@@ -20,12 +20,11 @@ const optionalToken = (req, res, next) => {
 // 1. Browsing open pools (Public / Buyer & Guest accessible)
 router.get('/pools', b2bPoolController.getHarvestPools);
 
-// Two-Tier B2B Open-Bid Lots & Bids (HOTEL_B2B / RETAIL_MERCHANT <-> B2B_OFFTAKER)
+// Two-Tier B2B Open-Bid Lots & Bids (Pembeli Bisnis / Pembeli <-> Penjual B2B Terverifikasi)
 router.get('/lots', b2bLotController.getB2BLots);
 router.get('/lot-bids', verifyToken, b2bLotController.getB2BLotBids);
 router.post('/lots/:productId/bid', verifyToken, b2bLotController.placeB2BLotBid);
 router.put('/bids/:bidId/status', verifyToken, b2bLotController.updateB2BLotBidStatus);
-router.post('/bids/:bidId/restock-to-retail', verifyToken, b2bLotController.restockB2BBidToRetail);
 router.post('/bids/:bidId/cancel-with-refund', verifyToken, b2bLotController.cancelB2BBidWithRefund);
 
 // US-22: B2B Contracts & Bids Aliases

@@ -20,6 +20,7 @@ class User {
   final String? adminTier;
   final bool isChairman;
   final bool isVerified;
+  final bool isB2bVerified;
 
   const User({
     required this.id,
@@ -31,6 +32,7 @@ class User {
     this.adminTier,
     this.isChairman = false,
     this.isVerified = true,
+    this.isB2bVerified = false,
   });
 
   factory User.fromJson(Map<String, dynamic> json) {
@@ -45,6 +47,10 @@ class User {
     final bool chairmanFlag = json['is_chairman'] == true ||
         json['is_chairman'] == 1 ||
         json['isChairman'] == true;
+    final String? parsedAdminTier = json['admin_tier']?.toString();
+    final bool b2bFlag = json['is_b2b_verified'] == true ||
+        json['is_b2b_verified'] == 1 ||
+        parsedAdminTier == 'B2B_OFFTAKER';
 
     return User(
       id: json['id']?.toString() ?? '',
@@ -53,9 +59,10 @@ class User {
       phone: json['phone']?.toString() ?? json['phone_number']?.toString(),
       role: json['role']?.toString(),
       roleId: parsedRoleId,
-      adminTier: json['admin_tier']?.toString(),
+      adminTier: parsedAdminTier,
       isChairman: chairmanFlag,
       isVerified: json['is_verified'] == true || json['is_verified'] == 1,
+      isB2bVerified: b2bFlag,
     );
   }
 
@@ -69,6 +76,7 @@ class User {
         'admin_tier': adminTier,
         'is_chairman': isChairman,
         'is_verified': isVerified,
+        'is_b2b_verified': isB2bVerified,
       };
 }
 
